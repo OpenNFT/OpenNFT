@@ -18,7 +18,7 @@ P = evalin('base', 'P');
 % Note, don't split cell structure in 2 lines with '...'.
 fieldNames = {'feedbackType', 'condition', 'dispValue', 'Reward', 'displayStage','displayBlankScreen', 'iteration'};
 defaultFields = {'', 0, 0, '', '', '', 0};
-disp(displayData)
+% disp(displayData)
 eval(varsFromStruct(displayData, fieldNames, defaultFields))
 
 if ~strcmp(feedbackType, 'DCM')
