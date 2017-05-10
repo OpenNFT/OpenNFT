@@ -13,6 +13,7 @@ function nfbSave(indVol)
 % Written by Yury Koush, Artem Nikonorov
 
 disp('Save...')
+
 P = evalin('base', 'P');
 mainLoopData = evalin('base', 'mainLoopData');
 evalin('base', 'clear mmImgViewTempl;');
