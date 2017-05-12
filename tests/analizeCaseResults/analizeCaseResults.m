@@ -1,4 +1,4 @@
-function testCaseResults(curDataPath, refDataPath)
+function analizeCaseResults(curDataPath, refDataPath)
 % This function performs the functional test on the current run output
 % comparing it with reference output data
 %

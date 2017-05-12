@@ -81,9 +81,11 @@ if isPSC && strcmp(P.Prot, 'Cont')
         mainLoopData.dispValues(indVolNorm) = dispValue;
         mainLoopData.dispValue = dispValue;
     else
+        tmp_fbVal = 0;
         mainLoopData.dispValue = 0;                                    
     end
 
+    mainLoopData.vectNFBs(indVolNorm) = tmp_fbVal;
     mainLoopData.blockNF = blockNF;
     mainLoopData.firstNF = firstNF;
     mainLoopData.Reward = '';
@@ -142,6 +144,7 @@ if isPSC && strcmp(P.Prot, 'Inter')
 
             % compute average %SC feedback value
             tmp_fbVal = mean(norm_percValues); % actual feedback value
+            mainLoopData.vectNFBs(indVolNorm) = tmp_fbVal;
             dispValue = round(100 * tmp_fbVal) /10;
 
             % [1...10], for Display 
@@ -184,8 +187,11 @@ if isPSC && strcmp(P.Prot, 'Inter')
 
             mainLoopData.norm_percValues(blockNF,:) = norm_percValues;
             mainLoopData.regSuccess(blockNF) = regSuccess;
+        else
+            tmp_fbVal = 0;
         end
-
+    else
+        tmp_fbVal = 0;
     end
 
     if mainLoopData.flagEndPSC 
@@ -194,6 +200,7 @@ if isPSC && strcmp(P.Prot, 'Inter')
         mainLoopData.dispValue = 0;                                    
     end
 
+    mainLoopData.vectNFBs(indVolNorm) = tmp_fbVal;    
     mainLoopData.blockNF = blockNF;
     mainLoopData.firstNF = firstNF;
     mainLoopData.Reward = '';
@@ -218,6 +225,7 @@ if isDCM
         disp(['logBF value: ', num2str(logBF)]);
 
         mainLoopData.logBF(indNFTrial) = logBF;
+        mainLoopData.vectNFBs(indNFTrial) = logBF;
         mainLoopData.flagEndDCM = 1;
         mainLoopData.dispValue = round(10*mainLoopData.logBF(indNFTrial))/10;
 
@@ -270,9 +278,11 @@ if isSVM
         mainLoopData.dispValues(indVolNorm) = dispValue;
         mainLoopData.dispValue = dispValue;
     else
+        tmp_fbVal = 0;
         mainLoopData.dispValue = 0;                                    
     end
 
+    mainLoopData.vectNFBs(indVolNorm) = tmp_fbVal;
     mainLoopData.blockNF = blockNF;
     mainLoopData.firstNF = firstNF;
     mainLoopData.Reward = '';

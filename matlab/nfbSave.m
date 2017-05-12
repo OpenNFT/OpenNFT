@@ -23,6 +23,11 @@ evalin('base', 'clear mmOrthView;');
 
 folder = P.nfbDataFolder;
 
+% save feedback values
+save([folder filesep P.SubjectID '_' ...
+    num2str(P.NFRunNr) '_NFBs' '.mat'], ...
+    '-struct', 'mainLoopData', 'vectNFBs');
+
 % save time-series
 if P.NrROIs >0
     save([folder filesep P.SubjectID '_' ...
