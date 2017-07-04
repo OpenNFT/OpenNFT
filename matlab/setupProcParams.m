@@ -29,6 +29,13 @@ function setupProcParams()
 % The iGLM estimations are used for visulaizations, however, note that 
 % negligible variations are possible in dynamic ROI update schemes or
 % feedback estimations based on iGLM. 
+%
+% Note, the iGLM/cGLM contrasts are hard-coded and user-/study- defined,
+% which is linked to the prepared SPM.mat structure.
+% Note that for simplicity, intermittent time-series settings are used for 
+% continuous feedback demonstration.
+% An end-user needs to set and justify their own parameter
+% files and contrasts.
 %__________________________________________________________________________
 % Copyright (C) 2016-2017 OpenNFT.org
 %
