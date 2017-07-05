@@ -11,10 +11,10 @@ function setupProcParams()
 % (fMRI model specification), on functional localizer data
 % of the same/pilot subject. Some parameters could be set constant for
 % the whole study, for simplicity, keeping in mind their potential 
-% variablilty, e.g. the TH values. 
+% variability, e.g. the TH values.
 % Note that this is not a perfect solution and requires analytical and 
 % programming efforts in future studies. Perspectively, the TH value 
-% calculation algorithm (as in SPM) has to be implmented.
+% calculation algorithm (as in SPM) has to be implemented.
 % An encouraged user could explore SPM.xM.TH estimations and advance
 % iGLM estimation scheme further.
 %
@@ -23,10 +23,10 @@ function setupProcParams()
 % variability (std ca. 0.5%), see in code. 
 % This is because SPM provides the TH value for each volume given the data,
 % which is not available in real-time in the current OpenNFT version. 
-% TH values could depend on the data acqusition setup, and could evtl. be 
+% TH values could depend on the data acquisition setup, and could evtl. be
 % set as mean(SPM.xM.TH)*ones(size(SPM.xM.TH)), or zeros(size(SPM.xM.TH)) 
 % given masking threshold defined in SPM batch. 
-% The iGLM estimations are used for visulaizations, however, note that 
+% The iGLM estimations are used for visualizations, however, note that
 % negligible variations are possible in dynamic ROI update schemes or
 % feedback estimations based on iGLM. 
 %
