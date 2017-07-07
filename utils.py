@@ -27,7 +27,7 @@ def timeit(message):
         units = 'ms'
     elif to < 0.001:
         to *= 1e6
-        units = 'µs'
+        units = 'mcs'
 
     print(message + ' {:.2f} {}'.format(to, units))
 
