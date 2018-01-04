@@ -60,6 +60,9 @@ class EventRecorder(object):
 
     # --------------------------------------------------------------------------
     def recordEvent(self, position: Times, eventNumber, value=None):
+        position = int(position)
+        eventNumber = int(eventNumber)
+
         if not value:
             value = time.time()
         if eventNumber <= 0:
@@ -69,6 +72,9 @@ class EventRecorder(object):
         self.records[0, position] = eventNumber
 
     def recordEventDuration(self, position: Times, eventNumber, duration):
+        position = int(position)
+        eventNumber = int(eventNumber)
+
         if eventNumber <= 0:
             eventNumber = self.records[0, position] + 1
 
