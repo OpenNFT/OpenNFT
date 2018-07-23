@@ -1057,6 +1057,7 @@ class OpenNFT(QWidget):
                     ptbP['Type'] = self.P['Type']
                     ptbP['WorkFolder'] = self.P['WorkFolder']
                     ptbP['DisplayFeedbackFullscreen'] = self.P['DisplayFeedbackFullscreen']
+                    ptbP['Prot'] = self.P['Prot']
 
                     self.ptbScreen.initialize(
                         sid, self.P['WorkFolder'], self.P['Prot'], ptbP)
