@@ -816,7 +816,13 @@ class OpenNFT(QWidget):
         else:
             ext = ext[-1]
 
-        path = os.path.join(os.path.dirname(path), '*%s' % ext )
+        file_series_part = re.findall(r"\{#:(\d+)\}", self.P['FirstFileNameTxt'])
+        if len(file_series_part) > 0:
+            file_series_len = int(file_series_part[0])
+            fname = os.path.splitext(os.path.basename(path))[0][:-file_series_len]
+            path = os.path.join(os.path.dirname(path), '%s*%s' % (fname, ext))
+        else:
+            path = os.path.join(os.path.dirname(path), '*%s' % ext )
 
         files = glob.glob(path)
 
@@ -846,7 +852,15 @@ class OpenNFT(QWidget):
                 ext = config.DICOM_FILES_EXTENSION
         else:
             ext = ext[-1]
-        searchString = '%s' % ext
+
+        file_series_part = re.findall(r"\{#:(\d+)\}", self.P['FirstFileNameTxt'])
+        if len(file_series_part) > 0:
+            file_series_len = int(file_series_part[0])
+            fname = os.path.splitext(os.path.basename(path))[0][:-file_series_len]
+            searchString = '%s*%s' % (fname, ext)
+        else:
+            searchString = '%s' % ext
+
         path = os.path.dirname(path)
 
         print('Searching for %s in %s' %(searchString, path))
