@@ -1337,7 +1337,14 @@ class OpenNFT(QWidget):
         # --- middle ---
         self.leProjName.setText(self.settings.value('ProjectName', ''))
         self.leSubjectID.setText(self.settings.value('SubjectID', ''))
-        self.leFirstFile.setText(self.settings.value('FirstFileNameTxt', '001_{Image Series No:06}_{#:06}.dcm'))
+        
+        # if FirstFileNameTxt is wrong, we replace it by default value
+        FirstFileNameTemplate = self.settings.value('FirstFileNameTxt','001_{Image Series No:06}_{#:06}.dcm')
+        file_series_part = re.findall(r"\{#:(\d+)\}", FirstFileNameTemplate)
+        if len(file_series_part) == 0:
+            FirstFileNameTemplate = '001_{Image Series No:06}_{#:06}.dcm'
+        self.leFirstFile.setText(FirstFileNameTemplate)
+        
         self.sbNFRunNr.setValue(int(self.settings.value('NFRunNr', '1')))
         self.sbImgSerNr.setValue(int(self.settings.value('ImgSerNr', '1')))
         self.sbVolumesNr.setValue(int(self.settings.value('NrOfVolumes')))
