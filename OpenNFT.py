@@ -805,6 +805,22 @@ class OpenNFT(QWidget):
         self.isMainLoopEntered = False
 
     # --------------------------------------------------------------------------
+    def getFileSearchString(self, file_name_template, path, ext):
+        file_series_part = re.findall(r"\{#:(\d+)\}", file_name_template)
+        file_num_part = re.findall(r"_\d+_(\d+.\w+)", file_name_template)
+        if len(file_series_part) > 0:
+            file_series_len = int(file_series_part[0])
+            fname = os.path.splitext(os.path.basename(path))[0][:-file_series_len]
+            search_string = '%s*%s' % (fname, ext)
+        elif len(file_num_part) > 0:
+            fname = file_name_template.replace(file_num_part[0], "*")
+            search_string = '%s%s' % (fname, ext)
+        else:
+            search_string = '*%s' % ext
+
+        return search_string
+    
+    # --------------------------------------------------------------------------
     def startInOfflineMode(self):
         path = os.path.join( self.P['WatchFolder'], self.P['FirstFileName'] )
         ext = re.findall(r"\.\w*$", str(path))
@@ -816,13 +832,8 @@ class OpenNFT(QWidget):
         else:
             ext = ext[-1]
 
-        file_series_part = re.findall(r"\{#:(\d+)\}", self.P['FirstFileNameTxt'])
-        if len(file_series_part) > 0:
-            file_series_len = int(file_series_part[0])
-            fname = os.path.splitext(os.path.basename(path))[0][:-file_series_len]
-            path = os.path.join(os.path.dirname(path), '%s*%s' % (fname, ext))
-        else:
-            path = os.path.join(os.path.dirname(path), '*%s' % ext )
+        searchString = self.getFileSearchString(self.P['FirstFileNameTxt'], path, ext)
+        path = os.path.join(os.path.dirname(path), searchString)
 
         files = glob.glob(path)
 
@@ -853,14 +864,7 @@ class OpenNFT(QWidget):
         else:
             ext = ext[-1]
 
-        file_series_part = re.findall(r"\{#:(\d+)\}", self.P['FirstFileNameTxt'])
-        if len(file_series_part) > 0:
-            file_series_len = int(file_series_part[0])
-            fname = os.path.splitext(os.path.basename(path))[0][:-file_series_len]
-            searchString = '%s*%s' % (fname, ext)
-        else:
-            searchString = '%s' % ext
-
+        searchString = self.getFileSearchString(self.P['FirstFileNameTxt'], path, ext)
         path = os.path.dirname(path)
 
         print('Searching for %s in %s' %(searchString, path))
@@ -1337,14 +1341,7 @@ class OpenNFT(QWidget):
         # --- middle ---
         self.leProjName.setText(self.settings.value('ProjectName', ''))
         self.leSubjectID.setText(self.settings.value('SubjectID', ''))
-        
-        # if FirstFileNameTxt is wrong, we replace it by default value
-        FirstFileNameTemplate = self.settings.value('FirstFileNameTxt','001_{Image Series No:06}_{#:06}.dcm')
-        file_series_part = re.findall(r"\{#:(\d+)\}", FirstFileNameTemplate)
-        if len(file_series_part) == 0:
-            FirstFileNameTemplate = '001_{Image Series No:06}_{#:06}.dcm'
-        self.leFirstFile.setText(FirstFileNameTemplate)
-        
+        self.leFirstFile.setText(self.settings.value('FirstFileNameTxt','001_{Image Series No:06}_{#:06}.dcm'))
         self.sbNFRunNr.setValue(int(self.settings.value('NFRunNr', '1')))
         self.sbImgSerNr.setValue(int(self.settings.value('ImgSerNr', '1')))
         self.sbVolumesNr.setValue(int(self.settings.value('NrOfVolumes')))
