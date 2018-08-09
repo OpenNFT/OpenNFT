@@ -25,12 +25,12 @@ function [idxActVox, recTh, tTh, Cn, Dn, sigma2n, tn, neg_e2n] = ...
 % tTh        - updated t-variate at time n
 % Cn         - updated matrix for Cholesky decomposition (Eq. 15)
 % Dn         - sum of (Yn * Ft') at time n
-% sigma2n    - updated reqursive sigma square estimate
-% tn         - t-statisitcs at time n
+% sigma2n    - updated recursive sigma square estimate
+% tn         - t-statistics at time n
 % neg_e2n    - flag on negative mean scquare error
 %
-% Note, intialization, recursion and application is coded in preprVol.m
-% Note, a handle for negtive e2n is introduced to stabilize the algorithm.
+% Note, initialization, recursion and application is coded in preprVol.m
+% Note, a handle for negative and zero e2n is introduced to stabilize the algorithm.
 %
 % For generic aspects and equation numbers see:
 % Bagarinao, E., Matsuo, K., Nakai, T., Sato, S., 2003. Estimation of
@@ -53,15 +53,23 @@ Cn = (n - 1) / n * Cn  + Ft * Ft' / n; % Eq. (18)
 sigma2n = sigma2n + Yn .* Yn; % Eq. (9), without factor 1/n, see bellow
 
 [Nn,p] = chol(Cn); % normalization matrix
-if p == 0
+if p == 0 && n > nrBasFct+2
     invNn = inv(Nn');
     An = Dn * invNn' / n; % Eq. (14)
     Bn = An * invNn; % Eq. (16)
     e2n = n / df * (sigma2n / n - sum(An .* An, 2)); % Eqs. (8,9,22)
     
     % handle negative e2n
-    neg_e2n = find(e2n <= 0.0);
-    e2n(neg_e2n) = abs(e2n(neg_e2n));
+    neg_e2n = find(e2n < 0.0);
+    if ~isempty(neg_e2n)
+        e2n(neg_e2n) = abs(e2n(neg_e2n));
+    end
+    
+    % handle zero e2n
+    zero_e2n = find(e2n == 0.0);
+    if ~isempty(zero_e2n)
+        e2n(zero_e2n) = 1e10;
+    end
     
     eqContr = invNn * contr; % equivalent contrast
     tn = (An*eqContr) ./ sqrt(e2n / n .* (eqContr' * eqContr)); % Eq. (23)
