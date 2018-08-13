@@ -57,7 +57,10 @@ class PtbScreen(object):
         if not self.eng:
             return
 
-        self.eng.Screen('CloseAll', nargout=0)
+        try:
+            self.eng.Screen('CloseAll', nargout=0)
+        except:
+            pass
 
     # --------------------------------------------------------------------------
     def display(self, displayQueue):
