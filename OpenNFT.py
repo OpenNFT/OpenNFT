@@ -1002,6 +1002,7 @@ class OpenNFT(QWidget):
         self.outputSamples = {}
         self.musterInfo = {}
         self.iteration = 1
+        self.preiteration = 0
         self.files_queue = queue.Queue()
 
         self.mcPlot.getPlotItem().clear()
@@ -1104,6 +1105,7 @@ class OpenNFT(QWidget):
         self.pbMoreParameters.setChecked(False)
 
         self.iteration = 1
+        self.preiteration = 0
         self.fFinNFB = True
 
         if self.cbOfflineMode.isChecked():
