@@ -40,6 +40,7 @@ import glob
 import queue
 import enum
 import re
+import fnmatch
 
 import numpy as np
 import pyqtgraph as pg
@@ -93,7 +94,8 @@ class CreateFileEventHandler(FileSystemEventHandler):
         self.recorder = recorder
 
     def on_created(self, event):
-        if not event.is_directory and event.src_path.endswith(self.filepat):
+        # if not event.is_directory and event.src_path.endswith(self.filepat):
+        if not event.is_directory and fnmatch.fnmatch(os.path.basename(event.src_path), self.filepat):
             #t1
             self.recorder.recordEvent(Times.t1, 0)
             self.fq.put(event.src_path)
