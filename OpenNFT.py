@@ -10,8 +10,10 @@ Yury Koush, John Ashburner, Evgeny Prilepin, Ronald Sladky, Peter Zeidman, Serge
 Frank Scharnowski, Artem Nikonorov, Dimitri Van De Ville,
 
 OpenNFT: An open-source Python/Matlab framework for real-time fMRI neurofeedback training
-based on activity, connectivity and multivariate pattern analysis.
-(pending)
+based on activity, connectivity and multivariate pattern analysis. Neuroimage 157:489-503.
+
+Real-time fMRI data for testing OpenNFT functionality. Data in Brief 14:344-347.
+
 _________________________________________________________________________
 Copyright (C) 2016-2017 OpenNFT.org
 
@@ -38,6 +40,7 @@ import glob
 import queue
 import enum
 import re
+import fnmatch
 
 import numpy as np
 import pyqtgraph as pg
@@ -91,7 +94,8 @@ class CreateFileEventHandler(FileSystemEventHandler):
         self.recorder = recorder
 
     def on_created(self, event):
-        if not event.is_directory and event.src_path.endswith(self.filepat):
+        # if not event.is_directory and event.src_path.endswith(self.filepat):
+        if not event.is_directory and fnmatch.fnmatch(os.path.basename(event.src_path), self.filepat):
             #t1
             self.recorder.recordEvent(Times.t1, 0)
             self.fq.put(event.src_path)
@@ -805,6 +809,22 @@ class OpenNFT(QWidget):
         self.isMainLoopEntered = False
 
     # --------------------------------------------------------------------------
+    def getFileSearchString(self, file_name_template, path, ext):
+        file_series_part = re.findall(r"\{#:(\d+)\}", file_name_template)
+        file_num_part = re.findall(r"_\d+_(\d+.\w+)", file_name_template)
+        if len(file_series_part) > 0:
+            file_series_len = int(file_series_part[0])
+            fname = os.path.splitext(os.path.basename(path))[0][:-file_series_len]
+            search_string = '%s*%s' % (fname, ext)
+        elif len(file_num_part) > 0:
+            fname = file_name_template.replace(file_num_part[0], "*")
+            search_string = '%s%s' % (fname, ext)
+        else:
+            search_string = '*%s' % ext
+
+        return search_string
+    
+    # --------------------------------------------------------------------------
     def startInOfflineMode(self):
         path = os.path.join( self.P['WatchFolder'], self.P['FirstFileName'] )
         ext = re.findall(r"\.\w*$", str(path))
@@ -816,7 +836,8 @@ class OpenNFT(QWidget):
         else:
             ext = ext[-1]
 
-        path = os.path.join(os.path.dirname(path), '*%s' % ext )
+        searchString = self.getFileSearchString(self.P['FirstFileNameTxt'], path, ext)
+        path = os.path.join(os.path.dirname(path), searchString)
 
         files = glob.glob(path)
 
@@ -846,7 +867,8 @@ class OpenNFT(QWidget):
                 ext = config.DICOM_FILES_EXTENSION
         else:
             ext = ext[-1]
-        searchString = '%s' % ext
+
+        searchString = self.getFileSearchString(self.P['FirstFileNameTxt'], path, ext)
         path = os.path.dirname(path)
 
         print('Searching for %s in %s' %(searchString, path))
@@ -982,6 +1004,7 @@ class OpenNFT(QWidget):
         self.outputSamples = {}
         self.musterInfo = {}
         self.iteration = 1
+        self.preiteration = 0
         self.files_queue = queue.Queue()
 
         self.mcPlot.getPlotItem().clear()
@@ -1057,6 +1080,7 @@ class OpenNFT(QWidget):
                     ptbP['Type'] = self.P['Type']
                     ptbP['WorkFolder'] = self.P['WorkFolder']
                     ptbP['DisplayFeedbackFullscreen'] = self.P['DisplayFeedbackFullscreen']
+                    ptbP['Prot'] = self.P['Prot']
 
                     self.ptbScreen.initialize(
                         sid, self.P['WorkFolder'], self.P['Prot'], ptbP)
@@ -1083,6 +1107,7 @@ class OpenNFT(QWidget):
         self.pbMoreParameters.setChecked(False)
 
         self.iteration = 1
+        self.preiteration = 0
         self.fFinNFB = True
 
         if self.cbOfflineMode.isChecked():
@@ -1322,7 +1347,7 @@ class OpenNFT(QWidget):
         # --- middle ---
         self.leProjName.setText(self.settings.value('ProjectName', ''))
         self.leSubjectID.setText(self.settings.value('SubjectID', ''))
-        self.leFirstFile.setText(self.settings.value('FirstFileNameTxt', '001_{Image Series No:06}_{#:06}.dcm'))
+        self.leFirstFile.setText(self.settings.value('FirstFileNameTxt','001_{Image Series No:06}_{#:06}.dcm'))
         self.sbNFRunNr.setValue(int(self.settings.value('NFRunNr', '1')))
         self.sbImgSerNr.setValue(int(self.settings.value('ImgSerNr', '1')))
         self.sbVolumesNr.setValue(int(self.settings.value('NrOfVolumes')))
