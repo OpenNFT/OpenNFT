@@ -135,6 +135,14 @@ class OpenNFT(QWidget):
         self.udpSender.sendto(data, (config.UDP_IP, config.UDP_PORT))
 
     # --------------------------------------------------------------------------
+    def initUdpReceiver(self):
+        self.udpReceiver = 0
+
+    # --------------------------------------------------------------------------
+    def finalizeUdpReceiver(self):
+        self.udpReceiver
+
+    # --------------------------------------------------------------------------
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -1111,7 +1119,9 @@ class OpenNFT(QWidget):
         self.preiteration = 0
         self.fFinNFB = True
 
-        if self.cbOfflineMode.isChecked():
+        if self.P['DataType'] == 'UDP':
+            self.initUdpReceiver()
+        elif self.cbOfflineMode.isChecked():
             self.startInOfflineMode()
         else:
             self.startFilesystemWatching()
@@ -1162,6 +1172,9 @@ class OpenNFT(QWidget):
         if config.USE_MRPULSE and hasattr(self, 'mrPulses'):
             np_arr = MRpulse.toNpData(self.mrPulses)
             self.pulseProc.terminate()
+        
+        if self.P['DataType'] == 'UDP':
+            self.finalizeUdpReceiver()
 
         if self.P.get('nfbDataFolder'):
             path = os.path.normpath(self.P['nfbDataFolder'])

@@ -1102,6 +1102,16 @@
               <string>IMAPH</string>
              </property>
             </item>
+            <item>
+             <property name="text">
+              <string>NII</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>UDP</string>
+             </property>
+            </item>
            </widget>
           </item>
           <item row="0" column="0">
