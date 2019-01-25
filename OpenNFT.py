@@ -49,10 +49,10 @@ from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 
 from PyQt5.QtWidgets import QApplication, QWidget, QFileDialog
-from PyQt5.QtGui import QPalette
-from PyQt5.QtCore import QSettings, QTimer, QEvent
+from PyQt5.QtGui import QIcon, QPalette
+from PyQt5.QtCore import QSettings, QTimer, QEvent, QRegExp
 from PyQt5.uic import loadUi
-from PyQt5.QtGui import QIcon
+from PyQt5.QtGui import QRegExpValidator
 
 import config
 import excepthook
@@ -113,34 +113,34 @@ class OpenNFT(QWidget):
 
     # --------------------------------------------------------------------------
     def initUdpSender(self):
-        if not config.USE_UDP:
+        if not config.USE_UDP_FEEDBACK:
             return
         self.udpSender = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
         #data = "HI\n"
-        data = "9\n"
+        data = UDP_CONTROL_CHAR + "\n"
         #self.printToLog(data)
         data = bytes(data, 'UTF-8')
-        self.udpSender.sendto(data, (config.UDP_IP, config.UDP_PORT))
+        self.udpSender.sendto(data, (config.UDP_FEEDBACK_IP, config.UDP_FEEDBACK_PORT))
 
     # --------------------------------------------------------------------------
     def finalizeUdpSender(self):
-        if not config.USE_UDP:
+        if not config.USE_UDP_FEEDBACK:
             return
 
         #data = "BYE\n"
         data = "9\n"
         #self.printToLog(data)
         data = bytes(data, 'UTF-8')
-        self.udpSender.sendto(data, (config.UDP_IP, config.UDP_PORT))
+        self.udpSender.sendto(data, (config.UDP_FEEDBACK_IP, config.UDP_FEEDBACK_PORT))
 
     # --------------------------------------------------------------------------
-    def initUdpReceiver(self):
-        self.udpReceiver = 0
+    def initTcpReceiver(self):
+        self.TcpReceiver = 0
 
     # --------------------------------------------------------------------------
-    def finalizeUdpReceiver(self):
-        self.udpReceiver
+    def finalizeTcpReceiver(self):
+        self.TcpReceiver
 
     # --------------------------------------------------------------------------
     def __init__(self, *args, **kwargs):
@@ -436,6 +436,8 @@ class OpenNFT(QWidget):
         self.call_timer.timeout.connect(self.callMainLoopIteration)
         self.orthViewUpdateCheckTimer.timeout.connect(self.onCheckOrthViewUpdated)
 
+        self.leUDPFeedbackIP.setValidator(QRegExpValidator(QRegExp("[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}"), self))
+
     # --------------------------------------------------------------------------
     def onChangeMode(self, flag):
         if flag:
@@ -607,8 +609,8 @@ class OpenNFT(QWidget):
                 if self.displayData:
                     self.printToLog('Sending by UDP - dispValue = ' + str(self.displayData['dispValue']))
                     data = bytes(str(self.displayData['dispValue']) + "\n", 'UTF-8')
-                    if config.USE_UDP:
-                        self.udpSender.sendto(data, (config.UDP_IP, config.UDP_PORT))
+                    if config.USE_UDP_FEEDBACK:
+                        self.udpSender.sendto(data, (config.UDP_FEEDBACK_IP, config.UDP_FEEDBACK_PORT))
                     # t7
                     self.recorder.recordEvent(Times.t7, self.iteration)
             elif self.P['Type'] == 'DCM':
@@ -768,10 +770,10 @@ class OpenNFT(QWidget):
 
             # t5
             self.recorder.recordEvent(Times.t5, self.iteration)
-            if self.displayData and config.USE_UDP:
+            if self.displayData and config.USE_UDP_FEEDBACK:
                 self.printToLog('Sending by UDP - dispValue = ' + str(self.displayData['dispValue']))
                 data = bytes(str(self.displayData['dispValue']) + "\n", 'UTF-8')
-                self.udpSender.sendto(data, (config.UDP_IP, config.UDP_PORT))
+                self.udpSender.sendto(data, (config.UDP_FEEDBACK_IP, config.UDP_FEEDBACK_PORT))
             # t8
             self.recorder.recordEvent(Times.t8, self.iteration)
         elif self.P['Type'] == 'PSC':
@@ -779,10 +781,10 @@ class OpenNFT(QWidget):
 
             # t5
             self.recorder.recordEvent(Times.t5, self.iteration)
-            if self.displayData and config.USE_UDP: # for UDP, configure here if required
+            if self.displayData and config.USE_UDP_FEEDBACK: # for UDP, configure here if required
                 self.printToLog('Sending by UDP - dispValue = ' + str(self.displayData['dispValue']))
                 data = bytes(str(self.displayData['dispValue']) + "\n", 'UTF-8')
-                self.udpSender.sendto(data, (config.UDP_IP, config.UDP_PORT))
+                self.udpSender.sendto(data, (config.UDP_FEEDBACK_IP, config.UDP_FEEDBACK_PORT))
 
             if self.P['Prot'] != 'Inter':
                 if self.cbDisplayFeedback.isChecked() and config.USE_PTB:
@@ -1173,9 +1175,6 @@ class OpenNFT(QWidget):
             np_arr = MRpulse.toNpData(self.mrPulses)
             self.pulseProc.terminate()
         
-        if self.P['DataType'] == 'UDP':
-            self.finalizeUdpReceiver()
-
         if self.P.get('nfbDataFolder'):
             path = os.path.normpath(self.P['nfbDataFolder'])
             fname = os.path.join(path, 'TimeVectors_' + str(self.P['NFRunNr']).zfill(2) + '.txt')
@@ -1183,6 +1182,8 @@ class OpenNFT(QWidget):
 
         if self.fFinNFB:
             self.finalizeUdpSender()
+            if self.P['DataType'] == 'UDP':
+                self.finalizeUdpReceiver()
             self.nfbFinStarted = self.eng.nfbSave(self.iteration, nargout=0, async=True)
             self.fFinNFB = False
 
@@ -1376,6 +1377,9 @@ class OpenNFT(QWidget):
         self.cbScreenId.setCurrentIndex(int(self.settings.value('DisplayFeedbackScreenID', 0)))
         self.cbDisplayFeedback.setChecked( str( self.settings.value('DisplayFeedback')).lower()=='true' )
         self.cbDisplayFeedbackFullscreen.setChecked( str(self.settings.value('DisplayFeedbackFullscreen')).lower() == 'true')
+        self.cbUDPFeedback.setChecked( str( self.settings.value('UseUDPFeedback')).lower() == 'true')
+        self.leUDPFeedbackIP.setText( self.settings.value('UDPFeedbackIP', ''))
+        self.leUDPFeedbackPort.setText( str( self.settings.value('UDPFeedbackPort', '')))
 
         # --- bottom right ---
         idx = self.cbDataType.findText(self.settings.value('DataType', 'DICOM'))
@@ -1540,6 +1544,9 @@ class OpenNFT(QWidget):
         self.settings.setValue('DisplayFeedback', self.cbDisplayFeedback.isChecked())
         self.settings.setValue('DisplayFeedbackScreenID', self.cbScreenId.currentIndex())
         self.settings.setValue('DisplayFeedbackFullscreen', self.cbDisplayFeedbackFullscreen.isChecked())
+        self.settings.setValue('UDPFeedback', self.cbUDPFeedback.isChecked())
+        self.settings.setValue('UDPFeedbackIP', self.leUDPFeedbackIP.text())
+        self.settings.setValue('UDPFeedbackPort', int( self.leUDPFeedbackPort.text()))
 
         # --- bottom right ---
         self.settings.setValue('DataType', self.P['DataType'])
