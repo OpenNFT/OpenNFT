@@ -10,15 +10,30 @@ Written by Artem Nikonorov
 """
 
 import socket
-from time import sleep
+import select
+
 
 UDP_IP = "127.0.0.1"
 UDP_PORT = 1234
+UDP_CONTROL_CHAR = '#'
 
 receiver = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 receiver.bind((UDP_IP, UDP_PORT))
 
-while True:
-    sleep(0.01)
-    data, addr = receiver.recvfrom(1024)
-    print("Received message: ", data)
+data = [0]
+while chr(data[0]) != UDP_CONTROL_CHAR:
+    while len(select.select([receiver],[],[],0.001)[0]) == 0:
+        pass
+    data, addr = receiver.recvfrom(16)
+    print(data)
+print("Connection started from: ", addr[0])
+
+data = [0]
+while chr(data[0]) != UDP_CONTROL_CHAR:
+    while len(select.select([receiver],[],[],0.001)[0]) == 0:
+        pass
+    data = receiver.recv(16)
+    print(data)
+
+print("Connection closed")
+receiver.close()
