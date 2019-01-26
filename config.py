@@ -27,16 +27,23 @@ IMAPH_FILES_EXTENSION = '.img'
 # MRI triggering is required
 USE_MRPULSE = False
 
+# receive data via TCP
+USE_TCP_DATA = False
+if USE_TCP_DATA:
+    # UDP sender settings
+    TCP_DATA_IP = "127.0.0.1" # localhost
+    TCP_DATA_PORT = 1234
+
 # export feedback via UDP
 USE_UDP_FEEDBACK = True
 if USE_UDP_FEEDBACK:
     # UDP sender settings
     UDP_FEEDBACK_IP = "127.0.0.1" # localhost
     UDP_FEEDBACK_PORT = 1234
-    UDP_CONTROL_CHAR = '#'
+    UDP_CONTROL_CHAR = '9\n'
 
 # use PTB by default, the check box on the GUI can be unselected during the Review of the Parameters
-USE_PTB = True
+USE_PTB = False
 
 # currently used only for DCM feedabck
 USE_MATLAB_MODEL_HELPER = True

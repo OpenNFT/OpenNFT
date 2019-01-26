@@ -117,7 +117,7 @@ class OpenNFT(QWidget):
         self.udpSender = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
         #data = "HI\n"
-        data = UDP_CONTROL_CHAR + "\n"
+        data = config.UDP_CONTROL_CHAR
         #self.printToLog(data)
         data = bytes(data, 'UTF-8')
         self.udpSender.sendto(data, (config.UDP_FEEDBACK_IP, config.UDP_FEEDBACK_PORT))
@@ -129,7 +129,7 @@ class OpenNFT(QWidget):
             return
 
         #data = "BYE\n"
-        data = "9\n"
+        data = config.UDP_CONTROL_CHAR
         #self.printToLog(data)
         data = bytes(data, 'UTF-8')
         self.udpSender.sendto(data, (config.UDP_FEEDBACK_IP, config.UDP_FEEDBACK_PORT))
@@ -1042,8 +1042,6 @@ class OpenNFT(QWidget):
                 self.reset()
             # -self.chooseSetFile(self.leSetFile.text())
 
-            self.printToLog("  Actualizing:")
-
             self.actualize()
 
             memMapFile = self.getFreeMemmapFilename()
@@ -1102,6 +1100,7 @@ class OpenNFT(QWidget):
             self.eng.nfbInitReward(nargout=0)
 
             self.initUdpSender()
+            self.initTcpReceiver()
 
             self.btnStart.setEnabled(True)
 
@@ -1120,9 +1119,7 @@ class OpenNFT(QWidget):
         self.preiteration = 0
         self.fFinNFB = True
 
-        if self.P['DataType'] == 'UDP':
-            self.initUdpReceiver()
-        elif self.cbOfflineMode.isChecked():
+        if self.cbOfflineMode.isChecked():
             self.startInOfflineMode()
         else:
             self.startFilesystemWatching()
@@ -1181,8 +1178,8 @@ class OpenNFT(QWidget):
 
         if self.fFinNFB:
             self.finalizeUdpSender()
-            if self.P['DataType'] == 'UDP':
-                self.finalizeUdpReceiver()
+            if self.cbcbTCPData.isChecked():
+                self.finalizeTcpReceiver()
             self.nfbFinStarted = self.eng.nfbSave(self.iteration, nargout=0, async=True)
             self.fFinNFB = False
 
@@ -1372,13 +1369,20 @@ class OpenNFT(QWidget):
 
         # --- bottom left ---
         self.cbOfflineMode.setChecked( str( self.settings.value('OfflineMode')).lower()=='true' )
+        self.cbTCPData.setChecked( str( self.settings.value('UseTCPData')).lower() == 'true')
+        if self.cbTCPData.isChecked():
+            self.leTCPDataIP.setText( self.settings.value('TCPDataIP', ''))
+            self.leTCPDataPort.setText( str( self.settings.value('TCPDataPort', '')))
+
+
         self.cbUsePTB.setChecked( str( self.settings.value('UsePTB')).lower()=='true' )
         self.cbScreenId.setCurrentIndex(int(self.settings.value('DisplayFeedbackScreenID', 0)))
         self.cbDisplayFeedback.setChecked( str( self.settings.value('DisplayFeedback')).lower()=='true' )
         self.cbDisplayFeedbackFullscreen.setChecked( str(self.settings.value('DisplayFeedbackFullscreen')).lower() == 'true')
         self.cbUDPFeedback.setChecked( str( self.settings.value('UseUDPFeedback')).lower() == 'true')
-        self.leUDPFeedbackIP.setText( self.settings.value('UDPFeedbackIP', ''))
-        self.leUDPFeedbackPort.setText( str( self.settings.value('UDPFeedbackPort', '')))
+        if self.cbUDPFeedback.isChecked():
+            self.leUDPFeedbackIP.setText( self.settings.value('UDPFeedbackIP', ''))
+            self.leUDPFeedbackPort.setText( str( self.settings.value('UDPFeedbackPort', '')))
 
         # --- bottom right ---
         idx = self.cbDataType.findText(self.settings.value('DataType', 'DICOM'))
@@ -1430,6 +1434,8 @@ class OpenNFT(QWidget):
 
     # --------------------------------------------------------------------------
     def actualize(self):
+        self.printToLog("  Actualizing:")
+
         # --- top ---
         self.P['ProtocolFile'] = self.leProtocolFile.text()
         self.P['WorkFolder'] = self.leWorkFolder.text()
@@ -1471,7 +1477,6 @@ class OpenNFT(QWidget):
         self.P['TargRAD'] = self.sbTargRAD.value()
         self.P['TargDIAM'] = self.sbTargDIAM.value()
         self.P['WeightsFileName'] = self.leWeightsFile.text()
-        config.USE_PTB = self.cbUsePTB.isChecked()
 
         # Parsing FirstFileNameTxt template and replace it with variables ---
         fields = {
@@ -1539,14 +1544,17 @@ class OpenNFT(QWidget):
 
         # --- bottom left ---
         self.settings.setValue('OfflineMode', self.cbOfflineMode.isChecked())
+        self.settings.setValue('UseTCPData', self.cbTCPData.isChecked())
+        self.settings.setValue('TCPDataIP', self.leTCPDataIP.text())
+        self.settings.setValue('TCPDataPort', int( self.leTCPDataPort.text()))
         self.settings.setValue('UsePTB', self.cbUsePTB.isChecked())
         self.settings.setValue('DisplayFeedback', self.cbDisplayFeedback.isChecked())
         self.settings.setValue('DisplayFeedbackScreenID', self.cbScreenId.currentIndex())
         self.settings.setValue('DisplayFeedbackFullscreen', self.cbDisplayFeedbackFullscreen.isChecked())
-        self.settings.setValue('UDPFeedback', self.cbUDPFeedback.isChecked())
+        self.settings.setValue('UseUDPFeedback', self.cbUDPFeedback.isChecked())
         self.settings.setValue('UDPFeedbackIP', self.leUDPFeedbackIP.text())
         self.settings.setValue('UDPFeedbackPort', int( self.leUDPFeedbackPort.text()))
-
+        
         # --- bottom right ---
         self.settings.setValue('DataType', self.P['DataType'])
         self.settings.setValue('Prot', self.P['Prot'])
@@ -1557,6 +1565,22 @@ class OpenNFT(QWidget):
         self.settings.setValue('TargRAD', self.P['TargRAD'])
         self.settings.setValue('TargDIAM', self.P['TargDIAM'])
         self.settings.setValue('WeightsFileName', self.P['WeightsFileName'])
+
+        # Update config
+        config.USE_TCP_DATA = self.cbTCPData.isChecked()
+        if config.USE_TCP_DATA:
+            # TCP receiver settings
+            config.TCP_DATA_IP = self.leTCPDataIP.text()
+            config.TCP_DATA_PORT = int( self.leTCPDataPort.text())
+
+        config.USE_PTB = self.cbUsePTB.isChecked()
+
+        config.USE_UDP_FEEDBACK = self.UseUDPFeedback.isChecked()
+        if config.USE_UDP_FEEDBACK:
+            # UDP sender settings
+            config.UDP_FEEDBACK_IP = self.leUDPFeedbackIP.text()
+            config.UDP_FEEDBACK_PORT = int( self.leUDPFeedbackPort.text())
+
 
     # --------------------------------------------------------------------------
     def displayImage(self):
