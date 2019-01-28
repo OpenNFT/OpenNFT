@@ -1,42 +1,24 @@
 # -*- coding: utf-8 -*-
 
-# testing script for udpSender
+# testing UDP
 """
 
 __________________________________________________________________________
 Copyright (C) 2016-2017 OpenNFT.org
 
-Written by Artem Nikonorov
+Written by Tibor Auer
 """
 
-import socket
-from time import sleep
+from pyniexp.connection import Udp
 
 UDP_IP = "127.0.0.1"
-UDP_PORT = 5077
+UDP_PORT = 1234
 UDP_CONTROL_CHAR = '#'
 
-# Initialise
-udpSender = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+udpSender = Udp(IP=UDP_IP,port=UDP_PORT,controlChar=UDP_CONTROL_CHAR)
 
-#data = "HI\n"
-data = UDP_CONTROL_CHAR
-#self.printToLog(data)
-data = bytes(data, 'UTF-8')
-udpSender.sendto(data, (UDP_IP, UDP_PORT))
+udpSender.ConnectForSending()
 
-# Send
-for data in [12, 34, 56, 78, 90]:
-    sleep(0.01)
-    data = bytes(str(data), 'UTF-8')
-    udpSender.sendto(data, (UDP_IP, UDP_PORT))    
-    print("Sent message: ", data)
+udpSender.SendData([12,34,56,78])
 
-# Finalize
-#data = "BYE\n"
-data = UDP_CONTROL_CHAR
-#self.printToLog(data)
-data = bytes(data, 'UTF-8')
-udpSender.sendto(data, (UDP_IP, UDP_PORT))
-udpSender.close()
-udpSender = None
+udpSender.Close()
