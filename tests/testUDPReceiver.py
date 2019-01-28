@@ -1,39 +1,30 @@
 # -*- coding: utf-8 -*-
 
-# testing script for udpSender
+# testing UDP
 """
 
 __________________________________________________________________________
 Copyright (C) 2016-2017 OpenNFT.org
 
-Written by Artem Nikonorov
+Written by Tibor Auer
 """
 
-import socket
-import select
-
+from pyniexp.connection import Udp
 
 UDP_IP = "127.0.0.1"
 UDP_PORT = 1234
 UDP_CONTROL_CHAR = '#'
 
-receiver = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-receiver.bind((UDP_IP, UDP_PORT))
+receiver = Udp(IP=UDP_IP,port=UDP_PORT,controlChar=UDP_CONTROL_CHAR)
 
-data = [0]
-while chr(data[0]) != UDP_CONTROL_CHAR:
-    while len(select.select([receiver],[],[],0.001)[0]) == 0:
-        pass
-    data, addr = receiver.recvfrom(16)
-    print(data)
-print("Connection started from: ", addr[0])
+receiver.ConnectForReceiving()
 
-data = [0]
-while chr(data[0]) != UDP_CONTROL_CHAR:
-    while len(select.select([receiver],[],[],0.001)[0]) == 0:
-        pass
-    data = receiver.recv(16)
-    print(data)
+n = 0
+while receiver.isOpen:
+    data = receiver.ReceiveData(n=1,dtype='float')
+    n += 1
+    if n == 1: receiver.ResetClock()
+    if len(data): receiver.Log('volume #{:3d} feedback: {:2.3f}'.format(n,data[0]))
+    else: receiver.Log('volume #{:3d} no data!'.format(n))
 
-print("Connection closed")
-receiver.close()
+receiver.Close()
