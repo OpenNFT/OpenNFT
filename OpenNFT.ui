@@ -1221,6 +1221,62 @@
                                             </widget>
                                         </item>
                                         <item>
+                                            <widget class="QLabel" name="label_41_1">
+                                                <property name="text">
+                                                    <string>Maximum Feedback Value</string>
+                                                </property>
+                                            </widget>
+                                        </item>
+                                        <item>
+                                            <widget class="QLineEdit" name="leMaxFeedbackVal">
+                                                <property name="maximumSize">
+                                                    <size>
+                                                        <width>50</width>
+                                                        <height>20</height>
+                                                    </size>
+                                                </property>
+                                                <property name="text">
+                                                    <string>100</string>
+                                                </property>
+                                                <property name="readOnly">
+                                                    <bool>false</bool>
+                                                </property>
+                                            </widget>
+                                        </item>
+                                        <item>
+                                            <widget class="QLabel" name="label_41_2">
+                                                <property name="text">
+                                                    <string>Number of Decimals</string>
+                                                </property>
+                                            </widget>
+                                        </item>
+                                        <item>
+                                            <widget class="QDoubleSpinBox" name="sbFeedbackValDec">
+                                                <property name="value">
+                                                    <double>2</double>
+                                                </property>
+                                                <property name="decimals">
+                                                    <double>0</double>
+                                                </property>
+                                                <property name="minimum">
+                                                    <double>0</double>
+                                                </property>
+                                                <property name="maximum">
+                                                    <double>6</double>
+                                                </property>
+                                            </widget>
+                                        </item>
+                                        <item>
+                                            <widget class="QCheckBox" name="cbNegFeedback">
+                                                <property name="text">
+                                                    <string>Allow negative Feedback Value</string>
+                                                </property>
+                                                <property name="checked">
+                                                    <bool>false</bool>
+                                                </property>
+                                            </widget>
+                                        </item>
+                                        <item>
                                             <spacer name="horizontalSpacer">
                                                 <property name="orientation">
                                                     <enum>Qt::Horizontal</enum>
@@ -1275,7 +1331,7 @@
                                         <item>
                                             <widget class="QCheckBox" name="cbUsePTB">
                                                 <property name="text">
-                                                    <string>Use Psychtoolbox for NF Presentation</string>
+                                                    <string>Use built-in NF Presentation</string>
                                                 </property>
                                                 <property name="checked">
                                                     <bool>true</bool>
