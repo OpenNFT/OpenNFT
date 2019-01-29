@@ -1374,6 +1374,9 @@ class OpenNFT(QWidget):
             self.leTCPDataIP.setText( self.settings.value('TCPDataIP', ''))
             self.leTCPDataPort.setText( str( self.settings.value('TCPDataPort', '')))
 
+        self.leMaxFeedbackVal.setText( str( self.settings.value('MaxFeedbackVal', '')))
+        self.sbFeedbackValDec.setValue(int(self.settings.value('FeedbackValDec')))
+        self.cbNegFeedback.setChecked( str( self.settings.value('NegFeedback')).lower()=='true' )
 
         self.cbUsePTB.setChecked( str( self.settings.value('UsePTB')).lower()=='true' )
         self.cbScreenId.setCurrentIndex(int(self.settings.value('DisplayFeedbackScreenID', 0)))
@@ -1472,6 +1475,10 @@ class OpenNFT(QWidget):
         self.P['Prot'] = str(self.cbProt.currentText())
         self.P['Type'] = str(self.cbType.currentText())
 
+        self.P['MaxFeedbackVal'] = float( self.leMaxFeedbackVal.text())
+        self.P['FeedbackValDec'] = self.sbFeedbackValDec.value()
+        self.P['NegFeedback'] = self.cbNegFeedback.isChecked()
+
         # --- main viewer ---
         self.P['TargANG'] = self.sbTargANG.value()
         self.P['TargRAD'] = self.sbTargRAD.value()
@@ -1548,6 +1555,11 @@ class OpenNFT(QWidget):
         if self.cbUseTCPData.isChecked():
             self.settings.setValue('TCPDataIP', self.leTCPDataIP.text())
             self.settings.setValue('TCPDataPort', int( self.leTCPDataPort.text()))
+
+        self.settings.setValue('MaxFeedbackVal', self.P['MaxFeedbackVal'])        
+        self.settings.setValue('FeedbackValDec', self.P['FeedbackValDec'])        
+        self.settings.setValue('NegFeedback', self.P['NegFeedback'])
+
         self.settings.setValue('UsePTB', self.cbUsePTB.isChecked())
         self.settings.setValue('DisplayFeedback', self.cbDisplayFeedback.isChecked())
         self.settings.setValue('DisplayFeedbackScreenID', self.cbScreenId.currentIndex())

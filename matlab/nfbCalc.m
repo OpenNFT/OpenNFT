@@ -67,14 +67,14 @@ if isPSC && strcmp(P.Prot, 'Cont')
 
         % compute average %SC feedback value
         tmp_fbVal = median(norm_percValues); 
-        dispValue = round(10000 * tmp_fbVal) /100; 
+        dispValue = round(P.MaxFeedbackVal*10^P.FeedbackValDec * tmp_fbVal) /10^P.FeedbackValDec; 
 
-        % [1...100], for Display
-        if dispValue < 1
-            dispValue = 1;
+        % [0...P.MaxFeedbackVal], for Display
+        if P.NegFeedback && dispValue < 0
+            dispValue = 0;
         end
-        if dispValue > 100
-            dispValue = 100;
+        if dispValue > P.MaxFeedbackVal
+            dispValue = P.MaxFeedbackVal;
         end
 
         mainLoopData.norm_percValues(indVolNorm,:) = norm_percValues;
@@ -145,14 +145,14 @@ if isPSC && strcmp(P.Prot, 'Inter')
             % compute average %SC feedback value
             tmp_fbVal = mean(norm_percValues); % actual feedback value
             mainLoopData.vectNFBs(indVolNorm) = tmp_fbVal;
-            dispValue = round(100 * tmp_fbVal) /10;
+            dispValue = round(P.MaxFeedbackVal*10^P.FeedbackValDec * tmp_fbVal) /10^P.FeedbackValDec; 
 
-            % [1...10], for Display 
-            if dispValue < 1
-                dispValue = 1;
+            % [0...P.MaxFeedbackVal], for Display
+            if P.NegFeedback && dispValue < 0
+                dispValue = 0;
             end
-            if dispValue > 10
-                dispValue = 10;
+            if dispValue > P.MaxFeedbackVal
+                dispValue = P.MaxFeedbackVal;
             end
 
             % regSuccess and Shaping 
@@ -227,7 +227,8 @@ if isDCM
         mainLoopData.logBF(indNFTrial) = logBF;
         mainLoopData.vectNFBs(indNFTrial) = logBF;
         mainLoopData.flagEndDCM = 1;
-        mainLoopData.dispValue = round(10*mainLoopData.logBF(indNFTrial))/10;
+        tmp_fbVal = mainLoopData.logBF(indNFTrial)
+        mainLoopData.dispValue = round(P.MaxFeedbackVal*10^P.FeedbackValDec * tmp_fbVal) /10^P.FeedbackValDec; 
 
         % calculating monetory reward value
         if mainLoopData.dispValue > thReward
@@ -272,7 +273,7 @@ if isSVM
 
         % compute average feedback value
         tmp_fbVal = mean(norm_percValues); 
-        dispValue = round(10000 * tmp_fbVal) /10000; % values from 0 to 1
+        dispValue = round(P.MaxFeedbackVal*10^P.FeedbackValDec * tmp_fbVal) /10^P.FeedbackValDec; 
 
         mainLoopData.norm_percValues(indVolNorm,:) = norm_percValues;
         mainLoopData.dispValues(indVolNorm) = dispValue;
