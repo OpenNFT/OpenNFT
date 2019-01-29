@@ -5,7 +5,38 @@ Refer to www.OpenNFT.org and to our Neuroimage manuscript ["OpenNFT: An open-sou
 Direct link to [OpenNFT manual](https://github.com/OpenNFT/opennft.github.io/blob/master/OpenNFT_Manual_v1.0.pdf).
 Note, we are still tuning our pre-release version. Please check the updates regularly.
 
-## Additional note for this fork (tiborauer)
-TCP/UDP trasfer now uses the pyniexp package, which you can install with:
+## Installation (based on the [OpenNFT manual](https://github.com/OpenNFT/opennft.github.io/blob/master/OpenNFT_Manual_v1.0.pdf))
+1. Prerequisites
+	- MATLAB
+		- Image Prpocessing
+		- Statitics and Machine Learning
+	- Miniconda3
 
-`pip install git+https://github.com/tiborauer/pyniexp.git`
+2. MATLAB Toolboxes
+	- [SPM12](https://github.com/spm/spm12.git)
+	- [Psychtoolbox 3](https://github.com/Psychtoolbox-3/Psychtoolbox-3.git)
+	- [JSONlab](https://uk.mathworks.com/matlabcentral/mlc-downloads/downloads/submissions/33381/versions/22/download/zip)
+
+3. Install Python packages\
+	`conda create --name openNFT python=3.5`\
+	`conda activate openNFT`\
+	`cd "<MATLABROOT>\extern\engines\python"`\
+  `python setup.py build --build-base="<CONDAROOT>\envs\openNFT\Lib\site-packages\MatlabEngineBuild" install`\
+	`conda install pip setuptools`\
+	`pip install PyQT5`\
+	`pip install PyQT5-tools`\
+	`pip install watchdog`\
+	`pip install --no-deps git+https://github.com/pyqtgraph/pyqtgraph.git`\
+	`pip install http://www.silx.org/pub/wheelhouse/numpy-1.13.1+mkl-cp35-cp35m-win_amd64.whl`
+	
+  - For MRpulse\
+    `pip install pywin32`\
+		`pip install pyHook-1.5.1-cp35-cp35m-win_amd64.whl` (from https://www.lfd.uci.edu/~gohlke/pythonlibs/#pyhook)
+	
+  - **For this fork:** TCP/UDP trasfer uses the pyniexp package, which you can install with:\
+    `pip install git+https://github.com/tiborauer/pyniexp.git`
+
+## Demo dataset
+https://github.com/OpenNFT/OpenNFT_Demo/releases
+
+
