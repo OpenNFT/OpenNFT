@@ -116,7 +116,7 @@ class OpenNFT(QWidget):
     def initUdpSender(self):
         if not config.USE_UDP_FEEDBACK:
             return
-        self.udpSender = Udp(IP=config.UDP_FEEDBACK_IP,port=config.UDP_FEEDBACK_PORT,controlChar=config.UDP_CONTROL_CHAR,encoding='UTF-8')
+        self.udpSender = Udp(IP=config.UDP_FEEDBACK_IP,port=config.UDP_FEEDBACK_PORT,controlChar=config.UDP_FEEDBACK_CONTROLCHAR,encoding='UTF-8')
         self.udpSender.ConnectForSending()
 
     # --------------------------------------------------------------------------
@@ -1338,6 +1338,7 @@ class OpenNFT(QWidget):
             self.leRoiAnatFolder.setText(self.settings.value('RoiAnatFolder', ''))
         else:
             self.leRoiAnatFolder.setText(self.settings.value('RoiFilesFolder', ''))
+        self.leRoiAnatOperation.setText(self.settings.value('RoiAnatOperation', ''))
         self.leRoiGroupFolder.setText(self.settings.value('RoiGroupFolder', ''))
         self.leAnatBgFolder.setText(self.settings.value('AnatBgFolder', ''))
         self.leSPMFile.setText(self.settings.value('SPMFile', ''))
@@ -1374,6 +1375,7 @@ class OpenNFT(QWidget):
         if self.cbUseUDPFeedback.isChecked():
             self.leUDPFeedbackIP.setText( self.settings.value('UDPFeedbackIP', ''))
             self.leUDPFeedbackPort.setText( str( self.settings.value('UDPFeedbackPort', '')))
+            self.leUDPFeedbackControlChar.setText( str( self.settings.value('UDPFeedbackControlChar', '')))
 
         # --- bottom right ---
         idx = self.cbDataType.findText(self.settings.value('DataType', 'DICOM'))
@@ -1437,6 +1439,7 @@ class OpenNFT(QWidget):
             self.P['RoiAnatFolder'] = self.leRoiAnatFolder.text()
         else:
             self.P['RoiFilesFolder'] = self.leRoiAnatFolder.text()
+        self.P['RoiAnatOperation'] = self.leRoiAnatOperation.text()        
         self.P['RoiGroupFolder'] = self.leRoiGroupFolder.text()
         self.P['AnatBgFolder'] = self.leAnatBgFolder.text()
         self.P['SPMFile'] = self.leSPMFile.text()
@@ -1517,6 +1520,7 @@ class OpenNFT(QWidget):
             self.settings.setValue('RoiAnatFolder', self.P['RoiAnatFolder'])
         else:
             self.settings.setValue('RoiFilesFolder', self.P['RoiFilesFolder'])
+        self.settings.setValue('RoiAnatOperation', self.P['RoiAnatOperation'])        
         self.settings.setValue('RoiGroupFolder', self.P['RoiGroupFolder'])
         self.settings.setValue('AnatBgFolder', self.P['AnatBgFolder'])
         self.settings.setValue('SPMFile', self.P['SPMFile'])
@@ -1556,6 +1560,7 @@ class OpenNFT(QWidget):
         if self.cbUseUDPFeedback.isChecked():
             self.settings.setValue('UDPFeedbackIP', self.leUDPFeedbackIP.text())
             self.settings.setValue('UDPFeedbackPort', int( self.leUDPFeedbackPort.text()))
+            self.settings.setValue('UDPFeedbackControlChar', self.leUDPFeedbackControlChar.text())
         
         # --- bottom right ---
         self.settings.setValue('DataType', self.P['DataType'])
@@ -1582,6 +1587,7 @@ class OpenNFT(QWidget):
             # UDP sender settings
             config.UDP_FEEDBACK_IP = self.leUDPFeedbackIP.text()
             config.UDP_FEEDBACK_PORT = int( self.leUDPFeedbackPort.text())
+            config.UDP_FEEDBACK_CONTROLCHAR = self.leUDPFeedbackPort.text()
 
 
     # --------------------------------------------------------------------------

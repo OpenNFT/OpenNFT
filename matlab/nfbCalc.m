@@ -34,19 +34,17 @@ condition = mainLoopData.condition;
 if isPSC && strcmp(P.Prot, 'Cont')
     blockNF = mainLoopData.blockNF;
     firstNF = mainLoopData.firstNF;
-    dispValue = mainLoopData.dispValue;
-    Reward = mainLoopData.Reward;
 
     % NF estimation condition
-    if condition == 2          
-        % count NF regulation blocks
-        for k = 1:numel(P.ProtNF)
-            if P.ProtNF{k}(1) == indVolNorm
-                blockNF = k;
-                firstNF = indVolNorm;  
-            end
-        end
+    if condition == 2
 
+        % count NF regulation blocks
+        k = cellfun(@(x) x(1) == indVolNorm, P.ProtNF);
+        if any(k)
+            blockNF = find(k);
+            firstNF = indVolNorm;
+        end
+    
         % Get reference baseline in cumulated way across the RUN, 
         % or any other fashion
         i_blockBAS = [];
@@ -66,11 +64,12 @@ if isPSC && strcmp(P.Prot, 'Cont')
         end
 
         % compute average %SC feedback value
-        tmp_fbVal = median(norm_percValues); 
+        X = norm_percValues;
+        tmp_fbVal = eval(P.RoiAnatOperation); 
         dispValue = round(P.MaxFeedbackVal*10^P.FeedbackValDec * tmp_fbVal) /10^P.FeedbackValDec; 
 
         % [0...P.MaxFeedbackVal], for Display
-        if P.NegFeedback && dispValue < 0
+        if ~P.NegFeedback && dispValue < 0
             dispValue = 0;
         end
         if dispValue > P.MaxFeedbackVal
@@ -104,12 +103,11 @@ if isPSC && strcmp(P.Prot, 'Inter')
     % NF estimation condition
     if condition == 2             
         % count NF regulation blocks
-        for k = 1:numel(P.ProtNF)
-            if P.ProtNF{k}(end) == indVolNorm
-                blockNF = k;
-                firstNF = indVolNorm;  
-                mainLoopData.flagEndPSC = 1;
-            end
+        k = cellfun(@(x) x(end) == indVolNorm, P.ProtNF);
+        if any(k)
+            blockNF = find(k);
+            firstNF = indVolNorm;
+            mainLoopData.flagEndPSC = 1;
         end
 
         regSuccess = 0;
@@ -143,12 +141,13 @@ if isPSC && strcmp(P.Prot, 'Inter')
             end
 
             % compute average %SC feedback value
-            tmp_fbVal = mean(norm_percValues); % actual feedback value
+            X = norm_percValues;
+            tmp_fbVal = eval(P.RoiAnatOperation); 
             mainLoopData.vectNFBs(indVolNorm) = tmp_fbVal;
             dispValue = round(P.MaxFeedbackVal*10^P.FeedbackValDec * tmp_fbVal) /10^P.FeedbackValDec; 
 
             % [0...P.MaxFeedbackVal], for Display
-            if P.NegFeedback && dispValue < 0
+            if ~P.NegFeedback && dispValue < 0
                 dispValue = 0;
             end
             if dispValue > P.MaxFeedbackVal
@@ -227,7 +226,7 @@ if isDCM
         mainLoopData.logBF(indNFTrial) = logBF;
         mainLoopData.vectNFBs(indNFTrial) = logBF;
         mainLoopData.flagEndDCM = 1;
-        tmp_fbVal = mainLoopData.logBF(indNFTrial)
+        tmp_fbVal = mainLoopData.logBF(indNFTrial);
         mainLoopData.dispValue = round(P.MaxFeedbackVal*10^P.FeedbackValDec * tmp_fbVal) /10^P.FeedbackValDec; 
 
         % calculating monetory reward value
@@ -258,12 +257,10 @@ if isSVM
 
     if condition == 2
         % count NF regulation blocks
-        for k = 1:numel(P.ProtNF)
-            if P.ProtNF{k}(end) == indVolNorm 
-                blockNF = k;
-                firstNF = indVolNorm;  
-                break
-            end
+        k = cellfun(@(x) x(end) == indVolNorm, P.ProtNF);
+        if any(k)
+            blockNF = find(k);
+            firstNF = indVolNorm;
         end
 
         for indRoi = 1:P.NrROIs
@@ -272,7 +269,8 @@ if isSVM
         end
 
         % compute average feedback value
-        tmp_fbVal = mean(norm_percValues); 
+        X = norm_percValues;
+        tmp_fbVal = eval(P.RoiAnatOperation); 
         dispValue = round(P.MaxFeedbackVal*10^P.FeedbackValDec * tmp_fbVal) /10^P.FeedbackValDec; 
 
         mainLoopData.norm_percValues(indVolNorm,:) = norm_percValues;
