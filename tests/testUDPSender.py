@@ -18,7 +18,9 @@ UDP_CONTROL_CHAR = '#'
 udpSender = Udp(IP=UDP_IP,port=UDP_PORT,controlChar=UDP_CONTROL_CHAR)
 
 udpSender.ConnectForSending()
+udpSender.sendTimeStamp = True
 
-udpSender.SendData([12,34,56,78])
+for data in [12,34,56,78]:
+    udpSender.SendData(data)
 
 udpSender.Close()
