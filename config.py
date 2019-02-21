@@ -46,6 +46,9 @@ if USE_UDP_FEEDBACK:
 # use PTB by default, the check box on the GUI can be unselected during the Review of the Parameters
 USE_PTB = False
 
+# Time between two iterations
+MAIN_LOOP_CALL_PERIOD = 30  # ms
+
 # currently used only for DCM feedabck
 USE_MATLAB_MODEL_HELPER = True
 
@@ -61,7 +64,6 @@ ROI_PLOT_WIDTH = 2.0
 ROI_PLOT_COLORS = ['b', 'r', 'g']
 MUSTER_Y_LIMITS = (-1000, 1000)
 MUSTER_PLOT_ALPHA = 220
-MAIN_LOOP_CALL_PERIOD = 30  # ms
 MAX_ROI_NAME_LENGTH = 6
 
 MUSTER_PEN_COLORS = [
