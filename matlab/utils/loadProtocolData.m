@@ -24,6 +24,8 @@ prt = loadjson(jsonFile);
 
 P.BaselineName = prt.BaselineName;
 P.CondName = prt.CondName;
+P.CondNames = {P.BaselineName, P.CondName};
+if isfield(prt,'DispName'), P.DispName = prt.DispName; end
 
 P.vectEncCond = [];
 P.ProtBAS = {};
@@ -52,8 +54,7 @@ end
 
 if strcmp(P.Prot, 'Inter') && isPSC
     P.vectEncCond = ones(1,NrOfVolumes-nrSkipVol);
-    P.DispName = prt.DispName;
-    P.CondNames = {P.BaselineName, P.CondName, P.DispName}; 
+    P.CondNames{3} = P.DispName
     for x = 1:lCond
         for k = 1:length(prt.Cond{x}.OnOffsets(:,1))
             unitBlock = prt.Cond{x}.OnOffsets(k,1) : prt.Cond{x}.OnOffsets(k,2);
@@ -72,9 +73,7 @@ end
 
 %% DCM
 if strcmp(P.Prot, 'InterBlock') && isDCM
-    P.DispName = prt.DispName;
-    P.RestName = prt.RestName;
-    P.CondNames = {P.BaselineName, P.CondName, P.RestName, P.DispName}; 
+    P.CondNames{4} = P.DispName
     for x = 1:lCond
         for k = 1:length(prt.Cond{x}.OnOffsets(:,1))
             unitBlock = prt.Cond{x}.OnOffsets(k,1) : prt.Cond{x}.OnOffsets(k,2);

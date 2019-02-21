@@ -597,6 +597,8 @@ class OpenNFT(QWidget):
                     #QApplication.processEvents()
                     #self.endDisplayEvent.wait()
                     #self.endDisplayEvent.clear()
+                if self.iteration > self.P['nrSkipVol'] and config.UDP_SEND_CONDITION:
+                    self.udpSender.SendData(self.P['CondNames'][int(self.eng.evalin('base', 'mainLoopData.condition'))-1])
 
             elif self.P['Type'] == 'SVM':
                 if self.displayData and config.USE_UDP_FEEDBACK:
@@ -1362,6 +1364,7 @@ class OpenNFT(QWidget):
             self.leUDPFeedbackIP.setText( self.settings.value('UDPFeedbackIP', ''))
             self.leUDPFeedbackPort.setText( str( self.settings.value('UDPFeedbackPort', '')))
             self.leUDPFeedbackControlChar.setText( str( self.settings.value('UDPFeedbackControlChar', '')))
+            self.cbUDPSendCondition.setChecked( str( self.settings.value('UDPSendCondition')).lower() == 'true')
 
         # --- bottom right ---
         idx = self.cbDataType.findText(self.settings.value('DataType', 'DICOM'))
@@ -1545,6 +1548,7 @@ class OpenNFT(QWidget):
             self.settings.setValue('UDPFeedbackIP', self.leUDPFeedbackIP.text())
             self.settings.setValue('UDPFeedbackPort', int( self.leUDPFeedbackPort.text()))
             self.settings.setValue('UDPFeedbackControlChar', self.leUDPFeedbackControlChar.text())
+            self.settings.setValue('UDPSendCondition', self.cbUDPSendCondition.isChecked())
         
         # --- bottom right ---
         self.settings.setValue('DataType', self.P['DataType'])
@@ -1572,7 +1576,7 @@ class OpenNFT(QWidget):
             config.UDP_FEEDBACK_IP = self.leUDPFeedbackIP.text()
             config.UDP_FEEDBACK_PORT = int( self.leUDPFeedbackPort.text())
             config.UDP_FEEDBACK_CONTROLCHAR = self.leUDPFeedbackPort.text()
-
+            config.UDP_SEND_CONDITION = self.cbUDPSendCondition.isChecked()
 
     # --------------------------------------------------------------------------
     def displayImage(self):

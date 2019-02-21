@@ -22,10 +22,10 @@ receiver.sendTimeStamp = True
 
 n = 0
 while receiver.isOpen:
-    data = receiver.ReceiveData(n=1,dtype='float')
+    data = receiver.ReceiveData(n=1)#,dtype='float')
     n += 1
     # if n == 1: receiver.ResetClock()
-    if len(data) > 1: receiver.Log('volume #{:3d} feedback: {} - {:2.3f}'.format(n,data[0],data[1]))
+    if len(data) > 1: receiver.Log('volume #{:3d} feedback: {} - {}'.format(n,data[0],data[1]))
     else: receiver.Log('volume #{:3d} no data!'.format(n))
 
 receiver.Close()
