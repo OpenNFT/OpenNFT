@@ -41,6 +41,7 @@ if USE_UDP_FEEDBACK:
     UDP_FEEDBACK_IP = "127.0.0.1" # localhost
     UDP_FEEDBACK_PORT = 1234
     UDP_FEEDBACK_CONTROLCHAR = '#\n'
+    UDP_SEND_CONDITION = True
 
 # use PTB by default, the check box on the GUI can be unselected during the Review of the Parameters
 USE_PTB = False
