@@ -1113,6 +1113,7 @@ class OpenNFT(QWidget):
         self.fFinNFB = True
 
         if self.cbOfflineMode.isChecked():
+            config.MAIN_LOOP_CALL_PERIOD = self.P['TR']
             self.startInOfflineMode()
         else:
             self.startFilesystemWatching()
