@@ -395,7 +395,6 @@ class OpenNFT(QWidget):
 
         self.btnChooseSetFile.clicked.connect(self.onChooseSetFile)
         self.btnChooseSetFile2.clicked.connect(self.onChooseSetFile)
-        self.btnChooseSPMFile.clicked.connect(self.onChooseSPMFile)
 
         self.btnChooseProtocolFile.clicked.connect(self.onChooseProtocolFile)
 
@@ -1264,21 +1263,6 @@ class OpenNFT(QWidget):
             self.leMCTempl.setText(fname)
             self.P['MCTempl'] = fname
 
-    def onChooseSPMFile(self):
-        if config.DONOT_USE_QFILE_NATIVE_DIALOG:
-            fname = QFileDialog.getOpenFileName(
-                self, "Select SPM File", config.ROOT_PATH, 'MAT files (*.mat)', options=QFileDialog.DontUseNativeDialog)[0]
-        else:
-            fname = QFileDialog.getOpenFileName(
-                self, "Select SPM File", config.ROOT_PATH, 'MAT files (*.mat)')[0]
-
-        fname = fname.replace('/', os.path.sep)
-        if fname:
-            self.leSPMFile.setText(fname)
-            self.P['SPMFile'] = fname
-
-
-
     # --------------------------------------------------------------------------
     def onChooseFolder(self, name, le):
         dname = QFileDialog.getExistingDirectory(
@@ -1347,7 +1331,6 @@ class OpenNFT(QWidget):
         self.leRoiAnatOperation.setText(self.settings.value('RoiAnatOperation', ''))
         self.leRoiGroupFolder.setText(self.settings.value('RoiGroupFolder', ''))
         self.leAnatBgFolder.setText(self.settings.value('AnatBgFolder', ''))
-        self.leSPMFile.setText(self.settings.value('SPMFile', ''))
         self.leMCTempl.setText(self.settings.value('MCTempl', ''))
 
         # --- middle ---
@@ -1449,7 +1432,6 @@ class OpenNFT(QWidget):
         self.P['RoiAnatOperation'] = self.leRoiAnatOperation.text()        
         self.P['RoiGroupFolder'] = self.leRoiGroupFolder.text()
         self.P['AnatBgFolder'] = self.leAnatBgFolder.text()
-        self.P['SPMFile'] = self.leSPMFile.text()
         self.P['MCTempl'] = self.leMCTempl.text()
 
         # --- middle ---
@@ -1530,7 +1512,6 @@ class OpenNFT(QWidget):
         self.settings.setValue('RoiAnatOperation', self.P['RoiAnatOperation'])        
         self.settings.setValue('RoiGroupFolder', self.P['RoiGroupFolder'])
         self.settings.setValue('AnatBgFolder', self.P['AnatBgFolder'])
-        self.settings.setValue('SPMFile', self.P['SPMFile'])
         self.settings.setValue('MCTempl', self.P['MCTempl'])
 
         # --- middle ---
