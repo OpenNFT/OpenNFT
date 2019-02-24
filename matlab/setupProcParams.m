@@ -7,20 +7,10 @@ function setupProcParams()
 % output:
 % Output is assigned to workspace variables.
 %
-% Note, SPM.mat structure is prepared running specified SPM batch module
-% (fMRI model specification), on functional localizer data
-% of the same/pilot subject. Some parameters could be set constant for
-% the whole study, for simplicity, keeping in mind their potential 
-% variability, e.g. the TH values.
-% Note that this is not a perfect solution and requires analytical and 
-% programming efforts in future studies. Perspectively, the TH value 
-% calculation algorithm (as in SPM) has to be implemented.
-% An encouraged user could explore SPM.xM.TH estimations and advance
-% iGLM estimation scheme further.
-%
-% For now, note that spmMaskTh is assigned from user-specified SPM  
-% structure and SPM.xM.TH values, for simplicity, neglecting the temporal  
-% variability (std ca. 0.5%), see in code. 
+% For now, note that spmMaskTh is assigned based on the EPI template/
+% background image, for simplicity; and a somewhat lower relative threshold
+% (0.5 vs 0.8) aims to take the temporal variability (std ca. 0.5%) into 
+% account, see in code.
 % This is because SPM provides the TH value for each volume given the data,
 % which is not available in real-time in the current OpenNFT version. 
 % TH values could depend on the data acquisition setup, and could evtl. be
@@ -32,8 +22,6 @@ function setupProcParams()
 %
 % Note, the iGLM/cGLM contrasts are hard-coded and user-/study- defined,
 % which is linked to the prepared SPM.mat structure.
-% Note that for simplicity, intermittent time-series settings are used for 
-% continuous feedback demonstration.
 % An end-user needs to set and justify their own parameter
 % files and contrasts.
 %__________________________________________________________________________
@@ -164,8 +152,44 @@ P.isHighPass = true;
 P.isLinRegr = true;
 P.linRegr = zscore((1:double(P.NrOfVolumes-P.nrSkipVol))');
 
-%% Loas SPM file and set parameters for iGLM & cGLM corrections
-load(P.SPMFile);
+%% Construct SPM and set parameters for iGLM & cGLM corrections
+SPM.xY.RT = double(P.TR)/1000;
+SPM.nscan = double(P.NrOfVolumes-P.nrSkipVol);
+
+% basis function defaults
+SPM.xBF.T = 16;
+SPM.xBF.T0 = 8;
+SPM.xBF.UNITS = 'scans';
+SPM.xBF.Volterra   = 1;
+SPM.xBF.name       = 'hrf';
+SPM.xBF.length     = 32;
+SPM.xBF.order      = 1;
+SPM.xBF.dt = SPM.xY.RT/SPM.xBF.T;
+
+SPM.xX.K.HParam = 128;
+
+% protocol
+for e = 1:numel(P.Protocol.Cond)
+    SPM.Sess.U(e) = struct(...
+        'name',{cellstr(P.Protocol.Cond{e}.ConditionName)},...
+        'ons',P.Protocol.Cond{e}.OnOffsets(:,1),...
+        'dur',(diff(P.Protocol.Cond{e}.OnOffsets')+1)',...
+        'P',struct('name','none'),...
+        'orth',1 ...
+        );
+end
+SPM.Sess.C.C = [];
+SPM.Sess.C.name = {};
+
+SPM.xGX.iGXcalc = 'None';
+SPM.xVi.form = sprintf('AR(%1.1f)',P.aAR1);
+
+% masking threshold based on moco template (with lower relative threshold)
+SPM.xM.TH = repmat(mean(spm_read_vols(spm_vol(P.MCTempl)),[1,2,3])*0.5,[1 SPM.nscan]);
+
+SPM = spm_fmri_spm_ui(SPM);
+if exist(fullfile(pwd, 'SPM.mat'),'file'), delete('SPM.mat'); end
+
 if ~P.iglmAR1
     % exclude constant regressor
     mainLoopData.basFct = SPM.xX.X(:,1:end-1);
@@ -183,13 +207,13 @@ mainLoopData.statMap3D_iGLM = [];
 if isPSC && strcmp(P.Prot, 'Cont') && ~fIMAPH
     tmpSpmDesign = SPM.xX.X(1:P.NrOfVolumes-P.nrSkipVol, 2);
     % this contrast does not count constant term
-    mainLoopData.tContr = [0; 1; 0];
+    mainLoopData.tContr = strcmp(P.CondNames,P.CondName)';
 end
 
 if isPSC && strcmp(P.Prot, 'Inter') && ~fIMAPH
     tmpSpmDesign = SPM.xX.X(1:P.NrOfVolumes-P.nrSkipVol, 2);
     % this contrast does not count constant term
-    mainLoopData.tContr = [0; 1; 0];
+    mainLoopData.tContr = strcmp(P.CondNames,P.CondName)';
 end
 
 % PSC (Phillips)
@@ -215,16 +239,8 @@ if isSVM && strcmp(P.Prot, 'Cont')
     mainLoopData.tContr = [1];
 end
 
-%% High-pass filter for iGLM
-K.HParam = 128;
-K.RT = SPM.xY.RT;
-k    = SPM.nscan;
-n    = fix(2*(k*K.RT)/K.HParam + 1);
-X0   = spm_dctmtx(k,n);
-K.X0 = X0(:,2:end);
-% or, if given by SPM
-% mainLoopData.K = SPM.xX.K;
-mainLoopData.K = K;
+%% High-pass filter for iGLM given by SPM
+mainLoopData.K = SPM.xX.K;
 
 clear SPM
 
