@@ -582,47 +582,20 @@
                                     </widget>
                                 </item>
                                 <item row="6" column="0">
-                                    <widget class="QLabel" name="label_5">
-                                        <property name="text">
-                                            <string>SPM File</string>
-                                        </property>
-                                    </widget>
-                                </item>
-                                <item row="6" column="2">
-                                    <widget class="QLineEdit" name="leSPMFile">
-                                        <property name="readOnly">
-                                            <bool>false</bool>
-                                        </property>
-                                    </widget>
-                                </item>
-                                <item row="6" column="3">
-                                    <widget class="QPushButton" name="btnChooseSPMFile">
-                                        <property name="maximumSize">
-                                            <size>
-                                                <width>32</width>
-                                                <height>16777215</height>
-                                            </size>
-                                        </property>
-                                        <property name="text">
-                                            <string>...</string>
-                                        </property>
-                                    </widget>
-                                </item>
-                                <item row="7" column="0">
                                     <widget class="QLabel" name="label_4">
                                         <property name="text">
                                             <string>MRI Watch Folder</string>
                                         </property>
                                     </widget>
                                 </item>
-                                <item row="7" column="2">
+                                <item row="6" column="2">
                                     <widget class="QLineEdit" name="leWatchFolder">
                                         <property name="readOnly">
                                             <bool>false</bool>
                                         </property>
                                     </widget>
                                 </item>
-                                <item row="7" column="3">
+                                <item row="6" column="3">
                                     <widget class="QPushButton" name="btnChooseWatchFolder">
                                         <property name="maximumSize">
                                             <size>
@@ -635,21 +608,21 @@
                                         </property>
                                     </widget>
                                 </item>
-                                <item row="8" column="0">
+                                <item row="7" column="0">
                                     <widget class="QLabel" name="label_6">
                                         <property name="text">
                                             <string>ROI Folder (Subject)</string>
                                         </property>
                                     </widget>
                                 </item>
-                                <item row="8" column="2">
+                                <item row="7" column="2">
                                     <widget class="QLineEdit" name="leRoiAnatFolder">
                                         <property name="readOnly">
                                             <bool>false</bool>
                                         </property>
                                     </widget>
                                 </item>
-                                <item row="8" column="3">
+                                <item row="7" column="3">
                                     <widget class="QPushButton" name="btnChooseRoiAnatFolder">
                                         <property name="maximumSize">
                                             <size>
@@ -662,7 +635,7 @@
                                         </property>
                                     </widget>
                                 </item>
-                                <item row="9" column="2">
+                                <item row="8" column="2">
                                     <layout class="QHBoxLayout" name="horizontalLayout_RoiAnatW">
                                         <property name="spacing">
                                             <number>6</number>
@@ -702,21 +675,21 @@
                                         </item>
                                     </layout>
                                 </item>
-                                <item row="10" column="0">
+                                <item row="9" column="0">
                                     <widget class="QLabel" name="label_9">
                                         <property name="text">
                                             <string>DCM ROI Folder (Group)</string>
                                         </property>
                                     </widget>
                                 </item>
-                                <item row="10" column="2">
+                                <item row="9" column="2">
                                     <widget class="QLineEdit" name="leRoiGroupFolder">
                                         <property name="readOnly">
                                             <bool>false</bool>
                                         </property>
                                     </widget>
                                 </item>
-                                <item row="10" column="3">
+                                <item row="9" column="3">
                                     <widget class="QPushButton" name="btnChooseRoiGroupFolder">
                                         <property name="maximumSize">
                                             <size>
@@ -729,21 +702,21 @@
                                         </property>
                                     </widget>
                                 </item>
-                                <item row="12" column="0">
+                                <item row="11" column="0">
                                     <widget class="QLabel" name="label_11">
                                         <property name="text">
                                             <string>Underlay Folder</string>
                                         </property>
                                     </widget>
                                 </item>
-                                <item row="12" column="2">
+                                <item row="11" column="2">
                                     <widget class="QLineEdit" name="leAnatBgFolder">
                                         <property name="readOnly">
                                             <bool>false</bool>
                                         </property>
                                     </widget>
                                 </item>
-                                <item row="12" column="3">
+                                <item row="11" column="3">
                                     <widget class="QPushButton" name="btnChooseAnatBgFolder">
                                         <property name="maximumSize">
                                             <size>
@@ -756,17 +729,17 @@
                                         </property>
                                     </widget>
                                 </item>
-                                <item row="14" column="0">
+                                <item row="13" column="0">
                                     <widget class="QLabel" name="label_10">
                                         <property name="text">
                                             <string>Motion Correction Template</string>
                                         </property>
                                     </widget>
                                 </item>
-                                <item row="14" column="2">
+                                <item row="13" column="2">
                                     <widget class="QLineEdit" name="leMCTempl"/>
                                 </item>
-                                <item row="14" column="3">
+                                <item row="13" column="3">
                                     <widget class="QPushButton" name="btnMCTempl">
                                         <property name="maximumSize">
                                             <size>
