@@ -1668,16 +1668,11 @@ class OpenNFT(QWidget):
 
     # --------------------------------------------------------------------------
     def createMusterInfo(self):
-        if self.P['Prot'] == 'InterBlock':
-            i1, i2 = 1, 0
-        else:
-            i1, i2 = 0, 1
-
         # TODO: More general way to use any protocol
-        tmpCond1 = np.array(self.P['Protocol']['Cond'][i1]['OnOffsets']).astype(np.int32)
+        tmpCond1 = np.array(self.P['Protocol']['Cond'][0]['OnOffsets']).astype(np.int32)
         nrCond1 = tmpCond1.shape[0]
 
-        tmpCond2 = np.array(self.P['Protocol']['Cond'][i2]['OnOffsets']).astype(np.int32)
+        tmpCond2 = np.array(self.P['Protocol']['Cond'][1]['OnOffsets']).astype(np.int32)
         nrCond2 = tmpCond2.shape[0]
 
         if len(self.P['Protocol']['Cond']) > 2:
