@@ -225,8 +225,8 @@ end
 
 % DCM
 if isDCM && strcmp(P.Prot, 'InterBlock')
-    tmpSpmDesign = SPM.xX.X(1:P.lengthDCMTrial,1);
     % this contrast does not count constant term
+    tmpSpmDesign = SPM.xX.X(1:P.lengthDCMTrial,1);
     mainLoopData.tContr = [1; -1];
     [mainLoopData.DCM_EN, mainLoopData.dcmParTag, ...
         mainLoopData.dcmParOpp] = dcmPrep(SPM);
@@ -237,7 +237,7 @@ if isSVM && strcmp(P.Prot, 'Cont')
     mainLoopData.basFct = mainLoopData.basFct(:,2);
     mainLoopData.nrBasFct = 1;
     % this contrast does not count constant term
-    tmpSpmDesign = SPM.xX.X(1:P.NrOfVolumes-P.nrSkipVol,1);
+    tmpSpmDesign = SPM.xX.X(1:P.NrOfVolumes-P.nrSkipVol,strcmp(P.CondNames,P.CondName));
     mainLoopData.tContr = [1];
 end
 
