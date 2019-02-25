@@ -426,8 +426,36 @@ class OpenNFT(QWidget):
         self.call_timer.timeout.connect(self.callMainLoopIteration)
         self.orthViewUpdateCheckTimer.timeout.connect(self.onCheckOrthViewUpdated)
 
+        self.cbUsePTB.stateChanged.connect(self.onChangePTB)
+        self.onChangePTB()
+
         self.leTCPDataIP.setValidator(QRegExpValidator(QRegExp("[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}"), self))
+        self.cbUseTCPData.stateChanged.connect(self.onChangeUseTCPData)
+        self.onChangeUseTCPData()
+        
         self.leUDPFeedbackIP.setValidator(QRegExpValidator(QRegExp("[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}"), self))
+        self.cbUseUDPFeedback.stateChanged.connect(self.onChangeUseUDPFeedback)
+        self.onChangeUseUDPFeedback()
+
+    # --------------------------------------------------------------------------
+    def onChangePTB(self):
+        self.sbTargANG.setEnabled(self.cbUsePTB.isChecked())
+        self.sbTargRAD.setEnabled(self.cbUsePTB.isChecked())
+        self.sbTargDIAM.setEnabled(self.cbUsePTB.isChecked())
+
+    # --------------------------------------------------------------------------
+    def onChangeUseTCPData(self):
+        self.leTCPDataIP.setEnabled(self.cbUseTCPData.isChecked())
+        self.leTCPDataPort.setEnabled(self.cbUseTCPData.isChecked())
+
+    # --------------------------------------------------------------------------
+    def onChangeUseUDPFeedback(self):
+        self.leUDPFeedbackIP.setEnabled(self.cbUseUDPFeedback.isChecked())
+        self.leUDPFeedbackPort.setEnabled(self.cbUseUDPFeedback.isChecked())
+        self.leUDPFeedbackControlChar.setEnabled(self.cbUseUDPFeedback.isChecked())
+        self.cbUDPSendCondition.setEnabled(self.cbUseUDPFeedback.isChecked())
+        if not(self.cbUseUDPFeedback.isChecked()):
+            self.cbUDPSendCondition.setChecked(False)        
 
     # --------------------------------------------------------------------------
     def onChangeMode(self, flag):
@@ -905,7 +933,8 @@ class OpenNFT(QWidget):
                 '<span style="font-weight:600;color:{};">'.format(cname)
                 + 'ROI_{} {}</span>, '.format(i, n))
 
-        legendText = legendText[:-2]
+        legendText += (
+                '<span style="font-weight:600;color:k;">Operation: {}</span>'.format(self.P['RoiAnatOperation']))
         legendText += '</p></body></html>'
 
         self.labelPlotLegend.setText(legendText)
@@ -1576,6 +1605,7 @@ class OpenNFT(QWidget):
             config.UDP_FEEDBACK_PORT = int( self.leUDPFeedbackPort.text())
             config.UDP_FEEDBACK_CONTROLCHAR = self.leUDPFeedbackPort.text()
             config.UDP_SEND_CONDITION = self.cbUDPSendCondition.isChecked()
+        else: config.UDP_SEND_CONDITION = False
 
     # --------------------------------------------------------------------------
     def displayImage(self):
