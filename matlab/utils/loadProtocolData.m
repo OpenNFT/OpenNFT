@@ -72,7 +72,7 @@ end
 
 %% DCM
 if strcmp(P.Prot, 'InterBlock') && isDCM
-    P.CondNames{4} = P.DispName
+    P.CondNames{4} = P.DispName;
     for x = 1:lCond
         for k = 1:length(prt.Cond{x}.OnOffsets(:,1))
             unitBlock = prt.Cond{x}.OnOffsets(k,1) : prt.Cond{x}.OnOffsets(k,2);

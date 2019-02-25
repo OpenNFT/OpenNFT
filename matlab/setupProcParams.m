@@ -234,6 +234,8 @@ end
 
 % SVM
 if isSVM && strcmp(P.Prot, 'Cont')
+    mainLoopData.basFct = mainLoopData.basFct(:,2);
+    mainLoopData.nrBasFct = 1;
     % this contrast does not count constant term
     tmpSpmDesign = SPM.xX.X(1:P.NrOfVolumes-P.nrSkipVol,1);
     mainLoopData.tContr = [1];
