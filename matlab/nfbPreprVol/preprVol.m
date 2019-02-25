@@ -347,6 +347,7 @@ end
 
 %% sharing iGLM results 
 mainLoopData.statMapCreated = 0;
+statMap_2D = zeros(img2DdimY,img2DdimX);
 if ~isempty(idxActVoxIGLM) && max(tn) > 0 % handle empty activation map
     % and division by 0
     maskedStatMapVect = tn(idxActVoxIGLM);
@@ -402,6 +403,8 @@ if isDCM
             ROIoptimGlmAnat = evalin('base', 'ROIoptimGlmAnat');
         end
         for iROI = 1:P.NrROIs
+            ROIsAnat(iROI).mask2D(isnan(ROIsAnat(iROI).mask2D))=0;
+            
             ROIsGlmAnat(iROI).mask2D(indNFTrial+1) = ...
                 {statMap2D & ROIsAnat(iROI).mask2D};
             clear tmpVect
