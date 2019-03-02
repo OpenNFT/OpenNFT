@@ -1603,7 +1603,7 @@ class OpenNFT(QWidget):
             # UDP sender settings
             config.UDP_FEEDBACK_IP = self.leUDPFeedbackIP.text()
             config.UDP_FEEDBACK_PORT = int( self.leUDPFeedbackPort.text())
-            config.UDP_FEEDBACK_CONTROLCHAR = self.leUDPFeedbackPort.text()
+            config.UDP_FEEDBACK_CONTROLCHAR = self.leUDPFeedbackControlChar.text()
             config.UDP_SEND_CONDITION = self.cbUDPSendCondition.isChecked()
         else: config.UDP_SEND_CONDITION = False
 
