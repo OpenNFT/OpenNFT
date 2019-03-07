@@ -15,12 +15,14 @@ UDP_IP = "127.0.0.1"
 UDP_PORT = 1234
 UDP_CONTROL_CHAR = '#'
 
-udpSender = Udp(IP=UDP_IP,port=UDP_PORT,controlChar=UDP_CONTROL_CHAR)
+sender = Udp(IP=UDP_IP,port=UDP_PORT,control_signal=UDP_CONTROL_CHAR)
 
-udpSender.ConnectForSending()
-udpSender.sendTimeStamp = True
+sender.connect_for_sending()
+sender.sending_time_stamp = True
 
-for data in ['Bas',34,'NF',78]:
-    udpSender.SendData(data)
+sender.info()
 
-udpSender.Close()
+for data in ['Bas',34.0,'NF',78.0]:
+    sender.send_data(data)
+
+sender.close()
