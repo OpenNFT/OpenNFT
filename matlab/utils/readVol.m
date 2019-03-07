@@ -13,7 +13,7 @@ function [voxelCoord, voxelIntens, voxelIndex, mat, dim, vol] = ...
 % dim         - 3D volume dimensions
 % vol         - 3D volume
 %__________________________________________________________________________
-% Copyright (C) 2016-2017 OpenNFT.org
+% Copyright (C) 2016-2019 OpenNFT.org
 %
 % Written by Yury Koush
 

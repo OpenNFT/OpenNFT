@@ -6,7 +6,7 @@ function analizeCaseResults(curDataPath, refDataPath)
 % testCaseResults('C:\_RT\rtData\NF_PSC\NF_Data_1\foo_1_proc_tsROIs.mat', ...
 %    'C:\_RT\rtData\NF_PSC\RefData\foo_1_proc_tsROIs.mat');
 %__________________________________________________________________________
-% Copyright (C) 2016-2017 OpenNFT.org
+% Copyright (C) 2016-2019 OpenNFT.org
 %
 % Written by Artem Nikonorov
 

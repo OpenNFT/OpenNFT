@@ -37,7 +37,7 @@ function setupProcParams()
 % An end-user needs to set and justify their own parameter
 % files and contrasts.
 %__________________________________________________________________________
-% Copyright (C) 2016-2017 OpenNFT.org
+% Copyright (C) 2016-2019 OpenNFT.org
 %
 % Written by Yury Koush
 
@@ -196,7 +196,7 @@ end
 if isPSC && strcmp(P.Prot, 'Cont') && fIMAPH
     tmpSpmDesign = SPM.xX.X(1:P.NrOfVolumes-P.nrSkipVol,1);
     % this contrast does not count constant term
-    mainLoopData.tContr = [1];
+    mainLoopData.tContr = [0; 1];
 end
 
 % DCM

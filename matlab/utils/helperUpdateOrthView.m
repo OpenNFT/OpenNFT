@@ -14,7 +14,7 @@ function helperUpdateOrthView(cursorPos, flagsPlanes, bgType)
 % flagsPlanes = [1 0 0]; % click was on [transverse, sagital, coron]
 %
 %__________________________________________________________________________
-% Copyright (C) 2016-2017 OpenNFT.org
+% Copyright (C) 2016-2019 OpenNFT.org
 %
 % Adopted by Yury Koush based on SPM (see spm_orthviews.m)
 

@@ -8,7 +8,7 @@ function helperPrepareOrthView(P, bgType)
 % output:
 % Output is assigned to workspace variables.
 %__________________________________________________________________________
-% Copyright (C) 2016-2017 OpenNFT.org
+% Copyright (C) 2016-2019 OpenNFT.org
 %
 % Adopted by Yury Koush based on SPM (see spm_orthviews.m)
 

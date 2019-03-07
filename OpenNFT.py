@@ -15,7 +15,7 @@ based on activity, connectivity and multivariate pattern analysis. Neuroimage 15
 Real-time fMRI data for testing OpenNFT functionality. Data in Brief 14:344-347.
 
 _________________________________________________________________________
-Copyright (C) 2016-2017 OpenNFT.org
+Copyright (C) 2016-2019 OpenNFT.org
 
 License
 OpenNFT Software is open-source and is distributed under GNU GPL v3.0 license

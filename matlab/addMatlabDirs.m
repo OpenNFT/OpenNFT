@@ -1,7 +1,7 @@
 function addMatlabDirs()
 % Function to add OpenNFT Matlab directories
 %__________________________________________________________________________
-% Copyright (C) 2016-2017 OpenNFT.org
+% Copyright (C) 2016-2019 OpenNFT.org
 %
 % Written by Artem Nikonorov, Yury Koush
 

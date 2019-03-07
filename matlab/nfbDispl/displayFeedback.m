@@ -8,7 +8,7 @@ function displayFeedback(displayData)
 % End-user is adviced to configure the use of PTB on their own workstation
 % and justify more advanced configuration for PTB.
 %__________________________________________________________________________
-% Copyright (C) 2016-2017 OpenNFT.org
+% Copyright (C) 2016-2019 OpenNFT.org
 %
 % Written by Yury Koush, Artem Nikonorov
 

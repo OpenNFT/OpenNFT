@@ -9,7 +9,7 @@ function evals = varsFromStruct(S, fieldNames, defaultValues)
 % output: 
 % evals - output structure with fieldNames
 %__________________________________________________________________________
-% Copyright (C) 2016-2017 OpenNFT.org
+% Copyright (C) 2016-2019 OpenNFT.org
 %
 % Written by Artem Nikonorov
 

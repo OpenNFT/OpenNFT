@@ -20,7 +20,7 @@ function [kalmOut, S, fPositDerivSpike, fNegatDerivSpike] = ...
 % Signal quality and Bayesian signal processing in neurofeedback based on 
 % real-time fMRI. Neuroimage 59:478-89.
 %__________________________________________________________________________
-% Copyright (C) 2016-2017 OpenNFT.org
+% Copyright (C) 2016-2019 OpenNFT.org
 %
 % Written by Yury Koush
 

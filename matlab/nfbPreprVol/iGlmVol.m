@@ -37,7 +37,7 @@ function [idxActVox, recTh, tTh, Cn, Dn, sigma2n, tn, neg_e2n] = ...
 % general linear model coefficients for real-time application. NeuroImage
 % 19, 422-429.
 %__________________________________________________________________________
-% Copyright (C) 2016-2017 OpenNFT.org
+% Copyright (C) 2016-2019 OpenNFT.org
 %
 % Adopted by Yury Koush, Dimitri Van De Ville
 

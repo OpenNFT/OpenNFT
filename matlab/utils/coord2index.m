@@ -11,7 +11,7 @@ function index = coord2index(coord,dim)
 % Note,
 % [rows, columns, slices] = [dim(1), dim(2), dim(3)]
 %__________________________________________________________________________
-% Copyright (C) 2016-2017 OpenNFT.org
+% Copyright (C) 2016-2019 OpenNFT.org
 %
 % Written by Yury Koush
 

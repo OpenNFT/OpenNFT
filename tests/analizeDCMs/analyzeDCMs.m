@@ -13,7 +13,7 @@ function logBF_Offl = analyzeDCMs(idxTrials, parametersFileName,...
 % output:
 % logBF_Offl         - logBF value calculated post-hoc (offline)
 %__________________________________________________________________________
-% Copyright (C) 2016-2017 OpenNFT.org
+% Copyright (C) 2016-2019 OpenNFT.org
 %
 % Written by Yury Koush
 
