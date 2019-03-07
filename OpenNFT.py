@@ -116,15 +116,15 @@ class OpenNFT(QWidget):
     def initUdpSender(self):
         if not config.USE_UDP_FEEDBACK:
             return
-        self.udpSender = Udp(IP=config.UDP_FEEDBACK_IP,port=config.UDP_FEEDBACK_PORT,controlChar=config.UDP_FEEDBACK_CONTROLCHAR,encoding='UTF-8')
-        self.udpSender.ConnectForSending()
-        self.udpSender.sendTimeStamp = True
+        self.udpSender = Udp(IP=config.UDP_FEEDBACK_IP,port=config.UDP_FEEDBACK_PORT,control_signal=config.UDP_FEEDBACK_CONTROLCHAR,encoding='UTF-8')
+        self.udpSender.connect_for_sending()
+        self.udpSender.sending_time_stamp = True
 
     # --------------------------------------------------------------------------
     def finalizeUdpSender(self):
         if not config.USE_UDP_FEEDBACK:
             return
-        self.udpSender.Close()
+        self.udpSender.close()
 
     # --------------------------------------------------------------------------
     def initTcpReceiver(self):
@@ -624,12 +624,12 @@ class OpenNFT(QWidget):
                     #self.endDisplayEvent.wait()
                     #self.endDisplayEvent.clear()
                 if self.iteration > self.P['nrSkipVol'] and config.UDP_SEND_CONDITION:
-                    self.udpSender.SendData(self.P['CondNames'][int(self.eng.evalin('base', 'mainLoopData.condition'))-1])
+                    self.udpSender.send_data(self.P['CondNames'][int(self.eng.evalin('base', 'mainLoopData.condition'))-1])
 
             elif self.P['Type'] == 'SVM':
                 if self.displayData and config.USE_UDP_FEEDBACK:
                     self.printToLog('Sending by UDP - dispValue = ' + str(self.displayData['dispValue']))
-                    self.udpSender.SendData(self.displayData['dispValue'])
+                    self.udpSender.send_data(self.displayData['dispValue'])
                 # t7
                 self.recorder.recordEvent(Times.t7, self.iteration)
             elif self.P['Type'] == 'DCM':
@@ -791,7 +791,7 @@ class OpenNFT(QWidget):
             self.recorder.recordEvent(Times.t5, self.iteration)
             if self.displayData and config.USE_UDP_FEEDBACK:
                 self.printToLog('Sending by UDP - dispValue = ' + str(self.displayData['dispValue']))
-                self.udpSender.SendData(self.displayData['dispValue'])
+                self.udpSender.send_data(self.displayData['dispValue'])
             # t8
             self.recorder.recordEvent(Times.t8, self.iteration)
         elif self.P['Type'] == 'PSC':
@@ -801,7 +801,7 @@ class OpenNFT(QWidget):
             self.recorder.recordEvent(Times.t5, self.iteration)
             if self.displayData and config.USE_UDP_FEEDBACK: # for UDP, configure here if required
                 self.printToLog('Sending by UDP - dispValue = ' + str(self.displayData['dispValue']))
-                self.udpSender.SendData(self.displayData['dispValue'])
+                self.udpSender.send_data(self.displayData['dispValue'])
 
             if self.P['Prot'] != 'Inter':
                 if self.cbDisplayFeedback.isChecked() and config.USE_PTB:
