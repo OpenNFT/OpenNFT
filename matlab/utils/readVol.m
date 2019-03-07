@@ -21,6 +21,7 @@ volInfo = spm_vol(fileName);
 vol = spm_read_vols(volInfo);
 mat = volInfo.mat;
 dim = volInfo.dim;
+vol(isnan(vol)) = 0;
 voxelIndex = find(vol~=0);
 voxelIntens = vol(voxelIndex);
 voxelCoord = index2coord(voxelIndex,dim); 
