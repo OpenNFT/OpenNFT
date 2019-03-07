@@ -15,7 +15,7 @@ based on activity, connectivity and multivariate pattern analysis. Neuroimage 15
 Real-time fMRI data for testing OpenNFT functionality. Data in Brief 14:344-347.
 
 _________________________________________________________________________
-Copyright (C) 2016-2017 OpenNFT.org
+Copyright (C) 2016-2019 OpenNFT.org
 
 License
 OpenNFT Software is open-source and is distributed under GNU GPL v3.0 license
@@ -100,6 +100,7 @@ class CreateFileEventHandler(FileSystemEventHandler):
             self.recorder.recordEvent(Times.t1, 0)
             self.fq.put(event.src_path)
 
+
 class ViewBoxWithoutPadding(pg.ViewBox):
     def suggestPadding(self, axis):
         return 0.0
@@ -121,7 +122,6 @@ class OpenNFT(QWidget):
         #self.printToLog(data)
         data = bytes(data, 'UTF-8')
         self.udpSender.sendto(data, (config.UDP_IP, config.UDP_PORT))
-
 
     # --------------------------------------------------------------------------
     def finalizeUdpSender(self):
@@ -167,7 +167,8 @@ class OpenNFT(QWidget):
          self.normRoiPlot) = self.createRoiPlots()
 
         self.settingFileName = config.ROOT_PATH
-        self.appSettings = QSettings(self)
+        self.appSettings = QSettings(
+            str(utils.get_app_settings_file()), QSettings.IniFormat, self)
 
         self.iteration = 1
         self.preiteration = 0
@@ -1202,7 +1203,7 @@ class OpenNFT(QWidget):
         self.leSetFile.setText(fname)
         self.P['SetFile'] = fname
 
-        self.settings = QSettings(fname, QSettings.IniFormat)
+        self.settings = QSettings(fname, QSettings.IniFormat, self)
         self.loadSettingsFromSetFile()
 
         self.btnSetup.setEnabled(True)
@@ -1925,7 +1926,8 @@ class OpenNFT(QWidget):
             self.t1.join()  # ns.ptb.display(displayData)
 
         return
-# --------------------------------------------------------------------------
+
+
 def main():
     app = QApplication(sys.argv)
 
