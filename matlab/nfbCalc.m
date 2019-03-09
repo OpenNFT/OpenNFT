@@ -64,7 +64,6 @@ if isPSC && strcmp(P.Prot, 'Cont')
         end
 
         % compute average %SC feedback value
-        X = norm_percValues;
         tmp_fbVal = eval(P.RoiAnatOperation); 
         dispValue = round(P.MaxFeedbackVal*10^P.FeedbackValDec * tmp_fbVal) /10^P.FeedbackValDec; 
 
@@ -141,7 +140,6 @@ if isPSC && strcmp(P.Prot, 'Inter')
             end
 
             % compute average %SC feedback value
-            X = norm_percValues;
             tmp_fbVal = eval(P.RoiAnatOperation); 
             mainLoopData.vectNFBs(indVolNorm) = tmp_fbVal;
             dispValue = round(P.MaxFeedbackVal*10^P.FeedbackValDec * tmp_fbVal) /10^P.FeedbackValDec; 
@@ -269,7 +267,6 @@ if isSVM
         end
 
         % compute average feedback value
-        X = norm_percValues;
         tmp_fbVal = eval(P.RoiAnatOperation); 
         dispValue = round(P.MaxFeedbackVal*10^P.FeedbackValDec * tmp_fbVal) /10^P.FeedbackValDec; 
 
