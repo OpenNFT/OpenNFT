@@ -7,15 +7,6 @@ function setupProcParams()
 % output:
 % Output is assigned to workspace variables.
 %
-% For now, note that spmMaskTh is assigned based on the EPI template/
-% background image, for simplicity; and a somewhat lower relative threshold
-% (0.5 vs 0.8) aims to take the temporal variability (std ca. 0.5%) into 
-% account, see in code.
-% This is because SPM provides the TH value for each volume given the data,
-% which is not available in real-time in the current OpenNFT version. 
-% TH values could depend on the data acquisition setup, and could evtl. be
-% set as mean(SPM.xM.TH)*ones(size(SPM.xM.TH)), or zeros(size(SPM.xM.TH)) 
-% given masking threshold defined in SPM batch. 
 % The iGLM estimations are used for visualizations, however, note that
 % negligible variations are possible in dynamic ROI update schemes or
 % feedback estimations based on iGLM. 
@@ -152,52 +143,7 @@ P.isHighPass = true;
 P.isLinRegr = true;
 P.linRegr = zscore((1:double(P.NrOfVolumes-P.nrSkipVol))');
 
-%% Construct SPM and set parameters for iGLM & cGLM corrections
-SPM.xY.RT = double(P.TR)/1000;
-SPM.nscan = double(P.NrOfVolumes-P.nrSkipVol);
-
-% basis function defaults
-SPM.xBF.T = 16;
-SPM.xBF.T0 = 8;
-SPM.xBF.UNITS = 'scans';
-SPM.xBF.Volterra   = 1;
-SPM.xBF.name       = 'hrf';
-SPM.xBF.length     = 32;
-SPM.xBF.order      = 1;
-SPM.xBF.dt = SPM.xY.RT/SPM.xBF.T;
-
-SPM.xX.K.HParam = 128;
-
-% protocol
-if isDCM && strcmp(P.Prot, 'InterBlock')
-    regrInd = [...
-        find(strcmp(P.CondNames,P.CondName)),...
-        find(strcmp(P.CondNames,P.BaselineName)) ...
-        ];
-    SPM.nscan = P.lengthDCMTrial;
-else
-    regrInd = 1:numel(P.Protocol.Cond);
-end
-for e = 1:numel(regrInd)
-    SPM.Sess.U(e) = struct(...
-        'name',{cellstr(P.Protocol.Cond{regrInd(e)}.ConditionName)},...
-        'ons',P.Protocol.Cond{regrInd(e)}.OnOffsets(:,1),...
-        'dur',(diff(P.Protocol.Cond{regrInd(e)}.OnOffsets')+1)',...
-        'P',struct('name','none'),...
-        'orth',1 ...
-        );
-end
-SPM.Sess.C.C = [];
-SPM.Sess.C.name = {};
-
-SPM.xGX.iGXcalc = 'None';
-SPM.xVi.form = sprintf('AR(%1.1f)',P.aAR1);
-
-% masking threshold based on moco template (with lower relative threshold)
-SPM.xM.TH = repmat(mean(spm_read_vols(spm_vol(P.MCTempl)),[1,2,3])*0.5,[1 SPM.nscan]);
-
-SPM = spm_fmri_spm_ui(SPM);
-if exist(fullfile(pwd, 'SPM.mat'),'file'), delete('SPM.mat'); end
+SPM = setupSPM(P);
 
 if ~P.iglmAR1
     % exclude constant regressor
