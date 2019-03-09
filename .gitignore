@@ -51,6 +51,8 @@ docs/build/
 # PyCharm
 .idea/
 
+# VSCode
+.vscode/
 
 ###########
 # Matlab
