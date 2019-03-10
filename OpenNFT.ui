@@ -345,33 +345,6 @@
                                                                                             </item>
                                                                                         </widget>
                                                                                     </item>
-                                                                                    <item row="2" column="2">
-                                                                                        <widget class="QLabel" name="label_40_1">
-                                                                                            <property name="text">
-                                                                                                <string>Weights</string>
-                                                                                            </property>
-                                                                                        </widget>
-                                                                                    </item>
-                                                                                    <item row="2" column="3">
-                                                                                        <widget class="QLineEdit" name="leWeightsFile">
-                                                                                            <property name="alignment">
-                                                                                                <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-                                                                                            </property>
-                                                                                        </widget>
-                                                                                    </item>
-                                                                                    <item row="2" column="4">
-                                                                                        <widget class="QPushButton" name="btnChhoseWeghts">
-                                                                                            <property name="maximumSize">
-                                                                                                <size>
-                                                                                                    <width>32</width>
-                                                                                                    <height>16777215</height>
-                                                                                                </size>
-                                                                                            </property>
-                                                                                            <property name="text">
-                                                                                                <string>...</string>
-                                                                                            </property>
-                                                                                        </widget>
-                                                                                    </item>
                                                                                 </layout>
                                                                             </item>
                                                                         </layout>
@@ -691,6 +664,33 @@
                                 </item>
                                 <item row="9" column="3">
                                     <widget class="QPushButton" name="btnChooseRoiGroupFolder">
+                                        <property name="maximumSize">
+                                            <size>
+                                                <width>32</width>
+                                                <height>16777215</height>
+                                            </size>
+                                        </property>
+                                        <property name="text">
+                                            <string>...</string>
+                                        </property>
+                                    </widget>
+                                </item>
+                                <item row="10" column="0">
+                                    <widget class="QLabel" name="label_40_1">
+                                        <property name="text">
+                                            <string>SVM Weights</string>
+                                        </property>
+                                    </widget>
+                                </item>
+                                <item row="10" column="2">
+                                    <widget class="QLineEdit" name="leWeightsFile">
+                                        <property name="readOnly">
+                                            <bool>false</bool>
+                                        </property>
+                                    </widget>
+                                </item>
+                                <item row="10" column="3">
+                                    <widget class="QPushButton" name="btnChhoseWeghts">
                                         <property name="maximumSize">
                                             <size>
                                                 <width>32</width>
@@ -1269,7 +1269,7 @@
                                         <item>
                                             <widget class="QCheckBox" name="cbNegFeedback">
                                                 <property name="text">
-                                                    <string>Allow negative Feedback Value</string>
+                                                    <string>Allow negative PSC</string>
                                                 </property>
                                                 <property name="checked">
                                                     <bool>false</bool>
@@ -1329,9 +1329,9 @@
                                             <number>0</number>
                                         </property>
                                         <item>
-                                            <widget class="QCheckBox" name="cbDisplayFeedback">
+                                            <widget class="QCheckBox" name="cbUsePTB">
                                                 <property name="text">
-                                                    <string>Display Feedback on</string>
+                                                    <string>Use PTB MAIN for feedback display on</string>
                                                 </property>
                                                 <property name="checked">
                                                     <bool>true</bool>
@@ -1365,16 +1365,6 @@
                                             <widget class="QCheckBox" name="cbDisplayFeedbackFullscreen">
                                                 <property name="text">
                                                     <string>Fullscreen</string>
-                                                </property>
-                                                <property name="checked">
-                                                    <bool>true</bool>
-                                                </property>
-                                            </widget>
-                                        </item>
-                                        <item>
-                                            <widget class="QCheckBox" name="cbUsePTB">
-                                                <property name="text">
-                                                    <string>Use built-in NF Presentation</string>
                                                 </property>
                                                 <property name="checked">
                                                     <bool>true</bool>
