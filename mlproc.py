@@ -11,56 +11,13 @@ Written by Evgeny Prilepin
 
 """
 
-import time
+import time, os, signal, sys
 import multiprocessing as mp
 
 import matlab.engine as me
 
 import config
 
-
-# ==============================================================================
-def _start_matlab(event: mp.Event,
-                  alive_check_period=60, startup_options=None, shared_name=None):
-    pid = mp.current_process().pid
-
-    print('Start matlab process %s with process ID {}'.format(pid) % shared_name )
-
-    event.clear()
-
-    if startup_options is None:
-        eng = me.start_matlab()
-    else:
-        eng = me.start_matlab(startup_options)
-
-    try:
-        if shared_name:
-            eng.matlab.engine.shareEngine(shared_name, nargout=0)
-        else:
-            eng.matlab.engine.shareEngine(nargout=0)
-            shared_name = eng.matlab.engine.engineName(nargout=1)
-
-        print('Matlab shared engine {} is started'.format(shared_name))
-    except me.MatlabExecutionError:
-        raise
-    finally:
-        event.set()
-
-    while True:
-        # Is matlab alive?
-        try:
-            eng.version(nargout=0)
-        except me.EngineError:
-            break
-        time.sleep(alive_check_period)
-
-    # Delete '_matlab' key to supress error if matlab has been terminated
-    del eng.__dict__["_matlab"]
-
-    print('Terminate matlab helper process %s with process ID {}'.format(pid) % shared_name )
-
-
-# ==============================================================================
 class MatlabSharedEngineHelper(object):
     """A helper class for using shared matlab engine sessions
     """
@@ -73,6 +30,7 @@ class MatlabSharedEngineHelper(object):
         self._startup_options = startup_options
         self._shared_name = shared_name
         self._name = ''
+        self._pid = mp.Value('i',0)
 
     # --------------------------------------------------------------------------
     @property
@@ -113,9 +71,8 @@ class MatlabSharedEngineHelper(object):
 
     # --------------------------------------------------------------------------
     def destroy_engine(self):
-        if self._engine:
-            del self._engine.__dict__["_matlab"]
-            del self._engine
+        if self._pid.value != -1:
+            self._pid.value = -1 # send termination signal
         self._engine = None
 
     # --------------------------------------------------------------------------
@@ -151,10 +108,51 @@ class MatlabSharedEngineHelper(object):
         e = mp.Event()
 
         p = mp.Process(
-            target=_start_matlab,
+            target=self._start_matlab,
             args=(e, self._alive_check_period,
                   self._startup_options, self._shared_name))
 
         p.daemon = False
         p.start()
         e.wait()
+
+    # --------------------------------------------------------------------------
+    def _start_matlab(self, event: mp.Event,
+                    alive_check_period=60, startup_options=None, shared_name=None):
+        
+        pid = mp.current_process().pid
+        self._pid.value = pid
+
+        print('Start matlab process %s with process ID {}'.format(pid) % shared_name )
+
+        event.clear()
+
+        if startup_options is None:
+            eng = me.start_matlab()
+        else:
+            eng = me.start_matlab(startup_options)
+
+        try:
+            if shared_name:
+                eng.matlab.engine.shareEngine(shared_name, nargout=0)
+            else:
+                eng.matlab.engine.shareEngine(nargout=0)
+                shared_name = eng.matlab.engine.engineName(nargout=1)
+
+            print('Matlab shared engine {} is started'.format(shared_name))
+        except me.MatlabExecutionError:
+            raise
+        finally:
+            event.set()
+
+        while self._pid.value != -1:
+            # Is matlab alive?
+            try:
+                eng.version(nargout=0)
+            except me.EngineError:
+                break
+            time.sleep(alive_check_period)
+
+        if eng._check_matlab(): eng.exit()
+
+        print('Terminate matlab helper process %s with process ID {}'.format(pid) % shared_name )        
