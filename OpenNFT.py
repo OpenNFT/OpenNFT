@@ -441,6 +441,8 @@ class OpenNFT(QWidget):
 
     # --------------------------------------------------------------------------
     def onChangePTB(self):
+        self.cbScreenId.setEnabled(self.cbUsePTB.isChecked())
+        self.cbDisplayFeedbackFullscreen.setEnabled(self.cbUsePTB.isChecked())
         self.sbTargANG.setEnabled(self.cbUsePTB.isChecked())
         self.sbTargRAD.setEnabled(self.cbUsePTB.isChecked())
         self.sbTargDIAM.setEnabled(self.cbUsePTB.isChecked())
@@ -619,7 +621,7 @@ class OpenNFT(QWidget):
             self.recorder.recordEvent(Times.t6, self.iteration)
 
             if self.P['Type'] == 'PSC':
-                if self.cbDisplayFeedback.isChecked() and config.USE_PTB:
+                if config.USE_PTB:
                     self.printToLog('instruction + ' + str(self.iteration))
                     self.displayScreen()
                     #QApplication.processEvents()
@@ -635,7 +637,7 @@ class OpenNFT(QWidget):
                 # t7
                 self.recorder.recordEvent(Times.t7, self.iteration)
             elif self.P['Type'] == 'DCM':
-                if not self.isCalculateDcm and self.cbDisplayFeedback.isChecked() and config.USE_PTB:
+                if not self.isCalculateDcm and config.USE_PTB:
                     self.displayScreen()
 
         try:
@@ -761,7 +763,7 @@ class OpenNFT(QWidget):
 
                 if self.isCalculateDcm:
                     # display blank screen in ptb helper before calculate DCM
-                    if self.cbDisplayFeedback.isChecked() and config.USE_PTB:
+                    if config.USE_PTB:
                         self.displayData['displayBlankScreen'] = 1
                         self.displayScreen()
                         QApplication.processEvents()
@@ -806,7 +808,7 @@ class OpenNFT(QWidget):
                 self.udpSender.send_data(self.displayData['dispValue'])
 
             if self.P['Prot'] != 'Inter':
-                if self.cbDisplayFeedback.isChecked() and config.USE_PTB:
+                if config.USE_PTB:
                     if self.displayData:
                         self.displayData['displayStage'] = 'feedback'
                         self.displayScreen()
@@ -1090,7 +1092,7 @@ class OpenNFT(QWidget):
             with utils.timeit('  initMainLoopData:'):
                 self.initMainLoopData()
 
-            if self.cbDisplayFeedback.isChecked() and config.USE_PTB:
+            if config.USE_PTB:
                 self.stopDisplayThread = False
                 self.displayThread = threading.Thread(target=self.onEventDisplay)
                 self.displayThread.start()
@@ -1156,7 +1158,7 @@ class OpenNFT(QWidget):
         self.fs_observer.stop()
         self.call_timer.stop()
         self.orthViewUpdateCheckTimer.stop()
-        if self.cbDisplayFeedback.isChecked() and config.USE_PTB:
+        if hasattr(config, 'USE_PTB') and config.USE_PTB:
             self.ptbScreen.deinitialize()
             if not self.stopDisplayThread:
                 self.displayEvent.set()
@@ -1387,8 +1389,8 @@ class OpenNFT(QWidget):
 
         self.cbUsePTB.setChecked( str( self.settings.value('UsePTB')).lower()=='true' )
         self.cbScreenId.setCurrentIndex(int(self.settings.value('DisplayFeedbackScreenID', 0)))
-        self.cbDisplayFeedback.setChecked( str( self.settings.value('DisplayFeedback')).lower()=='true' )
         self.cbDisplayFeedbackFullscreen.setChecked( str(self.settings.value('DisplayFeedbackFullscreen')).lower() == 'true')
+
         self.cbUseUDPFeedback.setChecked( str( self.settings.value('UseUDPFeedback')).lower() == 'true')
         if self.cbUseUDPFeedback.isChecked():
             self.leUDPFeedbackIP.setText( self.settings.value('UDPFeedbackIP', ''))
@@ -1412,8 +1414,6 @@ class OpenNFT(QWidget):
         self.sbTargRAD.setValue(float(self.settings.value('TargRAD', 0)))
         self.sbTargDIAM.setValue(float(self.settings.value('TargDIAM', 0.0)))
         self.leWeightsFile.setText(str(self.settings.value('WeightsFileName', '')))
-
-        self.cbDisplayFeedback.setChecked(ast.literal_eval(str(self.settings.value('DisplayFeedback', 'True')).title()))
 
         self.actualize
 
@@ -1570,25 +1570,23 @@ class OpenNFT(QWidget):
         self.settings.setValue('NegFeedback', self.P['NegFeedback'])
 
         self.settings.setValue('UsePTB', self.cbUsePTB.isChecked())
-        self.settings.setValue('DisplayFeedback', self.cbDisplayFeedback.isChecked())
         self.settings.setValue('DisplayFeedbackScreenID', self.cbScreenId.currentIndex())
         self.settings.setValue('DisplayFeedbackFullscreen', self.cbDisplayFeedbackFullscreen.isChecked())
+        self.settings.setValue('TargANG', self.P['TargANG'])
+        self.settings.setValue('TargRAD', self.P['TargRAD'])
+        self.settings.setValue('TargDIAM', self.P['TargDIAM'])
+
         self.settings.setValue('UseUDPFeedback', self.cbUseUDPFeedback.isChecked())
-        if self.cbUseUDPFeedback.isChecked():
-            self.settings.setValue('UDPFeedbackIP', self.leUDPFeedbackIP.text())
-            self.settings.setValue('UDPFeedbackPort', int( self.leUDPFeedbackPort.text()))
-            self.settings.setValue('UDPFeedbackControlChar', self.leUDPFeedbackControlChar.text())
-            self.settings.setValue('UDPSendCondition', self.cbUDPSendCondition.isChecked())
+        self.settings.setValue('UDPFeedbackIP', self.leUDPFeedbackIP.text())
+        self.settings.setValue('UDPFeedbackPort', int( self.leUDPFeedbackPort.text()))
+        self.settings.setValue('UDPFeedbackControlChar', self.leUDPFeedbackControlChar.text())
+        self.settings.setValue('UDPSendCondition', self.cbUDPSendCondition.isChecked())
         
         # --- bottom right ---
         self.settings.setValue('DataType', self.P['DataType'])
         self.settings.setValue('Prot', self.P['Prot'])
         self.settings.setValue('Type', self.P['Type'])
 
-        # --- main viewer ---
-        self.settings.setValue('TargANG', self.P['TargANG'])
-        self.settings.setValue('TargRAD', self.P['TargRAD'])
-        self.settings.setValue('TargDIAM', self.P['TargDIAM'])
         self.settings.setValue('WeightsFileName', self.P['WeightsFileName'])
 
         # Update config
