@@ -1392,11 +1392,10 @@ class OpenNFT(QWidget):
         self.cbDisplayFeedbackFullscreen.setChecked( str(self.settings.value('DisplayFeedbackFullscreen')).lower() == 'true')
 
         self.cbUseUDPFeedback.setChecked( str( self.settings.value('UseUDPFeedback')).lower() == 'true')
-        if self.cbUseUDPFeedback.isChecked():
-            self.leUDPFeedbackIP.setText( self.settings.value('UDPFeedbackIP', ''))
-            self.leUDPFeedbackPort.setText( str( self.settings.value('UDPFeedbackPort', '')))
-            self.leUDPFeedbackControlChar.setText( str( self.settings.value('UDPFeedbackControlChar', '')))
-            self.cbUDPSendCondition.setChecked( str( self.settings.value('UDPSendCondition')).lower() == 'true')
+        self.leUDPFeedbackIP.setText( self.settings.value('UDPFeedbackIP', ''))
+        self.leUDPFeedbackPort.setText( str( self.settings.value('UDPFeedbackPort', '')))
+        self.leUDPFeedbackControlChar.setText( str( self.settings.value('UDPFeedbackControlChar', '')))
+        self.cbUDPSendCondition.setChecked( str( self.settings.value('UDPSendCondition')).lower() == 'true')
 
         # --- bottom right ---
         idx = self.cbDataType.findText(self.settings.value('DataType', 'DICOM'))
