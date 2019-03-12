@@ -13,7 +13,7 @@ function img2D = vol3Dimg2D(vol3D, slNrImg2DdimX, slNrImg2DdimY, ...
 % output: 
 % img2D - 2D image matrix
 %__________________________________________________________________________
-% Copyright (C) 2016-2017 OpenNFT.org
+% Copyright (C) 2016-2019 OpenNFT.org
 %
 % Written by Yury Koush
 

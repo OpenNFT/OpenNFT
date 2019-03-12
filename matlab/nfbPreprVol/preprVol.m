@@ -8,7 +8,7 @@ function preprVol(inpFileName, indVol)
 % output:
 % Output is assigned to workspace variables.
 %__________________________________________________________________________
-% Copyright (C) 2016-2017 OpenNFT.org
+% Copyright (C) 2016-2019 OpenNFT.org
 %
 % Written by Yury Koush, Artem Nikonorov
 
@@ -207,6 +207,7 @@ if isIGLM
         
         statMapVect = mainLoopData.statMapVect;
         statMap3D = mainLoopData.statMap3D; % this structure is set with 0
+        statMap2D = mainLoopData.statMap2D; % this structure is set with 0
         
         if ~fLockedTempl
             % assign Tempalte
@@ -276,6 +277,8 @@ if isIGLM
         statMap3D = zeros(dimVol);
         mainLoopData.statMapVect = statMapVect;
         mainLoopData.statMap3D = statMap3D;
+        statMap2D = zeros(img2DdimY,img2DdimX);
+        mainLoopData.statMap2D = statMap2D;
     end
     
     if isPSC || isSVM
@@ -354,13 +357,13 @@ if ~isempty(idxActVoxIGLM) && max(tn) > 0 % handle empty activation map
     
     clear idxActVoxIGLM
     
-    statMap_2D = vol3Dimg2D(statMap3D, slNrImg2DdimX, slNrImg2DdimY, ...
+    statMap2D = vol3Dimg2D(statMap3D, slNrImg2DdimX, slNrImg2DdimY, ...
         img2DdimX, img2DdimY, dimVol) / maxTval;
     
-    posIdx2D = find(statMap_2D > 0) - 1;
+    posIdx2D = find(statMap2D > 0) - 1;
     
     assignin('base', 'strIdx', matData2strData(posIdx2D));
-    tmpStrData = matData2strData(statMap_2D(posIdx2D)*255);
+    tmpStrData = matData2strData(statMap2D(posIdx2D)*255);
     assignin('base', 'strStatMap', tmpStrData);
     
     % shared for SPM matlab helper
@@ -390,7 +393,7 @@ tStopIGLM = toc(tStartMotCorr);
 fprintf('TIMING: %d iter - PREPROC MC: %d s - SMOOTH: %d s - IGLM: %d s',...
     nrIter, tStopMC, tStopSm-tStopMC, tStopIGLM-tStopSm);
 
-%% dynamic ROI mask based on statMap_2D
+%% dynamic ROI mask based on statMap2D
 if isDCM
     if ~isempty(find( P.endDCMblock == indVol - P.nrSkipVol,1 ))
         if (indNFTrial+1) > 1
@@ -403,12 +406,12 @@ if isDCM
             ROIsAnat(iROI).mask2D(isnan(ROIsAnat(iROI).mask2D))=0;
             
             ROIsGlmAnat(iROI).mask2D(indNFTrial+1) = ...
-                {statMap_2D & ROIsAnat(iROI).mask2D};
+                {statMap2D & ROIsAnat(iROI).mask2D};
             clear tmpVect
             tmpVect = find(cell2mat(ROIsGlmAnat(iROI).mask2D(indNFTrial+1))>0);
             if ~isempty(tmpVect) && length(tmpVect)>10
                 ROIsGlmAnat(iROI).meanGlmAnatROI(indNFTrial+1) = ...
-                    mean(statMap_2D(tmpVect));
+                    mean(statMap2D(tmpVect));
             else
                 ROIsGlmAnat(iROI).meanGlmAnatROI(indNFTrial+1) = 0;
             end

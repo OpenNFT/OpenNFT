@@ -11,7 +11,7 @@ function [slNrImg2DdimX, slNrImg2DdimY, img2DdimX, img2DdimY] = ...
 % img2DdimX     - 2D image columns
 % img2DdimY     - 2D image rows
 %__________________________________________________________________________
-% Copyright (C) 2016-2017 OpenNFT.org
+% Copyright (C) 2016-2019 OpenNFT.org
 %
 % Written by Yury Koush
 

@@ -10,7 +10,7 @@ function [DCM_EN, dcmParTag, dcmParOpp] = dcmPrep(SPM)
 % dcmParTag - model-defining structure for a target model (model 1)
 % dcmParOpp - model-defining structure for an opposed model (model 2)
 %__________________________________________________________________________
-% Copyright (C) 2016-2017 OpenNFT.org
+% Copyright (C) 2016-2019 OpenNFT.org
 %
 % Written by Yury Koush
 

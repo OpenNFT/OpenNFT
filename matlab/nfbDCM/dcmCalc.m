@@ -7,7 +7,7 @@ function LE = dcmCalc(modelName)
 % output:
 % LE - Free-energy bound on log evidence (DCM.F)
 %__________________________________________________________________________
-% Copyright (C) 2016-2017 OpenNFT.org
+% Copyright (C) 2016-2019 OpenNFT.org
 %
 % Written by Yury Koush, Artem Nikonorov
 

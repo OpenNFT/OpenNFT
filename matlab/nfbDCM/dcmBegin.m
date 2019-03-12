@@ -9,7 +9,7 @@ function calculateDcm = dcmBegin(indVol)
 % dcmInputData - final DCM models structure that contains the set of
 %                parameters to estimate both models.
 %__________________________________________________________________________
-% Copyright (C) 2016-2017 OpenNFT.org
+% Copyright (C) 2016-2019 OpenNFT.org
 %
 % Written by Yury Koush
 

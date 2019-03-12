@@ -29,7 +29,7 @@
 % To make this comparison fairly, you might check the number of iterations
 % to fit the model properly. Currently, the estimation is limited at 30
 % iterations, therefore, the simpler model is favoured to converge quickly.
-% If you want to use DCM to ask what’s the best setting of M.hE in your
+% If you want to use DCM to ask what is the best setting of M.hE in your
 % data, you may check the estimations using 128 maximum iterations and
 % pilot data (see Koush et al. 2013).
 %
@@ -43,7 +43,7 @@
 % neurofeedback: dynamic causal modeling for real-time fMRI.
 % Neuroimage 81:422-30.
 %__________________________________________________________________________
-% Copyright (C) 2016-2017 OpenNFT.org
+% Copyright (C) 2016-2019 OpenNFT.org
 %
 % Written by Yury Koush, Peter Zeidman
 %

@@ -13,7 +13,7 @@ function [emaOut, filtInput] = emaFilt(a, emaIn, filtInput)
 %
 % Note, EMA filtering is replaced with CGLM time-series processing.
 %__________________________________________________________________________
-% Copyright (C) 2016-2017 OpenNFT.org
+% Copyright (C) 2016-2019 OpenNFT.org
 %
 % Written by Yury Koush
 

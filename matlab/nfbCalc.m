@@ -15,7 +15,7 @@ function displayData = nfbCalc(indVol, displayData, ...
 % Note, DCM feedback estimates are hardcorded separately as function input.
 % Generalizations are planned.
 %__________________________________________________________________________
-% Copyright (C) 2016-2017 OpenNFT.org
+% Copyright (C) 2016-2019 OpenNFT.org
 %
 % Written by Yury Koush
 

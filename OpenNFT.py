@@ -10,12 +10,12 @@ Yury Koush, John Ashburner, Evgeny Prilepin, Ronald Sladky, Peter Zeidman, Serge
 Frank Scharnowski, Artem Nikonorov, Dimitri Van De Ville,
 
 OpenNFT: An open-source Python/Matlab framework for real-time fMRI neurofeedback training
-based on activity, connectivity and multivariate pattern analysis. Neuroimage 157:489-503.
+based on activity, connectivity and multivariate pattern analysis. (2017) Neuroimage 157:489-503.
 
-Real-time fMRI data for testing OpenNFT functionality. Data in Brief 14:344-347.
+Real-time fMRI data for testing OpenNFT functionality. (2017) Data in Brief 14:344-347.
 
 _________________________________________________________________________
-Copyright (C) 2016-2017 OpenNFT.org
+Copyright (C) 2016-2019 OpenNFT.org
 
 License
 OpenNFT Software is open-source and is distributed under GNU GPL v3.0 license

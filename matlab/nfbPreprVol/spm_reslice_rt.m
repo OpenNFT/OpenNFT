@@ -62,7 +62,7 @@ function VO = spm_reslice_rt(P,flags)
 % $Id: spm_reslice.m 5929 2014-03-27 14:47:40Z guillaume $
 %__________________________________________________________________________
 % Adopted for OpenNFT by Yury Koush and John Ashburner. 
-% Copyright (C) 2016-2017 OpenNFT.org
+% Copyright (C) 2016-2019 OpenNFT.org
 %
 %__________________________________________________________________________
 %
