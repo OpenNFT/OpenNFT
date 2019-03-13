@@ -33,7 +33,7 @@ Note, we are still tuning our pre-release version. Please check the updates regu
     `pip install pywin32`\
 		`pip install pyHook-1.5.1-cp35-cp35m-win_amd64.whl` (from https://www.lfd.uci.edu/~gohlke/pythonlibs/#pyhook)
 	
-  - **For this fork:** TCP/UDP trasfer uses the [pyniexp](https://github.com/tiborauer/pyniexp) package\
+  - For TCP/UDP trasfer uses the [pyniexp](https://github.com/tiborauer/pyniexp) package\
     `pip install git+https://github.com/tiborauer/pyniexp.git`
 
 ## Demo dataset

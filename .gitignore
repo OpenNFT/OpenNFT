@@ -65,4 +65,3 @@ OpenNFT_venv/Scripts/activate.bat
 OpenNFT_venv/Scripts/deactivate.bat
 OpenNFT_venv/pyvenv.cfg
 *.mat
-/.vscode/launch.json
