@@ -102,6 +102,7 @@ class CreateFileEventHandler(FileSystemEventHandler):
             self.recorder.recordEvent(Times.t1, 0)
             self.fq.put(event.src_path)
 
+
 class ViewBoxWithoutPadding(pg.ViewBox):
     def suggestPadding(self, axis):
         return 0.0
@@ -167,7 +168,8 @@ class OpenNFT(QWidget):
          self.normRoiPlot) = self.createRoiPlots()
 
         self.settingFileName = config.ROOT_PATH
-        self.appSettings = QSettings(self)
+        self.appSettings = QSettings(
+            str(utils.get_app_settings_file()), QSettings.IniFormat, self)
 
         self.iteration = 1
         self.preiteration = 0
@@ -1235,7 +1237,7 @@ class OpenNFT(QWidget):
         self.leSetFile.setText(fname)
         self.P['SetFile'] = fname
 
-        self.settings = QSettings(fname, QSettings.IniFormat)
+        self.settings = QSettings(fname, QSettings.IniFormat, self)
         self.loadSettingsFromSetFile()
 
         self.btnSetup.setEnabled(True)
@@ -1986,7 +1988,8 @@ class OpenNFT(QWidget):
             self.t1.join()  # ns.ptb.display(displayData)
 
         return
-# --------------------------------------------------------------------------
+
+
 def main():
     app = QApplication(sys.argv)
 
