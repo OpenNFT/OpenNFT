@@ -8,7 +8,7 @@ function loadProtocolData()
 % output:
 % Output is assigned to workspace variables.
 %__________________________________________________________________________
-% Copyright (C) 2016-2019 OpenNFT.org
+% Copyright (C) 2016-2017 OpenNFT.org
 %
 % Written by Yury Koush, Artem Nikonorov
 
@@ -24,6 +24,8 @@ prt = loadjson(jsonFile);
 
 P.BaselineName = prt.BaselineName;
 P.CondName = prt.CondName;
+P.CondNames = {P.BaselineName, P.CondName};
+if isfield(prt,'DispName'), P.DispName = prt.DispName; end
 
 P.vectEncCond = [];
 P.ProtBAS = {};
@@ -38,10 +40,10 @@ if strcmp(P.Prot, 'Cont') && isPSC
     for x = 1:lCond
         for k = 1:length(prt.Cond{x}.OnOffsets(:,1)) 
             unitBlock = prt.Cond{x}.OnOffsets(k,1) : prt.Cond{x}.OnOffsets(k,2); 
-            if strcmpi(prt.Cond{x}.ConditionName, 'Bas') 
+            if strcmpi(prt.Cond{x}.ConditionName, P.BaselineName) 
                 P.vectEncCond(unitBlock) = 1;
                 P.ProtBAS(k,:) = {unitBlock}; 
-            elseif strcmpi(prt.Cond{x}.ConditionName, 'NF') 
+            elseif strcmpi(prt.Cond{x}.ConditionName, P.CondName) 
                 P.vectEncCond(unitBlock) = 2;
                 P.ProtNF(k,:) = {unitBlock};                
             end
@@ -51,16 +53,17 @@ end
 
 if strcmp(P.Prot, 'Inter') && isPSC
     P.vectEncCond = ones(1,NrOfVolumes-nrSkipVol);
+    P.CondNames{3} = P.DispName;
     for x = 1:lCond
         for k = 1:length(prt.Cond{x}.OnOffsets(:,1))
             unitBlock = prt.Cond{x}.OnOffsets(k,1) : prt.Cond{x}.OnOffsets(k,2);
-            if strcmpi(prt.Cond{x}.ConditionName, 'Bas')
+            if strcmpi(prt.Cond{x}.ConditionName, P.BaselineName)
                 P.vectEncCond(unitBlock) = 1;
                 P.ProtBAS(k,:) = {unitBlock};
-            elseif strcmpi(prt.Cond{x}.ConditionName, 'NF')
+            elseif strcmpi(prt.Cond{x}.ConditionName, P.CondName)
                 P.ProtNF(k,:) = {unitBlock};
                 P.vectEncCond(unitBlock) = 2;
-            elseif strcmpi(prt.Cond{x}.ConditionName, 'FB')
+            elseif strcmpi(prt.Cond{x}.ConditionName, P.DispName)
                 P.vectEncCond(unitBlock) = 3;
             end
         end
@@ -69,16 +72,17 @@ end
 
 %% DCM
 if strcmp(P.Prot, 'InterBlock') && isDCM
+    P.CondNames{4} = P.DispName;
     for x = 1:lCond
         for k = 1:length(prt.Cond{x}.OnOffsets(:,1))
             unitBlock = prt.Cond{x}.OnOffsets(k,1) : prt.Cond{x}.OnOffsets(k,2);
-            if strcmpi(prt.Cond{x}.ConditionName, 'N')
+            if strcmpi(prt.Cond{x}.ConditionName, P.BaselineName)
                 P.vectEncCond(unitBlock) = 1;
-            elseif strcmpi(prt.Cond{x}.ConditionName, 'P')
+            elseif strcmpi(prt.Cond{x}.ConditionName, P.CondName)
                 P.vectEncCond(unitBlock) = 2;
             elseif strcmpi(prt.Cond{x}.ConditionName, 'DCM')
                 P.vectEncCond(unitBlock) = 3;
-            elseif strcmpi(prt.Cond{x}.ConditionName, 'FB')
+            elseif strcmpi(prt.Cond{x}.ConditionName, P.DispName)
                 P.vectEncCond(unitBlock) = 4;
             end
         end
@@ -91,10 +95,10 @@ if strcmp(P.Prot, 'Cont') && isSVM
     for x = 1:lCond
         for k = 1:length(prt.Cond{x}.OnOffsets(:,1)) 
             unitBlock = prt.Cond{x}.OnOffsets(k,1) : prt.Cond{x}.OnOffsets(k,2); 
-            if strcmpi(prt.Cond{x}.ConditionName, 'Bas') 
+            if strcmpi(prt.Cond{x}.ConditionName, P.BaselineName) 
                 P.vectEncCond(unitBlock) = 1;
                 P.ProtBAS(k,:) = {unitBlock}; 
-            elseif strcmpi(prt.Cond{x}.ConditionName, 'NF') 
+            elseif strcmpi(prt.Cond{x}.ConditionName, P.CondName) 
                 P.vectEncCond(unitBlock) = 2;
                 P.ProtNF(k,:) = {unitBlock};                
             end
