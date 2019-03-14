@@ -11,7 +11,7 @@ Written by Evgeny Prilepin
 
 """
 
-import time, os, signal, sys
+import time
 import multiprocessing as mp
 
 import matlab.engine as me
