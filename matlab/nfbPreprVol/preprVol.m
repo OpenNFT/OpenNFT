@@ -359,9 +359,10 @@ if ~isempty(idxActVoxIGLM) && max(tn) > 0 % handle empty activation map
     statMap2D = vol3Dimg2D(statMap3D, slNrImg2DdimX, slNrImg2DdimY, ...
         img2DdimX, img2DdimY, dimVol) / maxTval;
     
-    posIdx2D = find(statMap2D > 0) - 1;
+    posIdx2D = find(statMap2D > 0);
+    pythonPosIdx2D = posIdx2D - 1;
     
-    assignin('base', 'strIdx', matData2strData(posIdx2D));
+    assignin('base', 'strIdx', matData2strData(pythonPosIdx2D));
     tmpStrData = matData2strData(statMap2D(posIdx2D)*255);
     assignin('base', 'strStatMap', tmpStrData);
     
