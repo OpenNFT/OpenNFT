@@ -33,10 +33,11 @@ Note, we are still tuning our pre-release version. Please check the updates regu
     `pip install pywin32`\
 		`pip install pyHook-1.5.1-cp35-cp35m-win_amd64.whl` (from https://www.lfd.uci.edu/~gohlke/pythonlibs/#pyhook)
 	
-  - For TCP/UDP trasfer uses the [pyniexp](https://github.com/tiborauer/pyniexp) package\
+  - For UDP (feedback) trasfers
     `pip install git+https://github.com/tiborauer/pyniexp.git`
 
 ## Demo dataset
 https://github.com/OpenNFT/OpenNFT_Demo/releases
+N.B.: Use the updated Setup and Protocol files provided with OpenNFT
 
 
