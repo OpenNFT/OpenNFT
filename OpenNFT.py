@@ -1580,7 +1580,7 @@ class OpenNFT(QWidget):
     # --------------------------------------------------------------------------
     def createMusterInfo(self):
         if self.P['Prot'] == 'InterBlock':
-            i1, i2 = 1, 0
+            i1, i2 = 0, 1
         else:
             i1, i2 = 0, 1
 
