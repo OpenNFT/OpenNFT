@@ -8,7 +8,7 @@ function loadProtocolData()
 % output:
 % Output is assigned to workspace variables.
 %__________________________________________________________________________
-% Copyright (C) 2016-2019 OpenNFT.org
+% Copyright (C) 2016-2017 OpenNFT.org
 %
 % Written by Yury Koush, Artem Nikonorov
 
@@ -37,6 +37,7 @@ lCond = length(prt.Cond);
 %% PSC
 if strcmp(P.Prot, 'Cont') && isPSC
     P.vectEncCond = ones(1,P.NrOfVolumes-P.nrSkipVol);
+    P.CondNames = {P.BaselineName, P.CondName};
     for x = 1:lCond
         for k = 1:length(prt.Cond{x}.OnOffsets(:,1)) 
             unitBlock = prt.Cond{x}.OnOffsets(k,1) : prt.Cond{x}.OnOffsets(k,2); 
@@ -80,7 +81,7 @@ if strcmp(P.Prot, 'InterBlock') && isDCM
                 P.vectEncCond(unitBlock) = 1;
             elseif strcmpi(prt.Cond{x}.ConditionName, P.CondName)
                 P.vectEncCond(unitBlock) = 2;
-            elseif strcmpi(prt.Cond{x}.ConditionName, 'DCM')
+            elseif strcmpi(prt.Cond{x}.ConditionName, P.RestName)
                 P.vectEncCond(unitBlock) = 3;
             elseif strcmpi(prt.Cond{x}.ConditionName, P.DispName)
                 P.vectEncCond(unitBlock) = 4;

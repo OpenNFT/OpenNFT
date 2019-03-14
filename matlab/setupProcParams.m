@@ -175,14 +175,14 @@ end
 if isPSC && strcmp(P.Prot, 'Cont') && fIMAPH
     tmpSpmDesign = SPM.xX.X(1:P.NrOfVolumes-P.nrSkipVol,1);
     % this contrast does not count constant term
-    mainLoopData.tContr = [0; 1];
+    mainLoopData.tContr = [1];
 end
 
 % DCM
 if isDCM && strcmp(P.Prot, 'InterBlock')
     % this contrast does not count constant term
-    tmpSpmDesign = SPM.xX.X(1:P.lengthDCMTrial,1);
-    mainLoopData.tContr = [1; -1];
+    tmpSpmDesign = SPM.xX.X(1:P.lengthDCMTrial,2);
+    mainLoopData.tContr = [-1; 1];
     [mainLoopData.DCM_EN, mainLoopData.dcmParTag, ...
         mainLoopData.dcmParOpp] = dcmPrep(SPM);
 end
