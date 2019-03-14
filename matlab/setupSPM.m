@@ -9,6 +9,8 @@ function SPM = setupSPM(P)
 % TH values could depend on the data acquisition setup, and could evtl. be
 % set as mean(SPM.xM.TH)*ones(size(SPM.xM.TH)), or zeros(size(SPM.xM.TH)) 
 % given masking threshold defined in SPM batch. 
+% T0 indicates the shift of onsets to correspond with the slice order. SPM
+% default T0 = 8ms given T = 16ms. We assume T0=1 does not introduce shift.
 %__________________________________________________________________________
 %
 % Written by Tibor Auer (tibor.auer@gmail.com)
@@ -23,7 +25,7 @@ SPM.nscan = double(P.NrOfVolumes-P.nrSkipVol);
 
 % basis function defaults
 SPM.xBF.T = 16;
-SPM.xBF.T0 = 8;
+SPM.xBF.T0 = 1; % check for the desired onset shift
 SPM.xBF.UNITS = 'scans';
 SPM.xBF.Volterra   = 1;
 SPM.xBF.name       = 'hrf';
@@ -36,8 +38,8 @@ SPM.xX.K.HParam = 128;
 % protocol
 if isDCM && strcmp(P.Prot, 'InterBlock')
     regrInd = [...
-        find(strcmp(P.CondNames,P.CondName)),...
-        find(strcmp(P.CondNames,P.BaselineName)) ...
+        find(strcmp(P.CondNames,P.BaselineName)),...
+        find(strcmp(P.CondNames,P.CondName)) ...
         ];
     SPM.nscan = P.lengthDCMTrial;
 else
@@ -59,7 +61,11 @@ SPM.xGX.iGXcalc = 'None';
 SPM.xVi.form = sprintf('AR(%1.1f)',P.aAR1);
 
 % masking threshold based on moco template (with lower relative threshold)
-SPM.xM.TH = repmat(mean(spm_read_vols(spm_vol(P.MCTempl)),[1,2,3])*THR,[1 SPM.nscan]);
+% TODO, seems jsut Matlab version solution:
+%meanVol = mean(spm_read_vols(spm_vol(P.MCTempl)),[1,2,3]);
+meanVol = mean2(mean(spm_read_vols(spm_vol(P.MCTempl)),1));
+SPM.xM.TH = repmat(meanVol*THR,[1 SPM.nscan]);
 
 SPM = spm_fmri_spm_ui(SPM);
+save(fullfile(P.WorkFolder,'Settings','SPM.mat'),'SPM');
 if exist(fullfile(pwd, 'SPM.mat'),'file'), delete('SPM.mat'); end
