@@ -71,8 +71,14 @@ class MatlabSharedEngineHelper(object):
 
     # --------------------------------------------------------------------------
     def destroy_engine(self):
-        if self._pid.value != -1:
-            self._pid.value = -1 # send termination signal
+        if config.CLOSE_MATLAB_ON_EXIT:
+            if self._pid.value != -1:
+                self._pid.value = -1 # send termination signal
+        else:
+            if self._engine: # just detach matlab
+                del self._engine.__dict__["_matlab"]
+                del self._engine
+
         self._engine = None
 
     # --------------------------------------------------------------------------
