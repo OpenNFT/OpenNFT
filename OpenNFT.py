@@ -1377,7 +1377,6 @@ class OpenNFT(QWidget):
         self.sbMatrixSize.setValue(int(self.settings.value('MatrixSizeX')))
 
         # --- bottom left ---
-        #AN{
         self.cbOfflineMode.setChecked( str( self.settings.value('OfflineMode', 'true')).lower()=='true')
         self.cbUseTCPData.setChecked( str( self.settings.value('UseTCPData', 'false')).lower() == 'true')
         if self.cbUseTCPData.isChecked():
@@ -1397,7 +1396,6 @@ class OpenNFT(QWidget):
         self.leUDPFeedbackPort.setText( str( self.settings.value('UDPFeedbackPort', '1234')))
         self.leUDPFeedbackControlChar.setText( str( self.settings.value('UDPFeedbackControlChar', '')))
         self.cbUDPSendCondition.setChecked( str( self.settings.value('UDPSendCondition')).lower() == 'true')
-        #AN}
 
         # --- bottom right ---
         idx = self.cbDataType.findText(self.settings.value('DataType', 'DICOM'))
