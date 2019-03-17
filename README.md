@@ -38,6 +38,6 @@ Note, we are still tuning our pre-release version. Please check the updates regu
 
 ## Demo dataset
 https://github.com/OpenNFT/OpenNFT_Demo/releases
-N.B.: Use the updated Setup and Protocol files provided with OpenNFT
+N.B.: Use the updated Setup and Protocol files provided with OpenNFT - https://github.com/OpenNFT/OpenNFT/tree/tiborauer-master/ini
 
 
