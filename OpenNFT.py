@@ -74,6 +74,8 @@ from eventrecorder import Times as Times
 if config.USE_MRPULSE:
     import MRpulse
 
+# if missing, install it by
+# pip install git+https://github.com/tiborauer/pyniexp.git
 from pyniexp.connection import Udp
 
 # Enable antialiasing for prettier plots
