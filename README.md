@@ -37,7 +37,8 @@ Note, we are still tuning our pre-release version. Please check the updates regu
     `pip install git+https://github.com/tiborauer/pyniexp.git`
 
 ## Demo dataset
-https://github.com/OpenNFT/OpenNFT_Demo/releases
-N.B.: Use the updated Setup and Protocol files provided with OpenNFT - https://github.com/OpenNFT/OpenNFT/tree/master/ini
+https://github.com/OpenNFT/OpenNFT_Demo/releases  
+## N.B.:
+Use the updated Setup and Protocol files provided with OpenNFT - https://github.com/OpenNFT/OpenNFT/tree/master/ini
 
 
