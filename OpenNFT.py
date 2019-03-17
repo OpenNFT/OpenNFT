@@ -70,13 +70,13 @@ import threading
 import eventrecorder as erd
 from eventrecorder import Times as Times
 
+# if missing, install it by
+# pip install git+https://github.com/tiborauer/pyniexp.git
+from pyniexp.connection import Udp
 
 if config.USE_MRPULSE:
     import MRpulse
 
-# if missing, install it by
-# pip install git+https://github.com/tiborauer/pyniexp.git
-from pyniexp.connection import Udp
 
 # Enable antialiasing for prettier plots
 pg.setConfigOptions(antialias=True)
@@ -1145,7 +1145,8 @@ class OpenNFT(QWidget):
         self.fFinNFB = True
 
         if self.cbOfflineMode.isChecked():
-            config.MAIN_LOOP_CALL_PERIOD = self.P['TR']
+            if not config.USE_FAST_OFFLINE_LOOP:
+                config.MAIN_LOOP_CALL_PERIOD = self.P['TR']
             self.startInOfflineMode()
         else:
             self.startFilesystemWatching()

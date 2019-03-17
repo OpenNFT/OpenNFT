@@ -33,6 +33,8 @@ USE_MRPULSE = False
 
 # Time between two iterations
 MAIN_LOOP_CALL_PERIOD = 30  # ms
+# Fast offline loop for debugging
+USE_FAST_OFFLINE_LOOP = True
 
 # currently used only for DCM feedabck
 USE_MATLAB_MODEL_HELPER = True
