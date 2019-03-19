@@ -22,7 +22,7 @@ MODEL_HELPER_MATLAB_SHARED_NAME_PREFIX = 'MATLAB_NFB_MODEL_HELPER_'
 
 # if False we only detach Matlab sessions on exit
 # useful when debugging
-CLOSE_MATLAB_ON_EXIT = False
+CLOSE_MATLAB_ON_EXIT = True
 
 # MRI scan file extensions
 DICOM_FILES_EXTENSION = '.dcm'
