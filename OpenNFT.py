@@ -70,7 +70,7 @@ import threading
 import eventrecorder as erd
 from eventrecorder import Times as Times
 
-# if missing, install it by
+# if missing in VENV, install it by
 # pip install git+https://github.com/tiborauer/pyniexp.git
 from pyniexp.connection import Udp
 
