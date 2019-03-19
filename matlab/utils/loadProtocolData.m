@@ -94,6 +94,7 @@ end
 %% SVM
 if strcmp(P.Prot, 'Cont') && isSVM
     P.vectEncCond = ones(1,P.NrOfVolumes-P.nrSkipVol);
+    P.CondNames = {P.BaselineName, P.CondName};
     for x = 1:lCond
         for k = 1:length(prt.Cond{x}.OnOffsets(:,1)) 
             unitBlock = prt.Cond{x}.OnOffsets(k,1) : prt.Cond{x}.OnOffsets(k,2); 

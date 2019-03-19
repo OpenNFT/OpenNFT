@@ -20,6 +20,10 @@ PTB_MATLAB_SHARED_NAME_PREFIX = 'MATLAB_NFB_PTB_'
 SPM_MATLAB_SHARED_NAME_PREFIX = 'MATLAB_NFB_SPM_'
 MODEL_HELPER_MATLAB_SHARED_NAME_PREFIX = 'MATLAB_NFB_MODEL_HELPER_'
 
+# if False we only detach Matlab sessions on exit
+# useful when debugging
+CLOSE_MATLAB_ON_EXIT = False
+
 # MRI scan file extensions
 DICOM_FILES_EXTENSION = '.dcm'
 IMAPH_FILES_EXTENSION = '.img'
@@ -27,15 +31,10 @@ IMAPH_FILES_EXTENSION = '.img'
 # MRI triggering is required
 USE_MRPULSE = False
 
-# export feedback via UDP, currently used just for SVM feedback
-USE_UDP = False
-if USE_UDP:
-    # UDP sender settings
-    UDP_IP = "127.0.0.1"
-    UDP_PORT = 1234
-
-# use PTB by default, the check box on the GUI can be unselected during the Review of the Parameters
-USE_PTB = True
+# Time between two iterations
+MAIN_LOOP_CALL_PERIOD = 30  # ms
+# Fast offline loop for debugging
+USE_FAST_OFFLINE_LOOP = True
 
 # currently used only for DCM feedabck
 USE_MATLAB_MODEL_HELPER = True
@@ -52,7 +51,6 @@ ROI_PLOT_WIDTH = 2.0
 ROI_PLOT_COLORS = ['b', 'r', 'g']
 MUSTER_Y_LIMITS = (-1000, 1000)
 MUSTER_PLOT_ALPHA = 220
-MAIN_LOOP_CALL_PERIOD = 30  # ms
 MAX_ROI_NAME_LENGTH = 6
 
 MUSTER_PEN_COLORS = [

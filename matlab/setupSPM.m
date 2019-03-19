@@ -10,7 +10,7 @@ function SPM = setupSPM(P)
 % set as mean(SPM.xM.TH)*ones(size(SPM.xM.TH)), or zeros(size(SPM.xM.TH)) 
 % given masking threshold defined in SPM batch. 
 % T0 indicates the shift of onsets to correspond with the slice order. SPM
-% default T0 = 8ms given T = 16ms. We assume T0=1 does not introduce shift.
+% default T0 = 8 given T = 16. We assume T0=1 does not introduce shift.
 %__________________________________________________________________________
 %
 % Written by Tibor Auer (tibor.auer@gmail.com)
@@ -61,7 +61,7 @@ SPM.xGX.iGXcalc = 'None';
 SPM.xVi.form = sprintf('AR(%1.1f)',P.aAR1);
 
 % masking threshold based on moco template (with lower relative threshold)
-% TODO, seems jsut Matlab version solution:
+% TODO, seems just Matlab version solution:
 %meanVol = mean(spm_read_vols(spm_vol(P.MCTempl)),[1,2,3]);
 meanVol = mean2(mean(spm_read_vols(spm_vol(P.MCTempl)),1));
 SPM.xM.TH = repmat(meanVol*THR,[1 SPM.nscan]);
