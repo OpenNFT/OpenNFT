@@ -20,6 +20,10 @@ PTB_MATLAB_SHARED_NAME_PREFIX = 'MATLAB_NFB_PTB_'
 SPM_MATLAB_SHARED_NAME_PREFIX = 'MATLAB_NFB_SPM_'
 MODEL_HELPER_MATLAB_SHARED_NAME_PREFIX = 'MATLAB_NFB_MODEL_HELPER_'
 
+# if False we only detach Matlab sessions on exit
+# useful when debugging
+CLOSE_MATLAB_ON_EXIT = True
+
 # MRI scan file extensions
 DICOM_FILES_EXTENSION = '.dcm'
 IMAPH_FILES_EXTENSION = '.img'
@@ -29,6 +33,8 @@ USE_MRPULSE = False
 
 # Time between two iterations
 MAIN_LOOP_CALL_PERIOD = 30  # ms
+# Fast offline loop for debugging
+USE_FAST_OFFLINE_LOOP = True
 
 # currently used only for DCM feedabck
 USE_MATLAB_MODEL_HELPER = True

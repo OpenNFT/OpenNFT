@@ -70,11 +70,13 @@ import threading
 import eventrecorder as erd
 from eventrecorder import Times as Times
 
+# if missing in VENV, install it by
+# pip install git+https://github.com/tiborauer/pyniexp.git
+from pyniexp.connection import Udp
 
 if config.USE_MRPULSE:
     import MRpulse
 
-from pyniexp.connection import Udp
 
 # Enable antialiasing for prettier plots
 pg.setConfigOptions(antialias=True)
@@ -1143,7 +1145,8 @@ class OpenNFT(QWidget):
         self.fFinNFB = True
 
         if self.cbOfflineMode.isChecked():
-            config.MAIN_LOOP_CALL_PERIOD = self.P['TR']
+            if not config.USE_FAST_OFFLINE_LOOP:
+                config.MAIN_LOOP_CALL_PERIOD = self.P['TR']
             self.startInOfflineMode()
         else:
             self.startFilesystemWatching()
@@ -1377,25 +1380,29 @@ class OpenNFT(QWidget):
         self.sbMatrixSize.setValue(int(self.settings.value('MatrixSizeX')))
 
         # --- bottom left ---
-        self.cbOfflineMode.setChecked( str( self.settings.value('OfflineMode')).lower()=='true' )
-        self.cbUseTCPData.setChecked( str( self.settings.value('UseTCPData')).lower() == 'true')
+        self.cbOfflineMode.setChecked(str(self.settings.value('OfflineMode', 'true')).lower() == 'true')
+
+        if self.settings.value('UseTCPData', None) is None:
+            self.printToLog('Upgrade settings format from version 1.0.rc0')
+
+        self.cbUseTCPData.setChecked(str(self.settings.value('UseTCPData', 'false')).lower() == 'true')
         if self.cbUseTCPData.isChecked():
-            self.leTCPDataIP.setText( self.settings.value('TCPDataIP', ''))
-            self.leTCPDataPort.setText( str( self.settings.value('TCPDataPort', '')))
+            self.leTCPDataIP.setText(self.settings.value('TCPDataIP', ''))
+            self.leTCPDataPort.setText(str( self.settings.value('TCPDataPort', '')))
 
-        self.leMaxFeedbackVal.setText( str( self.settings.value('MaxFeedbackVal', '')))
-        self.sbFeedbackValDec.setValue(int(self.settings.value('FeedbackValDec')))
-        self.cbNegFeedback.setChecked( str( self.settings.value('NegFeedback')).lower()=='true' )
+        self.leMaxFeedbackVal.setText(str(self.settings.value('MaxFeedbackVal', '100')))  # FixMe
+        self.sbFeedbackValDec.setValue(int(self.settings.value('FeedbackValDec', '0')))     # FixMe
+        self.cbNegFeedback.setChecked(str(self.settings.value('NegFeedback', 'false')).lower() == 'true')
 
-        self.cbUsePTB.setChecked( str( self.settings.value('UsePTB')).lower()=='true' )
+        self.cbUsePTB.setChecked(str(self.settings.value('UsePTB', 'false')).lower()=='true')
         self.cbScreenId.setCurrentIndex(int(self.settings.value('DisplayFeedbackScreenID', 0)))
-        self.cbDisplayFeedbackFullscreen.setChecked( str(self.settings.value('DisplayFeedbackFullscreen')).lower() == 'true')
+        self.cbDisplayFeedbackFullscreen.setChecked(str(self.settings.value('DisplayFeedbackFullscreen')).lower() == 'true')
 
-        self.cbUseUDPFeedback.setChecked( str( self.settings.value('UseUDPFeedback')).lower() == 'true')
-        self.leUDPFeedbackIP.setText( self.settings.value('UDPFeedbackIP', ''))
-        self.leUDPFeedbackPort.setText( str( self.settings.value('UDPFeedbackPort', '')))
-        self.leUDPFeedbackControlChar.setText( str( self.settings.value('UDPFeedbackControlChar', '')))
-        self.cbUDPSendCondition.setChecked( str( self.settings.value('UDPSendCondition')).lower() == 'true')
+        self.cbUseUDPFeedback.setChecked(str(self.settings.value('UseUDPFeedback')).lower() == 'true')
+        self.leUDPFeedbackIP.setText(self.settings.value('UDPFeedbackIP', ''))
+        self.leUDPFeedbackPort.setText(str(self.settings.value('UDPFeedbackPort', '1234')))
+        self.leUDPFeedbackControlChar.setText(str( self.settings.value('UDPFeedbackControlChar', '')))
+        self.cbUDPSendCondition.setChecked(str(self.settings.value('UDPSendCondition')).lower() == 'true')
 
         # --- bottom right ---
         idx = self.cbDataType.findText(self.settings.value('DataType', 'DICOM'))
