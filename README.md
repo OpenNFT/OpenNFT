@@ -8,9 +8,10 @@ Note, we are still tuning our pre-release version. Please check the updates regu
 ## Installation (based on the [OpenNFT manual](https://github.com/OpenNFT/opennft.github.io/blob/master/OpenNFT_Manual_v1.0.pdf))
 1. Prerequisites
 	- MATLAB
-		- Image Prpocessing
-		- Statitics and Machine Learning
-	- Miniconda3
+		- Image Processing Toolbox
+		- Statistics and Machine Learning Toolbox
+	- [Miniconda3](https://docs.conda.io/en/latest/miniconda.html)
+	- [Git](https://git-scm.com/downloads): for installing SPM, Psychtoolbox and pyniexp
 
 2. MATLAB Toolboxes
 	- [SPM12](https://github.com/spm/spm12.git)
@@ -31,7 +32,7 @@ Note, we are still tuning our pre-release version. Please check the updates regu
 	
   - For MRpulse\
     `pip install pywin32`\
-		`pip install pyHook-1.5.1-cp35-cp35m-win_amd64.whl` (from https://www.lfd.uci.edu/~gohlke/pythonlibs/#pyhook)
+    `pip install pyHook-1.5.1-cp35-cp35m-win_amd64.whl` (from https://www.lfd.uci.edu/~gohlke/pythonlibs/#pyhook)
 	
   - For UDP (feedback) transfers
     `pip install git+https://github.com/tiborauer/pyniexp.git`
