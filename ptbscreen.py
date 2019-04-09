@@ -79,7 +79,7 @@ class PtbScreen(object):
 
         #print('ptbDisplay 2-' + str(displayData['iteration']))
         print('stage: ' + displayData['displayStage'])
-
+         
         #if display_blank:
         if displayData['displayBlankScreen'] > 0:
             self.eng.ptbBlankScreen(nargout=0, async=True)
@@ -91,8 +91,12 @@ class PtbScreen(object):
             elif displayData['displayStage'] == 'feedback':
                 # t8
                 self.recorder.recordEvent(Times.t8, int(displayData['iteration']))
-
-            self.eng.displayFeedback(displayData, nargout=0, async=True)
+            
+            if displayData['taskseq'] > 0:
+                self.eng.ptbTask(nargout=0, async=True)
+                displayData['taskseq'] = 0
+            else:
+                self.eng.displayFeedback(displayData, nargout=0, async=True)
 
         #print('ptbDisplay 3-' + str(displayData['iteration']))
 

@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+﻿<?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
     <class>NeuroFB</class>
     <widget class="QWidget" name="NeuroFB">
@@ -1306,6 +1306,11 @@
                                         <item>
                                             <property name="text">
                                                 <string>Cont</string>
+                                            </property>
+                                        </item>
+                                        <item>
+                                            <property name="text">
+                                                <string>ContTask</string>
                                             </property>
                                         </item>
                                         <item>

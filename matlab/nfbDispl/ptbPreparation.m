@@ -51,12 +51,12 @@ if ~fFullScreen
         P.Screen.wPtr = Screen('OpenWindow', screenid, [125 125 125], ...
             [40 40 640 520]);
     else
-        P.Screen.wPtr = Screen('OpenWindow', screenid, [0 0 0], ...
+        P.Screen.wPtr = Screen('OpenWindow', screenid, [125 125 125], ...
             [40 40 640 520]);
     end
 else
     % full screen
-    P.Screen.wPtr = Screen('OpenWindow', screenid, [0 0 0]);
+    P.Screen.wPtr = Screen('OpenWindow', screenid, [125 125 125]);
 end
 
 [w, h] = Screen('WindowSize', P.Screen.wPtr);
@@ -78,6 +78,74 @@ if strcmp(protName, 'Cont')
     P.Screen.fix = [w/2-w/150, h/2-w/150, w/2+w/150, h/2+w/150];
     Screen('FillOval', P.Screen.wPtr, [255 255 255], P.Screen.fix);
     P.Screen.vbl=Screen('Flip', P.Screen.wPtr,P.Screen.vbl+P.Screen.ifi/2);
+end
+
+if strcmp(protName, 'ContTask')
+    % Set up alpha-blending for smooth (anti-aliased) lines
+    Screen('BlendFunction', P.Screen.wPtr, 'GL_SRC_ALPHA', 'GL_ONE_MINUS_SRC_ALPHA');
+    
+    % fixation cross settings
+    P.Screen.fixCrossDimPix = 40;
+    
+    % Set the line width for our fixation cross
+    P.Screen.lineWidthPix = 4;
+
+    % Now we set the coordinates (these are all relative to zero, we will let
+    % the drawing routine center the cross in the center of our monitor for
+    % us)
+    P.Screen.wRect = [0, 0, P.Screen.w, P.Screen.h];
+    [P.Screen.xCenter, P.Screen.yCenter] = RectCenter(P.Screen.wRect);
+    P.Screen.xCoords = [-P.Screen.fixCrossDimPix P.Screen.fixCrossDimPix 0 0];
+    P.Screen.yCoords = [0 0 -P.Screen.fixCrossDimPix P.Screen.fixCrossDimPix];
+    P.Screen.allCoords = [P.Screen.xCoords; P.Screen.yCoords];
+    
+    % scramble-image presentation parameters
+    P.Screen.numSecs = 0.05;    % presentation dur in sec (500ms)
+    P.Screen.numFrames = round(P.Screen.numSecs / P.Screen.ifi);    % in frames
+    
+    % get some color information
+    P.Screen.white = WhiteIndex(screenid);
+    P.Screen.black = BlackIndex(screenid);
+    P.Screen.grey  = P.Screen.white / 2;
+
+    % response option coords on the x and y axis relative to center 
+    P.Screen.option_lx = -250;    % left option     x
+    P.Screen.option_rx = 150;     % right option    x
+    P.Screen.option_ly = 300;     % left option     y
+    P.Screen.option_ry = 300;     % right option    y
+    
+    % accepted response keys
+    P.Screen.leftKey = KbName('1');
+    P.Screen.rightKey = KbName('2');
+
+    % show initial fixation dot
+    P.Screen.fix = [w/2-w/150, h/2-w/150, w/2+w/150, h/2+w/150];
+    Screen('FillOval', P.Screen.wPtr, [255 255 255], P.Screen.fix);
+    P.Screen.vbl=Screen('Flip', P.Screen.wPtr,P.Screen.vbl+P.Screen.ifi/2);
+
+    %% Prepare PTB Sprites
+    basePath = strcat(workFolder, filesep, 'Settings', filesep, 'Stims', filesep);
+    load([basePath 'ims.mat']);
+    
+    sz = size(all_images,2);                % nr of unique images
+    P.Screen.nrims = size(all_images{1},3); % how many repetitions of an image
+    P.tex = zeros(sz,P.Screen.nrims);       % initialize pointer matrix
+    for i = 1:sz
+        for j = 1:P.Screen.nrims 
+            imgArr = all_images{i}(:,:,j);
+            P.tex(i,j) = Screen('MakeTexture', P.Screen.wPtr, imgArr);
+            clear imgArr
+        end
+    end
+    
+    % text font, size and style
+    Screen('TextFont',P.Screen.wPtr, 'Courier New');
+    Screen('TextSize', P.Screen.wPtr, 12);
+    Screen('TextStyle',P.Screen.wPtr, 3);
+    
+    % initiate trial counter variable for keeping track of task trials.
+    % Counter values will be used to index images in im matrix.
+    P.Task.trialCounter = 1;
 end
 
 if strcmp(protName, 'Inter')

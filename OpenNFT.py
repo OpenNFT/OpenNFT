@@ -510,11 +510,13 @@ class OpenNFT(QWidget):
 
     # --------------------------------------------------------------------------
     def initMainLoopData(self):
+        print('initiating mainloopdata')
         # Data types
         self.mainLoopData['DataType'] = self.cbDataType.currentText()
+#        self.mainLoopData['taskseq'] = 0
 
         self.eng.workspace['mainLoopData'] = self.mainLoopData
-
+               
         self.eng.setupProcParams(nargout=0)
 
         with utils.timeit("Receiving 'P' from Matlab:"):
@@ -618,6 +620,7 @@ class OpenNFT(QWidget):
             self.eng.mainLoopEntry(self.iteration, nargout=0)
 
             self.displayData = self.eng.initDispalyData(self.iteration)
+            
 
             #t6, display instruction prior to data acquisition
             self.recorder.recordEvent(Times.t6, self.iteration)
@@ -812,9 +815,28 @@ class OpenNFT(QWidget):
             if self.P['Prot'] != 'Inter':
                 if config.USE_PTB:
                     if self.displayData:
-                        self.displayData['displayStage'] = 'feedback'
-                        self.displayScreen()
-
+                        if self.P['Prot'] == 'ContTask':
+    #                       Here task condition is evaluated: if condition is 3 (task) and the current
+    #                       itteration corresponds with the onset of a task block (kept in TaskFirstVol)
+    #                       taskseq is set to one. While set to 1, Display  in ptbScreen.py 
+    #                       will use the taskse flag to call the ptbTask function.
+                            cond = self.eng.evalin('base', 'mainLoopData.displayData.condition')
+                            if cond == 3 and int(self.P['TaskFirstVol'][0][self.iteration-1]) == 1:
+                                self.displayData['taskseq'] = 1   
+                                self.displayScreen()
+#                               i'm a bit suspicious of the workings of the threading processes..
+#                               put these lines here to be consistent with DCM logic
+                                QApplication.processEvents()
+                                self.endDisplayEvent.wait()
+                                self.endDisplayEvent.clear()
+                            else:
+                                self.displayData['taskseq'] = 0 
+                                self.displayData['displayStage'] = 'feedback'
+                                self.displayScreen()
+                        else:
+                            self.displayData['taskseq'] = 0
+                            self.displayData['displayStage'] = 'feedback'
+                            self.displayScreen()
         # main logic end
 
         init = self.iteration == (self.P['nrSkipVol'] + 1)
