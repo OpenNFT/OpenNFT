@@ -22,8 +22,8 @@ end
 mainLoopData = evalin('base', 'mainLoopData');
 
 % Get experiment onset time stamp. This perhaps redundant with the event
-% recording already implemented but as the task process is uncoupled from
-% data imput I prefer to do this seperatly as well.
+% recording already implemented, but as the task process is uncoupled from
+% data input I prefer to do this separately as well.
 if indVol == double(P.nrSkipVol)+1
     P.expOns = GetSecs; 
     fprintf('\n\n=============')

@@ -15,7 +15,8 @@ function ptbTask()
 %
 % Written by Lucas Peek (lucaspeek@live.nl)
 
-P = evalin('base', 'P');
+P   = evalin('base', 'P');
+Tex = evalin('base', 'Tex');
 
 % fixation cross
 Screen('DrawLines', P.Screen.wPtr, P.Screen.allCoords,...
@@ -59,7 +60,7 @@ for ii = 1: P.Screen.nrims
             P.Screen.yCenter+P.Screen.option_ry, [0 0 0]);
 
         % Draw the image to buffer
-        Screen('DrawTexture', P.Screen.wPtr,  P.tex(P.Task.trialCounter,ii));
+        Screen('DrawTexture', P.Screen.wPtr,  Tex(P.Task.trialCounter,ii));
 
         % Flip the screen
         P.Screen.vbl = Screen('Flip', P.Screen.wPtr, P.Screen.vbl + (waitframes - 0.5) * P.Screen.ifi);

@@ -207,7 +207,7 @@ class OpenNFT(QWidget):
         # Matlab helper processs for display using Psychtoolbox (aka Ptb)
         # with possible reusing for first model computation
         self.mlPtbDcmHelper = mlproc.MatlabSharedEngineHelper(
-            startup_options='-nodesktop',
+            startup_options='-desktop',
             shared_name=(config.PTB_MATLAB_SHARED_NAME_PREFIX +
                          utils.generate_random_number_string())
         )
@@ -418,6 +418,8 @@ class OpenNFT(QWidget):
             lambda: self.onChooseFolder('WorkFolder', self.leWorkFolder))
         self.btnChooseWatchFolder.clicked.connect(
             lambda: self.onChooseFolder('WatchFolder', self.leWatchFolder))
+        self.btnChooseTaskFolder.clicked.connect(
+            lambda: self.onChooseFolder('TaskFolder', self.leTaskFolder))
 
         self.btnStart.setEnabled(False)
 
@@ -1136,6 +1138,8 @@ class OpenNFT(QWidget):
                     ptbP['WorkFolder'] = self.P['WorkFolder']
                     ptbP['DisplayFeedbackFullscreen'] = self.P['DisplayFeedbackFullscreen']
                     ptbP['Prot'] = self.P['Prot']
+                    if self.P['Prot'] == 'ContTask':
+                        ptbP['TaskFolder'] = self.P['TaskFolder']
 
                     self.ptbScreen.initialize(
                         sid, self.P['WorkFolder'], self.P['Prot'], ptbP)
@@ -1388,6 +1392,8 @@ class OpenNFT(QWidget):
         self.leRoiGroupFolder.setText(self.settings.value('RoiGroupFolder', ''))
         self.leAnatBgFolder.setText(self.settings.value('AnatBgFolder', ''))
         self.leMCTempl.setText(self.settings.value('MCTempl', ''))
+        if (self.settings.value('Prot', '')) == 'ContTask':
+            self.leTaskFolder.setText(self.settings.value('TaskFolder', ''))
 
         # --- middle ---
         self.leProjName.setText(self.settings.value('ProjectName', ''))
@@ -1486,10 +1492,12 @@ class OpenNFT(QWidget):
             self.P['RoiAnatFolder'] = self.leRoiAnatFolder.text()
         else:
             self.P['RoiFilesFolder'] = self.leRoiAnatFolder.text()
+            
         self.P['RoiAnatOperation'] = self.leRoiAnatOperation.text()        
         self.P['RoiGroupFolder'] = self.leRoiGroupFolder.text()
         self.P['AnatBgFolder'] = self.leAnatBgFolder.text()
         self.P['MCTempl'] = self.leMCTempl.text()
+
 
         # --- middle ---
         self.P['ProjectName'] = self.leProjName.text()
@@ -1511,7 +1519,10 @@ class OpenNFT(QWidget):
         self.P['DataType'] = str(self.cbDataType.currentText())
         self.P['Prot'] = str(self.cbProt.currentText())
         self.P['Type'] = str(self.cbType.currentText())
-
+        
+        if self.P['Prot'] == 'ContTask':
+            self.P['TaskFolder'] = self.leTaskFolder.text()
+        
         self.P['MaxFeedbackVal'] = float( self.leMaxFeedbackVal.text())
         self.P['FeedbackValDec'] = self.sbFeedbackValDec.value()
         self.P['NegFeedback'] = self.cbNegFeedback.isChecked()
@@ -1570,6 +1581,9 @@ class OpenNFT(QWidget):
         self.settings.setValue('RoiGroupFolder', self.P['RoiGroupFolder'])
         self.settings.setValue('AnatBgFolder', self.P['AnatBgFolder'])
         self.settings.setValue('MCTempl', self.P['MCTempl'])
+        
+        if self.P['Prot'] == 'ContTask':
+            self.settings.setValue('TaskFolder', self.P['TaskFolder'])
 
         # --- middle ---
         self.settings.setValue('ProjectName', self.P['ProjectName'])

@@ -15,6 +15,8 @@ function displayFeedback(displayData)
 tDispl = tic;
 
 P = evalin('base', 'P');
+Tex = evalin('base', 'Tex');
+
 % Note, don't split cell structure in 2 lines with '...'.
 fieldNames = {'feedbackType', 'condition', 'dispValue', 'Reward', 'displayStage','displayBlankScreen', 'iteration'};
 defaultFields = {'', 0, 0, '', '', '', 0};
@@ -152,11 +154,12 @@ switch feedbackType
                     P.Screen.h/2 - P.Screen.h/4, dispColor);
                 % smiley
                 Screen('DrawTexture', P.Screen.wPtr, ...
-                    P.Screen.texSm(round(dispValue)), ...
+                    Tex(round(dispValue)), ...
                     P.Screen.rectSm, P.Screen.dispRect+[0 0 0 0]);
                 % display
                 P.Screen.vbl = Screen('Flip', P.Screen.wPtr, ...
                     P.Screen.vbl + P.Screen.ifi/2);
+                fprintf([round(dispValue) '\n'])
         end
         
     %% Trial-based DCM
@@ -175,11 +178,11 @@ switch feedbackType
                     disp(['Neut Pict:' mat2str(imgNNr)]);
                 end
                 if nrN < 5
-                    basImage = P.texN(imgNNr);
+                    basImage = Tex.N(imgNNr);
                 elseif (nrN > 4) && (nrN < 9)
-                    basImage = P.texN(imgNNr);
+                    basImage = Tex.N(imgNNr);
                 elseif nrN > 8
-                    basImage = P.texN(imgNNr);
+                    basImage = Tex.N(imgNNr);
                 end
                 % Draw Texture
                 Screen('DrawTexture', P.Screen.wPtr, basImage);
@@ -195,11 +198,11 @@ switch feedbackType
                     disp(['Posit Pict:' mat2str(imgPNr)]);
                 end
                 if nrP < 5
-                    dispImage = P.texP(imgPNr);
+                    dispImage = Tex.P(imgPNr);
                 elseif (nrP > 4) && (nrP < 9)
-                    dispImage = P.texP(imgPNr);
+                    dispImage = Tex.P(imgPNr);
                 elseif nrP > 8
-                    dispImage = P.texP(imgPNr);
+                    dispImage = Tex.P(imgPNr);
                 end
                 % Draw Texture
                 Screen('DrawTexture', P.Screen.wPtr, dispImage);
