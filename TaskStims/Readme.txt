@@ -1,1 +1,0 @@
-copy stims folder into the settings folder
