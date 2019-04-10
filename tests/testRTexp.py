@@ -18,8 +18,8 @@ import glob
 testCase = 'PSC'
 
 if testCase == 'PSC':
-    srcpath = 'C:/Users/lucas/Desktop/OpenNFT_Project/OpenNFT_oldV/OpenNFT_DemoData/NF_PSC/NF_Run_1'
-    dstpath = 'C:/Users/lucas/Desktop/OpenNFT_Project/OpenNFT_DemoData/NF_PSC/NF_Run_1'
+    srcpath = 'C:/_RT/rtData/NF_PSC/NF_Run_1_src'
+    dstpath = 'C:/_RT/rtData/NF_PSC/NF_Run_1'
     pause_in_sec = 1
 
 elif testCase == 'SVM':
@@ -45,4 +45,4 @@ for filename in os.listdir(srcpath):
     	dst = os.path.join(dstpath, filename)
     	shutil.copy(src, dst)
     	print(filename)
-    	sleep(2) # seconds
+    	sleep(pause_in_seconds) # seconds
