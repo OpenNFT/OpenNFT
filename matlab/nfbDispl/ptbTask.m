@@ -66,7 +66,9 @@ for ii = 1: P.Screen.nrims
         P.Screen.vbl = Screen('Flip', P.Screen.wPtr, P.Screen.vbl + (waitframes - 0.5) * P.Screen.ifi);
     end
 
-    % start recording and evalutating responses
+    % Start recording and evalutating responses. In this example, responses
+    % are evaluated after every image displayed. As this is a highly simplified
+    % version of a real task it makes less sense in its current form.
     [pressed, firstPress]=KbQueueCheck();
     if pressed && resp_c < 3
          % first response male
