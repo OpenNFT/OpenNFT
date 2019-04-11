@@ -207,7 +207,7 @@ class OpenNFT(QWidget):
         # Matlab helper processs for display using Psychtoolbox (aka Ptb)
         # with possible reusing for first model computation
         self.mlPtbDcmHelper = mlproc.MatlabSharedEngineHelper(
-            startup_options='-desktop',
+            startup_options='-nodesktop',
             shared_name=(config.PTB_MATLAB_SHARED_NAME_PREFIX +
                          utils.generate_random_number_string())
         )

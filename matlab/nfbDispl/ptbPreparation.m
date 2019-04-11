@@ -157,7 +157,7 @@ if strcmp(protName, 'Inter')
     end
     P.Screen.rectSm = Screen('Rect', Tex(i));
     
-    w_dispRect = round(Tex(4)*1.5);
+    w_dispRect = round(P.Screen.rectSm(4)*1.5);
     w_offset_dispRect = 0;
     P.Screen.dispRect =[(w/2 - w_dispRect/2), ...
         (h/2 + w_offset_dispRect), (w/2 + w_dispRect/2), ...        
