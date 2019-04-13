@@ -16,7 +16,8 @@ import multiprocessing as mp
 
 import matlab.engine as me
 
-import config
+from opennft import config
+
 
 class MatlabSharedEngineHelper(object):
     """A helper class for using shared matlab engine sessions

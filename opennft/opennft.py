@@ -54,28 +54,19 @@ from PyQt5.QtCore import QSettings, QTimer, QEvent, QRegExp
 from PyQt5.uic import loadUi
 from PyQt5.QtGui import QRegExpValidator
 
-import config
-import excepthook
-import utils
-import mlproc
-import ptbscreen
-import projview
-
-import socket
-import ast
+from opennft import config, projview, ptbscreen, utils, eventrecorder as erd, excepthook, mrpulse, mlproc
 
 import multiprocessing
 import threading
 
-import eventrecorder as erd
-from eventrecorder import Times as Times
+from opennft.eventrecorder import Times as Times
 
 # if missing in VENV, install it by
 # pip install git+https://github.com/tiborauer/pyniexp.git
 from pyniexp.connection import Udp
 
 if config.USE_MRPULSE:
-    import MRpulse
+    pass
 
 
 # Enable antialiasing for prettier plots
@@ -119,7 +110,7 @@ class OpenNFT(QWidget):
     def initUdpSender(self):
         if not config.USE_UDP_FEEDBACK:
             return
-        self.udpSender = Udp(IP=config.UDP_FEEDBACK_IP,port=config.UDP_FEEDBACK_PORT,control_signal=config.UDP_FEEDBACK_CONTROLCHAR,encoding='UTF-8')
+        self.udpSender = Udp(IP=config.UDP_FEEDBACK_IP, port=config.UDP_FEEDBACK_PORT, control_signal=config.UDP_FEEDBACK_CONTROLCHAR, encoding='UTF-8')
         self.udpSender.connect_for_sending()
         self.udpSender.sending_time_stamp = True
 
@@ -1119,7 +1110,7 @@ class OpenNFT(QWidget):
                         sid, self.P['WorkFolder'], self.P['Prot'], ptbP)
 
             if config.USE_MRPULSE:
-                (self.pulseProc, self.mrPulses) = MRpulse.start(self.P['NrOfVolumes'], self.displayEvent)
+                (self.pulseProc, self.mrPulses) = mrpulse.start(self.P['NrOfVolumes'], self.displayEvent)
 
             self.recorder.initialize(self.P['NrOfVolumes'])
             self.eng.nfbInitReward(nargout=0)
@@ -1195,7 +1186,7 @@ class OpenNFT(QWidget):
             self.nfbFinStarted = None
 
         if config.USE_MRPULSE and hasattr(self, 'mrPulses'):
-            np_arr = MRpulse.toNpData(self.mrPulses)
+            np_arr = mrpulse.toNpData(self.mrPulses)
             self.pulseProc.terminate()
         
         if self.P.get('nfbDataFolder'):
@@ -1600,7 +1591,7 @@ class OpenNFT(QWidget):
         if config.USE_TCP_DATA:
             # TCP receiver settings
             config.TCP_DATA_IP = self.leTCPDataIP.text()
-            config.TCP_DATA_PORT = int( self.leTCPDataPort.text())
+            config.TCP_DATA_PORT = int(self.leTCPDataPort.text())
 
         config.USE_PTB = self.cbUsePTB.isChecked()
 
@@ -1608,7 +1599,7 @@ class OpenNFT(QWidget):
         if config.USE_UDP_FEEDBACK:
             # UDP sender settings
             config.UDP_FEEDBACK_IP = self.leUDPFeedbackIP.text()
-            config.UDP_FEEDBACK_PORT = int( self.leUDPFeedbackPort.text())
+            config.UDP_FEEDBACK_PORT = int(self.leUDPFeedbackPort.text())
             config.UDP_FEEDBACK_CONTROLCHAR = self.leUDPFeedbackControlChar.text()
             config.UDP_SEND_CONDITION = self.cbUDPSendCondition.isChecked()
         else: config.UDP_SEND_CONDITION = False
@@ -1984,10 +1975,10 @@ class OpenNFT(QWidget):
 
         # return
         if not hasattr(self, 'tvData'):
-            (self.pulseProc, self.tvData) = MRpulse.start(1, 12, self.e1)
+            (self.pulseProc, self.tvData) = mrpulse.start(1, 12, self.e1)
             self.testStarted = True
         else:
-            np_arr = MRpulse.toNpData(self.tvData)
+            np_arr = mrpulse.toNpData(self.tvData)
             print(np_arr)
 
             self.e1.set()
