@@ -107,7 +107,12 @@ class OpenNFT(QWidget):
     def initUdpSender(self):
         if not config.USE_UDP_FEEDBACK:
             return
-        self.udpSender = Udp(IP=config.UDP_FEEDBACK_IP, port=config.UDP_FEEDBACK_PORT, control_signal=config.UDP_FEEDBACK_CONTROLCHAR, encoding='UTF-8')
+        self.udpSender = Udp(
+            IP=config.UDP_FEEDBACK_IP,
+            port=config.UDP_FEEDBACK_PORT,
+            control_signal=config.UDP_FEEDBACK_CONTROLCHAR,
+            encoding='UTF-8'
+        )
         self.udpSender.connect_for_sending()
         self.udpSender.sending_time_stamp = True
 
