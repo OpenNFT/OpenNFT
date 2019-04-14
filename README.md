@@ -27,6 +27,14 @@ Note, we are still tuning our pre-release version. Please check the updates regu
     * (optional for numpy+MKL) `(OpenNFT_venv)$ pip install http://www.silx.org/pub/wheelhouse/numpy-1.13.1+mkl-cp35-cp35m-win_amd64.whl`
     * `(OpenNFT_venv)$ pip install git+https://github.com/OpenNFT/OpenNFT.git --install-option "--matlab-root=<MATLABROOT>"`
 
+4. Running OpenNFT application
+    
+    `(OpenNFT_venv)$ opennft`
+    
+    or with console window:
+    
+    `(OpenNFT_venv)$ opennft_console`
+
 ## Demo dataset
 https://github.com/OpenNFT/OpenNFT_Demo/releases  
 #### N.B.:
