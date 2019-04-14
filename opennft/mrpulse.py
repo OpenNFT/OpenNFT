@@ -14,7 +14,7 @@ import pythoncom, pyHook
 import sys
 import multiprocessing as mp, time
 import numpy as np
-from opennft import eventrecorder as Times
+from opennft.eventrecorder import Times
 
 global pulses
 global displayEvent
