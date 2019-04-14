@@ -14,7 +14,15 @@ Written by Evgeny Prilepin
 import time
 import multiprocessing as mp
 
-import matlab.engine as me
+try:
+    import matlab.engine as me
+except ImportError as err:
+    raise ImportError(
+        '"MATLAB Engine for Python" is not installed.\n'
+        'Please see how to install Matlab engine:\n'
+        'https://www.mathworks.com/help/matlab/matlab_external/install-the-matlab-engine-for-python.html\n'
+        'https://github.com/OpenNFT/opennft.github.io/blob/master/OpenNFT_Manual_v1.0.pdf'
+    ) from err
 
 from opennft import config
 
