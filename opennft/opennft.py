@@ -89,7 +89,7 @@ class CreateFileEventHandler(FileSystemEventHandler):
         # if not event.is_directory and event.src_path.endswith(self.filepat):
         if not event.is_directory and fnmatch.fnmatch(os.path.basename(event.src_path), self.filepat):
             #t1
-            self.recorder.recordEvent(erd.erd.Times.t1, 0)
+            self.recorder.recordEvent(erd.Times.t1, 0)
             self.fq.put(event.src_path)
 
 
