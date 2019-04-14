@@ -55,7 +55,7 @@ def package_data():
 def find_requires():
     requires = [
         'PyQt5 >= 5.12.0',
-        'numpy >= 1.15.0, >= 1.15.0+mkl',
+        'numpy >= 1.13.1, >= 1.13.1+mkl',
         'pyqtgraph  @  https://github.com/pyqtgraph/pyqtgraph/tarball/master',
         'pyniexp @ https://github.com/tiborauer/pyniexp/tarball/master',
         'watchdog >= 0.9.0',
