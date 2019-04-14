@@ -8,11 +8,12 @@ Note, we are still tuning our pre-release version. Please check the updates regu
 ## Installation (based on the [OpenNFT manual](https://github.com/OpenNFT/opennft.github.io/blob/master/OpenNFT_Manual_v1.0.pdf))
 
 1. Prerequisites
-    - MATLAB
+    - MATLAB >= R2016b (x64)
         - Image Processing Toolbox
         - Statistics and Machine Learning Toolbox
     - [Miniconda3](https://docs.conda.io/en/latest/miniconda.html)
     - [Git](https://git-scm.com/downloads): for installing SPM, Psychtoolbox, pyqtgraph and pyniexp
+    - Python >= 3.5, <= 3.6 (x64)
 
 2. MATLAB Toolboxes
     - [SPM12](https://github.com/spm/spm12.git)
