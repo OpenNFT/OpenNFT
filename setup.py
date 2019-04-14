@@ -20,27 +20,25 @@ DESCRIPTION = 'An open-source Python/Matlab framework for real-time fMRI neurofe
 
 PYTHON_REQUIRES = '>=3.5, <=3.6'
 
-
-def root_dir():
-    return pathlib.Path(__file__).parent
+ROOT_DIR = pathlib.Path(__file__).parent
 
 
 def version():
     about = {}
-    ver_mod = root_dir() / 'opennft' / '__version__.py'
+    ver_mod = ROOT_DIR / 'opennft' / '__version__.py'
     with ver_mod.open() as f:
         exec(f.read(), about)
     return about['__version__']
 
 
 def long_description():
-    readme = root_dir() / 'README.md'
+    readme = ROOT_DIR / 'README.md'
     with readme.open(encoding='utf-8') as f:
         return '\n' + f.read()
 
 
 def find_matlab_package_files():
-    matlab_files_root = root_dir() / 'opennft' / 'matlab'
+    matlab_files_root = ROOT_DIR / 'opennft' / 'matlab'
     matlab_files = list(str(p) for p in matlab_files_root.rglob('*.m'))
     return matlab_files
 
