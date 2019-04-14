@@ -165,6 +165,9 @@ setup(
     entry_points={
         'gui_scripts': [
             'opennft = opennft.opennft:main'
+        ],
+        'console_scripts': [
+            'opennft_console = opennft.opennft:main'
         ]
     },
 
