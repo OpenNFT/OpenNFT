@@ -43,7 +43,7 @@ You can check installation result using `-v` (verbose) option:
 (OpenNFT_venv)$ pip install git+https://github.com/OpenNFT/OpenNFT.git -v
 ```
 
-Also you can install OpenNFT from you working directory:
+Also you can install OpenNFT from your working directory:
 
 ```
 (OpenNFT_venv)$ pip install /path/to/you/working/dir/
