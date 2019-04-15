@@ -24,7 +24,7 @@ PYTHON_REQUIRES = '>=3.5, <3.7'
 ROOT_DIR = pathlib.Path(__file__).parent
 
 
-def version():
+def get_version():
     about = {}
     ver_mod = ROOT_DIR / 'opennft' / '__version__.py'
     with ver_mod.open() as f:
@@ -53,8 +53,8 @@ def package_data():
     return {'opennft': data}
 
 
-def find_requires():
-    requires = [
+def specify_requirements():
+    requirements = [
         'PyQt5 >= 5.12.0',
         'numpy >= 1.13.1, >= 1.13.1+mkl',
         'pyqtgraph @ https://github.com/pyqtgraph/pyqtgraph/tarball/develop',
@@ -69,12 +69,12 @@ def find_requires():
             (3, 7): 'https://github.com/OpenNFT/OpenNFT/releases/download/v1.0rc0/pyHook-1.5.1-cp37-cp37m-win_amd64.whl',
         }[sys.version_info[:2]]
 
-        requires += [
+        requirements += [
             'pywin32 >= 224',
             'pyHook @ {}'.format(pyhook_whl),
         ]
 
-    return requires
+    return requirements
 
 
 class InstallMatlabEngineMixin:
@@ -178,10 +178,10 @@ class DevelopCommand(develop, InstallMatlabEngineMixin):
 
 setup(
     name=NAME,
-    version=version(),
+    version=get_version(),
 
     python_requires=PYTHON_REQUIRES,
-    install_requires=find_requires(),
+    install_requires=specify_requirements(),
 
     packages=find_packages(exclude=["tests", "*.tests", "*.tests.*", "tests.*"]),
     package_data=package_data(),
