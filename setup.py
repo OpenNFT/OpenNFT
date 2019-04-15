@@ -121,7 +121,10 @@ class InstallMatlabEngineMixin:
         engine_setup_path = str(engine_dir / 'setup.py')
         install_command = [sys.executable, engine_setup_path, 'install']
 
-        p = subprocess.run(install_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        p = subprocess.run(install_command,
+                           stdout=subprocess.PIPE,
+                           stderr=subprocess.PIPE,
+                           cwd=str(engine_dir))
 
         if p.returncode != 0:
             try:
