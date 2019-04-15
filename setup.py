@@ -4,6 +4,7 @@ import sys
 import pathlib
 import subprocess
 
+from distutils.spawn import find_executable
 from distutils.core import DistutilsOptionError
 
 from setuptools import setup, find_packages
@@ -76,7 +77,7 @@ def find_requires():
 
 class InstallMatlabEngineMixin:
     cmd_options = [
-        ('matlab-root=', None, "MATLAB installation directory")
+        ('matlab-root=', None, "MATLAB installation directory (MATLABROOT)")
     ]
 
     def _initialize(self):
@@ -90,15 +91,30 @@ class InstallMatlabEngineMixin:
                     'MATLAB installation directory "{}" does not exist'.format(self.matlab_root))
 
     def _install_matlab_engine(self):
-        if not self.matlab_root:
-            return
+        if self.matlab_root:
+            matlab_root = self.matlab_root
+            install_failed_error = True
+        else:
+            matlab_exe = find_executable('matlab')
+            if not matlab_exe:
+                return
 
-        engine_dir = self.matlab_root / 'extern' / 'engines' / 'python'
+            matlab_exe_parent = pathlib.Path(matlab_exe).parent
+            install_failed_error = False
+
+            if matlab_exe_parent.name == 'bin':
+                matlab_root = matlab_exe_parent.parent
+            else:
+                # /matlabroot/bin/win64
+                matlab_root = matlab_exe_parent.parent.parent
+
+            print('MATLAB was found. MATLABROOT: "{}"'.format(matlab_root))
+
+        engine_dir = matlab_root / 'extern' / 'engines' / 'python'
 
         if not engine_dir.is_dir():
             raise EnvironmentError(
-                'Cannot find "MATLAB engine for Python" in MATLAB root "{}"'.format(
-                    self.matlab_root))
+                'Cannot find "MATLAB engine for Python" in MATLAB root "{}"'.format(matlab_root))
 
         print('Installing "MATLAB engine for Python" from "{}"...'.format(engine_dir))
 
@@ -108,10 +124,16 @@ class InstallMatlabEngineMixin:
         p = subprocess.run(install_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
         if p.returncode != 0:
-            raise EnvironmentError(
-                'An error occurred while installing "MATLAB engine for Python"\n'
-                + '{}\n'.format(p.stderr.decode('utf-8'))
-            )
+            try:
+                raise EnvironmentError(
+                    'An error occurred while installing "MATLAB engine for Python"\n'
+                    + '{}\n'.format(p.stderr.decode('utf-8'))
+                )
+            except EnvironmentError as err:
+                if install_failed_error:
+                    raise
+                else:
+                    print(err, file=sys.stderr)
         else:
             print('{}\n\n"Matlab Engine for Python" is successfully installed'.format(
                 p.stdout.decode('utf-8')))

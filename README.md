@@ -20,13 +20,13 @@ Note, we are still tuning our pre-release version. Please check the updates regu
     - [Psychtoolbox 3](https://github.com/Psychtoolbox-3/Psychtoolbox-3.git)
     - [JSONlab](https://uk.mathworks.com/matlabcentral/mlc-downloads/downloads/submissions/33381/versions/22/download/zip)
 
-3. Install in virtual environment (OpenNFT_venv) with Python 3.5
+3. Install in virtual environment (OpenNFT_venv) with conda and Python 3.5
 
-    * `$ conda create --name OpenNFT_venv python=3.5`
-    * `$ conda activate OpenNFT_venv`
-    * `(OpenNFT_venv)$ conda install pip setuptools`
-    * (optional for numpy+MKL) `(OpenNFT_venv)$ pip install http://www.silx.org/pub/wheelhouse/numpy-1.13.1+mkl-cp35-cp35m-win_amd64.whl`
-    * `(OpenNFT_venv)$ pip install git+https://github.com/OpenNFT/OpenNFT.git --install-option "--matlab-root=<MATLABROOT>"`
+    - `$ conda create --name OpenNFT_venv python=3.5`
+    - `$ conda activate OpenNFT_venv`
+    - `(OpenNFT_venv)$ conda install pip setuptools`
+    - (optional for numpy+MKL) `(OpenNFT_venv)$ pip install http://www.silx.org/pub/wheelhouse/numpy-1.13.1+mkl-cp35-cp35m-win_amd64.whl`
+    - `(OpenNFT_venv)$ pip install git+https://github.com/OpenNFT/OpenNFT.git --install-option "--matlab-root=<MATLABROOT>"`
 
 4. Running OpenNFT application
     
@@ -35,6 +35,44 @@ Note, we are still tuning our pre-release version. Please check the updates regu
     or with console window:
     
     `(OpenNFT_venv)$ opennft_console`
+
+Also if you do not set install option `--matlab-root` we try to find Matlab automatically.
+You can check installation result using `-v` (verbose) option:
+
+```
+(OpenNFT_venv)$ pip install git+https://github.com/OpenNFT/OpenNFT.git -v
+```
+
+Also you can install OpenNFT from you working directory:
+
+```
+(OpenNFT_venv)$ pip install /path/to/you/working/dir/
+```
+
+or:
+
+```
+(OpenNFT_venv)$ cd /path/to/you/working/dir/
+(OpenNFT_venv)$ pip install .
+```
+
+Also you can use option `-e/--editable` for installing in [editable mode](https://pip.pypa.io/en/stable/reference/pip_install/#editable-installs) (mode for development):
+
+```
+(OpenNFT_venv)$ pip install -e .
+(OpenNFT_venv)$ pip list
+Package     Version    Location
+----------- ---------- -----------------------------
+argh        0.26.2
+keyboard    0.13.3
+nidaqmx     0.5.7
+numpy       1.16.2+mkl
+OpenNFT     1.0.0rc0   c:\workspace\projects\opennft
+pathtools   0.1.2
+pip         19.0.3
+pyHook      1.5.1
+...
+```
 
 ## Demo dataset
 https://github.com/OpenNFT/OpenNFT_Demo/releases  
