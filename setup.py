@@ -55,7 +55,7 @@ def find_requires():
     requires = [
         'PyQt5 >= 5.12.0',
         'numpy >= 1.13.1, >= 1.13.1+mkl',
-        'pyqtgraph @ https://github.com/pyqtgraph/pyqtgraph/tarball/master',
+        'pyqtgraph @ https://github.com/pyqtgraph/pyqtgraph/tarball/develop',
         'pyniexp @ https://github.com/tiborauer/pyniexp/tarball/master',
         'watchdog >= 0.9.0',
     ]
