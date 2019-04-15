@@ -46,7 +46,8 @@ def find_matlab_package_files():
 
 def package_data():
     data = [
-        'configs/*'
+        'configs/*',
+        'ui/*.ui',
     ] + find_matlab_package_files()
     return {'opennft': data}
 
