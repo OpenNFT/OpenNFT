@@ -197,7 +197,7 @@ setup(
     },
 
     classifiers=[
-        'License :: OSI Approved :: MIT License',
+        'License :: OSI Approved :: GPL-3.0 License',
         'Programming Language :: Python',
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.5',
