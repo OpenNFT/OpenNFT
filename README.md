@@ -75,6 +75,7 @@ pyHook      1.5.1
 ```
 
 ## Demo dataset
-https://github.com/OpenNFT/OpenNFT_Demo/releases  
+https://github.com/OpenNFT/OpenNFT_Demo/releases 
+ 
 #### N.B.:
-Use the updated Setup and Protocol files provided with OpenNFT - https://github.com/OpenNFT/OpenNFT/tree/master/configs
+Use the updated Setup and Protocol files provided with OpenNFT - https://github.com/OpenNFT/OpenNFT/tree/master/opennft/configs
