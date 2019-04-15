@@ -8,8 +8,8 @@ from distutils.spawn import find_executable
 from distutils.core import DistutilsOptionError
 
 from setuptools import setup, find_packages
-from setuptools.command.develop import develop
 from setuptools.command.install import install
+from setuptools.command.develop import develop
 
 
 NAME = 'OpenNFT'
