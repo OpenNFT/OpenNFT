@@ -16,7 +16,7 @@ import pyqtgraph as pg
 from pyqtgraph.Qt import QtCore
 from pyqtgraph.Qt import QtGui
 
-import excepthook
+from opennft import excepthook
 
 excepthook.set_hook()
 

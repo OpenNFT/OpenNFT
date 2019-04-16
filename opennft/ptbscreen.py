@@ -11,11 +11,9 @@ Written by Evgeny Prilepin, Artem Nikonorov, Yury Koush
 
 """
 
-import mlproc
-import eventrecorder as erd
-from eventrecorder import Times as Times
+from opennft import eventrecorder as erd, mlproc
+from opennft.eventrecorder import Times as Times
 import multiprocessing as mp
-import config
 import threading
 
 # ==============================================================================

@@ -11,12 +11,10 @@ Written by Artem Nikonorov
 """                                                       
 
 import pythoncom, pyHook
-import os
 import sys
 import multiprocessing as mp, time
 import numpy as np
-import eventrecorder as erd
-import eventrecorder.Times as Times
+from opennft.eventrecorder import Times
 
 global pulses
 global displayEvent
