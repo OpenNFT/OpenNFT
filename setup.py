@@ -99,6 +99,7 @@ class InstallMatlabEngineMixin:
         else:
             matlab_exe = find_executable('matlab')
             if not matlab_exe:
+                print('Cannot find MATLAB. "Matlab engine for Python" will not be installed', file=sys.stderr)
                 return
 
             matlab_exe_parent = pathlib.Path(matlab_exe).parent
