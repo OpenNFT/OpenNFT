@@ -134,9 +134,9 @@ class InstallMatlabEngineMixin:
             stderr_text = p.stderr.decode()
         except UnicodeDecodeError:
             import chardet  # noqa
-            c = chardet.detect(p.stderr)
-            stdout_text = p.stdout.decode(c['encoding'])
-            stderr_text = p.stderr.decode(c['encoding'])
+            enc = chardet.detect(p.stderr)['encoding']
+            stdout_text = p.stdout.decode(enc)
+            stderr_text = p.stderr.decode(enc)
 
         if p.returncode != 0:
             try:
