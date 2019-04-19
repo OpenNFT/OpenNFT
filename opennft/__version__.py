@@ -7,4 +7,4 @@ Copyright (C) 2016-2019 OpenNFT.org
 
 """
 
-__version__ = '1.0.0.pre'
+__version__ = '1.0.0rc0'

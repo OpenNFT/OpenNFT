@@ -129,12 +129,25 @@ class InstallMatlabEngineMixin:
                            stderr=subprocess.PIPE,
                            cwd=str(engine_dir))
 
+        try:
+            stdout_text = p.stdout.decode()
+            stderr_text = p.stderr.decode()
+        except UnicodeDecodeError:
+            import chardet  # noqa
+            if p.returncode == 0:
+                c = chardet.detect(p.stdout)
+            else:
+                c = chardet.detect(p.stderr)
+
+            enc = c['encoding']
+            stdout_text = p.stdout.decode(enc)
+            stderr_text = p.stderr.decode(enc)
+
         if p.returncode != 0:
             try:
                 raise EnvironmentError(
-                    'An error occurred while installing "MATLAB engine for Python"\n'
-                    + '{}\n'.format(p.stderr.decode('utf-8'))
-                )
+                    'An error occurred while installing "MATLAB engine for Python"\n{}\n'.format(
+                        stderr_text))
             except EnvironmentError as err:
                 if install_failed_error:
                     raise
@@ -142,7 +155,7 @@ class InstallMatlabEngineMixin:
                     print(err, file=sys.stderr)
         else:
             print('{}\n\n"Matlab Engine for Python" is successfully installed'.format(
-                p.stdout.decode('utf-8')))
+                stdout_text))
 
 
 class InstallCommand(install, InstallMatlabEngineMixin):
@@ -175,7 +188,6 @@ class DevelopCommand(develop, InstallMatlabEngineMixin):
     def run(self):
         self._install_matlab_engine()
         develop.run(self)
-
 
 setup(
     name=NAME,
