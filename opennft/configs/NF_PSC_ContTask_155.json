@@ -1,0 +1,39 @@
+{
+"BaselineName": "Bas",
+"CondName": "NF",
+"TaskName": "Task",
+"Cond": [
+        	{
+            			"ConditionName": "Bas",
+            			"OnOffsets": [
+                			[1,10],
+                			[31,40],
+                			[61,70],
+                			[91,100],
+                			[121,130]
+            			]
+        		},
+        		{
+
+            			"ConditionName": "NF",
+            			"OnOffsets": [
+                			[11,20],
+                			[41,50],
+                			[71,80],
+                			[101,110],
+                			[131,140]
+            			]
+        		},
+        		{
+
+            			"ConditionName": "Task",
+            			"OnOffsets": [
+               				[21,30],
+                			[51,60],
+                			[81,90],
+                			[111,120],
+                			[141,150]
+             			]
+        	}
+]
+}

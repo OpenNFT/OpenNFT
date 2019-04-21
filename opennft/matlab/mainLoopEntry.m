@@ -21,8 +21,17 @@ if ~(indVol > P.nrSkipVol)
 end
 mainLoopData = evalin('base', 'mainLoopData');
 
-%% PSC
-if (strcmp(P.Prot, 'Inter') ||  strcmp(P.Prot, 'Cont'))  && ...
+% Get experiment onset time stamp. This perhaps redundant with the event
+% recording already implemented, but as the task process is uncoupled from
+% data input I prefer to do this separately as well.
+if indVol == double(P.nrSkipVol)+1
+    P.expOns = GetSecs; 
+    fprintf('\n\n=============')
+    fprintf('\nWe are live!')
+    fprintf('\n=============\n\n')
+end
+
+if (strcmp(P.Prot, 'Inter') ||  strcmp(P.Prot, 'Cont') || strcmp(P.Prot, 'ContTask'))  && ...
         (strcmp(P.Type, 'PSC')   ||  strcmp(P.Type, 'SVM') )
     
     mainLoopData.indVolNorm = indVol - P.nrSkipVol;
@@ -43,6 +52,19 @@ if (strcmp(P.Prot, 'Inter') ||  strcmp(P.Prot, 'Cont'))  && ...
         end
     end
     
+    if strcmp(P.Prot, 'ContTask')
+        if condition == 1
+            mainLoopData.flagEndPSC = 0;
+            mainLoopData.dispValue = 0;
+            mainLoopData.Reward = '';
+        elseif condition == 2
+            mainLoopData.flagEndPSC = 1;
+        elseif condition == 3
+            mainLoopData.flagEndPSC = 0;
+            mainLoopData.Reward = '';
+        end
+    end
+
     if strcmp(P.Prot, 'Inter')
         switch condition
             case 1
@@ -62,6 +84,8 @@ if (strcmp(P.Prot, 'Inter') ||  strcmp(P.Prot, 'Cont'))  && ...
         displayData.feedbackType = 'value_fixation';
     elseif strcmp(P.Prot, 'Cont')
         displayData.feedbackType = 'bar_count';
+    elseif strcmp(P.Prot, 'ContTask')
+        displayData.feedbackType = 'bar_count_task';  
     end
     displayData.condition = condition;
     displayData.dispValue = mainLoopData.dispValue;
@@ -105,6 +129,7 @@ end
 displayData.displayStage = 'instruction';
 displayData.iteration = indVol;
 displayData.displayBlankScreen = 0;
+displayData.taskseq = 0;
 mainLoopData.displayData = displayData;
 mainLoopData.feedbackType = displayData.feedbackType;
 

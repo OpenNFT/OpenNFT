@@ -50,6 +50,30 @@ if strcmp(P.Prot, 'Cont') && isPSC
     end
 end
 
+if strcmp(P.Prot, 'ContTask') && isPSC
+    P.TaskName = prt.TaskName;
+    P.vectEncCond = ones(1,P.NrOfVolumes-P.nrSkipVol);
+    P.TaskFirstVol = zeros(1,P.NrOfVolumes+P.nrSkipVol);
+    
+    P.TaskFirstVol(1,(prt.Cond{end}.OnOffsets(:,1)+double(P.nrSkipVol))')=1;
+    P.CondNames = {P.BaselineName, P.CondName, P.TaskName};
+    for x = 1:lCond
+        for k = 1:length(prt.Cond{x}.OnOffsets(:,1)) 
+            unitBlock = prt.Cond{x}.OnOffsets(k,1) : prt.Cond{x}.OnOffsets(k,2); 
+            if strcmpi(prt.Cond{x}.ConditionName, 'Bas') 
+                P.vectEncCond(unitBlock) = 1;
+                P.ProtBAS(k,:) = {unitBlock}; 
+            elseif strcmpi(prt.Cond{x}.ConditionName, 'NF') 
+                P.vectEncCond(unitBlock) = 2;
+                P.ProtNF(k,:) = {unitBlock};  
+            elseif strcmpi(prt.Cond{x}.ConditionName, 'Task') 
+                P.vectEncCond(unitBlock) = 3;
+                P.ProtTask(k,:) = {unitBlock};  
+            end
+        end
+    end 
+end
+
 if strcmp(P.Prot, 'Inter') && isPSC
     P.vectEncCond = ones(1,NrOfVolumes-nrSkipVol);
     P.DispName = prt.DispName;
