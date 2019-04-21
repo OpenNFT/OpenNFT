@@ -58,8 +58,9 @@ addpath('.\nfbDCM_Offl');
 dataDir            = '.\NF_Data_1\';
 timeseriesFileName = [dataDir 'foo_1_proc_tsROIs.mat'];
 parametersFileName = [dataDir 'foo_1_P.mat'];
-% path to SPM_DCM_108.mat structure or copy in the same directory
-spmFileName        = ['.\SPM_DCM_108.mat'];
+% path(rename) to SPM.mat or copy in the same directory.
+% It is generated in the \Settings.
+spmFileName        = ['.\SPM_DCM.mat'];
 
 % Calculate DCM for NF trial indices,
 % specify indices as xdxTrials = 1:7, or 2:4, or 5

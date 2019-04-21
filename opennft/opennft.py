@@ -41,6 +41,8 @@ import queue
 import enum
 import re
 import fnmatch
+import threading
+import multiprocessing
 
 import numpy as np
 import pyqtgraph as pg
@@ -48,34 +50,20 @@ import pyqtgraph as pg
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 
+from pyniexp.connection import Udp
+
 from PyQt5.QtWidgets import QApplication, QWidget, QFileDialog
 from PyQt5.QtGui import QIcon, QPalette
 from PyQt5.QtCore import QSettings, QTimer, QEvent, QRegExp
 from PyQt5.uic import loadUi
 from PyQt5.QtGui import QRegExpValidator
 
-import config
-import excepthook
-import utils
-import mlproc
-import ptbscreen
-import projview
-
-import socket
-import ast
-
-import multiprocessing
-import threading
-
-import eventrecorder as erd
-from eventrecorder import Times as Times
-
-# if missing in VENV, install it by
-# pip install git+https://github.com/tiborauer/pyniexp.git
-from pyniexp.connection import Udp
+from opennft import excepthook
+from opennft import eventrecorder as erd
+from opennft import config, mlproc, ptbscreen, projview, utils
 
 if config.USE_MRPULSE:
-    import MRpulse
+    from opennft import mrpulse
 
 
 # Enable antialiasing for prettier plots
@@ -101,7 +89,7 @@ class CreateFileEventHandler(FileSystemEventHandler):
         # if not event.is_directory and event.src_path.endswith(self.filepat):
         if not event.is_directory and fnmatch.fnmatch(os.path.basename(event.src_path), self.filepat):
             #t1
-            self.recorder.recordEvent(Times.t1, 0)
+            self.recorder.recordEvent(erd.Times.t1, 0)
             self.fq.put(event.src_path)
 
 
@@ -119,7 +107,12 @@ class OpenNFT(QWidget):
     def initUdpSender(self):
         if not config.USE_UDP_FEEDBACK:
             return
-        self.udpSender = Udp(IP=config.UDP_FEEDBACK_IP,port=config.UDP_FEEDBACK_PORT,control_signal=config.UDP_FEEDBACK_CONTROLCHAR,encoding='UTF-8')
+        self.udpSender = Udp(
+            IP=config.UDP_FEEDBACK_IP,
+            port=config.UDP_FEEDBACK_PORT,
+            control_signal=config.UDP_FEEDBACK_CONTROLCHAR,
+            encoding='UTF-8'
+        )
         self.udpSender.connect_for_sending()
         self.udpSender.sending_time_stamp = True
 
@@ -512,13 +505,11 @@ class OpenNFT(QWidget):
 
     # --------------------------------------------------------------------------
     def initMainLoopData(self):
-        print('initiating mainloopdata')
         # Data types
         self.mainLoopData['DataType'] = self.cbDataType.currentText()
-#        self.mainLoopData['taskseq'] = 0
 
         self.eng.workspace['mainLoopData'] = self.mainLoopData
-               
+
         self.eng.setupProcParams(nargout=0)
 
         with utils.timeit("Receiving 'P' from Matlab:"):
@@ -622,10 +613,9 @@ class OpenNFT(QWidget):
             self.eng.mainLoopEntry(self.iteration, nargout=0)
 
             self.displayData = self.eng.initDispalyData(self.iteration)
-            
 
             #t6, display instruction prior to data acquisition
-            self.recorder.recordEvent(Times.t6, self.iteration)
+            self.recorder.recordEvent(erd.Times.t6, self.iteration)
 
             if self.P['Type'] == 'PSC':
                 if config.USE_PTB:
@@ -642,7 +632,7 @@ class OpenNFT(QWidget):
                     self.printToLog('Sending by UDP - dispValue = ' + str(self.displayData['dispValue']))
                     self.udpSender.send_data(self.displayData['dispValue'])
                 # t7
-                self.recorder.recordEvent(Times.t7, self.iteration)
+                self.recorder.recordEvent(erd.Times.t7, self.iteration)
             elif self.P['Type'] == 'DCM':
                 if not self.isCalculateDcm and config.USE_PTB:
                     self.displayScreen()
@@ -681,7 +671,7 @@ class OpenNFT(QWidget):
                 return
 
         # t2
-        self.recorder.recordEvent(Times.t2, self.iteration)
+        self.recorder.recordEvent(erd.Times.t2, self.iteration)
 
         if not self.reachedFirstFile:
             if not self.P['FirstFileName'] in fname:
@@ -719,7 +709,7 @@ class OpenNFT(QWidget):
             self.eng.preprVol(fname, self.iteration, nargout=0)
 
         # t3
-        self.recorder.recordEvent(Times.t3, self.iteration)
+        self.recorder.recordEvent(erd.Times.t3, self.iteration)
 
         if self.eng.evalin('base', 'mainLoopData.statMapCreated') == 1:
             nrVoxInVol = self.eng.evalin('base', 'mainLoopData.nrVoxInVol')
@@ -739,7 +729,7 @@ class OpenNFT(QWidget):
             self.outputSamples = self.eng.preprSig(self.iteration)
 
         # t4
-        self.recorder.recordEvent(Times.t4, self.iteration)
+        self.recorder.recordEvent(erd.Times.t4, self.iteration)
 
         if self.P['Type'] == 'DCM':
             if self.isCalculateDcm:
@@ -753,7 +743,7 @@ class OpenNFT(QWidget):
 
                 if (self.tagFuture.done() and self.oppFuture.done()) or lastBlankScan:
                     # t12 last DCM model computation is done
-                    self.recorder.recordEvent(Times.t12, self.iteration)
+                    self.recorder.recordEvent(erd.Times.t12, self.iteration)
                     dcmTagLE = self.tagFuture.result()
                     dcmOppLE = self.oppFuture.result()
                     self.printToLog('DCM calculated')
@@ -762,7 +752,7 @@ class OpenNFT(QWidget):
                     self.displayData = self.eng.nfbCalc(self.iteration, self.displayData, dcmTagLE, dcmOppLE, True, nargout=1)
 
                     # t5
-                    self.recorder.recordEvent(Times.t5, self.iteration)
+                    self.recorder.recordEvent(erd.Times.t5, self.iteration)
                     self.isCalculateDcm = False
 
             else:
@@ -779,7 +769,7 @@ class OpenNFT(QWidget):
 
                     # Parallel DCM computing on two matlab engines
                     # t11 first DCM model computation started
-                    self.recorder.recordEvent(Times.t11, self.iteration)
+                    self.recorder.recordEvent(erd.Times.t11, self.iteration)
                     self.tagFuture = self.mlPtbDcmHelper.engine.dcmCalc(
                         'Tag', nargout=1, async=True)
 
@@ -799,17 +789,17 @@ class OpenNFT(QWidget):
             self.displayData = self.eng.nfbCalc(self.iteration, self.displayData, nargout=1)
 
             # t5
-            self.recorder.recordEvent(Times.t5, self.iteration)
+            self.recorder.recordEvent(erd.Times.t5, self.iteration)
             if self.displayData and config.USE_UDP_FEEDBACK:
                 self.printToLog('Sending by UDP - dispValue = ' + str(self.displayData['dispValue']))
                 self.udpSender.send_data(self.displayData['dispValue'])
             # t8
-            self.recorder.recordEvent(Times.t8, self.iteration)
+            self.recorder.recordEvent(erd.Times.t8, self.iteration)
         elif self.P['Type'] == 'PSC':
             self.displayData = self.eng.nfbCalc(self.iteration, self.displayData, nargout=1)
 
             # t5
-            self.recorder.recordEvent(Times.t5, self.iteration)
+            self.recorder.recordEvent(erd.Times.t5, self.iteration)
             if self.displayData and config.USE_UDP_FEEDBACK: # for UDP, configure here if required
                 self.printToLog('Sending by UDP - dispValue = ' + str(self.displayData['dispValue']))
                 self.udpSender.send_data(self.displayData['dispValue'])
@@ -826,8 +816,6 @@ class OpenNFT(QWidget):
                             if cond == 3 and int(self.P['TaskFirstVol'][0][self.iteration-1]) == 1:
                                 self.displayData['taskseq'] = 1   
                                 self.displayScreen()
-#                               i'm a bit suspicious of the workings of the threading processes..
-#                               put these lines here to be consistent with DCM logic
                                 QApplication.processEvents()
                                 self.endDisplayEvent.wait()
                                 self.endDisplayEvent.clear()
@@ -852,7 +840,7 @@ class OpenNFT(QWidget):
 
         # Stop Elapsed time and record
         # self.recorder.recordEvent(config.TIMEVECTOR_LENGTH, self.iteration, time.time() - t)
-        self.recorder.recordEventDuration(Times.d0, self.iteration, time.time() - t)
+        self.recorder.recordEventDuration(erd.Times.d0, self.iteration, time.time() - t)
         self.leElapsedTime.setText('{:.4f}'.format(time.time() - t))
         self.leCurrentVolume.setText('%d' % self.iteration)
         print('Elapsed time: {:.4f}'.format(time.time() - t))
@@ -988,9 +976,16 @@ class OpenNFT(QWidget):
 
     # --------------------------------------------------------------------------
     def basicSetupPlot(self, plotitem, grid=True):
-        xmax = max(self.musterInfo['tmpCond1'][-1][1],
-                   self.musterInfo['tmpCond2'][-1][1])
-
+#        creating muster info must be optimized. Its not very flexible in its current form
+#        this works around the x-length issue for the ContTask condition only! 
+        if self.P['Prot'] == 'ContTask':
+            xmax = max(self.musterInfo['tmpCond1'][-1][1],
+                       self.musterInfo['tmpCond2'][-1][1],
+                       self.musterInfo['tmpCond3'][-1][1])
+        else:
+            xmax = max(self.musterInfo['tmpCond1'][-1][1],
+                       self.musterInfo['tmpCond2'][-1][1])
+        
         plotitem.disableAutoRange(axis=pg.ViewBox.XAxis)
         plotitem.setXRange(1, xmax, padding=0.0)
         plotitem.showGrid(x=grid, y=grid, alpha=config.PLOT_GRID_ALPHA)
@@ -1145,7 +1140,7 @@ class OpenNFT(QWidget):
                         sid, self.P['WorkFolder'], self.P['Prot'], ptbP)
 
             if config.USE_MRPULSE:
-                (self.pulseProc, self.mrPulses) = MRpulse.start(self.P['NrOfVolumes'], self.displayEvent)
+                (self.pulseProc, self.mrPulses) = mrpulse.start(self.P['NrOfVolumes'], self.displayEvent)
 
             self.recorder.initialize(self.P['NrOfVolumes'])
             self.eng.nfbInitReward(nargout=0)
@@ -1221,7 +1216,7 @@ class OpenNFT(QWidget):
             self.nfbFinStarted = None
 
         if config.USE_MRPULSE and hasattr(self, 'mrPulses'):
-            np_arr = MRpulse.toNpData(self.mrPulses)
+            np_arr = mrpulse.toNpData(self.mrPulses)
             self.pulseProc.terminate()
         
         if self.P.get('nfbDataFolder'):
@@ -1492,12 +1487,10 @@ class OpenNFT(QWidget):
             self.P['RoiAnatFolder'] = self.leRoiAnatFolder.text()
         else:
             self.P['RoiFilesFolder'] = self.leRoiAnatFolder.text()
-            
         self.P['RoiAnatOperation'] = self.leRoiAnatOperation.text()        
         self.P['RoiGroupFolder'] = self.leRoiGroupFolder.text()
         self.P['AnatBgFolder'] = self.leAnatBgFolder.text()
         self.P['MCTempl'] = self.leMCTempl.text()
-
 
         # --- middle ---
         self.P['ProjectName'] = self.leProjName.text()
@@ -1636,7 +1629,7 @@ class OpenNFT(QWidget):
         if config.USE_TCP_DATA:
             # TCP receiver settings
             config.TCP_DATA_IP = self.leTCPDataIP.text()
-            config.TCP_DATA_PORT = int( self.leTCPDataPort.text())
+            config.TCP_DATA_PORT = int(self.leTCPDataPort.text())
 
         config.USE_PTB = self.cbUsePTB.isChecked()
 
@@ -1644,7 +1637,7 @@ class OpenNFT(QWidget):
         if config.USE_UDP_FEEDBACK:
             # UDP sender settings
             config.UDP_FEEDBACK_IP = self.leUDPFeedbackIP.text()
-            config.UDP_FEEDBACK_PORT = int( self.leUDPFeedbackPort.text())
+            config.UDP_FEEDBACK_PORT = int(self.leUDPFeedbackPort.text())
             config.UDP_FEEDBACK_CONTROLCHAR = self.leUDPFeedbackControlChar.text()
             config.UDP_SEND_CONDITION = self.cbUDPSendCondition.isChecked()
         else: config.UDP_SEND_CONDITION = False
@@ -2020,10 +2013,10 @@ class OpenNFT(QWidget):
 
         # return
         if not hasattr(self, 'tvData'):
-            (self.pulseProc, self.tvData) = MRpulse.start(1, 12, self.e1)
+            (self.pulseProc, self.tvData) = mrpulse.start(1, 12, self.e1)
             self.testStarted = True
         else:
-            np_arr = MRpulse.toNpData(self.tvData)
+            np_arr = mrpulse.toNpData(self.tvData)
             print(np_arr)
 
             self.e1.set()

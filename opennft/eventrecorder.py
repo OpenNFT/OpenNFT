@@ -14,7 +14,7 @@ import time
 import numpy as np
 import enum
 
-__all__ = ['Times'  'EventRecorder']
+__all__ = ['Times', 'EventRecorder']
 
 
 class Times(enum.IntEnum):

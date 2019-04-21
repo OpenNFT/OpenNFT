@@ -52,11 +52,11 @@ if ~fFullScreen
             [40 40 640 520]);
     else
         P.Screen.wPtr = Screen('OpenWindow', screenid, [125 125 125], ...
-            [40 40 640 520]);
+            [40 40 720 720]);
     end
 else
     % full screen
-    P.Screen.wPtr = Screen('OpenWindow', screenid, [125 125 125]);
+    P.Screen.wPtr = Screen('OpenWindow', screenid, [0 0 0]);
 end
 
 [w, h] = Screen('WindowSize', P.Screen.wPtr);

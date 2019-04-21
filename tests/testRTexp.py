@@ -45,4 +45,4 @@ for filename in os.listdir(srcpath):
     	dst = os.path.join(dstpath, filename)
     	shutil.copy(src, dst)
     	print(filename)
-    	sleep(pause_in_seconds) # seconds
+    	sleep(pause_in_sec) # seconds

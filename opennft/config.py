@@ -10,8 +10,8 @@ Copyright (C) 2016-2019 OpenNFT.org
 import os
 
 ROOT_PATH = os.path.abspath(os.path.dirname(__file__))
-OpenNFT_UI = os.path.join(ROOT_PATH, 'OpenNFT.ui')
-OpenNFT_ICON = os.path.join(ROOT_PATH, 'appicon.png')
+OpenNFT_UI = os.path.join(ROOT_PATH, 'ui', 'opennft.ui')
+OpenNFT_ICON = os.path.join(ROOT_PATH, 'ui', 'images', 'appicon.png')
 MATLAB_FUNCTIONS_PATH = os.path.join(ROOT_PATH, 'matlab')
 
 # matlab processes

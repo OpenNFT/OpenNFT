@@ -159,7 +159,6 @@ switch feedbackType
                 % display
                 P.Screen.vbl = Screen('Flip', P.Screen.wPtr, ...
                     P.Screen.vbl + P.Screen.ifi/2);
-                fprintf([round(dispValue) '\n'])
         end
         
     %% Trial-based DCM

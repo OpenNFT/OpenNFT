@@ -146,7 +146,7 @@ if isPSC && strcmp(P.Prot, 'Inter')
 
             % [0...P.MaxFeedbackVal], for Display
             if ~P.NegFeedback && dispValue < 0
-                dispValue = 1;
+                dispValue = 0;
             end
             if dispValue > P.MaxFeedbackVal
                 dispValue = P.MaxFeedbackVal;
