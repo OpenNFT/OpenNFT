@@ -31,7 +31,7 @@ condition = mainLoopData.condition;
 [isPSC, isDCM, isSVM, isIGLM] = getFlagsType(P);
 
 %% Continuous PSC NF
-if isPSC && strcmp(P.Prot, 'Cont')
+if isPSC && (strcmp(P.Prot, 'Cont') || strcmp(P.Prot, 'ContTask'))
     blockNF = mainLoopData.blockNF;
     firstNF = mainLoopData.firstNF;
 

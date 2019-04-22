@@ -15,6 +15,8 @@ function displayFeedback(displayData)
 tDispl = tic;
 
 P = evalin('base', 'P');
+Tex = evalin('base', 'Tex');
+
 % Note, don't split cell structure in 2 lines with '...'.
 fieldNames = {'feedbackType', 'condition', 'dispValue', 'Reward', 'displayStage','displayBlankScreen', 'iteration'};
 defaultFields = {'', 0, 0, '', '', '', 0};
@@ -59,6 +61,47 @@ switch feedbackType
         end
         P.Screen.vbl = Screen('Flip', P.Screen.wPtr, ...
             P.Screen.vbl + P.Screen.ifi/2);
+    
+    %% Continuous PSC with task block
+    case 'bar_count_task'
+        dispValue  = dispValue*(floor(P.Screen.h/2) - floor(P.Screen.h/10))/100;
+        switch condition
+            case 1 % Baseline
+                % Text "COUNT"
+                Screen('TextSize', P.Screen.wPtr , P.Screen.h/10);
+                Screen('DrawText', P.Screen.wPtr, 'COUNT', ...
+                    floor(P.Screen.w/2-P.Screen.h/4), ...
+                    floor(P.Screen.h/2-P.Screen.h/10), instrColor);
+                
+                 P.Screen.vbl = Screen('Flip', P.Screen.wPtr, ...
+                     P.Screen.vbl + P.Screen.ifi/2);
+                
+            case 2 % Regualtion
+                % Fixation Point
+                Screen('FillOval', P.Screen.wPtr, [255 255 255], ...
+                    [floor(P.Screen.w/2-P.Screen.w/200), ...
+                    floor(P.Screen.h/2-P.Screen.w/200), ...
+                    floor(P.Screen.w/2+P.Screen.w/200), ...
+                    floor(P.Screen.h/2+P.Screen.w/200)]);
+                % draw target bar
+                Screen('DrawLines', P.Screen.wPtr, ...
+                    [floor(P.Screen.w/2-P.Screen.w/20), ...
+                    floor(P.Screen.w/2+P.Screen.w/20); ...
+                    floor(P.Screen.h/10), floor(P.Screen.h/10)], ...
+                    P.Screen.lw, [255 0 0]);
+                % draw activity bar
+                Screen('DrawLines', P.Screen.wPtr, ...
+                    [floor(P.Screen.w/2-P.Screen.w/20), ... 
+                    floor(P.Screen.w/2+P.Screen.w/20); ...
+                    floor(P.Screen.h/2-dispValue), ...
+                    floor(P.Screen.h/2-dispValue)], P.Screen.lw, [0 255 0]);
+                
+                    P.Screen.vbl = Screen('Flip', P.Screen.wPtr, ...
+                        P.Screen.vbl + P.Screen.ifi/2);
+            case 3  
+                % ptbTask sequence called seperetaly in python
+                
+        end
         
     %% Intermittent PSC
     case 'value_fixation'
@@ -111,7 +154,7 @@ switch feedbackType
                     P.Screen.h/2 - P.Screen.h/4, dispColor);
                 % smiley
                 Screen('DrawTexture', P.Screen.wPtr, ...
-                    P.Screen.texSm(round(dispValue)), ...
+                    Tex(round(dispValue)), ...
                     P.Screen.rectSm, P.Screen.dispRect+[0 0 0 0]);
                 % display
                 P.Screen.vbl = Screen('Flip', P.Screen.wPtr, ...
@@ -134,11 +177,11 @@ switch feedbackType
                     disp(['Neut Pict:' mat2str(imgNNr)]);
                 end
                 if nrN < 5
-                    basImage = P.texN(imgNNr);
+                    basImage = Tex.N(imgNNr);
                 elseif (nrN > 4) && (nrN < 9)
-                    basImage = P.texN(imgNNr);
+                    basImage = Tex.N(imgNNr);
                 elseif nrN > 8
-                    basImage = P.texN(imgNNr);
+                    basImage = Tex.N(imgNNr);
                 end
                 % Draw Texture
                 Screen('DrawTexture', P.Screen.wPtr, basImage);
@@ -154,11 +197,11 @@ switch feedbackType
                     disp(['Posit Pict:' mat2str(imgPNr)]);
                 end
                 if nrP < 5
-                    dispImage = P.texP(imgPNr);
+                    dispImage = Tex.P(imgPNr);
                 elseif (nrP > 4) && (nrP < 9)
-                    dispImage = P.texP(imgPNr);
+                    dispImage = Tex.P(imgPNr);
                 elseif nrP > 8
-                    dispImage = P.texP(imgPNr);
+                    dispImage = Tex.P(imgPNr);
                 end
                 % Draw Texture
                 Screen('DrawTexture', P.Screen.wPtr, dispImage);
