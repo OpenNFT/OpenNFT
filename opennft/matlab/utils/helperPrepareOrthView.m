@@ -266,6 +266,13 @@ if ~isempty(Stat)
         drawimgs = reshape(actc(tmps(:),:)*actp+gryc(imgs(:),:)*(1-actp), ...
                                                            [size(imgs) 3]);
     end
+else
+    if strParam.modeDispl(1) || strParam.modeDispl(2)
+        %% Background
+        drawimgt = cimgt;
+        drawimgc = cimgc;
+        drawimgs = cimgs;
+    end
 end
 if strParam.modeDispl(3)
     %% Background + ROIs   
@@ -320,7 +327,7 @@ function [drawimgt, drawimgc, drawimgs, cimgt, cimgc, cimgs] = ...
                             getOrthROIs(imgt, imgc, imgs, ROIs, coordParam)
 global strParam
 % 6 colors, extend if >6  ROIs
-colour=[0 1 0;0 1 1;0 0 1;1 0 1;1 0 0;1 1 0;];%pink(3); %flipud(pink(3));
+colour=[0 1 0;0 1 1;0 0 1;1 0 1;1 0 0;1 1 0];%pink(3); %flipud(pink(3));
 mx = coordParam.mx;
 mn = coordParam.mn;
 eps = coordParam.eps;
