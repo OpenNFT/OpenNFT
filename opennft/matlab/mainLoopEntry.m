@@ -21,13 +21,16 @@ if ~(indVol > P.nrSkipVol)
 end
 mainLoopData = evalin('base', 'mainLoopData');
 
-% Get experiment onset time stamp. This perhaps redundant with the event
-% recording already implemented, but as the task process is uncoupled from
-% data input I prefer to do this separately as well.
+% Get Matlab time stamp related to # t6 using PTB-3 function.
+% For clarification, see OpenNFT timing diagram on the website and our ms.
+% Note that there is a small difference between this one and recordEvent()
+% times since they are taken subsequently. We also don't know how PTB
+% functions could deal with time-referencing issues between 2 parallel Matlab
+% processes, i.e. core process and PTB helper.
 if indVol == double(P.nrSkipVol)+1
-    P.expOns = GetSecs; 
+    P.expOns_t6 = GetSecs;
     fprintf('\n\n=============')
-    fprintf('\nWe are live!')
+    fprintf('\nMatlab time stamp t6!')
     fprintf('\n=============\n\n')
 end
 

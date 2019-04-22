@@ -19,6 +19,19 @@ if indVol <= P.nrSkipVol
     return;
 end
 
+% Get Matlab time stamp related to # t2 using PTB-3 function.
+% For clarification, see OpenNFT timing diagram on the website and our ms.
+% Note that there is a small difference between this one and recordEvent()
+% times since they are taken subsequently. We also don't know how PTB
+% functions could deal with time-referencing issues between 2 parallel Matlab
+% processes, i.e. core process and PTB helper.
+if indVol == double(P.nrSkipVol)+1
+    P.expOns_t2 = GetSecs;
+    fprintf('\n\n=============')
+    fprintf('\nMatlab time stamp t2!')
+    fprintf('\n=============\n\n')
+end
+
 [isPSC, isDCM, isSVM, isIGLM] = getFlagsType(P);
 if isDCM
     ROIsAnat = evalin('base', 'ROIsAnat');
