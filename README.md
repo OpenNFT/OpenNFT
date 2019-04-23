@@ -33,6 +33,10 @@ You can check installation result using `-v` (verbose) option:
 (OpenNFT_venv)$ pip install git+https://github.com/OpenNFT/OpenNFT.git -v
 ```
 
+**NOTE**: 
+If you use Windows and MATLAB has been installed to default direcory (Program Files) you need 
+Administrator rights for installing Matlab Engine for Python (You need to install OpenNFT via pip as Administrator).
+
 Also you can install OpenNFT from your working directory (OpenNFT project root directory):
 
 ```

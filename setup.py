@@ -54,25 +54,21 @@ def package_data():
 
 
 def specify_requirements():
+    pyhook_whl = {
+        (3, 5): 'https://github.com/OpenNFT/OpenNFT/releases/download/v1.0rc0/pyHook-1.5.1-cp35-cp35m-win_amd64.whl',
+        (3, 6): 'https://github.com/OpenNFT/OpenNFT/releases/download/v1.0rc0/pyHook-1.5.1-cp36-cp36m-win_amd64.whl',
+        (3, 7): 'https://github.com/OpenNFT/OpenNFT/releases/download/v1.0rc0/pyHook-1.5.1-cp37-cp37m-win_amd64.whl',
+    }[sys.version_info[:2]]
+
     requirements = [
         'PyQt5 >= 5.12.0',
         'numpy >= 1.13.1, >= 1.13.1+mkl',
         'pyqtgraph @ https://github.com/pyqtgraph/pyqtgraph/tarball/develop',
         'pyniexp @ https://github.com/tiborauer/pyniexp/tarball/master',
         'watchdog >= 0.9.0',
+        'pywin32 >= 224 ; platform_system == "Windows"',
+        'pyHook @ {} ; platform_system == "Windows"'.format(pyhook_whl),
     ]
-
-    if sys.platform == 'win32':
-        pyhook_whl = {
-            (3, 5): 'https://github.com/OpenNFT/OpenNFT/releases/download/v1.0rc0/pyHook-1.5.1-cp35-cp35m-win_amd64.whl',
-            (3, 6): 'https://github.com/OpenNFT/OpenNFT/releases/download/v1.0rc0/pyHook-1.5.1-cp36-cp36m-win_amd64.whl',
-            (3, 7): 'https://github.com/OpenNFT/OpenNFT/releases/download/v1.0rc0/pyHook-1.5.1-cp37-cp37m-win_amd64.whl',
-        }[sys.version_info[:2]]
-
-        requirements += [
-            'pywin32 >= 224',
-            'pyHook @ {}'.format(pyhook_whl),
-        ]
 
     return requirements
 
