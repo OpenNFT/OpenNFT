@@ -614,9 +614,10 @@ class OpenNFT(QWidget):
 
             self.displayData = self.eng.initDispalyData(self.iteration)
 
-            # t6, display instruction prior to data acquisition
-            self.recorder.recordEvent(erd.Times.t6, self.iteration)
+            # t6, the timestamp after data processing and feedback for PREVIOUS iteraration
+            self.recorder.recordEvent(erd.Times.t6, self.iteration - 1)
 
+            # display instruction prior to data acquisition for current iteration
             if self.P['Type'] == 'PSC':
                 if config.USE_PTB:
                     self.printToLog('instruction + ' + str(self.iteration))
