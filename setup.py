@@ -177,6 +177,7 @@ class DevelopCommand(develop, InstallMatlabEngineMixin):
         self._install_matlab_engine()
         develop.run(self)
 
+
 setup(
     name=NAME,
     version=get_version(),
