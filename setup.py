@@ -126,7 +126,7 @@ class InstallMatlabEngineMixin:
         install_script = str(ROOT_DIR / 'install_matlabengine.py')
         install_command = [sys.executable, install_script, str(engine_dir), ferr_name] + sys.path
 
-        p = subprocess.run(install_command, cwd=str(ROOT_DIR))
+        p = subprocess.run(install_command)
 
         with open(ferr_name, 'r', encoding='utf-8') as ferr:
             stderr_text = ferr.read()
