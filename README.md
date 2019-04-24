@@ -34,8 +34,8 @@ You can check installation result using `-v` (verbose) option:
 ```
 
 **NOTE**: 
-If you use Windows and MATLAB has been installed to default direcory (Program Files) you need 
-Administrator rights for installing Matlab Engine for Python (You need to install OpenNFT via pip as Administrator).
+If you do not have write access in MATLABROOT the installer will try to install "Matlab Engine for Python" 
+with Administrator/root privileges (It elevate privileges via UAC/sudo).
 
 Also you can install OpenNFT from your working directory (OpenNFT project root directory):
 

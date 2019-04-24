@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 
+import os
 import sys
 import pathlib
+import tempfile
 import subprocess
 
 from distutils.spawn import find_executable
@@ -117,27 +119,18 @@ class InstallMatlabEngineMixin:
 
         print('Installing "MATLAB engine for Python" from "{}"...'.format(engine_dir))
 
-        engine_setup_path = str(engine_dir / 'setup.py')
-        install_command = [sys.executable, engine_setup_path, 'install']
+        # A temporary file for writing stderr
+        fd, ferr_name = tempfile.mkstemp()
+        os.close(fd)
 
-        p = subprocess.run(install_command,
-                           stdout=subprocess.PIPE,
-                           stderr=subprocess.PIPE,
-                           cwd=str(engine_dir))
+        install_script = str(ROOT_DIR / 'install_matlabengine.py')
+        install_command = [sys.executable, install_script, str(engine_dir), ferr_name] + sys.path
 
-        try:
-            stdout_text = p.stdout.decode()
-            stderr_text = p.stderr.decode()
-        except UnicodeDecodeError:
-            import chardet  # noqa
-            if p.returncode == 0:
-                c = chardet.detect(p.stdout)
-            else:
-                c = chardet.detect(p.stderr)
+        p = subprocess.run(install_command, cwd=str(ROOT_DIR))
 
-            enc = c['encoding']
-            stdout_text = p.stdout.decode(enc)
-            stderr_text = p.stderr.decode(enc)
+        with open(ferr_name, 'r', encoding='utf-8') as ferr:
+            stderr_text = ferr.read()
+        os.unlink(ferr_name)
 
         if p.returncode != 0:
             try:
@@ -150,8 +143,7 @@ class InstallMatlabEngineMixin:
                 else:
                     print(err, file=sys.stderr)
         else:
-            print('{}\n\n"Matlab Engine for Python" is successfully installed'.format(
-                stdout_text))
+            print('"Matlab Engine for Python" is successfully installed')
 
 
 class InstallCommand(install, InstallMatlabEngineMixin):
