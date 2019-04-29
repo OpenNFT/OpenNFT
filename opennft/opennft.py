@@ -1139,6 +1139,7 @@ class OpenNFT(QWidget):
                     ptbP['WorkFolder'] = self.P['WorkFolder']
                     ptbP['DisplayFeedbackFullscreen'] = self.P['DisplayFeedbackFullscreen']
                     ptbP['Prot'] = self.P['Prot']
+                    ptbP['FeedbackValDec'] = self.P['FeedbackValDec']
                     if self.P['Prot'] == 'ContTask':
                         ptbP['TaskFolder'] = self.P['TaskFolder']
 
