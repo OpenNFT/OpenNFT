@@ -628,6 +628,12 @@ class OpenNFT(QWidget):
                 elif self.P['Type'] == 'DCM':
                     if not self.isCalculateDcm and config.USE_PTB:
                         self.displayScreen()
+            else:
+                
+                if self.P['Type'] == 'SVM':
+                    if self.displayData and config.USE_UDP_FEEDBACK:
+                        self.printToLog('Sending by UDP - instrValue = ') # + str(self.displayData['instrValue'])
+                        #self.udpSender.send_data(self.displayData['instrValue'])
 
         try:
             fname = self.files_queue.get_nowait()
