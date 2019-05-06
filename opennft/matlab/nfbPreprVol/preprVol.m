@@ -14,22 +14,12 @@ function preprVol(inpFileName, indVol)
 
 P = evalin('base', 'P');
 mainLoopData = evalin('base', 'mainLoopData');
+isShowSNR = evalin('base', 'isShowSNR');
+imageViewMode = evalin('base', 'imageViewMode');
+FIRST_SNR_VOLUME = evalin('base', 'FIRST_SNR_VOLUME');
 
 if indVol <= P.nrSkipVol
     return;
-end
-
-% Get Matlab time stamp related to # t2 using PTB-3 function.
-% For clarification, see OpenNFT timing diagram on the website and our ms.
-% Note that there is a small difference between this one and recordEvent()
-% times since they are taken subsequently. We also don't know how PTB
-% functions could deal with time-referencing issues between 2 parallel Matlab
-% processes, i.e. core process and PTB helper.
-if indVol == double(P.nrSkipVol)+1
-    P.expOns_t2 = GetSecs;
-    fprintf('\n\n=============')
-    fprintf('\nMatlab time stamp t2!')
-    fprintf('\n=============\n\n')
 end
 
 [isPSC, isDCM, isSVM, isIGLM] = getFlagsType(P);
@@ -158,6 +148,41 @@ mainLoopData.gKernel = gKernel;
 
 smReslVol = zeros(dimVol);
 spm_smooth(reslVol, smReslVol, gKernel);
+
+smReslVol = zeros(dimVol);
+spm_smooth(reslVol, smReslVol, gKernel);
+
+if indVolNorm > FIRST_SNR_VOLUME
+    
+    [snrVol, mainLoopData.meanVol, mainLoopData.m2Vol ] = snr_calc(indVolNorm, smReslVol, mainLoopData.meanVol, mainLoopData.m2Vol);
+    mainLoopData.snrMapCreated = 1; 
+    
+    if isShowSNR
+   
+        if imageViewMode == 1 || imageViewMode == 2
+            % orthviewAnat (1) || orthviewEPI (2)
+            fname = strrep(P.memMapFile, 'shared', 'SNRVol');
+            m_out = memmapfile(fname, 'Writable', true, 'Format',  {'double', prod(dimVol), 'snrVol'});
+            m_out.Data.snrVol = double(snrVol(:));
+
+        else
+            % mosaic (0)
+            snrMap_2D = vol3Dimg2D(snrVol, slNrImg2DdimX, slNrImg2DdimY, img2DdimX, img2DdimY, dimVol);
+            fname = strrep(P.memMapFile, 'shared', 'SNRMap');
+            m_out = memmapfile(fname, 'Writable', true, 'Format',  {'uint8', prod(dimVol), 'snrMap_2D'});
+            m_out.Data.snrMap_2D = uint8(snrMap_2D(:));
+        
+        end
+    
+    end
+else
+    
+    mainLoopData.snrMapCreated = 0; 
+    
+end
+    
+
+
 
 if isPSC || isSVM
     % Smoothed Vol 3D -> 2D
