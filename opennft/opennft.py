@@ -61,10 +61,10 @@ from PyQt5.QtGui import QRegExpValidator
 
 from opennft import eventrecorder as erd
 from opennft import config, mlproc, ptbscreen, projview, utils
+from opennft.rtQA import rtQAWindow
 
 if config.USE_MRPULSE:
     from opennft import mrpulse
-
 
 # Enable antialiasing for prettier plots
 pg.setConfigOptions(antialias=True)
@@ -85,7 +85,7 @@ class CreateFileEventHandler(FileSystemEventHandler):
     def on_created(self, event):
         # if not event.is_directory and event.src_path.endswith(self.filepat):
         if not event.is_directory and fnmatch.fnmatch(os.path.basename(event.src_path), self.filepat):
-            #t1
+            # t1
             self.recorder.recordEvent(erd.Times.t1, 0)
             self.fq.put(event.src_path)
 
@@ -144,7 +144,7 @@ class OpenNFT(QWidget):
 
         pg.setConfigOption('foreground',
                            self.palette().color(QPalette.Foreground))
-        #self.plotBgColor = (210, 210, 210)
+        # self.plotBgColor = (210, 210, 210)
         self.plotBgColor = (255, 255, 255)
 
         self.roiImageView = self.createRoiImageView()
@@ -166,7 +166,7 @@ class OpenNFT(QWidget):
         self.iteration = 1
         self.preiteration = 0
         self.pendingFilename = ''
-        self.isCalculateDcm = False# todo: rename to computeModelInProgress
+        self.isCalculateDcm = False  # todo: rename to computeModelInProgress
         self.isMainLoopEntered = False
         self.typicalFileSize = 0
         self.mainLoopLock = threading.Lock()
@@ -235,6 +235,8 @@ class OpenNFT(QWidget):
         self.initializeUi()
         self.readAppSettings()
         self.initialize(start=False)
+
+        self.windowRTQA = None
 
     # --------------------------------------------------------------------------
     def closeEvent(self, e):
@@ -384,6 +386,8 @@ class OpenNFT(QWidget):
         self.btnSetup.clicked.connect(self.setup)
         self.btnStart.clicked.connect(self.start)
         self.btnStop.clicked.connect(self.stop)
+        self.btnRTQA.clicked.connect(self.rtQA)
+        self.btnRTQA.setEnabled(False)
 
         self.btnChooseSetFile.clicked.connect(self.onChooseSetFile)
         self.btnChooseSetFile2.clicked.connect(self.onChooseSetFile)
@@ -402,7 +406,7 @@ class OpenNFT(QWidget):
             lambda: self.onChooseFolder('AnatBgFolder', self.leAnatBgFolder))
 
         self.btnMCTempl.clicked.connect(self.onChooseMCTemplFile)
-        #self.btnTest.clicked.connect(self.onTest)
+        # self.btnTest.clicked.connect(self.onTest)
 
         self.btnChooseWorkFolder.clicked.connect(
             lambda: self.onChooseFolder('WorkFolder', self.leWorkFolder))
@@ -413,7 +417,7 @@ class OpenNFT(QWidget):
 
         self.btnStart.setEnabled(False)
 
-        #if config.HIDE_TEST_BTN:
+        # if config.HIDE_TEST_BTN:
         #    self.btnTest.setVisible(False)
 
         self.cbImageViewMode.currentIndexChanged.connect(self.onChangeImageViewMode)
@@ -428,8 +432,9 @@ class OpenNFT(QWidget):
         self.leTCPDataIP.setValidator(QRegExpValidator(QRegExp("[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}"), self))
         self.cbUseTCPData.stateChanged.connect(self.onChangeUseTCPData)
         self.onChangeUseTCPData()
-        
-        self.leUDPFeedbackIP.setValidator(QRegExpValidator(QRegExp("[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}"), self))
+
+        self.leUDPFeedbackIP.setValidator(
+            QRegExpValidator(QRegExp("[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}"), self))
         self.cbUseUDPFeedback.stateChanged.connect(self.onChangeUseUDPFeedback)
         self.onChangeUseUDPFeedback()
 
@@ -452,10 +457,11 @@ class OpenNFT(QWidget):
         self.leUDPFeedbackPort.setEnabled(self.cbUseUDPFeedback.isChecked())
         self.leUDPFeedbackControlChar.setEnabled(self.cbUseUDPFeedback.isChecked())
         self.cbUDPSendCondition.setEnabled(self.cbUseUDPFeedback.isChecked())
-        if not(self.cbUseUDPFeedback.isChecked()):
-            self.cbUDPSendCondition.setChecked(False)        
+        if not (self.cbUseUDPFeedback.isChecked()):
+            self.cbUDPSendCondition.setChecked(False)
 
-    # --------------------------------------------------------------------------
+            # --------------------------------------------------------------------------
+
     def onChangeMode(self, flag):
         if flag:
             self.framePlots.setVisible(not flag)
@@ -478,7 +484,7 @@ class OpenNFT(QWidget):
     # --------------------------------------------------------------------------
     def getFreeMemmapFilename(self):
         path = os.path.normpath(self.P['WorkFolder'])
-        fname = os.path.join(path,'OrthView.dat')
+        fname = os.path.join(path, 'OrthView.dat')
         if not os.path.exists(fname):
             return fname
 
@@ -487,7 +493,7 @@ class OpenNFT(QWidget):
             f.close()
             return fname
         except IOError as e:
-            fname = os.path.join(path,'OrthView1.dat')
+            fname = os.path.join(path, 'OrthView1.dat')
 
         if not os.path.exists(fname):
             return fname
@@ -518,34 +524,51 @@ class OpenNFT(QWidget):
         self.spmHelperP['AnatBgFolder'] = os.path.normpath(self.P['AnatBgFolder'])
         self.spmHelperP['MCTempl'] = os.path.dirname(self.P['MCTempl'])
         self.spmHelperP['memMapFile'] = self.eng.evalin('base', 'P.memMapFile')
+        self.spmHelperP['idxRoiImgt'] = []
+        self.spmHelperP['idxRoiImgs'] = []
+        self.spmHelperP['idxRoiImgc'] = []
+        self.spmHelperP['lengthROIs'] = []
 
         self.engSPM.helperPrepareOrthView(self.spmHelperP, 'bgEPI', nargout=0)
+        self.engSPM.helperPrepareOrthViewRTQA(self.spmHelperP, 'bgEPI', nargout=0)
 
     # --------------------------------------------------------------------------
     def getOrthViewImages(self):
 
         filename = self.eng.evalin('base', 'P.memMapFile')
-        filename = filename.replace('shared', 'OrthView')
+        if self.windowRTQA.snrVolCheckBox.isChecked():
+            # file for SNR
+            filename = filename.replace('shared', 'SNROrthView')
+            # file for background
+            filenameBackg = filename.replace('shared', 'BackgOrthView')
+            # ROI from helperP
+            self.spmHelperP = self.engSPM.workspace['helperP']
+        else:
+            filename = filename.replace('shared', 'OrthView')
+
         imSize = list(self.engSPM.evalin('base', 'size(imgt)', nargout=3))
         imSize = list(map(int, imSize))
         offset = int(imSize[0] * imSize[1] * 0)
 
         f = open(filename, 'r')
-        #with utils.timeit("Receiving 'imgt' from helper Matlab:"):
-        self.imgt = np.memmap(filename, dtype='uint8', mode='r', shape=(imSize[0], imSize[1], imSize[2]), offset=offset, order='F')
+        # with utils.timeit("Receiving 'imgt' from helper Matlab:"):
+        self.imgt = np.memmap(filename, dtype='uint8', mode='r', shape=(imSize[0], imSize[1], imSize[2]), offset=offset,
+                              order='F')
 
         offset = int(imSize[0] * imSize[1] * imSize[2])
         imSize = self.engSPM.evalin('base', 'size(imgs)', nargout=3)
         imSize = list(map(int, imSize))
-        #with utils.timeit("Receiving 'imgt' from helper Matlab:"):
-        self.imgs = np.memmap(f, dtype='uint8', mode='r', shape=(imSize[0], imSize[1], imSize[2]), offset=offset, order='F')
+        # with utils.timeit("Receiving 'imgt' from helper Matlab:"):
+        self.imgs = np.memmap(f, dtype='uint8', mode='r', shape=(imSize[0], imSize[1], imSize[2]), offset=offset,
+                              order='F')
 
         offset += int(imSize[0] * imSize[1] * imSize[2])
         imSize = self.engSPM.evalin('base', 'size(imgc)', nargout=3)
         imSize = list(map(int, imSize))
 
         # with utils.timeit("Receiving 'imgt' from helper Matlab:"):
-        self.imgc = np.memmap(f, dtype='uint8', mode='r', shape=(imSize[0], imSize[1], imSize[2]), offset=offset, order='F')
+        self.imgc = np.memmap(f, dtype='uint8', mode='r', shape=(imSize[0], imSize[1], imSize[2]), offset=offset,
+                              order='F')
 
         f.close()
         # logger.info('Receiving images from helper Matlab')
@@ -561,8 +584,8 @@ class OpenNFT(QWidget):
             self.displayEvent.wait()
             if self.stopDisplayThread:
                 return
-            #logger.info('{}', self.displayStack[0]['iteration'])
-            #logger.info('{}', self.displayStack[0]['displayStage'])
+            # logger.info('{}', self.displayStack[0]['iteration'])
+            # logger.info('{}', self.displayStack[0]['displayStage'])
             self.ptbScreen.displayLock.acquire()
             self.ptbScreen.display(self.displayQueue)
             self.displayEvent.clear()
@@ -577,7 +600,7 @@ class OpenNFT(QWidget):
                 acquisitionFinished = False
 
         else:
-            if self.typicalFileSize - filesize > 4000: # suppose that minimal copying block is 4K
+            if self.typicalFileSize - filesize > 4000:  # suppose that minimal copying block is 4K
                 acquisitionFinished = False
 
         if not acquisitionFinished:
@@ -605,7 +628,7 @@ class OpenNFT(QWidget):
         self.mainLoopLock.release()
 
         if self.preiteration < self.iteration:
-            #this code is executed before file is aquired
+            # this code is executed before file is aquired
 
             self.eng.mainLoopEntry(self.iteration, nargout=0)
 
@@ -620,17 +643,18 @@ class OpenNFT(QWidget):
                         self.displayScreen()
 
                     if self.iteration > self.P['nrSkipVol'] and config.UDP_SEND_CONDITION:
-                        self.udpSender.send_data(self.P['CondNames'][int(self.eng.evalin('base', 'mainLoopData.condition'))-1])
+                        self.udpSender.send_data(
+                            self.P['CondNames'][int(self.eng.evalin('base', 'mainLoopData.condition')) - 1])
 
                 elif self.P['Type'] == 'DCM':
                     if not self.isCalculateDcm and config.USE_PTB:
                         self.displayScreen()
             else:
-                
+
                 if self.P['Type'] == 'SVM':
                     if self.displayData and config.USE_UDP_FEEDBACK:
-                        logger.info('Sending by UDP - instrValue = ') # + str(self.displayData['instrValue'])
-                        #self.udpSender.send_data(self.displayData['instrValue'])
+                        logger.info('Sending by UDP - instrValue = ')  # + str(self.displayData['instrValue'])
+                        # self.udpSender.send_data(self.displayData['instrValue'])
 
         try:
             fname = self.files_queue.get_nowait()
@@ -649,7 +673,7 @@ class OpenNFT(QWidget):
         self.preiteration = self.iteration
 
         path = os.path.join(self.P['WatchFolder'], fname)
-        #if False: # this unfortunately doesn't work
+        # if False: # this unfortunately doesn't work
         #    try:
         #        f = open(path, 'a')
         #        f.close()
@@ -691,11 +715,12 @@ class OpenNFT(QWidget):
         self.previousIterStartTime = t
 
         if self.iteration == 1:
-
             with utils.timeit('  setup after first volume:'):
                 self.eng.setupFirstVolume(fname, nargout=0)
-                self.engSPM.assignin('base', 'matTemplMotCorr', self.eng.evalin('base', 'mainLoopData.matTemplMotCorr'), nargout=0)
-                self.engSPM.assignin('base', 'dimTemplMotCorr', self.eng.evalin('base', 'mainLoopData.dimTemplMotCorr'), nargout=0)
+                self.engSPM.assignin('base', 'matTemplMotCorr', self.eng.evalin('base', 'mainLoopData.matTemplMotCorr'),
+                                     nargout=0)
+                self.engSPM.assignin('base', 'dimTemplMotCorr', self.eng.evalin('base', 'mainLoopData.dimTemplMotCorr'),
+                                     nargout=0)
 
         # Main logic
         # data preprocessing
@@ -705,7 +730,19 @@ class OpenNFT(QWidget):
         # t3
         self.recorder.recordEvent(erd.Times.t3, self.iteration)
 
-        if self.eng.evalin('base', 'mainLoopData.statMapCreated') == 1:
+        if self.windowRTQA.snrVolCheckBox.isChecked() and config.FIRST_SNR_VOLUME < self.iteration:
+
+            if self.imageViewMode == ImageViewMode.orthviewEPI:
+                bgType = 'bgEPI'
+            else:
+                bgType = 'bgAnat'
+
+            self.orthViewUpdateFuture = self.engSPM.helperUpdateOrthViewRTQA(
+                self.currentCursorPos, self.currentProjection, bgType,
+                async=True, nargout=0)
+
+        if self.eng.evalin('base',
+                           'mainLoopData.statMapCreated') == 1 and not self.windowRTQA.snrVolCheckBox.isChecked():
             nrVoxInVol = self.eng.evalin('base', 'mainLoopData.nrVoxInVol')
             memMapFile = self.eng.evalin('base', 'P.memMapFile')
 
@@ -743,7 +780,8 @@ class OpenNFT(QWidget):
                     logger.info('DCM calculated')
 
                     # feedback estimation
-                    self.displayData = self.eng.nfbCalc(self.iteration, self.displayData, dcmTagLE, dcmOppLE, True, nargout=1)
+                    self.displayData = self.eng.nfbCalc(self.iteration, self.displayData, dcmTagLE, dcmOppLE, True,
+                                                        nargout=1)
 
                     # t5
                     self.recorder.recordEvent(erd.Times.t5, self.iteration)
@@ -787,13 +825,13 @@ class OpenNFT(QWidget):
             if self.displayData and config.USE_UDP_FEEDBACK:
                 logger.info('Sending by UDP - dispValue = {}', self.displayData['dispValue'])
                 self.udpSender.send_data(self.displayData['dispValue'])
-                
+
         elif self.P['Type'] == 'PSC':
             self.displayData = self.eng.nfbCalc(self.iteration, self.displayData, nargout=1)
 
             # t5
             self.recorder.recordEvent(erd.Times.t5, self.iteration)
-            if self.displayData and config.USE_UDP_FEEDBACK: # for UDP, configure here if required
+            if self.displayData and config.USE_UDP_FEEDBACK:  # for UDP, configure here if required
                 logger.info('Sending by UDP - dispValue = {}', self.displayData['dispValue'])
                 self.udpSender.send_data(self.displayData['dispValue'])
 
@@ -801,20 +839,20 @@ class OpenNFT(QWidget):
                 if config.USE_PTB:
                     if self.displayData:
                         if self.P['Prot'] == 'ContTask':
-    #                       Here task condition is evaluated: if condition is 3 (task) and the current
-    #                       itteration corresponds with the onset of a task block (kept in TaskFirstVol)
-    #                       taskseq is set to one. While set to 1, Display  in ptbScreen.py 
-    #                       will use the taskse flag to call the ptbTask function.
+                            #                       Here task condition is evaluated: if condition is 3 (task) and the current
+                            #                       itteration corresponds with the onset of a task block (kept in TaskFirstVol)
+                            #                       taskseq is set to one. While set to 1, Display  in ptbScreen.py
+                            #                       will use the taskse flag to call the ptbTask function.
                             # cond = self.eng.evalin('base', 'mainLoopData.displayData.condition')
                             cond = self.displayData['condition']
-                            if cond == 3 and int(self.P['TaskFirstVol'][0][self.iteration-1]) == 1:
-                                self.displayData['taskseq'] = 1   
+                            if cond == 3 and int(self.P['TaskFirstVol'][0][self.iteration - 1]) == 1:
+                                self.displayData['taskseq'] = 1
                                 self.displayScreen()
                                 QApplication.processEvents()
                                 self.endDisplayEvent.wait()
                                 self.endDisplayEvent.clear()
                             else:
-                                self.displayData['taskseq'] = 0 
+                                self.displayData['taskseq'] = 0
                                 self.displayData['displayStage'] = 'feedback'
                                 self.displayScreen()
                         else:
@@ -848,7 +886,7 @@ class OpenNFT(QWidget):
         if self.iteration == self.P['NrOfVolumes']:
             logger.info('Last iteration reached...')
             self.stop()
-        
+
         self.iteration += 1
         self.isMainLoopEntered = False
 
@@ -867,15 +905,15 @@ class OpenNFT(QWidget):
             search_string = '*%s' % ext
 
         return search_string
-    
+
     # --------------------------------------------------------------------------
     def startInOfflineMode(self):
-        path = os.path.join( self.P['WatchFolder'], self.P['FirstFileName'] )
+        path = os.path.join(self.P['WatchFolder'], self.P['FirstFileName'])
         ext = re.findall(r"\.\w*$", str(path))
         if not ext:
             if self.P['DataType'] == 'IMAPH':
                 ext = config.IMAPH_FILES_EXTENSION
-            else: #dicom as default
+            else:  # dicom as default
                 ext = config.DICOM_FILES_EXTENSION
         else:
             ext = ext[-1]
@@ -907,7 +945,7 @@ class OpenNFT(QWidget):
         if not ext:
             if self.P['DataType'] == 'IMAPH':
                 ext = config.IMAPH_FILES_EXTENSION
-            else: #dicom as default
+            else:  # dicom as default
                 ext = config.DICOM_FILES_EXTENSION
         else:
             ext = ext[-1]
@@ -946,11 +984,11 @@ class OpenNFT(QWidget):
         for i, n, c in zip(range(1, numRoi + 1), roiNames, config.ROI_PLOT_COLORS):
             cname = pg.mkPen(color=c).color().name()
             legendText += (
-                '<span style="font-weight:600;color:{};">'.format(cname)
-                + 'ROI_{} {}</span>, '.format(i, n))
+                    '<span style="font-weight:600;color:{};">'.format(cname)
+                    + 'ROI_{} {}</span>, '.format(i, n))
 
         legendText += (
-                '<span style="font-weight:600;color:k;">Operation: {}</span>'.format(self.P['RoiAnatOperation']))
+            '<span style="font-weight:600;color:k;">Operation: {}</span>'.format(self.P['RoiAnatOperation']))
         legendText += '</p></body></html>'
 
         self.labelPlotLegend.setText(legendText)
@@ -974,8 +1012,8 @@ class OpenNFT(QWidget):
 
     # --------------------------------------------------------------------------
     def basicSetupPlot(self, plotitem, grid=True):
-#        creating muster info must be optimized. Its not very flexible in its current form
-#        this works around the x-length issue for the ContTask condition only! 
+        #        creating muster info must be optimized. Its not very flexible in its current form
+        #        this works around the x-length issue for the ContTask condition only!
         if self.P['Prot'] == 'ContTask':
             xmax = max(self.musterInfo['tmpCond1'][-1][1],
                        self.musterInfo['tmpCond2'][-1][1],
@@ -983,7 +1021,7 @@ class OpenNFT(QWidget):
         else:
             xmax = max(self.musterInfo['tmpCond1'][-1][1],
                        self.musterInfo['tmpCond2'][-1][1])
-        
+
         plotitem.disableAutoRange(axis=pg.ViewBox.XAxis)
         plotitem.setXRange(1, xmax, padding=0.0)
         plotitem.showGrid(x=grid, y=grid, alpha=config.PLOT_GRID_ALPHA)
@@ -999,8 +1037,8 @@ class OpenNFT(QWidget):
             return
 
         if not self.mlPtbDcmHelper.connect(
-                 start=start,
-                 name_prefix=config.PTB_MATLAB_SHARED_NAME_PREFIX):
+                start=start,
+                name_prefix=config.PTB_MATLAB_SHARED_NAME_PREFIX):
             logger.error('Unable to connect PTB Matlab session')
             return
 
@@ -1118,7 +1156,8 @@ class OpenNFT(QWidget):
                 with utils.timeit("  Preparation of PTB Screen:"):
                     sid = self.cbScreenId.currentIndex() + 1
                     path = os.path.normpath(self.P['nfbDataFolder'])
-                    eventRecordsPath = os.path.join(path, 'TimeVectors_display_' + str(self.P['NFRunNr']).zfill(2) + '.txt')
+                    eventRecordsPath = os.path.join(path,
+                                                    'TimeVectors_display_' + str(self.P['NFRunNr']).zfill(2) + '.txt')
 
                     ptbP = {}
                     ptbP['eventRecordsPath'] = eventRecordsPath
@@ -1147,6 +1186,13 @@ class OpenNFT(QWidget):
             self.initTcpReceiver()
 
             self.btnStart.setEnabled(True)
+            self.btnRTQA.setEnabled(True)
+
+            self.windowRTQA = rtQAWindow(self)
+            self.windowRTQA.snrVolCheckBox.stateChanged.connect(self.onChecked)
+            self.eng.assignin('base', 'isShowSNR', self.windowRTQA.snrVolCheckBox.isChecked(), nargout=0)
+            self.eng.assignin('base', 'imageViewMode', int(self.imageViewMode), nargout=0)
+            self.eng.assignin('base', 'FIRST_SNR_VOLUME', config.FIRST_SNR_VOLUME, nargout=0)
 
     # --------------------------------------------------------------------------
     def start(self):
@@ -1216,7 +1262,7 @@ class OpenNFT(QWidget):
         if config.USE_MRPULSE and hasattr(self, 'mrPulses'):
             np_arr = mrpulse.toNpData(self.mrPulses)
             self.pulseProc.terminate()
-        
+
         if self.P.get('nfbDataFolder'):
             path = os.path.normpath(self.P['nfbDataFolder'])
             fname = os.path.join(path, 'TimeVectors_' + str(self.P['NFRunNr']).zfill(2) + '.txt')
@@ -1232,14 +1278,23 @@ class OpenNFT(QWidget):
         logger.info('Finished.')
 
     # --------------------------------------------------------------------------
+    def rtQA(self):
+        self.windowRTQA.show()
+        config.USE_RTQA = True
+
+    # --------------------------------------------------------------------------
+    def onChecked(self):
+        self.eng.assignin('base', 'isShowSNR', self.windowRTQA.snrVolCheckBox.isChecked(), nargout=0)
+
+    # --------------------------------------------------------------------------
     def onChooseSetFile(self):
         if config.DONOT_USE_QFILE_NATIVE_DIALOG:
             fname = QFileDialog.getOpenFileName(
-                self, "Select 'SET File'", self.settingFileName, 'ini files (*.ini)', options=QFileDialog.DontUseNativeDialog)[0]
+                self, "Select 'SET File'", self.settingFileName, 'ini files (*.ini)',
+                options=QFileDialog.DontUseNativeDialog)[0]
         else:
             fname = QFileDialog.getOpenFileName(
                 self, "Select 'SET File'", self.settingFileName, 'ini files (*.ini)')[0]
-
 
         fname = fname.replace('/', os.path.sep)
         self.chooseSetFile(fname)
@@ -1268,7 +1323,8 @@ class OpenNFT(QWidget):
     def onChooseWeightsFile(self):
         if config.DONOT_USE_QFILE_NATIVE_DIALOG:
             fname = QFileDialog.getOpenFileName(
-                self, "Select 'Weights File'", self.leWeightsFile.text(), 'all files (*.*)', options=QFileDialog.DontUseNativeDialog)[0]
+                self, "Select 'Weights File'", self.leWeightsFile.text(), 'all files (*.*)',
+                options=QFileDialog.DontUseNativeDialog)[0]
         else:
             fname = QFileDialog.getOpenFileName(
                 self, "Select 'Weights File'", self.leWeightsFile.text(), 'all files (*.*)')[0]
@@ -1306,7 +1362,8 @@ class OpenNFT(QWidget):
     def onChooseMCTemplFile(self):
         if config.DONOT_USE_QFILE_NATIVE_DIALOG:
             fname = QFileDialog.getOpenFileName(
-                self, "Select MCTempl File", config.ROOT_PATH, 'Template files (*.nii)', options=QFileDialog.DontUseNativeDialog)[0]
+                self, "Select MCTempl File", config.ROOT_PATH, 'Template files (*.nii)',
+                options=QFileDialog.DontUseNativeDialog)[0]
         else:
             fname = QFileDialog.getOpenFileName(
                 self, "Select MCTempl File", config.ROOT_PATH, 'Template files (*.nii)')[0]
@@ -1334,6 +1391,7 @@ class OpenNFT(QWidget):
         else:
             mode = ImageViewMode.orthviewEPI
 
+        self.eng.assignin('base', 'imageViewMode', int(mode), nargout=0)
         self.changeImageViewMode(mode)
 
     # --------------------------------------------------------------------------
@@ -1348,8 +1406,14 @@ class OpenNFT(QWidget):
         else:
             bgType = 'bgAnat'
 
-        self.orthViewUpdateFuture = self.engSPM.helperUpdateOrthView(
-            pos, proj, bgType, async=True, nargout=0)
+        if self.windowRTQA.snrVolCheckBox.isChecked():
+
+            self.orthViewUpdateFuture = self.engSPM.helperUpdateOrthViewRTQA(
+                pos, proj, bgType, async=True, nargout=0)
+
+        else:
+            self.orthViewUpdateFuture = self.engSPM.helperUpdateOrthView(
+                pos, proj, bgType, async=True, nargout=0)
 
     # --------------------------------------------------------------------------
     def onCheckOrthViewUpdated(self):
@@ -1360,7 +1424,7 @@ class OpenNFT(QWidget):
             return
         self.orthViewUpdateInProgress = True
 
-        #with utils.timeit('Getting new orthview projections...'):
+        # with utils.timeit('Getting new orthview projections...'):
         self.getOrthViewImages()
 
         self.orthView.setTransversalImage(self.imgt)
@@ -1389,7 +1453,7 @@ class OpenNFT(QWidget):
         # --- middle ---
         self.leProjName.setText(self.settings.value('ProjectName', ''))
         self.leSubjectID.setText(self.settings.value('SubjectID', ''))
-        self.leFirstFile.setText(self.settings.value('FirstFileNameTxt','001_{Image Series No:06}_{#:06}.dcm'))
+        self.leFirstFile.setText(self.settings.value('FirstFileNameTxt', '001_{Image Series No:06}_{#:06}.dcm'))
         self.sbNFRunNr.setValue(int(self.settings.value('NFRunNr', '1')))
         self.sbImgSerNr.setValue(int(self.settings.value('ImgSerNr', '1')))
         self.sbVolumesNr.setValue(int(self.settings.value('NrOfVolumes')))
@@ -1407,21 +1471,22 @@ class OpenNFT(QWidget):
         self.cbUseTCPData.setChecked(str(self.settings.value('UseTCPData', 'false')).lower() == 'true')
         if self.cbUseTCPData.isChecked():
             self.leTCPDataIP.setText(self.settings.value('TCPDataIP', ''))
-            self.leTCPDataPort.setText(str( self.settings.value('TCPDataPort', '')))
+            self.leTCPDataPort.setText(str(self.settings.value('TCPDataPort', '')))
 
         self.leMaxFeedbackVal.setText(str(self.settings.value('MaxFeedbackVal', '100')))  # FixMe
         self.leMinFeedbackVal.setText(str(self.settings.value('MinFeedbackVal', '-100')))
-        self.sbFeedbackValDec.setValue(int(self.settings.value('FeedbackValDec', '0')))     # FixMe
+        self.sbFeedbackValDec.setValue(int(self.settings.value('FeedbackValDec', '0')))  # FixMe
         self.cbNegFeedback.setChecked(str(self.settings.value('NegFeedback', 'false')).lower() == 'true')
 
-        self.cbUsePTB.setChecked(str(self.settings.value('UsePTB', 'false')).lower()=='true')
+        self.cbUsePTB.setChecked(str(self.settings.value('UsePTB', 'false')).lower() == 'true')
         self.cbScreenId.setCurrentIndex(int(self.settings.value('DisplayFeedbackScreenID', 0)))
-        self.cbDisplayFeedbackFullscreen.setChecked(str(self.settings.value('DisplayFeedbackFullscreen')).lower() == 'true')
+        self.cbDisplayFeedbackFullscreen.setChecked(
+            str(self.settings.value('DisplayFeedbackFullscreen')).lower() == 'true')
 
         self.cbUseUDPFeedback.setChecked(str(self.settings.value('UseUDPFeedback')).lower() == 'true')
         self.leUDPFeedbackIP.setText(self.settings.value('UDPFeedbackIP', ''))
         self.leUDPFeedbackPort.setText(str(self.settings.value('UDPFeedbackPort', '1234')))
-        self.leUDPFeedbackControlChar.setText(str( self.settings.value('UDPFeedbackControlChar', '')))
+        self.leUDPFeedbackControlChar.setText(str(self.settings.value('UDPFeedbackControlChar', '')))
         self.cbUDPSendCondition.setChecked(str(self.settings.value('UDPSendCondition')).lower() == 'true')
 
         # --- bottom right ---
@@ -1484,7 +1549,7 @@ class OpenNFT(QWidget):
             self.P['RoiAnatFolder'] = self.leRoiAnatFolder.text()
         else:
             self.P['RoiFilesFolder'] = self.leRoiAnatFolder.text()
-        self.P['RoiAnatOperation'] = self.leRoiAnatOperation.text()        
+        self.P['RoiAnatOperation'] = self.leRoiAnatOperation.text()
         self.P['RoiGroupFolder'] = self.leRoiGroupFolder.text()
         self.P['AnatBgFolder'] = self.leAnatBgFolder.text()
         self.P['MCTempl'] = self.leMCTempl.text()
@@ -1509,12 +1574,12 @@ class OpenNFT(QWidget):
         self.P['DataType'] = str(self.cbDataType.currentText())
         self.P['Prot'] = str(self.cbProt.currentText())
         self.P['Type'] = str(self.cbType.currentText())
-        
+
         if self.P['Prot'] == 'ContTask':
             self.P['TaskFolder'] = self.leTaskFolder.text()
-        
-        self.P['MaxFeedbackVal'] = float( self.leMaxFeedbackVal.text())
-        self.P['MinFeedbackVal'] = float( self.leMinFeedbackVal.text())
+
+        self.P['MaxFeedbackVal'] = float(self.leMaxFeedbackVal.text())
+        self.P['MinFeedbackVal'] = float(self.leMinFeedbackVal.text())
         self.P['FeedbackValDec'] = self.sbFeedbackValDec.value()
         self.P['NegFeedback'] = self.cbNegFeedback.isChecked()
 
@@ -1526,11 +1591,11 @@ class OpenNFT(QWidget):
 
         # Parsing FirstFileNameTxt template and replace it with variables ---
         fields = {
-            'projectname':    self.P['ProjectName'],
-            'subjectid':      self.P['SubjectID'],
-            'imageseriesno':  self.P['ImgSerNr'],
-            'nfrunno':        self.P['NFRunNr'],
-            '#':              1
+            'projectname': self.P['ProjectName'],
+            'subjectid': self.P['SubjectID'],
+            'imageseriesno': self.P['ImgSerNr'],
+            'nfrunno': self.P['NFRunNr'],
+            '#': 1
         }
         template = self.P['FirstFileNameTxt']
         template_elements = re.findall(r"\{([A-Za-z0-9_: ]+)\}", template)
@@ -1544,7 +1609,7 @@ class OpenNFT(QWidget):
 
         # Update GUI information
         self.leCurrentVolume.setText('%d' % self.iteration)
-        self.leFirstFilePath.setText('%s%s%s' % (self.P['WatchFolder'],os.path.sep,self.P['FirstFileName']))
+        self.leFirstFilePath.setText('%s%s%s' % (self.P['WatchFolder'], os.path.sep, self.P['FirstFileName']))
 
         filePathStatus = ""
         if os.path.isdir(self.P['WatchFolder']):
@@ -1556,7 +1621,7 @@ class OpenNFT(QWidget):
         else:
             filePathStatus += "First file does not exist. "
 
-        #if os.path.isdir( self.P['WatchFolder'],os.path.sep,self.P['FirstFileName'] )
+        # if os.path.isdir( self.P['WatchFolder'],os.path.sep,self.P['FirstFileName'] )
         self.lbFilePathStatus.setText(filePathStatus)
 
         # Update settings file
@@ -1568,21 +1633,21 @@ class OpenNFT(QWidget):
             self.settings.setValue('RoiAnatFolder', self.P['RoiAnatFolder'])
         else:
             self.settings.setValue('RoiFilesFolder', self.P['RoiFilesFolder'])
-        self.settings.setValue('RoiAnatOperation', self.P['RoiAnatOperation'])        
+        self.settings.setValue('RoiAnatOperation', self.P['RoiAnatOperation'])
         self.settings.setValue('RoiGroupFolder', self.P['RoiGroupFolder'])
         self.settings.setValue('AnatBgFolder', self.P['AnatBgFolder'])
         self.settings.setValue('MCTempl', self.P['MCTempl'])
-        
+
         if self.P['Prot'] == 'ContTask':
             self.settings.setValue('TaskFolder', self.P['TaskFolder'])
 
         # --- middle ---
         self.settings.setValue('ProjectName', self.P['ProjectName'])
         self.settings.setValue('SubjectID', self.P['SubjectID'])
-        self.settings.setValue('ImgSerNr', self.P['ImgSerNr'] )
-        self.settings.setValue('NFRunNr', self.P['NFRunNr'] )
+        self.settings.setValue('ImgSerNr', self.P['ImgSerNr'])
+        self.settings.setValue('NFRunNr', self.P['NFRunNr'])
 
-        self.settings.setValue('FirstFileNameTxt', self.P['FirstFileNameTxt'] )
+        self.settings.setValue('FirstFileNameTxt', self.P['FirstFileNameTxt'])
         self.settings.setValue('FirstFileName', self.P['FirstFileName'])
 
         self.settings.setValue('NrOfVolumes', self.P['NrOfVolumes'])
@@ -1596,11 +1661,11 @@ class OpenNFT(QWidget):
         self.settings.setValue('UseTCPData', self.cbUseTCPData.isChecked())
         if self.cbUseTCPData.isChecked():
             self.settings.setValue('TCPDataIP', self.leTCPDataIP.text())
-            self.settings.setValue('TCPDataPort', int( self.leTCPDataPort.text()))
+            self.settings.setValue('TCPDataPort', int(self.leTCPDataPort.text()))
 
         self.settings.setValue('MaxFeedbackVal', self.P['MaxFeedbackVal'])
         self.settings.setValue('MinFeedbackVal', self.P['MinFeedbackVal'])
-        self.settings.setValue('FeedbackValDec', self.P['FeedbackValDec'])        
+        self.settings.setValue('FeedbackValDec', self.P['FeedbackValDec'])
         self.settings.setValue('NegFeedback', self.P['NegFeedback'])
 
         self.settings.setValue('UsePTB', self.cbUsePTB.isChecked())
@@ -1612,10 +1677,10 @@ class OpenNFT(QWidget):
 
         self.settings.setValue('UseUDPFeedback', self.cbUseUDPFeedback.isChecked())
         self.settings.setValue('UDPFeedbackIP', self.leUDPFeedbackIP.text())
-        self.settings.setValue('UDPFeedbackPort', int( self.leUDPFeedbackPort.text()))
+        self.settings.setValue('UDPFeedbackPort', int(self.leUDPFeedbackPort.text()))
         self.settings.setValue('UDPFeedbackControlChar', self.leUDPFeedbackControlChar.text())
         self.settings.setValue('UDPSendCondition', self.cbUDPSendCondition.isChecked())
-        
+
         # --- bottom right ---
         self.settings.setValue('DataType', self.P['DataType'])
         self.settings.setValue('Prot', self.P['Prot'])
@@ -1639,7 +1704,8 @@ class OpenNFT(QWidget):
             config.UDP_FEEDBACK_PORT = int(self.leUDPFeedbackPort.text())
             config.UDP_FEEDBACK_CONTROLCHAR = self.leUDPFeedbackControlChar.text()
             config.UDP_SEND_CONDITION = self.cbUDPSendCondition.isChecked()
-        else: config.UDP_SEND_CONDITION = False
+        else:
+            config.UDP_SEND_CONDITION = False
 
     # --------------------------------------------------------------------------
     def displayImage(self):
@@ -1667,11 +1733,25 @@ class OpenNFT(QWidget):
                 if self.imgViewTempl.size > 0:
                     self.roiImageView.setImage(self.imgViewTempl.T)
 
-                #self.P['imgViewTempl'] = self.imgViewTempl
+                # self.P['imgViewTempl'] = self.imgViewTempl
             else:
                 return
 
-        if (self.eng.evalin('base', "exist('strStatMap')") > 0 and
+        # SNR map display
+        if (self.windowRTQA.snrVolCheckBox.isChecked() and self.eng.evalin('base', "mainLoopData.snrMapCreated") > 0 and
+                self.imgViewTempl.size > 0):
+            # Background
+            img = self.imgViewTempl
+            print('getting SNRMap...')
+            with utils.timeit("Receiving 'strSNRMap' from Matlab:"):
+                filename = self.eng.evalin('base', 'P.memMapFile')
+                filename = filename.replace('shared', 'SNRMap')
+                imSize = list(self.engSPM.evalin('base', 'size(snrMap_2D)', nargout=2))
+                imSize = list(map(int, imSize))
+                snrMap_2D = np.memmap(filename, dtype='uint8', mode='r', shape=(imSize[0], imSize[1]), offset=0,
+                                      order='F')
+
+        if (not self.windowRTQA.snrVolCheckBox.isChecked() and self.eng.evalin('base', "exist('strStatMap')") > 0 and
                 self.imgViewTempl.size > 0):
             img = self.imgViewTempl
             logger.info('getting StatMap...')
@@ -1726,9 +1806,9 @@ class OpenNFT(QWidget):
         else:
             # FIXME: tmpCond4 (?)
             blockLength = (
-                tmpCond1[0][1] - tmpCond1[0][0] +
-                tmpCond2[0][1] - tmpCond2[0][0] +
-                tmpCond3[0][1] - tmpCond3[0][0] + 3
+                    tmpCond1[0][1] - tmpCond1[0][0] +
+                    tmpCond2[0][1] - tmpCond2[0][0] +
+                    tmpCond3[0][1] - tmpCond3[0][0] + 3
             )
 
         # ----------------------------------------------------------------------
@@ -1746,7 +1826,7 @@ class OpenNFT(QWidget):
 
             for i, n in enumerate(dfs):
                 if n > last:
-                    idx.append(i+1)
+                    idx.append(i + 1)
                     last = n
 
             for i, r in zip(idx, remData[:-1]):
@@ -1824,12 +1904,17 @@ class OpenNFT(QWidget):
             key = 'rawTimeSeries'
 
         dataRaw = np.array(self.outputSamples[key], ndmin=2)
+        dataRealRaw = np.array(self.outputSamples['rawTimeSeries'], ndmin=2)
         dataProc = np.array(self.outputSamples['kalmanProcTimeSeries'], ndmin=2)
         dataNorm = np.array(self.outputSamples['scalProcTimeSeries'], ndmin=2)
 
         self.drawGivenRoiPlot(init, self.rawRoiPlot, dataRaw)
         self.drawGivenRoiPlot(init, self.procRoiPlot, dataProc)
         self.drawGivenRoiPlot(init, self.normRoiPlot, dataNorm)
+
+        n = len(dataRealRaw[0, :])
+        self.windowRTQA.calcSNR(init, dataRealRaw[:, n - 1], "Raw", n)
+        self.windowRTQA.plotSNR(init)
 
     # --------------------------------------------------------------------------
     def drawGivenRoiPlot(self, init, plotwidget: pg.PlotWidget, data):

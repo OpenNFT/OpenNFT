@@ -86,6 +86,10 @@ mainLoopData.mposMin = [];
 mainLoopData.blockNF = 0;
 mainLoopData.firstNF = 0;
 
+mainLoopData.meanVol = [];
+mainLoopData.m2Vol = [];
+mainLoopData.snrMapCreated = 0;  
+
 %% DCM Settings
 if isDCM
     % This is to simplify the P.Protocol parameter listings for DCM,
@@ -159,7 +163,7 @@ mainLoopData.pVal = .01;
 mainLoopData.statMap3D_iGLM = [];
 
 % PSC
-if isPSC && (strcmp(P.Prot, 'Cont') || strcmp(P.Prot, 'ContTask')) && ~fIMAPH
+if isPSC && strcmp(P.Prot, 'Cont') && ~fIMAPH
     tmpSpmDesign = SPM.xX.X(1:P.NrOfVolumes-P.nrSkipVol, 2);
     % this contrast does not count constant term
     mainLoopData.tContr = strcmp(P.CondNames,P.CondName)';
@@ -172,7 +176,7 @@ if isPSC && strcmp(P.Prot, 'Inter') && ~fIMAPH
 end
 
 % PSC (Phillips)
-if isPSC && (strcmp(P.Prot, 'Cont') || strcmp(P.Prot, 'ContTask')) && fIMAPH
+if isPSC && strcmp(P.Prot, 'Cont') && fIMAPH
     tmpSpmDesign = SPM.xX.X(1:P.NrOfVolumes-P.nrSkipVol,1);
     % this contrast does not count constant term
     mainLoopData.tContr = [1];

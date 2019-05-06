@@ -80,3 +80,7 @@ MC_PLOT_COLORS = [
 #debuging use only
 USE_SLEEP_IN_STOP = False
 HIDE_TEST_BTN = True
+
+USE_RTQA = False
+FIRST_SNR_VOLUME = 2
+
