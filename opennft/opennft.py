@@ -1415,6 +1415,7 @@ class OpenNFT(QWidget):
             self.leTCPDataPort.setText(str( self.settings.value('TCPDataPort', '')))
 
         self.leMaxFeedbackVal.setText(str(self.settings.value('MaxFeedbackVal', '100')))  # FixMe
+        self.leMinFeedbackVal.setText(str(self.settings.value('MinFeedbackVal', '-100')))  # FixMe
         self.sbFeedbackValDec.setValue(int(self.settings.value('FeedbackValDec', '0')))     # FixMe
         self.cbNegFeedback.setChecked(str(self.settings.value('NegFeedback', 'false')).lower() == 'true')
 
@@ -1518,6 +1519,7 @@ class OpenNFT(QWidget):
             self.P['TaskFolder'] = self.leTaskFolder.text()
         
         self.P['MaxFeedbackVal'] = float( self.leMaxFeedbackVal.text())
+        self.P['MinFeedbackVal'] = float( self.leMinFeedbackVal.text())
         self.P['FeedbackValDec'] = self.sbFeedbackValDec.value()
         self.P['NegFeedback'] = self.cbNegFeedback.isChecked()
 
@@ -1601,7 +1603,8 @@ class OpenNFT(QWidget):
             self.settings.setValue('TCPDataIP', self.leTCPDataIP.text())
             self.settings.setValue('TCPDataPort', int( self.leTCPDataPort.text()))
 
-        self.settings.setValue('MaxFeedbackVal', self.P['MaxFeedbackVal'])        
+        self.settings.setValue('MaxFeedbackVal', self.P['MaxFeedbackVal']) 
+        self.settings.setValue('MinFeedbackVal', self.P['MinFeedbackVal']) 
         self.settings.setValue('FeedbackValDec', self.P['FeedbackValDec'])        
         self.settings.setValue('NegFeedback', self.P['NegFeedback'])
 
