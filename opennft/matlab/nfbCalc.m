@@ -70,6 +70,8 @@ if isPSC && (strcmp(P.Prot, 'Cont') || strcmp(P.Prot, 'ContTask'))
         % [0...P.MaxFeedbackVal], for Display
         if ~P.NegFeedback && dispValue < 0
             dispValue = 0;
+        elseif P.NegFeedback && dispValue < P.MinFeedbackVal
+             dispValue = P.MinFeedbackVal
         end
         if dispValue > P.MaxFeedbackVal
             dispValue = P.MaxFeedbackVal;
@@ -147,6 +149,8 @@ if isPSC && strcmp(P.Prot, 'Inter')
             % [0...P.MaxFeedbackVal], for Display
             if ~P.NegFeedback && dispValue < 0
                 dispValue = 0;
+            elseif P.NegFeedback && dispValue < P.MinFeedbackVal
+                dispValue = P.MinFeedbackVal
             end
             if dispValue > P.MaxFeedbackVal
                 dispValue = P.MaxFeedbackVal;
