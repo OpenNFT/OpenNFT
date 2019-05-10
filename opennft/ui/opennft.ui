@@ -1266,6 +1266,29 @@
                                                 </property>
                                             </widget>
                                         </item>
+					<item>
+                                            <widget class="QLabel" name="label_41_3">
+                                                <property name="text">
+                                                    <string>Minimum Feedback Value</string>
+                                                </property>
+                                            </widget>
+                                        </item>
+                                        <item>
+                                            <widget class="QLineEdit" name="leMinFeedbackVal">
+                                                <property name="maximumSize">
+                                                    <size>
+                                                        <width>50</width>
+                                                        <height>20</height>
+                                                    </size>
+                                                </property>
+                                                <property name="text">
+                                                    <string>-100</string>
+                                                </property>
+                                                <property name="readOnly">
+                                                    <bool>false</bool>
+                                                </property>
+                                            </widget>
+                                        </item>
                                         <item>
                                             <widget class="QLabel" name="label_41_2">
                                                 <property name="text">
