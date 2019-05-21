@@ -19,11 +19,20 @@ Note, we are still tuning our pre-release version. Please check the updates regu
 - [Psychtoolbox 3](https://github.com/Psychtoolbox-3/Psychtoolbox-3.git)
 - [JSONlab](https://uk.mathworks.com/matlabcentral/mlc-downloads/downloads/submissions/33381/versions/22/download/zip)
 
-### Install OpenNFT in virtual environment (OpenNFT_venv) with conda and Python 3.5
-- `$ conda create --name OpenNFT_venv python=3.5`
+### Install OpenNFT in virtual environment 
+
+Install with conda and Python 3.5:
+- `$ conda create -n OpenNFT_venv python=3.5 pip setuptools`
 - `$ conda activate OpenNFT_venv`
-- `(OpenNFT_venv)$ conda install pip setuptools`
+- `(OpenNFT_venv)$ python -m pip install -U pip setuptools`
 - (optional for numpy+MKL) `(OpenNFT_venv)$ pip install http://www.silx.org/pub/wheelhouse/numpy-1.13.1+mkl-cp35-cp35m-win_amd64.whl`
+- `(OpenNFT_venv)$ pip install git+https://github.com/OpenNFT/OpenNFT.git --install-option "--matlab-root=<MATLABROOT>"`
+
+Install without conda using your existing Python (>=3.5, <3.7):
+- `$ python -m venv OpenNFT_venv`
+- (Linux/macos) `$ source OpenNFT_venv/bin/acivate`
+- (Windows) `$ OpenNFT_venv\Scripts\acivate.bat`
+- `(OpenNFT_venv)$ python -m pip install -U pip setuptools`
 - `(OpenNFT_venv)$ pip install git+https://github.com/OpenNFT/OpenNFT.git --install-option "--matlab-root=<MATLABROOT>"`
 
 Also if you do not set install option `--matlab-root` we try to find Matlab automatically.
@@ -35,7 +44,7 @@ You can check installation result using `-v` (verbose) option:
 
 **NOTE**: 
 If you do not have write access in MATLABROOT the installer will try to install "Matlab Engine for Python" 
-with Administrator/root privileges (It elevate privileges via UAC/sudo).
+with Administrator/root privileges (It elevates privileges via UAC/sudo).
 
 Also you can install OpenNFT from your working directory (OpenNFT project root directory):
 

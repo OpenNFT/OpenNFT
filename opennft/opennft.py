@@ -614,31 +614,26 @@ class OpenNFT(QWidget):
 
             self.displayData = self.eng.initDispalyData(self.iteration)
 
-            # t6 is mooved to the tail
-            # t6, the timestamp after data processing and feedback for PREVIOUS iteraration
-            # if self.iteration > 1:
-            #     self.recorder.recordEvent(erd.Times.t6, self.iteration - 1)
-
             # display instruction prior to data acquisition for current iteration
-            if self.P['Type'] == 'PSC':
-                if config.USE_PTB:
-                    self.printToLog('instruction + ' + str(self.iteration))
-                    self.displayScreen()
-                    #QApplication.processEvents()
-                    #self.endDisplayEvent.wait()
-                    #self.endDisplayEvent.clear()
-                if self.iteration > self.P['nrSkipVol'] and config.UDP_SEND_CONDITION:
-                    self.udpSender.send_data(self.P['CondNames'][int(self.eng.evalin('base', 'mainLoopData.condition'))-1])
+            if self.P['Prot'] == 'Inter':
 
-            elif self.P['Type'] == 'SVM':
-                if self.displayData and config.USE_UDP_FEEDBACK:
-                    self.printToLog('Sending by UDP - dispValue = ' + str(self.displayData['dispValue']))
-                    self.udpSender.send_data(self.displayData['dispValue'])
-                # t7
-                self.recorder.recordEvent(erd.Times.t7, self.iteration)
-            elif self.P['Type'] == 'DCM':
-                if not self.isCalculateDcm and config.USE_PTB:
-                    self.displayScreen()
+                if self.P['Type'] == 'PSC':
+                    if config.USE_PTB:
+                        self.printToLog('instruction + ' + str(self.iteration))
+                        self.displayScreen()
+
+                    if self.iteration > self.P['nrSkipVol'] and config.UDP_SEND_CONDITION:
+                        self.udpSender.send_data(self.P['CondNames'][int(self.eng.evalin('base', 'mainLoopData.condition'))-1])
+
+                elif self.P['Type'] == 'DCM':
+                    if not self.isCalculateDcm and config.USE_PTB:
+                        self.displayScreen()
+            else:
+                
+                if self.P['Type'] == 'SVM':
+                    if self.displayData and config.USE_UDP_FEEDBACK:
+                        self.printToLog('Sending by UDP - instrValue = ') # + str(self.displayData['instrValue'])
+                        #self.udpSender.send_data(self.displayData['instrValue'])
 
         try:
             fname = self.files_queue.get_nowait()
@@ -796,8 +791,7 @@ class OpenNFT(QWidget):
             if self.displayData and config.USE_UDP_FEEDBACK:
                 self.printToLog('Sending by UDP - dispValue = ' + str(self.displayData['dispValue']))
                 self.udpSender.send_data(self.displayData['dispValue'])
-            # t8
-            self.recorder.recordEvent(erd.Times.t8, self.iteration)
+                
         elif self.P['Type'] == 'PSC':
             self.displayData = self.eng.nfbCalc(self.iteration, self.displayData, nargout=1)
 
@@ -1139,6 +1133,7 @@ class OpenNFT(QWidget):
                     ptbP['WorkFolder'] = self.P['WorkFolder']
                     ptbP['DisplayFeedbackFullscreen'] = self.P['DisplayFeedbackFullscreen']
                     ptbP['Prot'] = self.P['Prot']
+                    ptbP['FeedbackValDec'] = self.P['FeedbackValDec']
                     if self.P['Prot'] == 'ContTask':
                         ptbP['TaskFolder'] = self.P['TaskFolder']
 
@@ -1420,6 +1415,7 @@ class OpenNFT(QWidget):
             self.leTCPDataPort.setText(str( self.settings.value('TCPDataPort', '')))
 
         self.leMaxFeedbackVal.setText(str(self.settings.value('MaxFeedbackVal', '100')))  # FixMe
+        self.leMinFeedbackVal.setText(str(self.settings.value('MinFeedbackVal', '-100')))
         self.sbFeedbackValDec.setValue(int(self.settings.value('FeedbackValDec', '0')))     # FixMe
         self.cbNegFeedback.setChecked(str(self.settings.value('NegFeedback', 'false')).lower() == 'true')
 
@@ -1523,6 +1519,7 @@ class OpenNFT(QWidget):
             self.P['TaskFolder'] = self.leTaskFolder.text()
         
         self.P['MaxFeedbackVal'] = float( self.leMaxFeedbackVal.text())
+        self.P['MinFeedbackVal'] = float( self.leMinFeedbackVal.text())
         self.P['FeedbackValDec'] = self.sbFeedbackValDec.value()
         self.P['NegFeedback'] = self.cbNegFeedback.isChecked()
 
@@ -1606,7 +1603,8 @@ class OpenNFT(QWidget):
             self.settings.setValue('TCPDataIP', self.leTCPDataIP.text())
             self.settings.setValue('TCPDataPort', int( self.leTCPDataPort.text()))
 
-        self.settings.setValue('MaxFeedbackVal', self.P['MaxFeedbackVal'])        
+        self.settings.setValue('MaxFeedbackVal', self.P['MaxFeedbackVal'])
+        self.settings.setValue('MinFeedbackVal', self.P['MinFeedbackVal'])
         self.settings.setValue('FeedbackValDec', self.P['FeedbackValDec'])        
         self.settings.setValue('NegFeedback', self.P['NegFeedback'])
 
