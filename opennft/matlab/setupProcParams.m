@@ -196,8 +196,8 @@ if isSVM && strcmp(P.Prot, 'Cont')
     mainLoopData.tContr = [1];
 end
 
-if isfield(P, "contrast")
-    mainLoopData.tContr = (P.contrast)';
+if isfield(P, "Contrast")
+    mainLoopData.tContr = (P.Contrast)';
     disp("Contrast was set according to json file");
 end
 %% High-pass filter for iGLM given by SPM

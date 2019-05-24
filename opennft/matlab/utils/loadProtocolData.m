@@ -22,8 +22,8 @@ nrSkipVol = P.nrSkipVol;
 
 prt = loadjson(jsonFile);
 
-if isfield(prt, "contrast");
-    P.contrast = prt.contrast;
+if isfield(prt, "Contrast");
+    P.Contrast = prt.Contrast;
 end
 
 P.BaselineName = prt.BaselineName;
