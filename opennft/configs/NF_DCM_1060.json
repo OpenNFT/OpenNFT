@@ -1,4 +1,50 @@
 {
+
+	"dcmdef": {
+
+        "target": {
+
+        "a": [[1,0,1], 
+			  [0,1,1],
+			  [1,1,1]],
+
+        "b": [[0,0,1],
+			  [0,0,1],
+			  [0,0,0]],          
+
+        "c": [0,0,1],
+
+        "d": []
+                 },
+
+        "opposed": {
+
+		"a": [[1,0,1], 
+			  [0,1,1],
+			  [1,1,1]],
+
+		"b": [[0,0,0],
+		      [0,0,0],
+		      [1,1,0]],              
+
+            "c": [1,1,0],
+
+            "d": []
+                },
+        
+        "roiNames": ["AMG-L","AMG-R","PFC"],
+
+        "options": {
+            "two_state": 0,
+            "stochastic": 0,
+            "nograph": 1,
+			"centre": 1,
+			"nonlinear": 0
+        }
+
+	},
+
+
 	"BaselineName": "N",
 	"CondName": "P",
 	"RestName": "REST",
