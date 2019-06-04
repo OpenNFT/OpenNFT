@@ -133,7 +133,12 @@ if strcmp(P.Prot, 'Cont') && isSVM
     end
 end
 
-P.Protocol = rmfield(prt,'dcmdef');  % to avoid unsupported file type error in python
+% -- remove dcmdef field -- %
+if isDCM 
+    prt = rmfield(prt, 'dcmdef');
+end
+    
+P.Protocol = prt;
 assignin('base', 'P', P);
 end
 
