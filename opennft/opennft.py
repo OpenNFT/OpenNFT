@@ -1384,7 +1384,7 @@ class OpenNFT(QWidget):
             self.leRoiAnatFolder.setText(self.settings.value('RoiAnatFolder', ''))
         else:
             self.leRoiAnatFolder.setText(self.settings.value('RoiFilesFolder', ''))
-        self.leRoiAnatOperation.setText(self.settings.value('RoiAnatOperation', ''))
+        self.leRoiAnatOperation.setText(self.settings.value('RoiAnatOperation', 'mean(norm_percValues)'))
         self.leRoiGroupFolder.setText(self.settings.value('RoiGroupFolder', ''))
         self.leAnatBgFolder.setText(self.settings.value('AnatBgFolder', ''))
         self.leMCTempl.setText(self.settings.value('MCTempl', ''))
