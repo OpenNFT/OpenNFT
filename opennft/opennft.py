@@ -809,7 +809,8 @@ class OpenNFT(QWidget):
     #                       itteration corresponds with the onset of a task block (kept in TaskFirstVol)
     #                       taskseq is set to one. While set to 1, Display  in ptbScreen.py 
     #                       will use the taskse flag to call the ptbTask function.
-                            cond = self.eng.evalin('base', 'mainLoopData.displayData.condition')
+                            # cond = self.eng.evalin('base', 'mainLoopData.displayData.condition')
+                            cond = self.displayData['condition']
                             if cond == 3 and int(self.P['TaskFirstVol'][0][self.iteration-1]) == 1:
                                 self.displayData['taskseq'] = 1   
                                 self.displayScreen()
