@@ -1017,12 +1017,12 @@ class OpenNFT(QWidget):
                 logger.error('Unable to connect Model Helper Matlab session')
                 return
 
-        logger.info('Connected to main Matlab session "{}"', self.mlMainHelper.name)
-        logger.info('Connected to PTB Matlab session "{}"', self.mlPtbDcmHelper.name)
-        logger.info('Connected to SPM Matlab session "{}"', self.mlSpmHelper.name)
+        logger.info('Using Matlab session "{}" as MAIN', self.mlMainHelper.name)
+        logger.info('Using Matlab session "{}" for PTB', self.mlPtbDcmHelper.name)
+        logger.info('Using Matlab session "{}" for SPM', self.mlSpmHelper.name)
 
         if config.USE_MATLAB_MODEL_HELPER:
-            logger.info('Connected to Model Helper Matlab session "{}"', self.mlModelHelper.name)
+            logger.info('Using Matlab session "{}" for Model Helper', self.mlModelHelper.name)
 
         self.mlMainHelper.prepare()
         self.mlPtbDcmHelper.prepare()

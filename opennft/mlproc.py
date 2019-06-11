@@ -111,10 +111,10 @@ class MatlabSharedEngineHelper(object):
                 return False
 
         try:
-            logger.info('Connecting to Matlab shared engine "{}"', name)
             self._engine = me.connect_matlab(name)
             logger.info('Connected to Matlab shared engine "{}"', name)
         except me.EngineError:
+            logger.exception('Cannot connect to Matlab shared engine "{}"', name)
             return False
 
         self._name = name
@@ -142,7 +142,7 @@ class MatlabSharedEngineHelper(object):
         pid = mp.current_process().pid
         self._pid.value = pid
 
-        logger.info('Start matlab engine "{}" helper process with pid {}', shared_name, pid)
+        logger.info('Starting matlab engine "{}" helper process {}', shared_name, pid)
 
         event.clear()
 
@@ -160,6 +160,7 @@ class MatlabSharedEngineHelper(object):
 
             logger.info('Matlab shared engine "{}" is started', shared_name)
         except me.MatlabExecutionError:
+            logger.exception('Cannot start Matlab shared engine "{}"', shared_name)
             raise
         finally:
             event.set()
@@ -175,4 +176,4 @@ class MatlabSharedEngineHelper(object):
         if eng._check_matlab():
             eng.exit()
 
-        logger.info('Terminate matlab engine "{}" helper process with pid {}', shared_name, pid)
+        logger.info('Terminate matlab engine "{}" helper process {}', shared_name, pid)
