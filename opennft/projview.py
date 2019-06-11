@@ -16,10 +16,6 @@ import pyqtgraph as pg
 from pyqtgraph.Qt import QtCore
 from pyqtgraph.Qt import QtGui
 
-from opennft import excepthook
-
-excepthook.set_hook()
-
 
 # ==============================================================================
 class ProjectionImageView(pg.ViewBox):

@@ -33,7 +33,6 @@ The module bellow is written by Artem Nikonorov, Evgeny Prilepin, Yury Koush, Ro
 
 """
 
-import sys
 import os
 import time
 import glob
@@ -60,7 +59,6 @@ from PyQt5.QtCore import QSettings, QTimer, QEvent, QRegExp
 from PyQt5.uic import loadUi
 from PyQt5.QtGui import QRegExpValidator
 
-from opennft import excepthook
 from opennft import eventrecorder as erd
 from opennft import config, mlproc, ptbscreen, projview, utils
 
@@ -70,9 +68,6 @@ if config.USE_MRPULSE:
 
 # Enable antialiasing for prettier plots
 pg.setConfigOptions(antialias=True)
-
-# Override default exception hook to show any exceptions on pyqt slots
-excepthook.set_hook()
 
 
 class ImageViewMode(enum.IntEnum):
