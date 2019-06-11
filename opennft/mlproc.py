@@ -29,7 +29,7 @@ except ImportError as err:
 from opennft import config
 
 
-class MatlabSharedEngineHelper(object):
+class MatlabSharedEngineHelper:
     """A helper class for using shared matlab engine sessions
     """
 
