@@ -404,7 +404,7 @@ else
 end
 
 tStopIGLM = toc(tStartMotCorr);
-fprintf('TIMING: %d iter - PREPROC MC: %d s - SMOOTH: %d s - IGLM: %d s',...
+fprintf('TIMING: %d iter - PREPROC MC: %d s - SMOOTH: %d s - IGLM: %d s\n',...
     nrIter, tStopMC, tStopSm-tStopMC, tStopIGLM-tStopSm);
 
 %% dynamic ROI mask based on statMap2D
