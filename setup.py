@@ -68,6 +68,7 @@ def specify_requirements():
         'pyqtgraph @ https://github.com/pyqtgraph/pyqtgraph/tarball/develop',
         'pyniexp @ https://github.com/tiborauer/pyniexp/tarball/master',
         'watchdog >= 0.9.0',
+        'loguru >= 0.2.5',
         'pywin32 >= 224 ; platform_system == "Windows"',
         'pyHook @ {} ; platform_system == "Windows"'.format(pyhook_whl),
     ]
@@ -191,10 +192,10 @@ setup(
 
     entry_points={
         'gui_scripts': [
-            'opennft = opennft.opennft:main'
+            'opennft = opennft.__main__:main'
         ],
         'console_scripts': [
-            'opennft_console = opennft.opennft:main'
+            'opennft_console = opennft.__main__:main'
         ]
     },
 

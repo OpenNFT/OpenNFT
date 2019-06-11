@@ -44,6 +44,8 @@ import fnmatch
 import threading
 import multiprocessing
 
+from loguru import logger
+
 import numpy as np
 import pyqtgraph as pg
 
@@ -500,7 +502,7 @@ class OpenNFT(QWidget):
             f.close()
             return fname
         except IOError as e:
-            self.printToLog('POSSIBLE PROBLEMS WITH MEMMAP ACCESS!')
+            logger.info('POSSIBLE PROBLEMS WITH MEMMAP ACCESS!')
             return fname
 
     # --------------------------------------------------------------------------
@@ -564,8 +566,8 @@ class OpenNFT(QWidget):
             self.displayEvent.wait()
             if self.stopDisplayThread:
                 return
-            #self.printToLog(self.displayStack[0]['iteration'])
-            #self.printToLog(self.displayStack[0]['displayStage'])
+            #logger.info('{}', self.displayStack[0]['iteration'])
+            #logger.info('{}', self.displayStack[0]['displayStage'])
             self.ptbScreen.displayLock.acquire()
             self.ptbScreen.display(self.displayQueue)
             self.displayEvent.clear()
@@ -585,7 +587,7 @@ class OpenNFT(QWidget):
 
         if not acquisitionFinished:
             if self.pendingFilename != fname:
-                self.printToLog('Acquisition in progress - "' + fname + '"')
+                logger.info('Acquisition in progress - "{}"', fname)
                 self.pendingFilename = fname
 
             self.files_queue.put_nowait(fname)
@@ -619,7 +621,7 @@ class OpenNFT(QWidget):
 
                 if self.P['Type'] == 'PSC':
                     if config.USE_PTB:
-                        self.printToLog('instruction + ' + str(self.iteration))
+                        logger.info('instruction + {}', self.iteration)
                         self.displayScreen()
 
                     if self.iteration > self.P['nrSkipVol'] and config.UDP_SEND_CONDITION:
@@ -632,7 +634,7 @@ class OpenNFT(QWidget):
                 
                 if self.P['Type'] == 'SVM':
                     if self.displayData and config.USE_UDP_FEEDBACK:
-                        self.printToLog('Sending by UDP - instrValue = ') # + str(self.displayData['instrValue'])
+                        logger.info('Sending by UDP - instrValue = ') # + str(self.displayData['instrValue'])
                         #self.udpSender.send_data(self.displayData['instrValue'])
 
         try:
@@ -640,14 +642,14 @@ class OpenNFT(QWidget):
         except queue.Empty:
             if (self.previousIterStartTime > 0) and (self.preiteration < self.iteration):
                 if (time.time() - self.previousIterStartTime) > (self.P['TR'] / 1000):
-                    self.printToLog('\nScanner is too slow...')
+                    logger.info('Scanner is too slow...')
             self.isMainLoopEntered = False
             self.preiteration = self.iteration
             return
 
         if not self.cbOfflineMode.isChecked() and self.files_queue.qsize() > 0:
-            self.printToLog("Toolbox is too slow, on file " + fname)
-            self.printToLog("" + str(self.files_queue.qsize()) + " files in queue.")
+            logger.info("Toolbox is too slow, on file {}", fname)
+            logger.info("{} files in queue", self.files_queue.qsize())
 
         self.preiteration = self.iteration
 
@@ -657,7 +659,7 @@ class OpenNFT(QWidget):
         #        f = open(path, 'a')
         #        f.close()
         #    except IOError as e:
-        #        self.printToLog('Acquisition in progress - "' + fname + '"')
+        #        logger.info('Acquisition in progress - "{}"', fname)
         #        self.files_queue.put_nowait(fname)
         #        self.isMainLoopEntered = False
         #        return
@@ -673,21 +675,20 @@ class OpenNFT(QWidget):
 
         if not self.reachedFirstFile:
             if not self.P['FirstFileName'] in fname:
-                self.printToLog('\nVolume skiped, waiting for first file')
+                logger.info('Volume skiped, waiting for first file')
                 self.isMainLoopEntered = False
                 return
             else:
-                self.printToLog('\nFirst file was reached')
+                logger.info('First file was reached')
                 self.reachedFirstFile = True
 
         if self.iteration > self.P['NrOfVolumes']:
-            self.printToLog('\nVolumes limit reached')
+            logger.info('Volumes limit reached')
             self.stop()
             self.isMainLoopEntered = False
             return
 
-        self.printToLog('\nCall iteration for file "{}" '.format(
-            os.path.basename(fname)))
+        logger.info('Call iteration for file "{}"', os.path.basename(fname))
 
         # Start elapsed time
         t = time.time()
@@ -736,7 +737,7 @@ class OpenNFT(QWidget):
                 lastBlockIteration = self.iteration - self.P['nrBlankScans'] - self.P['nrSkipVol']
                 lastBlankScan = len(np.where(dcmBlocks == lastBlockIteration)[0]) > 0
                 if lastBlankScan:
-                    self.printToLog('get lastBlankScan...')
+                    logger.info('get lastBlankScan...')
                     print(dcmBlocks)
 
                 if (self.tagFuture.done() and self.oppFuture.done()) or lastBlankScan:
@@ -744,7 +745,7 @@ class OpenNFT(QWidget):
                     self.recorder.recordEvent(erd.Times.t12, self.iteration)
                     dcmTagLE = self.tagFuture.result()
                     dcmOppLE = self.oppFuture.result()
-                    self.printToLog('DCM calculated')
+                    logger.info('DCM calculated')
 
                     # feedback estimation
                     self.displayData = self.eng.nfbCalc(self.iteration, self.displayData, dcmTagLE, dcmOppLE, True, nargout=1)
@@ -789,7 +790,7 @@ class OpenNFT(QWidget):
             # t5
             self.recorder.recordEvent(erd.Times.t5, self.iteration)
             if self.displayData and config.USE_UDP_FEEDBACK:
-                self.printToLog('Sending by UDP - dispValue = ' + str(self.displayData['dispValue']))
+                logger.info('Sending by UDP - dispValue = {}', self.displayData['dispValue'])
                 self.udpSender.send_data(self.displayData['dispValue'])
                 
         elif self.P['Type'] == 'PSC':
@@ -798,7 +799,7 @@ class OpenNFT(QWidget):
             # t5
             self.recorder.recordEvent(erd.Times.t5, self.iteration)
             if self.displayData and config.USE_UDP_FEEDBACK: # for UDP, configure here if required
-                self.printToLog('Sending by UDP - dispValue = ' + str(self.displayData['dispValue']))
+                logger.info('Sending by UDP - dispValue = {}', self.displayData['dispValue'])
                 self.udpSender.send_data(self.displayData['dispValue'])
 
             if self.P['Prot'] != 'Inter':
@@ -889,7 +890,7 @@ class OpenNFT(QWidget):
         files = glob.glob(path)
 
         if not files:
-            self.printToLog("No files found in offline mode. Check WatchFolder settings!")
+            logger.info("No files found in offline mode. Check WatchFolder settings!")
             self.stop()
             return
 
@@ -996,37 +997,34 @@ class OpenNFT(QWidget):
         if not self.mlMainHelper.connect(
                 start=start,
                 name_prefix=config.MAIN_MATLAB_SHARED_NAME_PREFIX):
-            self.printToLog('There is no main Matlab session yet. Press Initialize.')
+            logger.warning('There is no main Matlab session yet. Press Initialize.')
             return
 
         if not self.mlPtbDcmHelper.connect(
                  start=start,
                  name_prefix=config.PTB_MATLAB_SHARED_NAME_PREFIX):
-            self.printToLog('Unable to connect PTB Matlab session')
+            logger.error('Unable to connect PTB Matlab session')
             return
 
         if not self.mlSpmHelper.connect(
                 start=start,
                 name_prefix=config.SPM_MATLAB_SHARED_NAME_PREFIX):
-            self.printToLog('Unable to connect SPM Matlab session')
+            logger.error('Unable to connect SPM Matlab session')
             return
 
         if config.USE_MATLAB_MODEL_HELPER:
             if not self.mlModelHelper.connect(
                     start=start,
                     name_prefix=config.MODEL_HELPER_MATLAB_SHARED_NAME_PREFIX):
-                self.printToLog('Unable to connect Model Helper Matlab session')
+                logger.error('Unable to connect Model Helper Matlab session')
                 return
 
-        self.printToLog('Connected to main Matlab session "{}"'.format(
-            self.mlMainHelper.name))
-        self.printToLog('Connected to PTB Matlab session "{}"'.format(
-            self.mlPtbDcmHelper.name))
-        self.printToLog('Connected to SPM Matlab session "{}"'.format(
-            self.mlSpmHelper.name))
+        logger.info('Connected to main Matlab session "{}"', self.mlMainHelper.name)
+        logger.info('Connected to PTB Matlab session "{}"', self.mlPtbDcmHelper.name)
+        logger.info('Connected to SPM Matlab session "{}"', self.mlSpmHelper.name)
+
         if config.USE_MATLAB_MODEL_HELPER:
-            self.printToLog('Connected to Model Helper Matlab session "{}"'.format(
-                self.mlModelHelper.name))
+            logger.info('Connected to Model Helper Matlab session "{}"', self.mlModelHelper.name)
 
         self.mlMainHelper.prepare()
         self.mlPtbDcmHelper.prepare()
@@ -1044,7 +1042,7 @@ class OpenNFT(QWidget):
         self.gboxShortParams.setEnabled(True)
         self.resetDone = True
 
-        self.printToLog("Initialize finished")
+        logger.info("Initialize finished")
 
     # --------------------------------------------------------------------------
     def reset(self):
@@ -1076,11 +1074,11 @@ class OpenNFT(QWidget):
     # --------------------------------------------------------------------------
     def setup(self):
         if not hasattr(self, 'resetDone'):
-            self.printToLog("Couldn't connect Matlab.\n PRESS INITIALIZE FIRST!")
+            logger.warn("Couldn't connect Matlab.\n PRESS INITIALIZE FIRST!")
             return
 
         with utils.timeit('Setup finished:'):
-            self.printToLog("Setup application...")
+            logger.info("Setup application...")
 
             # for multiply setup
             if not self.resetDone:
@@ -1106,7 +1104,7 @@ class OpenNFT(QWidget):
 
             self.P.update(self.eng.workspace['P'])
 
-            self.printToLog("  Setup plots...")
+            logger.info("  Setup plots...")
             self.createMusterInfo()
             self.setupRoiPlots()
             self.setupMcPlots()
@@ -1154,7 +1152,7 @@ class OpenNFT(QWidget):
 
     # --------------------------------------------------------------------------
     def start(self):
-        self.printToLog("*** Started ***")
+        logger.info("*** Started ***")
 
         self.btnStart.setEnabled(False)
         self.btnStop.setEnabled(True)
@@ -1233,7 +1231,7 @@ class OpenNFT(QWidget):
             self.nfbFinStarted = self.eng.nfbSave(self.iteration, nargout=0, async=True)
             self.fFinNFB = False
 
-        self.printToLog('Finished.')
+        logger.info('Finished.')
 
     # --------------------------------------------------------------------------
     def onChooseSetFile(self):
@@ -1345,9 +1343,7 @@ class OpenNFT(QWidget):
         self.currentCursorPos = pos
         self.currentProjection = proj
 
-        self.printToLog(
-            'New cursor coords {} for proj {} have been received'.format(
-                pos, proj))
+        logger.info('New cursor coords {} for proj {} have been received', pos, proj)
 
         if self.imageViewMode == ImageViewMode.orthviewEPI:
             bgType = 'bgEPI'
@@ -1408,7 +1404,7 @@ class OpenNFT(QWidget):
         self.cbOfflineMode.setChecked(str(self.settings.value('OfflineMode', 'true')).lower() == 'true')
 
         if self.settings.value('UseTCPData', None) is None:
-            self.printToLog('Upgrade settings format from version 1.0.rc0')
+            logger.warning('Upgrade settings format from version 1.0.rc0')
 
         self.cbUseTCPData.setChecked(str(self.settings.value('UseTCPData', 'false')).lower() == 'true')
         if self.cbUseTCPData.isChecked():
@@ -1478,7 +1474,7 @@ class OpenNFT(QWidget):
 
     # --------------------------------------------------------------------------
     def actualize(self):
-        self.printToLog("  Actualizing:")
+        logger.info("  Actualizing:")
 
         # --- top ---
         self.P['ProtocolFile'] = self.leProtocolFile.text()
@@ -1961,11 +1957,6 @@ class OpenNFT(QWidget):
             pt.setData(x=x, y=data[:, i1])
 
     # --------------------------------------------------------------------------
-    def printToLog(self, message):
-        # TODO: Use logging module
-        print(message)
-
-    # --------------------------------------------------------------------------
     def readAppSettings(self):
         self.appSettings.beginGroup('UI')
         self.restoreGeometry(self.appSettings.value(
@@ -2029,19 +2020,3 @@ class OpenNFT(QWidget):
             self.t1.join()  # ns.ptb.display(displayData)
 
         return
-
-
-def main():
-    app = QApplication(sys.argv)
-
-    app.setApplicationName('OpenNFT')
-    app.setOrganizationName('OpenNFT')
-    app.setApplicationVersion('1.0')
-
-    nf = OpenNFT()
-    nf.show()
-    sys.exit(app.exec())
-
-
-if __name__ == '__main__':
-    main()
