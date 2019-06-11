@@ -11,6 +11,8 @@ Written by Evgeny Prilepin, Artem Nikonorov, Yury Koush
 
 """
 
+from loguru import logger
+
 from opennft import eventrecorder as erd, mlproc
 from opennft.eventrecorder import Times as Times
 import multiprocessing as mp
@@ -64,7 +66,6 @@ class PtbScreen(object):
     def display(self, displayQueue):
         """
         """
-        #print('ptbDisplay 1')
         if displayQueue.empty():
             self.displayLock.release()
             return
@@ -75,10 +76,9 @@ class PtbScreen(object):
             self.displayLock.release()
             return
 
-        #print('ptbDisplay 2-' + str(displayData['iteration']))
-        print('stage: ' + displayData['displayStage'])
+        logger.info('stage: {}', displayData['displayStage'])
 
-        #if display_blank:
+        # if display_blank:
         if displayData['displayBlankScreen'] > 0:
             self.eng.ptbBlankScreen(nargout=0, async=True)
             displayData['displayBlankScreen'] = 0
@@ -96,7 +96,7 @@ class PtbScreen(object):
             else:
                 self.eng.displayFeedback(displayData, nargout=0, async=True)
 
-        #print('ptbDisplay 3-' + str(displayData['iteration']))
+        # logger.info('ptbDisplay 3-{}', displayData['iteration'])
 
         self.endEvent.set()
         self.displayLock.release()

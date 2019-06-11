@@ -549,11 +549,11 @@ class OpenNFT(QWidget):
         imSize = self.engSPM.evalin('base', 'size(imgc)', nargout=3)
         imSize = list(map(int, imSize))
 
-        #with utils.timeit("Receiving 'imgt' from helper Matlab:"):
+        # with utils.timeit("Receiving 'imgt' from helper Matlab:"):
         self.imgc = np.memmap(f, dtype='uint8', mode='r', shape=(imSize[0], imSize[1], imSize[2]), offset=offset, order='F')
 
         f.close()
-        #print('Receiving images from helper Matlab')
+        # logger.info('Receiving images from helper Matlab')
 
     # --------------------------------------------------------------------------
     def displayScreen(self):
@@ -738,7 +738,7 @@ class OpenNFT(QWidget):
                 lastBlankScan = len(np.where(dcmBlocks == lastBlockIteration)[0]) > 0
                 if lastBlankScan:
                     logger.info('get lastBlankScan...')
-                    print(dcmBlocks)
+                    logger.info('dcm blocks {}', dcmBlocks)
 
                 if (self.tagFuture.done() and self.oppFuture.done()) or lastBlankScan:
                     # t12 last DCM model computation is done
@@ -842,7 +842,8 @@ class OpenNFT(QWidget):
         self.recorder.recordEventDuration(erd.Times.d0, self.iteration, time.time() - t)
         self.leElapsedTime.setText('{:.4f}'.format(time.time() - t))
         self.leCurrentVolume.setText('%d' % self.iteration)
-        print('Elapsed time: {:.4f}'.format(time.time() - t))
+
+        logger.info('Elapsed time: {:.4f} s', time.time() - t)
 
         QApplication.processEvents()
 
@@ -850,7 +851,7 @@ class OpenNFT(QWidget):
         self.recorder.recordEvent(erd.Times.t6, self.iteration)
 
         if self.iteration == self.P['NrOfVolumes']:
-            print('Last iteration reached...')
+            logger.info('Last iteration reached...')
             self.stop()
         
         self.iteration += 1
@@ -919,7 +920,7 @@ class OpenNFT(QWidget):
         searchString = self.getFileSearchString(self.P['FirstFileNameTxt'], path, ext)
         path = os.path.dirname(path)
 
-        print('Searching for %s in %s' %(searchString, path))
+        logger.info('Searching for {} in {}', searchString, path)
 
         event_handler = CreateFileEventHandler(
             searchString, self.files_queue, self.recorder)
@@ -1089,7 +1090,7 @@ class OpenNFT(QWidget):
 
             memMapFile = self.getFreeMemmapFilename()
             memMapFile = memMapFile.replace('OrthView', 'shared')
-            print('memMapFile: ' + memMapFile)
+            logger.info('memMapFile: {}', memMapFile)
             self.P['memMapFile'] = memMapFile
 
             self.eng.workspace['P'] = self.P
@@ -1648,7 +1649,7 @@ class OpenNFT(QWidget):
 
         if 'imgViewTempl' not in self.P:
             if self.eng.evalin('base', 'length(imgViewTempl)') > 0:
-                print('getting RoiVoxel...')
+                logger.info('getting RoiVoxel...')
                 imSize = self.eng.evalin('base', 'size(imgViewTempl)', nargout=2)
 
                 newTransport = True
@@ -1676,7 +1677,7 @@ class OpenNFT(QWidget):
         if (self.eng.evalin('base', "exist('strStatMap')") > 0 and
                 self.imgViewTempl.size > 0):
             img = self.imgViewTempl
-            print('getting StatMap...')
+            logger.info('getting StatMap...')
             with utils.timeit("Receiving 'strStatMap' from Matlab:"):
                 statMap = np.fromstring(
                     self.eng.workspace['strStatMap'], dtype=np.uint8, sep=";")
@@ -2013,7 +2014,7 @@ class OpenNFT(QWidget):
             self.testStarted = True
         else:
             np_arr = mrpulse.toNpData(self.tvData)
-            print(np_arr)
+            logger.info('{}', np_arr)
 
             self.e1.set()
             self.e2.wait()
