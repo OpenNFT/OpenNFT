@@ -990,10 +990,12 @@ class OpenNFT(QWidget):
 
     # --------------------------------------------------------------------------
     def initialize(self, start=True):
+        ts = time.time()
+
         if not self.mlMainHelper.connect(
                 start=start,
                 name_prefix=config.MAIN_MATLAB_SHARED_NAME_PREFIX):
-            logger.warning('There is no main Matlab session yet. Press Initialize.')
+            logger.warning('There is no main Matlab session yet. Press "Initialize" button.')
             return
 
         if not self.mlPtbDcmHelper.connect(
@@ -1038,7 +1040,7 @@ class OpenNFT(QWidget):
         self.gboxShortParams.setEnabled(True)
         self.resetDone = True
 
-        logger.info("Initialize finished")
+        logger.info("Initialization finished ({:.2f} s)", time.time() - ts)
 
     # --------------------------------------------------------------------------
     def reset(self):
