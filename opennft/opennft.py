@@ -520,15 +520,16 @@ class OpenNFT(QWidget):
             self.P = self.eng.workspace['P']
 
         # init OrthoView in helper
-        self.spmHelperP = {}
-        self.spmHelperP['Type'] = self.P['Type']
-        self.spmHelperP['AnatBgFolder'] = os.path.normpath(self.P['AnatBgFolder'])
-        self.spmHelperP['MCTempl'] = os.path.dirname(self.P['MCTempl'])
-        self.spmHelperP['memMapFile'] = self.eng.evalin('base', 'P.memMapFile')
-        self.spmHelperP['idxRoiImgt'] = []
-        self.spmHelperP['idxRoiImgs'] = []
-        self.spmHelperP['idxRoiImgc'] = []
-        self.spmHelperP['lengthROIs'] = []
+        self.spmHelperP = {
+            'Type': self.P['Type'],
+            'AnatBgFolder': os.path.normpath(self.P['AnatBgFolder']),
+            'MCTempl': os.path.dirname(self.P['MCTempl']),
+            'memMapFile': self.eng.evalin('base', 'P.memMapFile'),
+            'idxRoiImgt': [],
+            'idxRoiImgs': [],
+            'idxRoiImgc': [],
+            'lengthROIs': [],
+        }
 
         self.engSPM.helperPrepareOrthView(self.spmHelperP, 'bgEPI', nargout=0)
         self.engSPM.helperPrepareOrthViewRTQA(self.spmHelperP, 'bgEPI', nargout=0)
