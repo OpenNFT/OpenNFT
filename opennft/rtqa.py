@@ -1,23 +1,22 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'rtQA.ui'
-#
-# Created by: PyQt5 UI code generator 5.11.3
-#
-# WARNING! All changes made in this file will be lost!
+from PyQt5 import QtWidgets
+from PyQt5 import QtCore
+from PyQt5 import uic
 
 import numpy as np
 import pyqtgraph as pg
-import opennft.config as config
-from opennft.rtQAUI import Ui_rtQA
-from PyQt5 import QtGui
+
+from opennft import utils
+from opennft import config
 
 
-class rtQAWindow(QtGui.QMainWindow, Ui_rtQA):
+class RTQAWindow(QtWidgets.QWidget):
 
     def __init__(self, parent=None):
-        super(rtQAWindow, self).__init__(parent)
-        self.setupUi(self)
+        super().__init__(parent=parent, flags=QtCore.Qt.Window)
+
+        uic.loadUi(utils.get_ui_file('rtqa.ui'), self)
 
         self.snrplot = pg.PlotWidget(self)
         self.snrplot.setBackground((255, 255, 255))
@@ -30,28 +29,27 @@ class rtQAWindow(QtGui.QMainWindow, Ui_rtQA):
         p.showGrid(x=True, y=True, alpha=1)
         p.installEventFilter(self)
 
-        self.means = dict.fromkeys(['meanRaw', 'meanProcessed']);
+        self.means = dict.fromkeys(['meanRaw', 'meanProcessed'])
         self.m2 = dict.fromkeys(['m2Raw'])
-        self.variances = dict.fromkeys(['varRaw', 'varProcessed']);
+        self.variances = dict.fromkeys(['varRaw', 'varProcessed'])
         self.rSNR = dict.fromkeys(['snrRaw', 'snrProcessed'])
 
     def closeEvent(self, event):
         self.hide()
         event.accept()
 
-    def dictInit(self, sz, key):
+    def init(self, sz, key):
         self.means['mean'+key] = np.zeros((sz, 0))
         self.m2['m2'+key] = np.zeros((sz, 0))
         self.variances['var'+key] = np.zeros((sz, 0))
         self.rSNR['snr'+key] = np.zeros((sz, 0))
 
-    def plotSNR(self, init):
-
+    def plot_snr(self, init):
         plotitem = self.snrplot.getPlotItem()
         key = str(self.comboBox.currentText())
         data = np.array(self.rSNR["snr" + key], ndmin=2)
-        sz, l = data.shape
-        x = np.arange(0, l , dtype=np.float64)
+        sz, le = data.shape
+        x = np.arange(0, le, dtype=np.float64)
 
         if init:
             plotitem.clear()
@@ -62,22 +60,21 @@ class rtQAWindow(QtGui.QMainWindow, Ui_rtQA):
                 p = plotitem.plot(pen=pen)
                 plots.append(p)
 
-            self.plotSNR.__dict__[plotitem] = plots
+            self.plot_snr.__dict__[plotitem] = plots
 
-        for p, y in zip(self.plotSNR.__dict__[plotitem], data):
+        for p, y in zip(self.plot_snr.__dict__[plotitem], data):
             p.setData(x=x, y=np.array(y))
 
         items = plotitem.listDataItems()
 
         plotitem.autoRange(items=items)
 
-    def calcSNR(self, init, data, key, iteration):
-
+    def calculate_snr(self, init, data, key, iteration):
         sz = data.size
         snr = np.zeros((sz, 1))
 
         if init:
-            self.dictInit(sz, key)
+            self.init(sz, key)
             mean = np.zeros((sz, 1))
             m2 = np.zeros((sz, 1))
             variance = np.zeros((sz, 1))
@@ -87,24 +84,23 @@ class rtQAWindow(QtGui.QMainWindow, Ui_rtQA):
             variance = self.variances["var" + key]
 
         n = iteration
-        meanPrev = mean;
+        mean_prev = mean
+
         for i in range(sz):
             mean[i] = mean[i] + (data[i] - mean[i]) / n
             if n == 1:
                 variance[i] = 0
             else:
-                m2[i] = m2[i] + (data[i] - meanPrev[i])*(data[i] - mean[i])
+                m2[i] = m2[i] + (data[i] - mean_prev[i])*(data[i] - mean[i])
                 variance[i] = m2[i] / (n-1)
             if variance[i] == 0:
                 snr[i] = 0
             else:
-                snr[i] = mean[i] / variance[i] ** (.5)
+                snr[i] = mean[i] / variance[i] ** 0.5
 
         self.means["mean" + key] = mean
         self.m2["m2" + key] = m2
         self.variances["var" + key] = variance
-        if iteration<8:
+        if iteration < 8:
             snr = np.zeros((sz, 1))
         self.rSNR['snr'+key] = np.append(self.rSNR['snr'+key], snr, axis=1)
-
-

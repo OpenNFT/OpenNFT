@@ -61,7 +61,7 @@ from PyQt5.QtGui import QRegExpValidator
 
 from opennft import eventrecorder as erd
 from opennft import config, mlproc, ptbscreen, projview, utils
-from opennft.rtQA import rtQAWindow
+from opennft.rtqa import RTQAWindow
 
 if config.USE_MRPULSE:
     from opennft import mrpulse
@@ -131,7 +131,8 @@ class OpenNFT(QWidget):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        loadUi(config.OpenNFT_UI, self)
+        loadUi(utils.get_ui_file('opennft.ui'), self)
+
         self.setWindowIcon(QIcon(config.OpenNFT_ICON))
         self.displayEvent = multiprocessing.Event()
         self.endDisplayEvent = multiprocessing.Event()
@@ -1188,8 +1189,9 @@ class OpenNFT(QWidget):
             self.btnStart.setEnabled(True)
             self.btnRTQA.setEnabled(True)
 
-            self.windowRTQA = rtQAWindow(self)
-            self.windowRTQA.snrVolCheckBox.stateChanged.connect(self.onChecked)
+            self.windowRTQA = RTQAWindow(parent=self)
+            self.windowRTQA.snrVolCheckBox.stateChanged.connect(self.onShowSnrVol)
+
             self.eng.assignin('base', 'isShowSNR', self.windowRTQA.snrVolCheckBox.isChecked(), nargout=0)
             self.eng.assignin('base', 'imageViewMode', int(self.imageViewMode), nargout=0)
             self.eng.assignin('base', 'FIRST_SNR_VOLUME', config.FIRST_SNR_VOLUME, nargout=0)
@@ -1283,7 +1285,7 @@ class OpenNFT(QWidget):
         config.USE_RTQA = True
 
     # --------------------------------------------------------------------------
-    def onChecked(self):
+    def onShowSnrVol(self):
         self.eng.assignin('base', 'isShowSNR', self.windowRTQA.snrVolCheckBox.isChecked(), nargout=0)
 
     # --------------------------------------------------------------------------
@@ -1913,8 +1915,8 @@ class OpenNFT(QWidget):
         self.drawGivenRoiPlot(init, self.normRoiPlot, dataNorm)
 
         n = len(dataRealRaw[0, :])
-        self.windowRTQA.calcSNR(init, dataRealRaw[:, n - 1], "Raw", n)
-        self.windowRTQA.plotSNR(init)
+        self.windowRTQA.calculate_snr(init, dataRealRaw[:, n - 1], "Raw", n)
+        self.windowRTQA.plot_snr(init)
 
     # --------------------------------------------------------------------------
     def drawGivenRoiPlot(self, init, plotwidget: pg.PlotWidget, data):
