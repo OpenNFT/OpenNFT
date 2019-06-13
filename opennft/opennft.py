@@ -40,7 +40,6 @@ import queue
 import enum
 import re
 import fnmatch
-import collections
 import threading
 import multiprocessing
 
@@ -61,7 +60,7 @@ from PyQt5.uic import loadUi
 from PyQt5.QtGui import QRegExpValidator
 
 from opennft import eventrecorder as erd
-from opennft import config, mlproc, ptbscreen, memmap, projview, utils
+from opennft import config, mlproc, ptbscreen, projimread, projview, utils
 from opennft.rtqa import RTQAWindow
 
 if config.USE_MRPULSE:
@@ -151,17 +150,11 @@ class OpenNFT(QWidget):
 
         self.roiImageView = self.createRoiImageView()
 
-        self.proj_image_mapping = collections.OrderedDict([
-            ('transversal', 'imgt'),
-            ('sagittal', 'imgs'),
-            ('coronal', 'imgc'),
-        ])
-
-        self.orth_view_images = {proj: {} for proj in self.proj_image_mapping}
-
         self.orthView = projview.ProjectionsWidget(self)
         self.layoutOrthView.addWidget(self.orthView)
         self.orthView.setVisible(False)
+
+        self.proj_images_reader = projimread.ProjectionImagesReader()
 
         self.mcPlot = self.createMcPlot()
 
@@ -557,12 +550,7 @@ class OpenNFT(QWidget):
         else:
             filename = filename.replace('shared', 'OrthView')
 
-        with open(filename, 'r') as fp:
-            offset = 0
-            for proj_name, image_name in self.proj_image_mapping.items():
-                shape = np.array(self.engSPM.evalin('base', 'size({})'.format(image_name), nargout=3), dtype=np.int32)
-                self.orth_view_images[proj_name]['image'] = memmap.read_image(fp, shape, offset)
-                offset += shape.prod()
+        self.proj_images_reader.read(filename, self.engSPM)
 
     # --------------------------------------------------------------------------
     def displayScreen(self):
@@ -1235,7 +1223,7 @@ class OpenNFT(QWidget):
         if config.USE_SLEEP_IN_STOP:
             time.sleep(2)
 
-        self.orth_view_images = {proj: {} for proj in self.proj_image_mapping}
+        self.proj_images_reader.clear()
 
         self.imgViewTempl = None
 
@@ -1414,9 +1402,9 @@ class OpenNFT(QWidget):
         # with utils.timeit('Getting new orthview projections...'):
         self.getOrthViewImages()
 
-        self.orthView.setTransversalImage(self.orth_view_images['transversal']['image'])
-        self.orthView.setSagittalImage(self.orth_view_images['sagittal']['image'])
-        self.orthView.setCoronalImage(self.orth_view_images['coronal']['image'])
+        self.orthView.setTransversalImage(self.proj_images_reader.transversal)
+        self.orthView.setSagittalImage(self.proj_images_reader.sagittal)
+        self.orthView.setCoronalImage(self.proj_images_reader.coronal)
 
         self.orthViewUpdateInProgress = False
 
