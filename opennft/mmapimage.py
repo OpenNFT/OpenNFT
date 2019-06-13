@@ -8,15 +8,25 @@ def get_image_shape(image_name: str, eng, nargout: int) -> np.ndarray:
     return np.array(eng.evalin('base', 'size({})'.format(image_name), nargout=nargout), dtype=np.int32)
 
 
-def read_memmap_image(fp, shape, offset: int, dtype: str = 'uint8'):
+def read_memmap_image(file_obj, shape, offset: int, dtype: str = 'uint8'):
     return np.memmap(
-        fp,
+        file_obj,
         dtype=dtype,
         mode='r',
         shape=tuple(shape),
         offset=offset,
         order='F'
     )
+
+
+def read_mosaic_image(memmap_filename: str, image_name, eng) -> np.ndarray:
+    """Reads mosaic image from memmap file
+
+    :param memmap_filename: memmap file name
+    :return: numpy array-like image object
+    """
+    shape = get_image_shape(image_name, eng, nargout=2)
+    return read_memmap_image(memmap_filename, shape=shape, offset=0)
 
 
 class ProjectionImagesReader:

@@ -1687,23 +1687,9 @@ class OpenNFT(QWidget):
 
         if 'imgViewTempl' not in self.P:
             if self.eng.evalin('base', 'length(imgViewTempl)') > 0:
-                logger.info('getting RoiVoxel...')
-                imSize = self.eng.evalin('base', 'size(imgViewTempl)', nargout=2)
-
-                newTransport = True
-                if not newTransport:
-                    with utils.timeit("Receiving 'strRoiVoxel' from Matlab:"):
-                        strRoiVoxel = self.eng.workspace['strRoiVoxel']
-                    img = np.fromstring(
-                        strRoiVoxel, dtype=np.uint8, sep=";").reshape(
-                        (imSize[0], imSize[1]), order='F')
-                else:
-                    filename = self.eng.evalin('base', 'P.memMapFile')
-                    offset = int(imSize[0] * imSize[1] * 0)
-                    with utils.timeit("Receiving 'mmImgViewTempl' from Matlab:"):
-                        self.imgViewTempl = np.memmap(filename, dtype='uint8', mode='r',
-                                                      shape=(int(imSize[0]), int(imSize[1])),
-                                                      offset=int(offset), order='F')
+                filename = self.eng.evalin('base', 'P.memMapFile')
+                with utils.timeit("Receiving 'mmImgViewTempl' from Matlab:"):
+                    self.imgViewTempl = mmapimage.read_mosaic_image(filename, 'imgViewTempl', self.eng)
 
                 if self.imgViewTempl.size > 0:
                     self.roiImageView.setImage(self.imgViewTempl.T)
