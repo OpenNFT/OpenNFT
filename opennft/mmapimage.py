@@ -4,6 +4,21 @@ import collections
 import numpy as np
 
 
+def get_image_shape(image_name: str, eng, nargout: int) -> np.ndarray:
+    return np.array(eng.evalin('base', 'size({})'.format(image_name), nargout=nargout), dtype=np.int32)
+
+
+def read_memmap_image(fp, shape, offset: int, dtype: str = 'uint8'):
+    return np.memmap(
+        fp,
+        dtype=dtype,
+        mode='r',
+        shape=tuple(shape),
+        offset=offset,
+        order='F'
+    )
+
+
 class ProjectionImagesReader:
     """The class for reading projection images from memmap file
     """
@@ -43,26 +58,11 @@ class ProjectionImagesReader:
             offset = 0
 
             for proj_name, image_name in self._projection_images_mapping.items():
-                shape = self._get_image_shape(image_name, matlab_engine)
-                self._projection_images[proj_name] = self._read_memmap_image(fp, shape, offset)
+                shape = get_image_shape(image_name, matlab_engine, nargout=3)
+                self._projection_images[proj_name] = read_memmap_image(fp, shape, offset)
                 offset += shape.prod()
 
     def clear(self):
         """Clean up all data
         """
         self._projection_images = {proj: None for proj in self._projection_images_mapping}
-
-    @staticmethod
-    def _get_image_shape(image_name, matlab_engine):
-        return np.array(matlab_engine.evalin('base', 'size({})'.format(image_name), nargout=3), dtype=np.int32)
-
-    @staticmethod
-    def _read_memmap_image(fp, shape, offset):
-        return np.memmap(
-            fp,
-            dtype='uint8',
-            mode='r',
-            shape=tuple(shape),
-            offset=offset,
-            order='F'
-        )

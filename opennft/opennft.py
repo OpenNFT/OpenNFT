@@ -60,7 +60,7 @@ from PyQt5.uic import loadUi
 from PyQt5.QtGui import QRegExpValidator
 
 from opennft import eventrecorder as erd
-from opennft import config, mlproc, ptbscreen, projimread, projview, utils
+from opennft import config, mlproc, ptbscreen, mmapimage, projview, utils
 from opennft.rtqa import RTQAWindow
 
 if config.USE_MRPULSE:
@@ -154,7 +154,7 @@ class OpenNFT(QWidget):
         self.layoutOrthView.addWidget(self.orthView)
         self.orthView.setVisible(False)
 
-        self.proj_images_reader = projimread.ProjectionImagesReader()
+        self.proj_images_reader = mmapimage.ProjectionImagesReader()
 
         self.mcPlot = self.createMcPlot()
 
