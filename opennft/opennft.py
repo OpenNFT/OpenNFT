@@ -535,8 +535,8 @@ class OpenNFT(QWidget):
 
     # --------------------------------------------------------------------------
     def getOrthViewImages(self):
-
         filename = self.eng.evalin('base', 'P.memMapFile')
+
         if self.windowRTQA.snrVolCheckBox.isChecked():
             # file for SNR
             filename = filename.replace('shared', 'SNROrthView')
@@ -551,27 +551,45 @@ class OpenNFT(QWidget):
         imSize = list(map(int, imSize))
         offset = int(imSize[0] * imSize[1] * 0)
 
-        f = open(filename, 'r')
         # with utils.timeit("Receiving 'imgt' from helper Matlab:"):
-        self.imgt = np.memmap(filename, dtype='uint8', mode='r', shape=(imSize[0], imSize[1], imSize[2]), offset=offset,
-                              order='F')
+        self.imgt = np.memmap(
+            filename,
+            dtype='uint8',
+            mode='r',
+            shape=(imSize[0], imSize[1], imSize[2]),
+            offset=offset,
+            order='F'
+        )
 
         offset = int(imSize[0] * imSize[1] * imSize[2])
         imSize = self.engSPM.evalin('base', 'size(imgs)', nargout=3)
         imSize = list(map(int, imSize))
-        # with utils.timeit("Receiving 'imgt' from helper Matlab:"):
-        self.imgs = np.memmap(f, dtype='uint8', mode='r', shape=(imSize[0], imSize[1], imSize[2]), offset=offset,
-                              order='F')
 
-        offset += int(imSize[0] * imSize[1] * imSize[2])
-        imSize = self.engSPM.evalin('base', 'size(imgc)', nargout=3)
-        imSize = list(map(int, imSize))
+        with open(filename, 'r') as fp:
+            # with utils.timeit("Receiving 'imgt' from helper Matlab:"):
+            self.imgs = np.memmap(
+                fp,
+                dtype='uint8',
+                mode='r',
+                shape=(imSize[0], imSize[1], imSize[2]),
+                offset=offset,
+                order='F'
+            )
 
-        # with utils.timeit("Receiving 'imgt' from helper Matlab:"):
-        self.imgc = np.memmap(f, dtype='uint8', mode='r', shape=(imSize[0], imSize[1], imSize[2]), offset=offset,
-                              order='F')
+            offset += int(imSize[0] * imSize[1] * imSize[2])
+            imSize = self.engSPM.evalin('base', 'size(imgc)', nargout=3)
+            imSize = list(map(int, imSize))
 
-        f.close()
+            # with utils.timeit("Receiving 'imgt' from helper Matlab:"):
+            self.imgc = np.memmap(
+                fp,
+                dtype='uint8',
+                mode='r',
+                shape=(imSize[0], imSize[1], imSize[2]),
+                offset=offset,
+                order='F'
+            )
+
         # logger.info('Receiving images from helper Matlab')
 
     # --------------------------------------------------------------------------
@@ -1409,21 +1427,17 @@ class OpenNFT(QWidget):
             bgType = 'bgAnat'
 
         if self.windowRTQA.snrVolCheckBox.isChecked():
-
             self.orthViewUpdateFuture = self.engSPM.helperUpdateOrthViewRTQA(
                 pos, proj, bgType, async=True, nargout=0)
-
         else:
             self.orthViewUpdateFuture = self.engSPM.helperUpdateOrthView(
                 pos, proj, bgType, async=True, nargout=0)
 
     # --------------------------------------------------------------------------
     def onCheckOrthViewUpdated(self):
-        if self.orthViewUpdateFuture is None:
+        if not self.orthViewUpdateFuture or not self.orthViewUpdateFuture.done():
             return
 
-        if not self.orthViewUpdateFuture.done():
-            return
         self.orthViewUpdateInProgress = True
 
         # with utils.timeit('Getting new orthview projections...'):
