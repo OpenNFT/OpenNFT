@@ -504,7 +504,7 @@ class OpenNFT(QWidget):
             f.close()
             return fname
         except IOError as e:
-            self.printToLog('POSSIBLE PROBLEMS WITH MEMMAP ACCESS!')
+            logger.info('POSSIBLE PROBLEMS WITH MEMMAP ACCESS!')
             return fname
 
     # --------------------------------------------------------------------------
