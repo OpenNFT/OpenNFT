@@ -173,7 +173,10 @@ class MatlabSharedEngineHelper:
                 break
             time.sleep(alive_check_period)
 
-        if eng._check_matlab():
-            eng.exit()
-
-        logger.info('Terminate matlab engine "{}" helper process {}', shared_name, pid)
+        try:
+            if eng._check_matlab():
+                eng.exit()
+        except SystemError:
+            logger.exception('Cannot terminate Matlab process correctly')
+        else:
+            logger.info('Terminate matlab engine "{}" helper process {}', shared_name, pid)
