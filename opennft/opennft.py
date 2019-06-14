@@ -66,6 +66,7 @@ from opennft.rtqa import RTQAWindow
 if config.USE_MRPULSE:
     from opennft import mrpulse
 
+
 # Enable antialiasing for prettier plots
 pg.setConfigOptions(antialias=True)
 
@@ -415,8 +416,6 @@ class OpenNFT(QWidget):
             lambda: self.onChooseFolder('WorkFolder', self.leWorkFolder))
         self.btnChooseWatchFolder.clicked.connect(
             lambda: self.onChooseFolder('WatchFolder', self.leWatchFolder))
-        self.btnChooseTaskFolder.clicked.connect(
-            lambda: self.onChooseFolder('TaskFolder', self.leTaskFolder))
 
         self.btnStart.setEnabled(False)
 
@@ -460,11 +459,10 @@ class OpenNFT(QWidget):
         self.leUDPFeedbackPort.setEnabled(self.cbUseUDPFeedback.isChecked())
         self.leUDPFeedbackControlChar.setEnabled(self.cbUseUDPFeedback.isChecked())
         self.cbUDPSendCondition.setEnabled(self.cbUseUDPFeedback.isChecked())
-        if not (self.cbUseUDPFeedback.isChecked()):
-            self.cbUDPSendCondition.setChecked(False)
+        if not(self.cbUseUDPFeedback.isChecked()):
+            self.cbUDPSendCondition.setChecked(False)        
 
-            # --------------------------------------------------------------------------
-
+    # --------------------------------------------------------------------------
     def onChangeMode(self, flag):
         if flag:
             self.framePlots.setVisible(not flag)
@@ -487,7 +485,7 @@ class OpenNFT(QWidget):
     # --------------------------------------------------------------------------
     def getFreeMemmapFilename(self):
         path = os.path.normpath(self.P['WorkFolder'])
-        fname = os.path.join(path, 'OrthView.dat')
+        fname = os.path.join(path,'OrthView.dat')
         if not os.path.exists(fname):
             return fname
 
@@ -496,7 +494,7 @@ class OpenNFT(QWidget):
             f.close()
             return fname
         except IOError as e:
-            fname = os.path.join(path, 'OrthView1.dat')
+            fname = os.path.join(path,'OrthView1.dat')
 
         if not os.path.exists(fname):
             return fname
@@ -540,7 +538,7 @@ class OpenNFT(QWidget):
     def getOrthViewImages(self):
         filename = self.eng.evalin('base', 'P.memMapFile')
 
-        if self.windowRTQA.snrVolCheckBox.isChecked():
+        if self.windowRTQA.volumeCheckBox.isChecked():
             # file for SNR
             filename = filename.replace('shared', 'SNROrthView')
             # file for background
@@ -613,16 +611,16 @@ class OpenNFT(QWidget):
 
             self.displayData = self.eng.initDispalyData(self.iteration)
 
-            # display instruction prior to data acquisition for current iteration
-            if self.P['Prot'] == 'Inter':
+            #t6, display instruction prior to data acquisition
+            self.recorder.recordEvent(erd.Times.t6, self.iteration)
 
-                if self.P['Type'] == 'PSC':
-                    if config.USE_PTB:
-                        logger.info('instruction + {}', self.iteration)
-                        self.displayScreen()
+            if self.P['Type'] == 'PSC':
+                if config.USE_PTB:
+                    logger.info('instruction + {}', self.iteration)
+                    self.displayScreen()
 
-                    if self.iteration > self.P['nrSkipVol'] and config.UDP_SEND_CONDITION:
-                        self.udpSender.send_data(
+                if self.iteration > self.P['nrSkipVol'] and config.UDP_SEND_CONDITION:
+                    self.udpSender.send_data(
                             self.P['CondNames'][int(self.eng.evalin('base', 'mainLoopData.condition')) - 1])
 
                 elif self.P['Type'] == 'DCM':
@@ -635,239 +633,236 @@ class OpenNFT(QWidget):
                         logger.info('Sending by UDP - instrValue = ')  # + str(self.displayData['instrValue'])
                         # self.udpSender.send_data(self.displayData['instrValue'])
 
-        try:
-            fname = self.files_queue.get_nowait()
-        except queue.Empty:
-            if (self.previousIterStartTime > 0) and (self.preiteration < self.iteration):
-                if (time.time() - self.previousIterStartTime) > (self.P['TR'] / 1000):
-                    logger.info('Scanner is too slow...')
-            self.isMainLoopEntered = False
+            try:
+                fname = self.files_queue.get_nowait()
+            except queue.Empty:
+                if (self.previousIterStartTime > 0) and (self.preiteration < self.iteration):
+                    if (time.time() - self.previousIterStartTime) > (self.P['TR'] / 1000):
+                        logger.info('Scanner is too slow...')
+                self.isMainLoopEntered = False
+                self.preiteration = self.iteration
+                return
+
+            if not self.cbOfflineMode.isChecked() and self.files_queue.qsize() > 0:
+                logger.info("Toolbox is too slow, on file {}", fname)
+                logger.info("{} files in queue", self.files_queue.qsize())
+
             self.preiteration = self.iteration
-            return
 
-        if not self.cbOfflineMode.isChecked() and self.files_queue.qsize() > 0:
-            logger.info("Toolbox is too slow, on file {}", fname)
-            logger.info("{} files in queue", self.files_queue.qsize())
+            path = os.path.join(self.P['WatchFolder'], fname)
+            # if False: # this unfortunately doesn't work
+            #    try:
+            #        f = open(path, 'a')
+            #        f.close()
+            #    except IOError as e:
+            #        logger.info('Acquisition in progress - "{}"', fname)
+            #        self.files_queue.put_nowait(fname)
+            #        self.isMainLoopEntered = False
+            #        return
 
-        self.preiteration = self.iteration
+            # data acquisition
+            if not self.cbOfflineMode.isChecked():
+                if not self.checkFileIsReady(path, fname):
+                    self.isMainLoopEntered = False
+                    return
 
-        path = os.path.join(self.P['WatchFolder'], fname)
-        # if False: # this unfortunately doesn't work
-        #    try:
-        #        f = open(path, 'a')
-        #        f.close()
-        #    except IOError as e:
-        #        logger.info('Acquisition in progress - "{}"', fname)
-        #        self.files_queue.put_nowait(fname)
-        #        self.isMainLoopEntered = False
-        #        return
+            # t2
+            self.recorder.recordEvent(erd.Times.t2, self.iteration)
 
-        # data acquisition
-        if not self.cbOfflineMode.isChecked():
-            if not self.checkFileIsReady(path, fname):
+            if not self.reachedFirstFile:
+                if not self.P['FirstFileName'] in fname:
+                    logger.info('Volume skiped, waiting for first file')
+                    self.isMainLoopEntered = False
+                    return
+                else:
+                    logger.info('First file was reached')
+                    self.reachedFirstFile = True
+
+            if self.iteration > self.P['NrOfVolumes']:
+                logger.info('Volumes limit reached')
+                self.stop()
                 self.isMainLoopEntered = False
                 return
 
-        # t2
-        self.recorder.recordEvent(erd.Times.t2, self.iteration)
+            logger.info('Call iteration for file "{}"', os.path.basename(fname))
 
-        if not self.reachedFirstFile:
-            if not self.P['FirstFileName'] in fname:
-                logger.info('Volume skiped, waiting for first file')
-                self.isMainLoopEntered = False
-                return
-            else:
-                logger.info('First file was reached')
-                self.reachedFirstFile = True
+            # Start elapsed time
+            t = time.time()
 
-        if self.iteration > self.P['NrOfVolumes']:
-            logger.info('Volumes limit reached')
-            self.stop()
-            self.isMainLoopEntered = False
-            return
+            self.previousIterStartTime = t
 
-        logger.info('Call iteration for file "{}"', os.path.basename(fname))
+            if self.iteration == 1:
+                with utils.timeit('  setup after first volume:'):
+                    self.eng.setupFirstVolume(fname, nargout=0)
+                    self.engSPM.assignin('base', 'matTemplMotCorr', self.eng.evalin('base', 'mainLoopData.matTemplMotCorr'),
+                                         nargout=0)
+                    self.engSPM.assignin('base', 'dimTemplMotCorr', self.eng.evalin('base', 'mainLoopData.dimTemplMotCorr'),
+                                         nargout=0)
 
-        # Start elapsed time
-        t = time.time()
+            # Main logic
+            # data preprocessing
+            with utils.timeit('  preprocess fMRI Volume:'):
+                self.eng.preprVol(fname, self.iteration, nargout=0)
 
-        self.previousIterStartTime = t
+            # t3
+            self.recorder.recordEvent(erd.Times.t3, self.iteration)
 
-        if self.iteration == 1:
-            with utils.timeit('  setup after first volume:'):
-                self.eng.setupFirstVolume(fname, nargout=0)
-                self.engSPM.assignin('base', 'matTemplMotCorr', self.eng.evalin('base', 'mainLoopData.matTemplMotCorr'),
-                                     nargout=0)
-                self.engSPM.assignin('base', 'dimTemplMotCorr', self.eng.evalin('base', 'mainLoopData.dimTemplMotCorr'),
-                                     nargout=0)
+            if self.windowRTQA.volumeCheckBox.isChecked() and config.FIRST_SNR_VOLUME < self.iteration:
 
-        # Main logic
-        # data preprocessing
-        with utils.timeit('  preprocess fMRI Volume:'):
-            self.eng.preprVol(fname, self.iteration, nargout=0)
+                if self.imageViewMode == ImageViewMode.orthviewEPI:
+                    bgType = 'bgEPI'
+                else:
+                    bgType = 'bgAnat'
 
-        # t3
-        self.recorder.recordEvent(erd.Times.t3, self.iteration)
+                self.orthViewUpdateFuture = self.engSPM.helperUpdateOrthViewRTQA(
+                    self.currentCursorPos, self.currentProjection, bgType,
+                    async=True, nargout=0)
 
-        if self.windowRTQA.snrVolCheckBox.isChecked() and config.FIRST_SNR_VOLUME < self.iteration:
+            if self.eng.evalin('base',
+                               'mainLoopData.statMapCreated') == 1 and not self.windowRTQA.volumeCheckBox.isChecked():
+                nrVoxInVol = self.eng.evalin('base', 'mainLoopData.nrVoxInVol')
+                memMapFile = self.eng.evalin('base', 'P.memMapFile')
 
-            if self.imageViewMode == ImageViewMode.orthviewEPI:
-                bgType = 'bgEPI'
-            else:
-                bgType = 'bgAnat'
+                if self.imageViewMode == ImageViewMode.orthviewEPI:
+                    bgType = 'bgEPI'
+                else:
+                    bgType = 'bgAnat'
 
-            self.orthViewUpdateFuture = self.engSPM.helperUpdateOrthViewRTQA(
-                self.currentCursorPos, self.currentProjection, bgType,
-                async=True, nargout=0)
+                self.orthViewUpdateFuture = self.engSPM.helperUpdateOrthView(
+                    self.currentCursorPos, self.currentProjection, bgType,
+                    async=True, nargout=0)
 
-        if self.eng.evalin('base',
-                           'mainLoopData.statMapCreated') == 1 and not self.windowRTQA.snrVolCheckBox.isChecked():
-            nrVoxInVol = self.eng.evalin('base', 'mainLoopData.nrVoxInVol')
-            memMapFile = self.eng.evalin('base', 'P.memMapFile')
+            # spatio-temporal data processing
+            with utils.timeit('  preprocess signal:'):
+                self.outputSamples = self.eng.preprSig(self.iteration)
 
-            if self.imageViewMode == ImageViewMode.orthviewEPI:
-                bgType = 'bgEPI'
-            else:
-                bgType = 'bgAnat'
+            # t4
+            self.recorder.recordEvent(erd.Times.t4, self.iteration)
 
-            self.orthViewUpdateFuture = self.engSPM.helperUpdateOrthView(
-                self.currentCursorPos, self.currentProjection, bgType,
-                async=True, nargout=0)
-
-        # spatio-temporal data processing
-        with utils.timeit('  preprocess signal:'):
-            self.outputSamples = self.eng.preprSig(self.iteration)
-
-        # t4
-        self.recorder.recordEvent(erd.Times.t4, self.iteration)
-
-        if self.P['Type'] == 'DCM':
-            if self.isCalculateDcm:
-                # here calc already in progress
-                dcmBlocks = np.array(self.P['endDCMblock'][0])
-                lastBlockIteration = self.iteration - self.P['nrBlankScans'] - self.P['nrSkipVol']
-                lastBlankScan = len(np.where(dcmBlocks == lastBlockIteration)[0]) > 0
-                if lastBlankScan:
-                    logger.info('get lastBlankScan...')
-                    logger.info('dcm blocks {}', dcmBlocks)
-
-                if (self.tagFuture.done() and self.oppFuture.done()) or lastBlankScan:
-                    # t12 last DCM model computation is done
-                    self.recorder.recordEvent(erd.Times.t12, self.iteration)
-                    dcmTagLE = self.tagFuture.result()
-                    dcmOppLE = self.oppFuture.result()
-                    logger.info('DCM calculated')
-
-                    # feedback estimation
-                    self.displayData = self.eng.nfbCalc(self.iteration, self.displayData, dcmTagLE, dcmOppLE, True,
-                                                        nargout=1)
-
-                    # t5
-                    self.recorder.recordEvent(erd.Times.t5, self.iteration)
-                    self.isCalculateDcm = False
-
-            else:
-                self.isCalculateDcm = self.eng.dcmBegin(self.iteration, nargout=1)
-
+            if self.P['Type'] == 'DCM':
                 if self.isCalculateDcm:
-                    # display blank screen in ptb helper before calculate DCM
-                    if config.USE_PTB:
-                        self.displayData['displayBlankScreen'] = 1
-                        self.displayScreen()
-                        QApplication.processEvents()
-                        self.endDisplayEvent.wait()
-                        self.endDisplayEvent.clear()
+                    # here calc already in progress
+                    dcmBlocks = np.array(self.P['endDCMblock'][0])
+                    lastBlockIteration = self.iteration - self.P['nrBlankScans'] - self.P['nrSkipVol']
+                    lastBlankScan = len(np.where(dcmBlocks == lastBlockIteration)[0]) > 0
+                    if lastBlankScan:
+                        logger.info('get lastBlankScan...')
+                        logger.info('dcm blocks {}', dcmBlocks)
 
-                    # Parallel DCM computing on two matlab engines
-                    # t11 first DCM model computation started
-                    self.recorder.recordEvent(erd.Times.t11, self.iteration)
-                    self.tagFuture = self.mlPtbDcmHelper.engine.dcmCalc(
-                        'Tag', nargout=1, async=True)
+                    if (self.tagFuture.done() and self.oppFuture.done()) or lastBlankScan:
+                        # t12 last DCM model computation is done
+                        self.recorder.recordEvent(erd.Times.t12, self.iteration)
+                        dcmTagLE = self.tagFuture.result()
+                        dcmOppLE = self.oppFuture.result()
+                        logger.info('DCM calculated')
 
-                    if config.USE_MATLAB_MODEL_HELPER:
-                        self.oppFuture = self.mlModelHelper.engine.dcmCalc(
-                            'Opp', nargout=1, async=True)
-                    else:
-                        self.oppFuture = self.mlPtbDcmHelper.engine.dcmCalc(
-                            'Opp', nargout=1, async=True)
+                        # feedback estimation
+                        self.displayData = self.eng.nfbCalc(self.iteration, self.displayData, dcmTagLE, dcmOppLE, True,
+                                                            nargout=1)
+
+                        # t5
+                        self.recorder.recordEvent(erd.Times.t5, self.iteration)
+                        self.isCalculateDcm = False
 
                 else:
-                    dcmTagLE = []
-                    dcmOppLE = []
+                    self.isCalculateDcm = self.eng.dcmBegin(self.iteration, nargout=1)
 
-        elif self.P['Type'] == 'SVM':
-            # feedback estimation
-            self.displayData = self.eng.nfbCalc(self.iteration, self.displayData, nargout=1)
+                    if self.isCalculateDcm:
+                        # display blank screen in ptb helper before calculate DCM
+                        if config.USE_PTB:
+                            self.displayData['displayBlankScreen'] = 1
+                            self.displayScreen()
+                            QApplication.processEvents()
+                            self.endDisplayEvent.wait()
+                            self.endDisplayEvent.clear()
 
-            # t5
-            self.recorder.recordEvent(erd.Times.t5, self.iteration)
-            if self.displayData and config.USE_UDP_FEEDBACK:
-                logger.info('Sending by UDP - dispValue = {}', self.displayData['dispValue'])
-                self.udpSender.send_data(self.displayData['dispValue'])
+                        # Parallel DCM computing on two matlab engines
+                        # t11 first DCM model computation started
+                        self.recorder.recordEvent(erd.Times.t11, self.iteration)
+                        self.tagFuture = self.mlPtbDcmHelper.engine.dcmCalc(
+                            'Tag', nargout=1, async=True)
 
-        elif self.P['Type'] == 'PSC':
-            self.displayData = self.eng.nfbCalc(self.iteration, self.displayData, nargout=1)
+                        if config.USE_MATLAB_MODEL_HELPER:
+                            self.oppFuture = self.mlModelHelper.engine.dcmCalc(
+                                'Opp', nargout=1, async=True)
+                        else:
+                            self.oppFuture = self.mlPtbDcmHelper.engine.dcmCalc(
+                                'Opp', nargout=1, async=True)
 
-            # t5
-            self.recorder.recordEvent(erd.Times.t5, self.iteration)
-            if self.displayData and config.USE_UDP_FEEDBACK:  # for UDP, configure here if required
-                logger.info('Sending by UDP - dispValue = {}', self.displayData['dispValue'])
-                self.udpSender.send_data(self.displayData['dispValue'])
+                    else:
+                        dcmTagLE = []
+                        dcmOppLE = []
 
-            if self.P['Prot'] != 'Inter':
-                if config.USE_PTB:
-                    if self.displayData:
-                        if self.P['Prot'] == 'ContTask':
-                            #                       Here task condition is evaluated: if condition is 3 (task) and the current
-                            #                       itteration corresponds with the onset of a task block (kept in TaskFirstVol)
-                            #                       taskseq is set to one. While set to 1, Display  in ptbScreen.py
-                            #                       will use the taskse flag to call the ptbTask function.
-                            # cond = self.eng.evalin('base', 'mainLoopData.displayData.condition')
-                            cond = self.displayData['condition']
-                            if cond == 3 and int(self.P['TaskFirstVol'][0][self.iteration - 1]) == 1:
-                                self.displayData['taskseq'] = 1
-                                self.displayScreen()
-                                QApplication.processEvents()
-                                self.endDisplayEvent.wait()
-                                self.endDisplayEvent.clear()
+            elif self.P['Type'] == 'SVM':
+                # feedback estimation
+                self.displayData = self.eng.nfbCalc(self.iteration, self.displayData, nargout=1)
+
+                # t5
+                self.recorder.recordEvent(erd.Times.t5, self.iteration)
+                if self.displayData and config.USE_UDP_FEEDBACK:
+                    logger.info('Sending by UDP - dispValue = {}', self.displayData['dispValue'])
+                    self.udpSender.send_data(self.displayData['dispValue'])
+
+            elif self.P['Type'] == 'PSC':
+                self.displayData = self.eng.nfbCalc(self.iteration, self.displayData, nargout=1)
+
+                # t5
+                self.recorder.recordEvent(erd.Times.t5, self.iteration)
+                if self.displayData and config.USE_UDP_FEEDBACK:  # for UDP, configure here if required
+                    logger.info('Sending by UDP - dispValue = {}', self.displayData['dispValue'])
+                    self.udpSender.send_data(self.displayData['dispValue'])
+
+                if self.P['Prot'] != 'Inter':
+                    if config.USE_PTB:
+                        if self.displayData:
+                            if self.P['Prot'] == 'ContTask':
+                                #                       Here task condition is evaluated: if condition is 3 (task) and the current
+                                #                       itteration corresponds with the onset of a task block (kept in TaskFirstVol)
+                                #                       taskseq is set to one. While set to 1, Display  in ptbScreen.py
+                                #                       will use the taskse flag to call the ptbTask function.
+                                # cond = self.eng.evalin('base', 'mainLoopData.displayData.condition')
+                                cond = self.displayData['condition']
+                                if cond == 3 and int(self.P['TaskFirstVol'][0][self.iteration - 1]) == 1:
+                                    self.displayData['taskseq'] = 1
+                                    self.displayScreen()
+                                    QApplication.processEvents()
+                                    self.endDisplayEvent.wait()
+                                    self.endDisplayEvent.clear()
+                                else:
+                                    self.displayData['taskseq'] = 0
+                                    self.displayData['displayStage'] = 'feedback'
+                                    self.displayScreen()
                             else:
                                 self.displayData['taskseq'] = 0
                                 self.displayData['displayStage'] = 'feedback'
                                 self.displayScreen()
-                        else:
-                            self.displayData['taskseq'] = 0
-                            self.displayData['displayStage'] = 'feedback'
-                            self.displayScreen()
-        # main logic end
+            # main logic end
 
-        init = self.iteration == (self.P['nrSkipVol'] + 1)
+            init = self.iteration == (self.P['nrSkipVol'] + 1)
 
-        with utils.timeit('  displayImage:'):
-            self.displayImage()
+            with utils.timeit('  displayImage:'):
+                self.displayImage()
 
-        with utils.timeit('  Drawings:'):
-            self.drawRoiPlots(init)
-            self.drawMcPlots(init)
+            with utils.timeit('  Drawings:'):
+                self.drawRoiPlots(init)
+                self.drawMcPlots(init)
 
-        # Stop Elapsed time and record
-        # self.recorder.recordEvent(config.TIMEVECTOR_LENGTH, self.iteration, time.time() - t)
-        self.recorder.recordEventDuration(erd.Times.d0, self.iteration, time.time() - t)
-        self.leElapsedTime.setText('{:.4f}'.format(time.time() - t))
-        self.leCurrentVolume.setText('%d' % self.iteration)
+            # Stop Elapsed time and record
+            # self.recorder.recordEvent(config.TIMEVECTOR_LENGTH, self.iteration, time.time() - t)
+            self.recorder.recordEventDuration(erd.Times.d0, self.iteration, time.time() - t)
+            self.leElapsedTime.setText('{:.4f}'.format(time.time() - t))
+            self.leCurrentVolume.setText('%d' % self.iteration)
 
-        logger.info('Elapsed time: {:.4f} s', time.time() - t)
+            logger.info('Elapsed time: {:.4f} s', time.time() - t)
 
-        QApplication.processEvents()
+            QApplication.processEvents()
 
-        # t6, timestamp after data processing and feedback
-        self.recorder.recordEvent(erd.Times.t6, self.iteration)
+            if self.iteration == self.P['NrOfVolumes']:
+                logger.info('Last iteration reached...')
+                self.stop()
 
-        if self.iteration == self.P['NrOfVolumes']:
-            logger.info('Last iteration reached...')
-            self.stop()
-
-        self.iteration += 1
-        self.isMainLoopEntered = False
+            self.iteration += 1
+            self.isMainLoopEntered = False
 
     # --------------------------------------------------------------------------
     def getFileSearchString(self, file_name_template, path, ext):
@@ -1049,6 +1044,8 @@ class OpenNFT(QWidget):
 
         self.eng = self.mlMainHelper.engine
         self.engSPM = self.mlSpmHelper.engine
+        # self.engSPM.desktop(nargout=0)
+
 
         self.eng.workspace['P'] = self.P
         self.eng.workspace['mainLoopData'] = self.mainLoopData
@@ -1167,10 +1164,19 @@ class OpenNFT(QWidget):
             self.btnStart.setEnabled(True)
             self.btnRTQA.setEnabled(True)
 
-            self.windowRTQA = RTQAWindow(parent=self)
-            self.windowRTQA.snrVolCheckBox.stateChanged.connect(self.onShowSnrVol)
-
-            self.eng.assignin('base', 'isShowSNR', self.windowRTQA.snrVolCheckBox.isChecked(), nargout=0)
+            if self.windowRTQA == None:
+                xrange = max(self.musterInfo['tmpCond1'][-1][1],
+                           self.musterInfo['tmpCond2'][-1][1])
+                self.windowRTQA = RTQAWindow(xrange, parent=self)
+            else:
+                self.windowRTQA.destroy()
+                xrange = max(self.musterInfo['tmpCond1'][-1][1],
+                             self.musterInfo['tmpCond2'][-1][1])
+                self.windowRTQA = RTQAWindow(xrange, parent=self)
+            self.windowRTQA.volumeCheckBox.stateChanged.connect(self.onShowSnrVol)
+            self.windowRTQA.smoothedCheckBox.stateChanged.connect(self.onSmoothedChecked)
+            self.eng.assignin('base', 'isShowSNR', self.windowRTQA.volumeCheckBox.isChecked(), nargout=0)
+            self.eng.assignin('base', 'isSmoothed', self.windowRTQA.smoothedCheckBox.isChecked(), nargout=0)
             self.eng.assignin('base', 'imageViewMode', int(self.imageViewMode), nargout=0)
             self.eng.assignin('base', 'FIRST_SNR_VOLUME', config.FIRST_SNR_VOLUME, nargout=0)
 
@@ -1263,7 +1269,12 @@ class OpenNFT(QWidget):
 
     # --------------------------------------------------------------------------
     def onShowSnrVol(self):
-        self.eng.assignin('base', 'isShowSNR', self.windowRTQA.snrVolCheckBox.isChecked(), nargout=0)
+        self.eng.assignin('base', 'isShowSNR', self.windowRTQA.volumeCheckBox.isChecked(), nargout=0)
+
+    # --------------------------------------------------------------------------
+
+    def onSmoothedChecked(self):
+        self.eng.assignin('base', 'isSmoothed', self.windowRTQA.smoothedCheckBox.isChecked(), nargout=0)
 
     # --------------------------------------------------------------------------
     def onChooseSetFile(self):
@@ -1385,12 +1396,13 @@ class OpenNFT(QWidget):
         else:
             bgType = 'bgAnat'
 
-        if self.windowRTQA.snrVolCheckBox.isChecked():
+        if self.windowRTQA.volumeCheckBox.isChecked():
             self.orthViewUpdateFuture = self.engSPM.helperUpdateOrthViewRTQA(
                 pos, proj, bgType, async=True, nargout=0)
         else:
             self.orthViewUpdateFuture = self.engSPM.helperUpdateOrthView(
                 pos, proj, bgType, async=True, nargout=0)
+
 
     # --------------------------------------------------------------------------
     def onCheckOrthViewUpdated(self):
@@ -1699,7 +1711,7 @@ class OpenNFT(QWidget):
                 return
 
         # SNR map display
-        if (self.windowRTQA.snrVolCheckBox.isChecked() and self.eng.evalin('base', "mainLoopData.snrMapCreated") > 0 and
+        if (self.windowRTQA.volumeCheckBox.isChecked() and self.eng.evalin('base', "mainLoopData.snrMapCreated") > 0 and
                 self.imgViewTempl.size > 0):
             # Background
             img = self.imgViewTempl
@@ -1712,7 +1724,7 @@ class OpenNFT(QWidget):
                 snrMap_2D = np.memmap(filename, dtype='uint8', mode='r', shape=(imSize[0], imSize[1]), offset=0,
                                       order='F')
 
-        if (not self.windowRTQA.snrVolCheckBox.isChecked() and self.eng.evalin('base', "exist('strStatMap')") > 0 and
+        if (not self.windowRTQA.volumeCheckBox.isChecked() and self.eng.evalin('base', "exist('strStatMap')") > 0 and
                 self.imgViewTempl.size > 0):
             img = self.imgViewTempl
             logger.info('getting StatMap...')
@@ -1745,8 +1757,10 @@ class OpenNFT(QWidget):
         tmpCond1 = np.array(self.P['Protocol']['Cond'][0]['OnOffsets']).astype(np.int32)
         nrCond1 = tmpCond1.shape[0]
 
-        tmpCond2 = np.array(self.P['Protocol']['Cond'][1]['OnOffsets']).astype(np.int32)
-        nrCond2 = tmpCond2.shape[0]
+        if len(self.P['Protocol']['Cond']) > 1:
+            tmpCond2 = np.array(self.P['Protocol']['Cond'][1]['OnOffsets']).astype(np.int32)
+        else:
+            tmpCond2 = np.array([(0, 0), (0, 0)])
 
         if len(self.P['Protocol']['Cond']) > 2:
             tmpCond3 = np.array(self.P['Protocol']['Cond'][2]['OnOffsets']).astype(np.int32)
@@ -1759,6 +1773,7 @@ class OpenNFT(QWidget):
         else:
             tmpCond4 = np.array([(0, 0), (0, 0)])
 
+        nrCond2 = tmpCond2.shape[0]
         nrCond3 = tmpCond3.shape[0]
         nrCond4 = tmpCond4.shape[0]
 
@@ -1874,7 +1889,7 @@ class OpenNFT(QWidget):
         self.drawGivenRoiPlot(init, self.normRoiPlot, dataNorm)
 
         n = len(dataRealRaw[0, :])
-        self.windowRTQA.calculate_snr(init, dataRealRaw[:, n - 1], "Raw", n)
+        self.windowRTQA.calculate_snr(init, dataRealRaw[:, n - 1], n)
         self.windowRTQA.plot_snr(init)
 
     # --------------------------------------------------------------------------
@@ -1921,19 +1936,28 @@ class OpenNFT(QWidget):
         ylim = config.MUSTER_Y_LIMITS
         self.computeMusterPlotData(ylim)
 
-        muster = [
-            plotitem.plot(x=self.musterInfo['xCond1'],
-                          y=self.musterInfo['yCond1'],
-                          fillLevel=ylim[0],
-                          pen=config.MUSTER_PEN_COLORS[0],
-                          brush=config.MUSTER_BRUSH_COLORS[0]),
+        if len(self.P['Protocol']['Cond']) > 1:
+            muster = [
+                plotitem.plot(x=self.musterInfo['xCond1'],
+                              y=self.musterInfo['yCond1'],
+                              fillLevel=ylim[0],
+                              pen=config.MUSTER_PEN_COLORS[0],
+                              brush=config.MUSTER_BRUSH_COLORS[0]),
 
-            plotitem.plot(x=self.musterInfo['xCond2'],
-                          y=self.musterInfo['yCond2'],
-                          fillLevel=ylim[0],
-                          pen=config.MUSTER_PEN_COLORS[1],
-                          brush=config.MUSTER_BRUSH_COLORS[1]),
-        ]
+                plotitem.plot(x=self.musterInfo['xCond2'],
+                              y=self.musterInfo['yCond2'],
+                              fillLevel=ylim[0],
+                              pen=config.MUSTER_PEN_COLORS[1],
+                              brush=config.MUSTER_BRUSH_COLORS[1]),
+            ]
+        else:
+            muster = [
+                plotitem.plot(x=self.musterInfo['xCond1'],
+                              y=self.musterInfo['yCond1'],
+                              fillLevel=ylim[0],
+                              pen=config.MUSTER_PEN_COLORS[3],
+                              brush=config.MUSTER_BRUSH_COLORS[3])
+            ]
 
         if self.P['Prot'] != 'InterBlock':
             muster.append(
@@ -1999,6 +2023,15 @@ class OpenNFT(QWidget):
         for pt, i1, in zip(
                 self.drawMcPlots.__dict__['mctrrot'], range(0, 6)):
             pt.setData(x=x, y=data[:, i1])
+
+        n = len(data[:, 0])
+        if not n == 0:
+            self.windowRTQA.plot_fd(data[n-1,:])
+
+    # --------------------------------------------------------------------------
+    def printToLog(self, message):
+        # TODO: Use logging module
+        print(message)
 
     # --------------------------------------------------------------------------
     def readAppSettings(self):
