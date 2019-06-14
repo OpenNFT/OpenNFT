@@ -146,12 +146,12 @@ class MatlabSharedEngineHelper:
 
         event.clear()
 
-        if startup_options is None:
-            eng = me.start_matlab()
-        else:
-            eng = me.start_matlab(startup_options)
-
         try:
+            if startup_options is None:
+                eng = me.start_matlab()
+            else:
+                eng = me.start_matlab(startup_options)
+
             if shared_name:
                 eng.matlab.engine.shareEngine(shared_name, nargout=0)
             else:
@@ -159,7 +159,7 @@ class MatlabSharedEngineHelper:
                 shared_name = eng.matlab.engine.engineName(nargout=1)
 
             logger.info('Matlab shared engine "{}" is started', shared_name)
-        except me.MatlabExecutionError:
+        except (me.EngineError, me.MatlabExecutionError):
             logger.exception('Cannot start Matlab shared engine "{}"', shared_name)
             raise
         finally:
