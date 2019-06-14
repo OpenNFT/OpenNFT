@@ -537,7 +537,7 @@ class OpenNFT(QWidget):
     def getOrthViewImages(self):
 
         filename = self.eng.evalin('base', 'P.memMapFile')
-        if self.windowRTQA.snrVolCheckBox.isChecked():
+        if self.windowRTQA.volumeCheckBox.isChecked():
             # file for SNR
             filename = filename.replace('shared', 'SNROrthView')
             # file for background
@@ -730,7 +730,7 @@ class OpenNFT(QWidget):
         # t3
         self.recorder.recordEvent(erd.Times.t3, self.iteration)
 
-        if self.windowRTQA.snrVolCheckBox.isChecked() and config.FIRST_SNR_VOLUME<self.iteration:
+        if self.windowRTQA.volumeCheckBox.isChecked() and config.FIRST_SNR_VOLUME<self.iteration:
 
             if self.imageViewMode == ImageViewMode.orthviewEPI:
                 bgType = 'bgEPI'
@@ -741,7 +741,7 @@ class OpenNFT(QWidget):
                 self.currentCursorPos, self.currentProjection, bgType,
                 async=True, nargout=0)
 
-        if self.eng.evalin('base', 'mainLoopData.statMapCreated') == 1 and not self.windowRTQA.snrVolCheckBox.isChecked():
+        if self.eng.evalin('base', 'mainLoopData.statMapCreated') == 1 and not self.windowRTQA.volumeCheckBox.isChecked():
             nrVoxInVol = self.eng.evalin('base', 'mainLoopData.nrVoxInVol')
             memMapFile = self.eng.evalin('base', 'P.memMapFile')
 
@@ -1041,7 +1041,7 @@ class OpenNFT(QWidget):
 
         self.eng = self.mlMainHelper.engine
         self.engSPM = self.mlSpmHelper.engine
-        self.engSPM.desktop(nargout=0)
+        # self.engSPM.desktop(nargout=0)
 
 
         self.eng.workspace['P'] = self.P
@@ -1157,9 +1157,19 @@ class OpenNFT(QWidget):
             self.btnStart.setEnabled(True)
             self.btnRTQA.setEnabled(True)
 
-            self.windowRTQA = rtQAWindow(self)
-            self.windowRTQA.snrVolCheckBox.stateChanged.connect(self.onChecked)
-            self.eng.assignin('base', 'isShowSNR', self.windowRTQA.snrVolCheckBox.isChecked(), nargout=0)
+            if self.windowRTQA == None:
+                xrange = max(self.musterInfo['tmpCond1'][-1][1],
+                           self.musterInfo['tmpCond2'][-1][1])
+                self.windowRTQA = rtQAWindow(xrange, self)
+            else:
+                self.windowRTQA.destroy()
+                xrange = max(self.musterInfo['tmpCond1'][-1][1],
+                             self.musterInfo['tmpCond2'][-1][1])
+                self.windowRTQA = rtQAWindow(xrange, self)
+            self.windowRTQA.volumeCheckBox.stateChanged.connect(self.onVolumeChecked)
+            self.windowRTQA.smoothedCheckBox.stateChanged.connect(self.onSmoothedChecked)
+            self.eng.assignin('base', 'isShowSNR', self.windowRTQA.volumeCheckBox.isChecked(), nargout=0)
+            self.eng.assignin('base', 'isSmoothed', self.windowRTQA.smoothedCheckBox.isChecked(), nargout=0)
             self.eng.assignin('base', 'imageViewMode', int(self.imageViewMode), nargout=0)
             self.eng.assignin('base', 'FIRST_SNR_VOLUME', config.FIRST_SNR_VOLUME, nargout=0)
 
@@ -1252,8 +1262,13 @@ class OpenNFT(QWidget):
         config.USE_RTQA = True
 
     # --------------------------------------------------------------------------
-    def onChecked(self):
-        self.eng.assignin('base', 'isShowSNR', self.windowRTQA.snrVolCheckBox.isChecked(), nargout=0)
+    def onVolumeChecked(self):
+        self.eng.assignin('base', 'isShowSNR', self.windowRTQA.volumeCheckBox.isChecked(), nargout=0)
+
+    # --------------------------------------------------------------------------
+
+    def onSmoothedChecked(self):
+        self.eng.assignin('base', 'isSmoothed', self.windowRTQA.smoothedCheckBox.isChecked(), nargout=0)
 
     # --------------------------------------------------------------------------
     def onChooseSetFile(self):
@@ -1376,7 +1391,7 @@ class OpenNFT(QWidget):
             bgType = 'bgAnat'
 
 
-        if self.windowRTQA.snrVolCheckBox.isChecked():
+        if self.windowRTQA.volumeCheckBox.isChecked():
 
             self.orthViewUpdateFuture = self.engSPM.helperUpdateOrthViewRTQA(
                 pos, proj, bgType, async=True, nargout=0)
@@ -1696,7 +1711,7 @@ class OpenNFT(QWidget):
                 return
 
         # SNR map display
-        if (self.windowRTQA.snrVolCheckBox.isChecked() and self.eng.evalin('base', "mainLoopData.snrMapCreated") > 0 and
+        if (self.windowRTQA.volumeCheckBox.isChecked() and self.eng.evalin('base', "mainLoopData.snrMapCreated") > 0 and
                 self.imgViewTempl.size > 0):
             # Background
             img = self.imgViewTempl
@@ -1709,7 +1724,7 @@ class OpenNFT(QWidget):
                 snrMap_2D = np.memmap(filename, dtype='uint8', mode='r', shape=(imSize[0], imSize[1]), offset=0, order='F')
 
 
-        if (not self.windowRTQA.snrVolCheckBox.isChecked() and self.eng.evalin('base', "exist('strStatMap')") > 0 and
+        if (not self.windowRTQA.volumeCheckBox.isChecked() and self.eng.evalin('base', "exist('strStatMap')") > 0 and
                 self.imgViewTempl.size > 0):
             img = self.imgViewTempl
             print('getting StatMap...')
@@ -1742,8 +1757,10 @@ class OpenNFT(QWidget):
         tmpCond1 = np.array(self.P['Protocol']['Cond'][0]['OnOffsets']).astype(np.int32)
         nrCond1 = tmpCond1.shape[0]
 
-        tmpCond2 = np.array(self.P['Protocol']['Cond'][1]['OnOffsets']).astype(np.int32)
-        nrCond2 = tmpCond2.shape[0]
+        if len(self.P['Protocol']['Cond']) > 1:
+            tmpCond2 = np.array(self.P['Protocol']['Cond'][1]['OnOffsets']).astype(np.int32)
+        else:
+            tmpCond2 = np.array([(0, 0), (0, 0)])
 
         if len(self.P['Protocol']['Cond']) > 2:
             tmpCond3 = np.array(self.P['Protocol']['Cond'][2]['OnOffsets']).astype(np.int32)
@@ -1756,6 +1773,7 @@ class OpenNFT(QWidget):
         else:
             tmpCond4 = np.array([(0, 0), (0, 0)])
 
+        nrCond2 = tmpCond2.shape[0]
         nrCond3 = tmpCond3.shape[0]
         nrCond4 = tmpCond4.shape[0]
 
@@ -1871,7 +1889,7 @@ class OpenNFT(QWidget):
         self.drawGivenRoiPlot(init, self.normRoiPlot, dataNorm)
 
         n = len(dataRealRaw[0, :])
-        self.windowRTQA.calcSNR(init, dataRealRaw[:, n - 1], "Raw", n)
+        self.windowRTQA.calcSNR(init, dataRealRaw[:, n - 1], n)
         self.windowRTQA.plotSNR(init)
 
     # --------------------------------------------------------------------------
@@ -1918,19 +1936,28 @@ class OpenNFT(QWidget):
         ylim = config.MUSTER_Y_LIMITS
         self.computeMusterPlotData(ylim)
 
-        muster = [
-            plotitem.plot(x=self.musterInfo['xCond1'],
-                          y=self.musterInfo['yCond1'],
-                          fillLevel=ylim[0],
-                          pen=config.MUSTER_PEN_COLORS[0],
-                          brush=config.MUSTER_BRUSH_COLORS[0]),
+        if len(self.P['Protocol']['Cond']) > 1:
+            muster = [
+                plotitem.plot(x=self.musterInfo['xCond1'],
+                              y=self.musterInfo['yCond1'],
+                              fillLevel=ylim[0],
+                              pen=config.MUSTER_PEN_COLORS[0],
+                              brush=config.MUSTER_BRUSH_COLORS[0]),
 
-            plotitem.plot(x=self.musterInfo['xCond2'],
-                          y=self.musterInfo['yCond2'],
-                          fillLevel=ylim[0],
-                          pen=config.MUSTER_PEN_COLORS[1],
-                          brush=config.MUSTER_BRUSH_COLORS[1]),
-        ]
+                plotitem.plot(x=self.musterInfo['xCond2'],
+                              y=self.musterInfo['yCond2'],
+                              fillLevel=ylim[0],
+                              pen=config.MUSTER_PEN_COLORS[1],
+                              brush=config.MUSTER_BRUSH_COLORS[1]),
+            ]
+        else:
+            muster = [
+                plotitem.plot(x=self.musterInfo['xCond1'],
+                              y=self.musterInfo['yCond1'],
+                              fillLevel=ylim[0],
+                              pen=config.MUSTER_PEN_COLORS[3],
+                              brush=config.MUSTER_BRUSH_COLORS[3])
+            ]
 
         if self.P['Prot'] != 'InterBlock':
             muster.append(
@@ -1996,6 +2023,10 @@ class OpenNFT(QWidget):
         for pt, i1, in zip(
                 self.drawMcPlots.__dict__['mctrrot'], range(0, 6)):
             pt.setData(x=x, y=data[:, i1])
+
+        n = len(data[:, 0])
+        if not n == 0:
+            self.windowRTQA.fdPlots(data[n-1,:])
 
     # --------------------------------------------------------------------------
     def printToLog(self, message):

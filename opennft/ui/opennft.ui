@@ -1553,6 +1553,27 @@
           </item>
          </layout>
         </item>
+        <item row="1" column="1">
+         <widget class="QLabel" name="label_5">
+          <property name="text">
+           <string>Experiment Type</string>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="2">
+         <widget class="QComboBox" name="comboBox">
+          <item>
+           <property name="text">
+            <string>TASK</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>REST</string>
+           </property>
+          </item>
+         </widget>
+        </item>
        </layout>
       </item>
       <item>

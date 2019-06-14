@@ -6,58 +6,245 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>878</width>
-    <height>243</height>
+    <width>1435</width>
+    <height>389</height>
    </rect>
+  </property>
+  <property name="sizePolicy">
+   <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+    <horstretch>0</horstretch>
+    <verstretch>0</verstretch>
+   </sizepolicy>
   </property>
   <property name="windowTitle">
    <string>RTQA</string>
   </property>
-  <widget class="QWidget" name="layoutWidget">
+  <widget class="QCheckBox" name="volumeCheckBox">
    <property name="geometry">
     <rect>
      <x>10</x>
-     <y>10</y>
-     <width>721</width>
+     <y>60</y>
+     <width>70</width>
+     <height>17</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Volume</string>
+   </property>
+  </widget>
+  <widget class="QWidget" name="layoutWidget_2">
+   <property name="geometry">
+    <rect>
+     <x>730</x>
+     <y>400</y>
+     <width>641</width>
      <height>221</height>
     </rect>
    </property>
-   <layout class="QVBoxLayout" name="layoutPlot1"/>
+   <layout class="QVBoxLayout" name="tdPlot"/>
+  </widget>
+  <widget class="QWidget" name="layoutWidget_3">
+   <property name="geometry">
+    <rect>
+     <x>730</x>
+     <y>660</y>
+     <width>641</width>
+     <height>221</height>
+    </rect>
+   </property>
+   <layout class="QVBoxLayout" name="rdPlot"/>
+  </widget>
+  <widget class="QWidget" name="layoutWidget_5">
+   <property name="geometry">
+    <rect>
+     <x>80</x>
+     <y>660</y>
+     <width>641</width>
+     <height>221</height>
+    </rect>
+   </property>
+   <layout class="QVBoxLayout" name="fdPlot"/>
+  </widget>
+  <widget class="QWidget" name="layoutWidget_4">
+   <property name="geometry">
+    <rect>
+     <x>80</x>
+     <y>400</y>
+     <width>641</width>
+     <height>219</height>
+    </rect>
+   </property>
+   <layout class="QVBoxLayout" name="mcPlot"/>
+  </widget>
+  <widget class="QLabel" name="mcLabel">
+   <property name="geometry">
+    <rect>
+     <x>80</x>
+     <y>370</y>
+     <width>641</width>
+     <height>21</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>12</pointsize>
+    </font>
+   </property>
+   <property name="text">
+    <string/>
+   </property>
+   <property name="alignment">
+    <set>Qt::AlignCenter</set>
+   </property>
+  </widget>
+  <widget class="QLabel" name="tdLabel">
+   <property name="geometry">
+    <rect>
+     <x>730</x>
+     <y>370</y>
+     <width>641</width>
+     <height>21</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>12</pointsize>
+    </font>
+   </property>
+   <property name="text">
+    <string/>
+   </property>
+   <property name="alignment">
+    <set>Qt::AlignCenter</set>
+   </property>
+  </widget>
+  <widget class="QLabel" name="fdLabel">
+   <property name="geometry">
+    <rect>
+     <x>80</x>
+     <y>630</y>
+     <width>641</width>
+     <height>21</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>12</pointsize>
+    </font>
+   </property>
+   <property name="text">
+    <string/>
+   </property>
+   <property name="alignment">
+    <set>Qt::AlignCenter</set>
+   </property>
+  </widget>
+  <widget class="QLabel" name="rdLabel">
+   <property name="geometry">
+    <rect>
+     <x>730</x>
+     <y>630</y>
+     <width>641</width>
+     <height>21</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>12</pointsize>
+    </font>
+   </property>
+   <property name="text">
+    <string/>
+   </property>
+   <property name="alignment">
+    <set>Qt::AlignCenter</set>
+   </property>
   </widget>
   <widget class="QComboBox" name="comboBox">
    <property name="geometry">
     <rect>
-     <x>740</x>
+     <x>10</x>
      <y>10</y>
-     <width>131</width>
+     <width>121</width>
      <height>22</height>
     </rect>
    </property>
-   <property name="currentText">
-    <string>Raw</string>
+   <property name="editable">
+    <bool>false</bool>
+   </property>
+   <property name="currentIndex">
+    <number>0</number>
    </property>
    <item>
     <property name="text">
-     <string>Raw</string>
+     <string>SNR</string>
     </property>
    </item>
    <item>
     <property name="text">
-     <string>Processed</string>
+     <string>MCMD</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>CNR</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>Spikes</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>Trend</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>Steps</string>
     </property>
    </item>
   </widget>
-  <widget class="QCheckBox" name="snrVolCheckBox">
+  <widget class="QCheckBox" name="tsCheckBox">
    <property name="geometry">
     <rect>
-     <x>740</x>
+     <x>10</x>
      <y>40</y>
-     <width>121</width>
-     <height>16</height>
+     <width>70</width>
+     <height>17</height>
     </rect>
    </property>
    <property name="text">
-    <string>Volume SNR</string>
+    <string>Time series</string>
+   </property>
+  </widget>
+  <widget class="QWidget" name="layoutWidget">
+   <property name="geometry">
+    <rect>
+     <x>140</x>
+     <y>10</y>
+     <width>1281</width>
+     <height>371</height>
+    </rect>
+   </property>
+   <layout class="QVBoxLayout" name="snrPlot">
+    <property name="sizeConstraint">
+     <enum>QLayout::SetNoConstraint</enum>
+    </property>
+   </layout>
+  </widget>
+  <widget class="QCheckBox" name="smoothedCheckBox">
+   <property name="geometry">
+    <rect>
+     <x>30</x>
+     <y>80</y>
+     <width>70</width>
+     <height>17</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Smoothed</string>
    </property>
   </widget>
  </widget>

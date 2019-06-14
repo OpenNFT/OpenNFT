@@ -86,6 +86,8 @@ mainLoopData.mposMin = [];
 mainLoopData.blockNF = 0;
 mainLoopData.firstNF = 0;
 
+mainLoopData.meanVolSmoothed = [];
+mainLoopData.m2VolSmoothed = [];
 mainLoopData.meanVol = [];
 mainLoopData.m2Vol = [];
 mainLoopData.snrMapCreated = 0;  

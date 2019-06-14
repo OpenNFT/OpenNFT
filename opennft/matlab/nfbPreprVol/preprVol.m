@@ -15,6 +15,7 @@ function preprVol(inpFileName, indVol)
 P = evalin('base', 'P');
 mainLoopData = evalin('base', 'mainLoopData');
 isShowSNR = evalin('base', 'isShowSNR');
+isSmoothed = evalin('base', 'isSmoothed');
 imageViewMode = evalin('base', 'imageViewMode');
 FIRST_SNR_VOLUME = evalin('base', 'FIRST_SNR_VOLUME');
 
@@ -149,13 +150,11 @@ mainLoopData.gKernel = gKernel;
 smReslVol = zeros(dimVol);
 spm_smooth(reslVol, smReslVol, gKernel);
 
-smReslVol = zeros(dimVol);
-spm_smooth(reslVol, smReslVol, gKernel);
-
 if indVolNorm > FIRST_SNR_VOLUME
     
-    [snrVol, mainLoopData.meanVol, mainLoopData.m2Vol ] = snr_calc(indVolNorm, smReslVol, mainLoopData.meanVol, mainLoopData.m2Vol);
+    [snrVol, mainLoopData.meanVol, mainLoopData.m2Vol, mainLoopData.meanVolSmoothed, mainLoopData.m2VolSmoothed] = snr_calc(indVolNorm, reslVol, smReslVol, mainLoopData.meanVol, mainLoopData.m2Vol,  mainLoopData.meanVolSmoothed, mainLoopData.m2VolSmoothed, isSmoothed);
     mainLoopData.snrMapCreated = 1; 
+    
     
     if isShowSNR
    
