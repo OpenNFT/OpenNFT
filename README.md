@@ -84,6 +84,14 @@ or with console window:
 
 `(OpenNFT_venv)$ opennft_console`
 
+## Running and debuging OpenNFT from pyCharm
+
+If you want to run the program from PyCharm run/debug configuration, you should use something like this:  
+
+![ ](https://user-images.githubusercontent.com/1299189/59237394-d1408300-8c02-11e9-89be-6fc74125d078.png)  
+
+If you don't see "Module name:" caption in the config dialog, you need to update your pyCharm.
+
 ## Demo dataset
 https://github.com/OpenNFT/OpenNFT_Demo/releases 
  

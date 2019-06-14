@@ -14,32 +14,32 @@ function [ snrVol, meanNonSmoothed, m2NonSmoothed, meanSmoothed, m2Smoothed ] = 
 %
     n = double(iteration);
     shape = size(vol);
-    snrVol = zeros(shape);    
+    snrVol = zeros(shape);
     if isempty(meanNonSmoothed) & isempty(m2NonSmoothed) & isempty(meanSmoothed) & isempty(m2Smoothed)
         meanNonSmoothed = vol;
         m2NonSmoothed = zeros(shape);
         meanSmoothed = volSmoothed;
-        m2Smoothed = zeros(shape); 
+        m2Smoothed = zeros(shape);
         return;
-    end;    
-    
+    end;
+
     meanPrev = meanSmoothed;
     meanSmoothed = meanSmoothed + (volSmoothed - meanSmoothed) / n;
     m2Smoothed = m2Smoothed + (volSmoothed - meanPrev).*(volSmoothed - meanSmoothed);
-    
+
     meanPrev = meanNonSmoothed;
     meanNonSmoothed = meanNonSmoothed + (vol - meanNonSmoothed) / n;
     m2NonSmoothed = m2NonSmoothed + (vol - meanPrev).*(vol - meanNonSmoothed);
-    
+
     if isSmoothed
-        variance = m2Smoothed / (n-1);   
+        variance = m2Smoothed / (n-1);
     else
-        variance = m2NonSmoothed / (n-1);   
+        variance = m2NonSmoothed / (n-1);
     end
-    
+
     if any(variance)
         snrVol = meanSmoothed ./ (variance.^.5);
     end
-    
+
 end
 

@@ -21,3 +21,6 @@ Copyright (C) 2016-2019 OpenNFT.org
 """
 
 from opennft.__version__ import *
+from opennft._logging import logging_setup
+
+logging_setup()
