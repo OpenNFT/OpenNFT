@@ -73,6 +73,9 @@ class MatlabSharedEngineHelper:
         self.engine.clear('all', nargout=0)
 
     def destroy_engine(self):
+        if not self._engine:
+            return
+
         logger.info('Destroy Matlab engine "{}"...', self.name)
 
         if self._pid.value != -1:
