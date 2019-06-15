@@ -83,7 +83,6 @@ class MatlabSharedEngineHelper:
             self._pid.value = -1
 
         self._engine = None
-        self.wait()
 
     def detach_engine(self):
         if self._engine and '_matlab' in self._engine.__dict__:

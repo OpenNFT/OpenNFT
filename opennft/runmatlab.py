@@ -17,7 +17,7 @@ _SHARED_SUFFIX = '_SHARED'
 def create_matlab_helper(engine_name: str, startup_options=None):
     """Creates helper object for Matlab shared engine
     """
-    shared_name = engine_name + config.MATLAB_SHARED_NAME_SUFFIX
+    shared_name = engine_name + config.MATLAB_NAME_SUFFIX
 
     return mlproc.MatlabSharedEngineHelper(
         startup_options=startup_options,
@@ -83,6 +83,8 @@ def destroy_matlab():
     for name, helper in helpers.items():
         helper.destroy_engine()
 
+    wait_for_closing_matlab()
+
 
 def detach_matlab():
     """Detach from all matlab engines
@@ -97,7 +99,6 @@ def wait_for_closing_matlab():
     """Waits for closing all matlab engines
     """
     for helper in get_matlab_helpers().values():
-        logger.info('Wait for closing Matlab "{}"...', helper.name)
         helper.wait()
 
 
@@ -109,13 +110,14 @@ def is_shared_matlab() -> bool:
 
 
 def main():
-    config.MATLAB_SHARED_NAME_SUFFIX = _SHARED_SUFFIX
+    config.MATLAB_NAME_SUFFIX = _SHARED_SUFFIX
 
-    with utils.timeit('Run matlab sessions: '):
+    with utils.timeit('Running Matlab shared engines: '):
         if not connect_to_matlab(start=True):
             destroy_matlab()
             sys.exit(1)
 
+    print('Press Ctrl+C for quit and destroy all Matlab shared engines')
     wait_for_closing_matlab()
 
 
