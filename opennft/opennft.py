@@ -61,7 +61,7 @@ from PyQt5.QtGui import QRegExpValidator
 
 from opennft import eventrecorder as erd
 from opennft import config, runmatlab, ptbscreen, mmapimage, projview, utils
-from opennft.rtqa import RTQAWindow
+from opennft import rtqa
 
 if config.USE_MRPULSE:
     from opennft import mrpulse
@@ -105,6 +105,7 @@ class OpenNFT(QWidget):
     def initUdpSender(self):
         if not config.USE_UDP_FEEDBACK:
             return
+
         self.udpSender = Udp(
             IP=config.UDP_FEEDBACK_IP,
             port=config.UDP_FEEDBACK_PORT,
@@ -1120,17 +1121,16 @@ class OpenNFT(QWidget):
             self.btnStart.setEnabled(True)
             self.btnRTQA.setEnabled(True)
 
-            if self.windowRTQA == None:
-                xrange = max(self.musterInfo['tmpCond1'][-1][1],
-                           self.musterInfo['tmpCond2'][-1][1])
-                self.windowRTQA = RTQAWindow(xrange, parent=self)
-            else:
-                self.windowRTQA.destroy()
-                xrange = max(self.musterInfo['tmpCond1'][-1][1],
-                             self.musterInfo['tmpCond2'][-1][1])
-                self.windowRTQA = RTQAWindow(xrange, parent=self)
+            if self.windowRTQA:
+                self.windowRTQA.deleteLater()
+
+            xrange = max(self.musterInfo['tmpCond1'][-1][1],
+                         self.musterInfo['tmpCond2'][-1][1])
+
+            self.windowRTQA = rtqa.RTQAWindow(xrange, parent=self)
             self.windowRTQA.volumeCheckBox.stateChanged.connect(self.onShowSnrVol)
             self.windowRTQA.smoothedCheckBox.stateChanged.connect(self.onSmoothedChecked)
+
             self.eng.assignin('base', 'isShowSNR', self.windowRTQA.volumeCheckBox.isChecked(), nargout=0)
             self.eng.assignin('base', 'isSmoothed', self.windowRTQA.smoothedCheckBox.isChecked(), nargout=0)
             self.eng.assignin('base', 'imageViewMode', int(self.imageViewMode), nargout=0)
