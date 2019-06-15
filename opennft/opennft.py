@@ -60,7 +60,7 @@ from PyQt5.uic import loadUi
 from PyQt5.QtGui import QRegExpValidator
 
 from opennft import eventrecorder as erd
-from opennft import config, runmatlab, ptbscreen, mmapimage, projview, utils
+from opennft import config, runmatlab, ptbscreen, mmapimage, mosaicview, projview, utils
 from opennft import rtqa
 
 if config.USE_MRPULSE:
@@ -91,12 +91,6 @@ class CreateFileEventHandler(FileSystemEventHandler):
             self.fq.put(event.src_path)
 
 
-class ViewBoxWithoutPadding(pg.ViewBox):
-    def suggestPadding(self, axis):
-        return 0.0
-
-
-# --------------------------------------------------------------------------
 class OpenNFT(QWidget):
     """Open Neurofeedback GUI application class
     """
@@ -150,11 +144,12 @@ class OpenNFT(QWidget):
         # self.plotBgColor = (210, 210, 210)
         self.plotBgColor = (255, 255, 255)
 
-        self.roiImageView = self.createRoiImageView()
+        self.mosaicImageView = mosaicview.MosaicImageViewWidget(self)
+        self.layoutImageRoi.addWidget(self.mosaicImageView)
 
         self.orthView = projview.ProjectionsWidget(self)
-        self.layoutOrthView.addWidget(self.orthView)
         self.orthView.setVisible(False)
+        self.layoutOrthView.addWidget(self.orthView)
 
         self.proj_images_reader = mmapimage.ProjectionImagesReader()
 
@@ -272,27 +267,6 @@ class OpenNFT(QWidget):
             return True
 
         return False
-
-    # --------------------------------------------------------------------------
-    def createRoiImageView(self):
-        glayout = pg.GraphicsLayoutWidget(self)
-        glayout.ci.layout.setContentsMargins(0, 0, 0, 0)
-
-        self.layoutImageRoi.addWidget(glayout)
-
-        viewbox = ViewBoxWithoutPadding(
-            lockAspect=True,
-            enableMouse=False,
-            enableMenu=False,
-            invertY=True,
-        )
-
-        imview = pg.ImageItem(autoDownsample=True)
-        viewbox.addItem(imview)
-
-        glayout.addItem(viewbox)
-
-        return imview
 
     # --------------------------------------------------------------------------
     def createMcPlot(self):
@@ -453,10 +427,10 @@ class OpenNFT(QWidget):
     def changeImageViewMode(self, mode):
         if mode == ImageViewMode.mosaic:
             self.orthView.setVisible(False)
-            self.roiImageView.getViewWidget().setVisible(True)
+            self.mosaicImageView.setVisible(True)
         else:
-            self.roiImageView.getViewWidget().setVisible(False)
             self.orthView.setVisible(True)
+            self.mosaicImageView.setVisible(False)
 
         self.imageViewMode = mode
 
@@ -1032,7 +1006,7 @@ class OpenNFT(QWidget):
         self.procRoiPlot.getPlotItem().clear()
         self.rawRoiPlot.getPlotItem().clear()
         self.normRoiPlot.getPlotItem().clear()
-        self.roiImageView.clear()
+        self.mosaicImageView.clear()
 
         self.isMainLoopEntered = False
         self.typicalFileSize = 0
@@ -1190,7 +1164,7 @@ class OpenNFT(QWidget):
 
         self.resetDone = False
 
-        self.roiImageView.clear()
+        self.mosaicImageView.clear()
         self.orthView.clear()
 
         try:
@@ -1651,7 +1625,6 @@ class OpenNFT(QWidget):
 
     # --------------------------------------------------------------------------
     def displayImage(self):
-
         if 'imgViewTempl' not in self.P:
             if self.eng.evalin('base', 'length(imgViewTempl)') > 0:
                 filename = self.eng.evalin('base', 'P.memMapFile')
@@ -1659,30 +1632,26 @@ class OpenNFT(QWidget):
                     self.imgViewTempl = mmapimage.read_mosaic_image(filename, 'imgViewTempl', self.eng)
 
                 if self.imgViewTempl.size > 0:
-                    self.roiImageView.setImage(self.imgViewTempl.T)
+                    self.mosaicImageView.set_background_image(self.imgViewTempl)
 
                 # self.P['imgViewTempl'] = self.imgViewTempl
             else:
                 return
 
         # SNR map display
-        if (self.windowRTQA.volumeCheckBox.isChecked() and self.eng.evalin('base', "mainLoopData.snrMapCreated") > 0 and
-                self.imgViewTempl.size > 0):
+        if (self.windowRTQA.volumeCheckBox.isChecked()
+                and self.eng.evalin('base', "mainLoopData.snrMapCreated") > 0
+                and self.imgViewTempl.size > 0):
             # Background
             img = self.imgViewTempl
-            print('getting SNRMap...')
-            with utils.timeit("Receiving 'strSNRMap' from Matlab:"):
-                filename = self.eng.evalin('base', 'P.memMapFile')
-                filename = filename.replace('shared', 'SNRMap')
-                imSize = list(self.engSPM.evalin('base', 'size(snrMap_2D)', nargout=2))
-                imSize = list(map(int, imSize))
-                snrMap_2D = np.memmap(filename, dtype='uint8', mode='r', shape=(imSize[0], imSize[1]), offset=0,
-                                      order='F')
+            with utils.timeit("Receiving 'SNRMap' from Matlab:"):
+                filename = self.eng.evalin('base', 'P.memMapFile').replace('shared', 'SNRMap')
+                snrMap_2D = mmapimage.read_mosaic_image(filename, 'snrMap_2D', self.engSPM)
 
-        if (not self.windowRTQA.volumeCheckBox.isChecked() and self.eng.evalin('base', "exist('strStatMap')") > 0 and
-                self.imgViewTempl.size > 0):
+        if (not self.windowRTQA.volumeCheckBox.isChecked()
+                and self.eng.evalin('base', "exist('strStatMap')") > 0
+                and self.imgViewTempl.size > 0):
             img = self.imgViewTempl
-            logger.info('getting StatMap...')
             with utils.timeit("Receiving 'strStatMap' from Matlab:"):
                 statMap = np.fromstring(
                     self.eng.workspace['strStatMap'], dtype=np.uint8, sep=";")
@@ -1694,15 +1663,17 @@ class OpenNFT(QWidget):
             ind = np.unravel_index(idx, img.shape, order='F')
 
             # Make RGB stat map image
-            r = img.copy()
+            # FIXME: rewrite this code with colormap
+
+            r = np.zeros_like(self.imgViewTempl)
             r[ind[0], ind[1]] = statMap
 
-            gb = img.copy()
-            gb[ind[0], ind[1]] = 0
+            # gb = img.copy()
+            # gb[ind[0], ind[1]] = 0
+            #
+            # imgRgb = np.stack((r, gb, gb), axis=2)
 
-            imgRgb = np.stack((r, gb, gb), axis=2)
-
-            self.roiImageView.setImage(imgRgb.transpose(1, 0, 2))
+            self.mosaicImageView.set_stats_map_image(r)
 
             self.eng.clear('strStatMap', nargout=0)
 
