@@ -17,11 +17,16 @@ UI_PATH = os.path.join(ROOT_PATH, 'UI')
 OpenNFT_ICON = os.path.join(ROOT_PATH, 'ui', 'images', 'appicon.png')
 MATLAB_FUNCTIONS_PATH = os.path.join(ROOT_PATH, 'matlab')
 
-# matlab processes
+# Matlab sessions
 MAIN_MATLAB_NAME = 'MATLAB_NFB_MAIN'
 PTB_MATLAB_NAME = 'MATLAB_NFB_PTB'
 SPM_MATLAB_NAME = 'MATLAB_NFB_SPM'
 MODEL_HELPER_MATLAB_NAME = 'MATLAB_NFB_MODEL_HELPER'
+
+MAIN_MATLAB_STARTUP_OPTIONS = '-nodesktop'
+PTB_MATLAB_STARTUP_OPTIONS = '-nodesktop'
+SPM_MATLAB_STARTUP_OPTIONS = '-nodesktop'
+MODEL_HELPER_MATLAB_STARTUP_OPTIONS = '-nodesktop'
 
 MATLAB_NAME_SUFFIX = ''
 

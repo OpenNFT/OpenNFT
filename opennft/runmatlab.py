@@ -33,20 +33,20 @@ def get_matlab_helpers() -> typing.Dict[str, mlproc.MatlabSharedEngineHelper]:
             # Main matlab engine
             (config.MAIN_MATLAB_NAME, create_matlab_helper(
                 engine_name=config.MAIN_MATLAB_NAME,
-                startup_options='-nodesktop',
+                startup_options=config.MAIN_MATLAB_STARTUP_OPTIONS,
             )),
 
             # Matlab helper processs for display using Psychtoolbox (aka Ptb)
             # with possible reusing for first model computation
             (config.PTB_MATLAB_NAME, create_matlab_helper(
                 engine_name=config.PTB_MATLAB_NAME,
-                startup_options='-nodesktop',
+                startup_options=config.PTB_MATLAB_STARTUP_OPTIONS,
             )),
 
             # Matlab helper processs for GUI data estimation
             (config.SPM_MATLAB_NAME, create_matlab_helper(
                 engine_name=config.SPM_MATLAB_NAME,
-                startup_options='-nodesktop',
+                startup_options=config.SPM_MATLAB_STARTUP_OPTIONS,
             )),
         ]
 
@@ -54,7 +54,7 @@ def get_matlab_helpers() -> typing.Dict[str, mlproc.MatlabSharedEngineHelper]:
             # Matlab helper processs for second model computation
             helpers.append((config.MODEL_HELPER_MATLAB_NAME, create_matlab_helper(
                 engine_name=config.MODEL_HELPER_MATLAB_NAME,
-                startup_options='-nodesktop',
+                startup_options=config.MODEL_HELPER_MATLAB_STARTUP_OPTIONS,
             )))
 
         get_matlab_helpers.helpers = collections.OrderedDict(helpers)
