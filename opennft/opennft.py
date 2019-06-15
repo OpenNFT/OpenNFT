@@ -225,14 +225,15 @@ class OpenNFT(QWidget):
     def closeEvent(self, e):
         self.writeAppSettings()
         self.stop()
+        self.hide()
+
+        self.eng = None
+        self.engSPM = None
 
         if runmatlab.is_shared_matlab():
             runmatlab.detach_matlab()
         else:
             runmatlab.destroy_matlab()
-
-        self.eng = None
-        self.engSPM = None
 
     # --------------------------------------------------------------------------
     def eventFilter(self, obj, event):
