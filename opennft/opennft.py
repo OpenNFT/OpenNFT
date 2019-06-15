@@ -60,7 +60,7 @@ from PyQt5.uic import loadUi
 from PyQt5.QtGui import QRegExpValidator
 
 from opennft import eventrecorder as erd
-from opennft import config, runmatlab, mlproc, ptbscreen, mmapimage, projview, utils
+from opennft import config, runmatlab, ptbscreen, mmapimage, projview, utils
 from opennft.rtqa import RTQAWindow
 
 if config.USE_MRPULSE:
