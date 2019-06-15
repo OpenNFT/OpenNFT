@@ -192,11 +192,12 @@ setup(
 
     entry_points={
         'gui_scripts': [
-            'opennft = opennft.__main__:main'
+            'opennft = opennft.__main__:main',
         ],
         'console_scripts': [
-            'opennft_console = opennft.__main__:main'
-        ]
+            'opennft_console = opennft.__main__:main',
+            'run_matlab = opennft.runmatlab:main',
+        ],
     },
 
     cmdclass={

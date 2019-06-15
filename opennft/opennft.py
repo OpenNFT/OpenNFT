@@ -60,7 +60,7 @@ from PyQt5.uic import loadUi
 from PyQt5.QtGui import QRegExpValidator
 
 from opennft import eventrecorder as erd
-from opennft import config, mlproc, ptbscreen, mmapimage, projview, utils
+from opennft import config, runmatlab, mlproc, ptbscreen, mmapimage, projview, utils
 from opennft.rtqa import RTQAWindow
 
 if config.USE_MRPULSE:
@@ -191,35 +191,13 @@ class OpenNFT(QWidget):
         self.outputSamples = {}
         self.musterInfo = {}
 
-        # Core Matlab helper processs
-        self.mlMainHelper = mlproc.MatlabSharedEngineHelper(
-            startup_options='-desktop',
-            shared_name=(config.MAIN_MATLAB_SHARED_NAME_PREFIX +
-                         utils.generate_random_number_string())
-        )
+        # Core Matlab helper process
+        matlab_helpers = runmatlab.get_matlab_helpers()
 
-        # Matlab helper processs for display using Psychtoolbox (aka Ptb)
-        # with possible reusing for first model computation
-        self.mlPtbDcmHelper = mlproc.MatlabSharedEngineHelper(
-            startup_options='-nodesktop',
-            shared_name=(config.PTB_MATLAB_SHARED_NAME_PREFIX +
-                         utils.generate_random_number_string())
-        )
-
-        # Matlab helper processs for GUI data estimation
-        self.mlSpmHelper = mlproc.MatlabSharedEngineHelper(
-            startup_options='-nodesktop',
-            shared_name=(config.SPM_MATLAB_SHARED_NAME_PREFIX +
-                         utils.generate_random_number_string())
-        )
-
-        # Matlab helper processs for second model computation
-        if config.USE_MATLAB_MODEL_HELPER:
-            self.mlModelHelper = mlproc.MatlabSharedEngineHelper(
-                startup_options='-nodesktop',
-                shared_name=(config.MODEL_HELPER_MATLAB_SHARED_NAME_PREFIX +
-                             utils.generate_random_number_string())
-            )
+        self.mlMainHelper = matlab_helpers[config.MAIN_MATLAB_NAME]
+        self.mlPtbDcmHelper = matlab_helpers[config.PTB_MATLAB_NAME]
+        self.mlSpmHelper = matlab_helpers[config.SPM_MATLAB_NAME]
+        self.mlModelHelper = matlab_helpers.get(config.MODEL_HELPER_MATLAB_NAME)
 
         self.ptbScreen = ptbscreen.PtbScreen(self.mlPtbDcmHelper, self.recorder, self.endDisplayEvent)
 
@@ -245,14 +223,12 @@ class OpenNFT(QWidget):
     # --------------------------------------------------------------------------
     def closeEvent(self, e):
         self.writeAppSettings()
-
         self.stop()
 
-        self.mlMainHelper.destroy_engine()
-        self.mlPtbDcmHelper.destroy_engine()
-        self.mlSpmHelper.destroy_engine()
-        if config.USE_MATLAB_MODEL_HELPER:
-            self.mlModelHelper.destroy_engine()
+        if runmatlab.is_shared_matlab():
+            runmatlab.detach_matlab()
+        else:
+            runmatlab.destroy_matlab()
 
         self.eng = None
         self.engSPM = None
@@ -1004,30 +980,10 @@ class OpenNFT(QWidget):
     def initialize(self, start=True):
         ts = time.time()
 
-        if not self.mlMainHelper.connect(
-                start=start,
-                name_prefix=config.MAIN_MATLAB_SHARED_NAME_PREFIX):
-            logger.warning('There is no main Matlab session yet. Press "Initialize" button.')
+        if not runmatlab.connect_to_matlab(start=start):
+            if not start:
+                logger.warning('There is no main Matlab session yet. Press "Initialize" button.')
             return
-
-        if not self.mlPtbDcmHelper.connect(
-                start=start,
-                name_prefix=config.PTB_MATLAB_SHARED_NAME_PREFIX):
-            logger.error('Unable to connect PTB Matlab session')
-            return
-
-        if not self.mlSpmHelper.connect(
-                start=start,
-                name_prefix=config.SPM_MATLAB_SHARED_NAME_PREFIX):
-            logger.error('Unable to connect SPM Matlab session')
-            return
-
-        if config.USE_MATLAB_MODEL_HELPER:
-            if not self.mlModelHelper.connect(
-                    start=start,
-                    name_prefix=config.MODEL_HELPER_MATLAB_SHARED_NAME_PREFIX):
-                logger.error('Unable to connect Model Helper Matlab session')
-                return
 
         logger.info('Using Matlab session "{}" as MAIN', self.mlMainHelper.name)
         logger.info('Using Matlab session "{}" for PTB', self.mlPtbDcmHelper.name)
