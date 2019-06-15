@@ -1002,8 +1002,6 @@ class OpenNFT(QWidget):
 
         self.eng = self.mlMainHelper.engine
         self.engSPM = self.mlSpmHelper.engine
-        # self.engSPM.desktop(nargout=0)
-
 
         self.eng.workspace['P'] = self.P
         self.eng.workspace['mainLoopData'] = self.mainLoopData
