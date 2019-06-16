@@ -1160,8 +1160,6 @@ class OpenNFT(QWidget):
 
         self.proj_images_reader.clear()
 
-        self.imgViewTempl = None
-
         self.resetDone = False
 
         self.mosaicImageView.clear()
@@ -1625,16 +1623,18 @@ class OpenNFT(QWidget):
 
     # --------------------------------------------------------------------------
     def displayMosaicImage(self):
+        background_image = np.array([], dtype=np.uint8)
+
         if 'imgViewTempl' not in self.P:
             if self.eng.evalin('base', 'length(imgViewTempl)') > 0:
                 filename = self.eng.evalin('base', 'P.memMapFile')
-                with utils.timeit("Receiving 'mmImgViewTempl' from Matlab:"):
-                    self.imgViewTempl = mmapimage.read_mosaic_image(filename, 'imgViewTempl', self.eng)
+                with utils.timeit("Receiving mosaic image from Matlab:"):
+                    background_image = mmapimage.read_mosaic_image(filename, 'imgViewTempl', self.eng)
 
-                if self.imgViewTempl.size > 0:
-                    self.mosaicImageView.set_background_image(self.imgViewTempl)
+                if background_image.size > 0:
+                    self.mosaicImageView.set_background_image(background_image)
 
-                # self.P['imgViewTempl'] = self.imgViewTempl
+                # self.P['imgViewTempl'] = mosaic_image_template
             else:
                 return
 
@@ -1643,14 +1643,14 @@ class OpenNFT(QWidget):
         # SNR map display
         if (self.windowRTQA.volumeCheckBox.isChecked()
                 and self.eng.evalin('base', "mainLoopData.snrMapCreated") > 0
-                and self.imgViewTempl.size > 0):
+                and background_image.size > 0):
             with utils.timeit("Receiving 'SNRMap' from Matlab:"):
                 filename = self.eng.evalin('base', 'P.memMapFile').replace('shared', 'SNRMap')
                 stats_map_image = mmapimage.read_mosaic_image(filename, 'snrMap_2D', self.engSPM)
 
         if (not self.windowRTQA.volumeCheckBox.isChecked()
                 and self.eng.evalin('base', "exist('strStatMap')") > 0
-                and self.imgViewTempl.size > 0):
+                and background_image.size > 0):
             with utils.timeit("Receiving 'strStatMap' from Matlab:"):
                 statMap = np.fromstring(
                     self.eng.workspace['strStatMap'], dtype=np.uint8, sep=";")
@@ -1659,17 +1659,14 @@ class OpenNFT(QWidget):
                 idx = np.fromstring(
                     self.eng.workspace['strIdx'], dtype=np.uint32, sep=";")
 
-            ind = np.unravel_index(idx, self.imgViewTempl.shape, order='F')
+            ind = np.unravel_index(idx, background_image.shape, order='F')
 
-            stats_map_image = np.zeros_like(self.imgViewTempl)
+            stats_map_image = np.zeros_like(background_image)
             stats_map_image[ind[0], ind[1]] = statMap
 
             self.eng.clear('strStatMap', nargout=0)
 
-        if stats_map_image:
-            self.mosaicImageView.set_stats_map_image(stats_map_image)
-        else:
-            self.mosaicImageView.clear()
+        self.mosaicImageView.set_stats_map_image(stats_map_image)
 
     # --------------------------------------------------------------------------
     def createMusterInfo(self):

@@ -43,6 +43,10 @@ class MosaicImageViewWidget(QtWidgets.QWidget):
         self._background_imitem.setImage(image.T)
 
     def set_stats_map_image(self, image):
+        if image is None:
+            self._stats_map_imitem.clear()
+            return
+
         # TODO: use colormap and thresholds from app settings
         map_ma = np.ma.masked_less(image, 0.1)
         map_rgba = colormap.map_to_rgba(map_ma, cmap='hot')
@@ -51,4 +55,7 @@ class MosaicImageViewWidget(QtWidgets.QWidget):
 
     def clear(self):
         self._background_imitem.clear()
+        self._stats_map_imitem.clear()
+
+    def clear_stats_map(self):
         self._stats_map_imitem.clear()
