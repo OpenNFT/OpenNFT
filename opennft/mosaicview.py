@@ -1,9 +1,12 @@
 # -*- coding: utf-8 -*-
 
 from PyQt5 import QtWidgets
+
 import pyqtgraph as pg
+import numpy as np
 
 from opennft import pgext
+from opennft import colormap
 
 
 class MosaicImageViewWidget(QtWidgets.QWidget):
@@ -40,8 +43,11 @@ class MosaicImageViewWidget(QtWidgets.QWidget):
         self._background_imitem.setImage(image.T)
 
     def set_stats_map_image(self, image):
-        # TODO: implement colormapped stat map
-        self._stats_map_imitem.setImage(image.T)
+        # TODO: use colormap and thresholds from app settings
+        map_ma = np.ma.masked_less(image, 0.1)
+        map_rgba = colormap.map_to_rgba(map_ma, cmap='hot')
+
+        self._stats_map_imitem.setImage(map_rgba.transpose((1, 0, 2)))
 
     def clear(self):
         self._background_imitem.clear()

@@ -792,8 +792,8 @@ class OpenNFT(QWidget):
 
             init = self.iteration == (self.P['nrSkipVol'] + 1)
 
-            with utils.timeit('  displayImage:'):
-                self.displayImage()
+            with utils.timeit('Display mosaic image:'):
+                self.displayMosaicImage()
 
             with utils.timeit('  Drawings:'):
                 self.drawRoiPlots(init)
@@ -1624,7 +1624,7 @@ class OpenNFT(QWidget):
             config.UDP_SEND_CONDITION = False
 
     # --------------------------------------------------------------------------
-    def displayImage(self):
+    def displayMosaicImage(self):
         if 'imgViewTempl' not in self.P:
             if self.eng.evalin('base', 'length(imgViewTempl)') > 0:
                 filename = self.eng.evalin('base', 'P.memMapFile')
@@ -1638,20 +1638,19 @@ class OpenNFT(QWidget):
             else:
                 return
 
+        stats_map_image = None
+
         # SNR map display
         if (self.windowRTQA.volumeCheckBox.isChecked()
                 and self.eng.evalin('base', "mainLoopData.snrMapCreated") > 0
                 and self.imgViewTempl.size > 0):
-            # Background
-            img = self.imgViewTempl
             with utils.timeit("Receiving 'SNRMap' from Matlab:"):
                 filename = self.eng.evalin('base', 'P.memMapFile').replace('shared', 'SNRMap')
-                snrMap_2D = mmapimage.read_mosaic_image(filename, 'snrMap_2D', self.engSPM)
+                stats_map_image = mmapimage.read_mosaic_image(filename, 'snrMap_2D', self.engSPM)
 
         if (not self.windowRTQA.volumeCheckBox.isChecked()
                 and self.eng.evalin('base', "exist('strStatMap')") > 0
                 and self.imgViewTempl.size > 0):
-            img = self.imgViewTempl
             with utils.timeit("Receiving 'strStatMap' from Matlab:"):
                 statMap = np.fromstring(
                     self.eng.workspace['strStatMap'], dtype=np.uint8, sep=";")
@@ -1660,22 +1659,17 @@ class OpenNFT(QWidget):
                 idx = np.fromstring(
                     self.eng.workspace['strIdx'], dtype=np.uint32, sep=";")
 
-            ind = np.unravel_index(idx, img.shape, order='F')
+            ind = np.unravel_index(idx, self.imgViewTempl.shape, order='F')
 
-            # Make RGB stat map image
-            # FIXME: rewrite this code with colormap
-
-            r = np.zeros_like(self.imgViewTempl)
-            r[ind[0], ind[1]] = statMap
-
-            # gb = img.copy()
-            # gb[ind[0], ind[1]] = 0
-            #
-            # imgRgb = np.stack((r, gb, gb), axis=2)
-
-            self.mosaicImageView.set_stats_map_image(r)
+            stats_map_image = np.zeros_like(self.imgViewTempl)
+            stats_map_image[ind[0], ind[1]] = statMap
 
             self.eng.clear('strStatMap', nargout=0)
+
+        if stats_map_image:
+            self.mosaicImageView.set_stats_map_image(stats_map_image)
+        else:
+            self.mosaicImageView.clear()
 
     # --------------------------------------------------------------------------
     def createMusterInfo(self):
