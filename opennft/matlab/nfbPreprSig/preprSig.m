@@ -193,8 +193,6 @@ for indRoi = 1:P.NrROIs
             cX0 = tmpRegr;
             betaReg = pinv(cX0)*tmp_rawTimeSeries;
             tmp_glmProcTimeSeries = (tmp_rawTimeSeries - cX0*betaReg)';
-            mainLoopData.glmProcTimeSeries(indRoi,indVolNorm) = ...
-                tmp_glmProcTimeSeries(end);
         elseif (tmp_ind_end >= regrStep) && (tmp_ind_end < 2*regrStep)
             tmpRegr = [ones(tmp_ind_end,1) P.linRegr(1:tmp_ind_end)];
             if P.cglmAR1
@@ -203,8 +201,6 @@ for indRoi = 1:P.NrROIs
             cX0 = tmpRegr;
             betaReg = pinv(cX0) * tmp_rawTimeSeries;
             tmp_glmProcTimeSeries = (tmp_rawTimeSeries - cX0 * betaReg)';
-            mainLoopData.glmProcTimeSeries(indRoi,indVolNorm) = ...
-                tmp_glmProcTimeSeries(end);
         elseif (tmp_ind_end >= 2*regrStep) && (tmp_ind_end < 3*regrStep)
             tmpRegr = [ones(tmp_ind_end,1) P.linRegr(1:tmp_ind_end) ...
                 zscore(P.motCorrParam(1:tmp_ind_end,:))];
@@ -214,8 +210,6 @@ for indRoi = 1:P.NrROIs
             cX0 = tmpRegr;
             betaReg = pinv(cX0) * tmp_rawTimeSeries;
             tmp_glmProcTimeSeries = (tmp_rawTimeSeries - cX0 * betaReg)';
-            mainLoopData.glmProcTimeSeries(indRoi,indVolNorm) = ...
-                tmp_glmProcTimeSeries(end);
         else
             % zscore() is cumulative, which limits truly recursive 
             % AR(1) filtering on regressors
@@ -224,7 +218,7 @@ for indRoi = 1:P.NrROIs
             if P.cglmAR1
                 tmpRegr = arRegr(P.aAR1,tmpRegr);
             end
-            if 1 
+            if ~P.isRest 
                 cX0 = [tmpRegr P.spmDesign(1:tmp_ind_end,:)];
                 betaReg = pinv(cX0) * tmp_rawTimeSeries;
                 tmp_glmProcTimeSeries = (tmp_rawTimeSeries - ...
@@ -234,9 +228,9 @@ for indRoi = 1:P.NrROIs
                 betaReg = pinv(cX0) * tmp_rawTimeSeries;
                 tmp_glmProcTimeSeries = (tmp_rawTimeSeries - cX0 * betaReg)';
             end
-            mainLoopData.glmProcTimeSeries(indRoi,indVolNorm) = ...
-                tmp_glmProcTimeSeries(end);
         end
+        mainLoopData.glmProcTimeSeries(indRoi,indVolNorm) = ...
+                tmp_glmProcTimeSeries(end);
         
     end
     

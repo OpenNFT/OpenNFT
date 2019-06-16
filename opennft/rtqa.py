@@ -10,9 +10,7 @@ import matlab
 
 from opennft import utils
 from opennft import config
-from opennft.fdm_base import FD
-import opennft.fdm_settings as s
-
+from opennft.rtqa_fdm import FD
 
 
 class RTQAWindow(QtWidgets.QWidget):
@@ -22,7 +20,7 @@ class RTQAWindow(QtWidgets.QWidget):
 
         uic.loadUi(utils.get_ui_file('rtqa.ui'), self)
 
-        self._fd = FD()
+        self._fd = FD(xrange)
         self.names = ['X', 'Y', 'Z', 'Pitch', 'Roll', 'Yaw', 'FD']
 
         self.comboBox.currentTextChanged.connect(self.onComboboxChanged)
@@ -30,6 +28,7 @@ class RTQAWindow(QtWidgets.QWidget):
         self.snrplot = pg.PlotWidget(self)
         self.snrplot.setBackground((255, 255, 255))
         self.snrPlot.addWidget(self.snrplot)
+
         p = self.snrplot.getPlotItem()
         p.setTitle('Signal-Noise Ratio', size='')
         p.setLabel('left', "Amplitude [a.u.]")
@@ -43,6 +42,7 @@ class RTQAWindow(QtWidgets.QWidget):
         self._plot_translat = pg.PlotWidget(self)
         self._plot_translat.setBackground((255, 255, 255))
         self.tdPlot.addWidget(self._plot_translat)
+
         p = self._plot_translat.getPlotItem()
         p.setTitle('Translational Displacement', size='')
         p.setLabel('left', "Amplitude [mm]")
@@ -52,11 +52,13 @@ class RTQAWindow(QtWidgets.QWidget):
         p.installEventFilter(self)
         p.disableAutoRange(axis=pg.ViewBox.XAxis)
         p.setXRange(1, xrange, padding=0.0)
-        self.makeRoiPlotLegend(self.tdLabel, self.names[0:3], s.PLOT_PEN_COLORS[0:3])
+
+        self.makeRoiPlotLegend(self.tdLabel, self.names[0:3], config.PLOT_PEN_COLORS[0:3])
 
         self._plot_rotat = pg.PlotWidget(self)
         self._plot_rotat.setBackground((255, 255, 255))
         self.rdPlot.addWidget(self._plot_rotat)
+
         p = self._plot_rotat.getPlotItem()
         p.setTitle('Rotational Displacement', size='')
         p.setLabel('left', "Angle [rad]")
@@ -66,11 +68,13 @@ class RTQAWindow(QtWidgets.QWidget):
         p.installEventFilter(self)
         p.disableAutoRange(axis=pg.ViewBox.XAxis)
         p.setXRange(1, xrange, padding=0.0)
-        self.makeRoiPlotLegend(self.rdLabel, self.names[3:6], s.PLOT_PEN_COLORS[3:6])
+
+        self.makeRoiPlotLegend(self.rdLabel, self.names[3:6], config.PLOT_PEN_COLORS[3:6])
 
         self._plot_fd = pg.PlotWidget(self)
         self._plot_fd.setBackground((255, 255, 255))
         self.fdPlot.addWidget(self._plot_fd)
+
         p = self._plot_fd.getPlotItem()
         p.setTitle('Framewise Displacement', size='')
         p.setLabel('left', "FD [mm]")
@@ -81,17 +85,18 @@ class RTQAWindow(QtWidgets.QWidget):
         p.disableAutoRange(axis=pg.ViewBox.XAxis)
         p.setXRange(1, xrange, padding=0.0)
         names = ['FD']
-        pens = [s.PLOT_PEN_COLORS[0]]
-        for i in range(len(s.DEFAULT_FD_THRESHOLDS)):
+        pens = [config.PLOT_PEN_COLORS[0]]
+        for i in range(len(config.DEFAULT_FD_THRESHOLDS)):
             names.append('Threshold ' + str(i))
-            pens.append(s.PLOT_PEN_COLORS[i + 1])
+            pens.append(config.PLOT_PEN_COLORS[i + 1])
+
         self.makeRoiPlotLegend(self.fdLabel, names, pens)
 
         self._plot_mc = pg.PlotWidget(self)
         self._plot_mc.setBackground((255, 255, 255))
         self.mcPlot.addWidget(self._plot_mc)
         p = self._plot_mc.getPlotItem()
-        p.setTitle('MC', size='')
+        p.setTitle('Head Displacement', size='')
         p.setLabel('left', "Amplitude [a.u.]")
         p.setMenuEnabled(enableMenu=True)
         p.setMouseEnabled(x=False, y=False)
@@ -99,20 +104,10 @@ class RTQAWindow(QtWidgets.QWidget):
         p.installEventFilter(self)
         p.disableAutoRange(axis=pg.ViewBox.XAxis)
         p.setXRange(1, xrange, padding=0.0)
-        self.makeRoiPlotLegend(self.mcLabel, self.names[0:6], s.PLOT_PEN_COLORS[0:6])
 
-        self._plot_mc.hide()
-        self._plot_fd.hide()
-        self._plot_translat.hide()
-        self._plot_rotat.hide()
-        self.mcLabel.hide()
-        self.fdLabel.hide()
-        self.tdLabel.hide()
-        self.rdLabel.hide()
+        self.makeRoiPlotLegend(self.mcLabel, self.names[0:6], config.PLOT_PEN_COLORS[0:6])
 
         self.tsCheckBox.setChecked(True)
-
-        self.setFixedSize(1450, 400)
 
         self.means = dict.fromkeys(['meanRaw'])
         self.m2 = dict.fromkeys(['m2Raw'])
@@ -126,18 +121,6 @@ class RTQAWindow(QtWidgets.QWidget):
         state = self.comboBox.currentIndex()
 
         if state == 0:
-            self._plot_mc.hide()
-            self._plot_fd.hide()
-            self._plot_translat.hide()
-            self._plot_rotat.hide()
-
-            self.mcLabel.hide()
-            self.fdLabel.hide()
-            self.tdLabel.hide()
-            self.rdLabel.hide()
-
-            self.snrplot.show()
-
             self.tsCheckBox.show()
             self.tsCheckBox.setChecked(True)
             self.volumeCheckBox.show()
@@ -145,40 +128,14 @@ class RTQAWindow(QtWidgets.QWidget):
             self.smoothedCheckBox.show()
             self.smoothedCheckBox.setChecked(False)
 
-            self.setFixedSize(1450, 400)
-
             return
         if state == 1:
-            self._plot_mc.show()
-            self._plot_fd.show()
-            self._plot_translat.show()
-            self._plot_rotat.show()
-
-            self.mcLabel.show()
-            self.fdLabel.show()
-            self.tdLabel.show()
-            self.rdLabel.show()
-
-            self.snrplot.hide()
-
             self.tsCheckBox.hide()
             self.tsCheckBox.setChecked(False)
             self.volumeCheckBox.hide()
             self.volumeCheckBox.setChecked(False)
             self.smoothedCheckBox.hide()
             self.smoothedCheckBox.setChecked(False)
-
-            self.mcLabel.move(140, 10)
-            self.fdLabel.move(140, 270)
-            self.tdLabel.move(790, 10)
-            self.rdLabel.move(790, 270)
-
-            self.layoutWidget_4.setGeometry(QtCore.QRect(140, 32, 641, 231))
-            self.layoutWidget_5.setGeometry(QtCore.QRect(140, 292, 641, 231))
-            self.layoutWidget_2.setGeometry(QtCore.QRect(790, 32, 641, 231))
-            self.layoutWidget_3.setGeometry(QtCore.QRect(790, 292, 641, 231))
-
-            self.setFixedSize(1450, 530)
 
             return
         if state == 2:
@@ -189,7 +146,6 @@ class RTQAWindow(QtWidgets.QWidget):
             return
 
     def makeRoiPlotLegend(self, label, names, pens):
-
         label.setText('')
         legendText = '<html><head/><body><p>Plot legend: '
 
@@ -213,7 +169,6 @@ class RTQAWindow(QtWidgets.QWidget):
         self.rSNR['snrRaw'] = np.zeros((sz, 0))
 
     def plot_snr(self, init):
-
         plotitem = self.snrplot.getPlotItem()
         data = np.array(self.rSNR["snrRaw"], ndmin=2)
         sz, l = data.shape
@@ -234,7 +189,6 @@ class RTQAWindow(QtWidgets.QWidget):
             p.setData(x=x, y=np.array(y))
 
     def calculate_snr(self, init, data, iteration):
-
         sz = data.size
         snr = np.zeros((sz, 1))
 
@@ -249,7 +203,8 @@ class RTQAWindow(QtWidgets.QWidget):
             variance = self.variances["varRaw"]
 
         n = iteration
-        meanPrev = mean;
+        meanPrev = mean
+
         for i in range(sz):
             mean[i] = mean[i] + (data[i] - mean[i]) / n
             if n == 1:
@@ -275,4 +230,3 @@ class RTQAWindow(QtWidgets.QWidget):
         self._fd.draw_mc_plots(True, self.outputSamples, self._plot_rotat, "rot")
         self._fd.draw_mc_plots(True, self.outputSamples, self._plot_fd, "fd")
         self._fd.draw_mc_plots(True, self.outputSamples, self._plot_mc, "mc")
-

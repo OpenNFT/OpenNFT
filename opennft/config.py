@@ -8,6 +8,7 @@ Copyright (C) 2016-2019 OpenNFT.org
 """
 
 import os
+import pyqtgraph as pg
 
 
 LOG_LEVEL = 'DEBUG'
@@ -85,6 +86,20 @@ HIDE_TEST_BTN = True
 
 USE_RTQA = False
 FIRST_SNR_VOLUME = 2
+
+# FD defaults
+DEFAULT_FD_RADIUS = 50 # radius multiplying angular displacement in FD compution
+DEFAULT_FD_THRESHOLDS = [0.2, 0.5] # FD thresholds to display by default
+
+# plot display defaults
+PLOT_BACKGROUND_COLOR = (255, 255, 255);
+PLOT_PEN_COLORS = [ # colors used to plot motion correction metrics
+    pg.mkPen(pg.mkColor(0, 46, 255), width=1.2),
+    pg.mkPen(pg.mkColor(255, 123, 0), width=1.2),
+    pg.mkPen(pg.mkColor(255, 56, 109), width=1.2),
+    pg.mkPen(pg.mkColor(127, 0, 255), width=1.2),
+    pg.mkPen(pg.mkColor(0, 147, 54), width=1.2),
+    pg.mkPen(pg.mkColor(145, 130, 43), width=1.2)]
 
 
 

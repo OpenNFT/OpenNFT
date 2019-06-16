@@ -504,7 +504,7 @@ class OpenNFT(QWidget):
             f.close()
             return fname
         except IOError as e:
-            self.printToLog('POSSIBLE PROBLEMS WITH MEMMAP ACCESS!')
+            logger.info('POSSIBLE PROBLEMS WITH MEMMAP ACCESS!')
             return fname
 
     # --------------------------------------------------------------------------
@@ -1044,7 +1044,7 @@ class OpenNFT(QWidget):
 
         self.eng = self.mlMainHelper.engine
         self.engSPM = self.mlSpmHelper.engine
-        # self.engSPM.desktop(nargout=0)
+        self.engSPM.desktop(nargout=0)
 
 
         self.eng.workspace['P'] = self.P
@@ -1561,6 +1561,7 @@ class OpenNFT(QWidget):
         self.P['DataType'] = str(self.cbDataType.currentText())
         self.P['Prot'] = str(self.cbProt.currentText())
         self.P['Type'] = str(self.cbType.currentText())
+        self.P['isRest'] = self.restCheckBox.isChecked()
 
         if self.P['Prot'] == 'ContTask':
             self.P['TaskFolder'] = self.leTaskFolder.text()
