@@ -65,6 +65,7 @@ def specify_requirements():
     requirements = [
         'PyQt5 >= 5.12.0',
         'numpy >= 1.13.1, >= 1.13.1+mkl',
+        'matplotlib >= 2.0',
         'pyqtgraph @ https://github.com/pyqtgraph/pyqtgraph/tarball/develop',
         'pyniexp @ https://github.com/tiborauer/pyniexp/tarball/master',
         'watchdog >= 0.9.0',
