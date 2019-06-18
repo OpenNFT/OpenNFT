@@ -57,10 +57,14 @@ class MatlabSharedEngineHelper:
         if self.engine is not None:
             return True
 
-        if start:
-            self._start()
-
-        return self._connect(name_prefix)
+        if not self._connect(name_prefix):
+            if start:
+                self._start()
+                return self._connect(name_prefix)
+            else:
+                return False
+        else:
+            return True
 
     def prepare(self):
         """Prepares Matlab session for needs of NFB
