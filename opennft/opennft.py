@@ -412,7 +412,7 @@ class OpenNFT(QWidget):
         self.leUDPFeedbackControlChar.setEnabled(self.cbUseUDPFeedback.isChecked())
         self.cbUDPSendCondition.setEnabled(self.cbUseUDPFeedback.isChecked())
         if not(self.cbUseUDPFeedback.isChecked()):
-            self.cbUDPSendCondition.setChecked(False)        
+            self.cbUDPSendCondition.setChecked(False)
 
     # --------------------------------------------------------------------------
     def onChangeMode(self, flag):
@@ -1488,6 +1488,7 @@ class OpenNFT(QWidget):
         self.P['DataType'] = str(self.cbDataType.currentText())
         self.P['Prot'] = str(self.cbProt.currentText())
         self.P['Type'] = str(self.cbType.currentText())
+        self.P['isRest'] = self.restCheckBox.isChecked()
 
         if self.P['Prot'] == 'ContTask':
             self.P['TaskFolder'] = self.leTaskFolder.text()
