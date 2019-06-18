@@ -612,7 +612,7 @@ class OpenNFT(QWidget):
             self.displayData = self.eng.initDispalyData(self.iteration)
 
             # display instruction prior to data acquisition for current iteration
-            if self.P['Prot'] == 'Inter':
+            if self.P['Prot'] == 'Inter' or self.P['Prot'] == 'InterBlock':
 
                 if self.P['Type'] == 'PSC':
                     if config.USE_PTB:
