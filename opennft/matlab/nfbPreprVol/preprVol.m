@@ -168,7 +168,7 @@ if indVolNorm > FIRST_SNR_VOLUME
             % mosaic (0)
             snrMap_2D = vol3Dimg2D(snrVol, slNrImg2DdimX, slNrImg2DdimY, img2DdimX, img2DdimY, dimVol);
             fname = strrep(P.memMapFile, 'shared', 'SNRMap');
-            m_out = memmapfile(fname, 'Writable', true, 'Format',  {'uint8', prod(dimVol), 'snrMap_2D'});
+            m_out = memmapfile(fname, 'Writable', true, 'Format',  {'uint8', img2DdimX*img2DdimY, 'snrMap_2D'});
             m_out.Data.snrMap_2D = uint8(snrMap_2D(:));
         
         end

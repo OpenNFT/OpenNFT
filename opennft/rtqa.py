@@ -10,8 +10,7 @@ import matlab
 
 from opennft import utils
 from opennft import config
-from opennft.fdm_base import FD
-import opennft.fdm_settings as s
+from opennft.rtqa_fdm import FD
 
 
 class RTQAWindow(QtWidgets.QWidget):
@@ -21,7 +20,7 @@ class RTQAWindow(QtWidgets.QWidget):
 
         uic.loadUi(utils.get_ui_file('rtqa.ui'), self)
 
-        self._fd = FD()
+        self._fd = FD(xrange)
         self.names = ['X', 'Y', 'Z', 'Pitch', 'Roll', 'Yaw', 'FD']
 
         self.comboBox.currentTextChanged.connect(self.onComboboxChanged)
@@ -54,7 +53,7 @@ class RTQAWindow(QtWidgets.QWidget):
         p.disableAutoRange(axis=pg.ViewBox.XAxis)
         p.setXRange(1, xrange, padding=0.0)
 
-        self.makeRoiPlotLegend(self.tdLabel, self.names[0:3], s.PLOT_PEN_COLORS[0:3])
+        self.makeRoiPlotLegend(self.tdLabel, self.names[0:3], config.PLOT_PEN_COLORS[0:3])
 
         self._plot_rotat = pg.PlotWidget(self)
         self._plot_rotat.setBackground((255, 255, 255))
@@ -70,7 +69,7 @@ class RTQAWindow(QtWidgets.QWidget):
         p.disableAutoRange(axis=pg.ViewBox.XAxis)
         p.setXRange(1, xrange, padding=0.0)
 
-        self.makeRoiPlotLegend(self.rdLabel, self.names[3:6], s.PLOT_PEN_COLORS[3:6])
+        self.makeRoiPlotLegend(self.rdLabel, self.names[3:6], config.PLOT_PEN_COLORS[3:6])
 
         self._plot_fd = pg.PlotWidget(self)
         self._plot_fd.setBackground((255, 255, 255))
@@ -86,10 +85,10 @@ class RTQAWindow(QtWidgets.QWidget):
         p.disableAutoRange(axis=pg.ViewBox.XAxis)
         p.setXRange(1, xrange, padding=0.0)
         names = ['FD']
-        pens = [s.PLOT_PEN_COLORS[0]]
-        for i in range(len(s.DEFAULT_FD_THRESHOLDS)):
+        pens = [config.PLOT_PEN_COLORS[0]]
+        for i in range(len(config.DEFAULT_FD_THRESHOLDS)):
             names.append('Threshold ' + str(i))
-            pens.append(s.PLOT_PEN_COLORS[i + 1])
+            pens.append(config.PLOT_PEN_COLORS[i + 1])
 
         self.makeRoiPlotLegend(self.fdLabel, names, pens)
 
@@ -97,7 +96,7 @@ class RTQAWindow(QtWidgets.QWidget):
         self._plot_mc.setBackground((255, 255, 255))
         self.mcPlot.addWidget(self._plot_mc)
         p = self._plot_mc.getPlotItem()
-        p.setTitle('MC', size='')
+        p.setTitle('Head Displacement', size='')
         p.setLabel('left', "Amplitude [a.u.]")
         p.setMenuEnabled(enableMenu=True)
         p.setMouseEnabled(x=False, y=False)
@@ -106,7 +105,7 @@ class RTQAWindow(QtWidgets.QWidget):
         p.disableAutoRange(axis=pg.ViewBox.XAxis)
         p.setXRange(1, xrange, padding=0.0)
 
-        self.makeRoiPlotLegend(self.mcLabel, self.names[0:6], s.PLOT_PEN_COLORS[0:6])
+        self.makeRoiPlotLegend(self.mcLabel, self.names[0:6], config.PLOT_PEN_COLORS[0:6])
 
         self.tsCheckBox.setChecked(True)
 
