@@ -56,7 +56,7 @@ class MosaicImageViewWidget(QtWidgets.QWidget):
             self._thr_min = self._thr_max = None
             return
 
-        self._stats_map_image: np.ma.MaskedArray = np.ma.masked_equal(image, 0.0)
+        self._stats_map_image = np.ma.masked_equal(image, 0.0)
 
         if compute_thresholds or self._thr_min is None:
             self._compute_stats_map_thresholds()
