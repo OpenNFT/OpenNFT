@@ -490,15 +490,12 @@ class OpenNFT(QWidget):
     def getOrthViewImages(self):
         filename = self.eng.evalin('base', 'P.memMapFile')
 
-        if self.windowRTQA.volumeCheckBox.isChecked():
-            # file for SNR
-            filename = filename.replace('shared', 'SNROrthView')
-            # file for background
-            filenameBackg = filename.replace('shared', 'BackgOrthView')
-            # ROI from helperP
-            self.spmHelperP = self.engSPM.workspace['helperP']
-        else:
-            filename = filename.replace('shared', 'OrthView')
+        # file for SNR
+        filename = filename.replace('shared', 'OrthView')
+        # file for background
+        filenameBackg = filename.replace('shared', 'BackgOrthView')
+        # ROI from helperP
+        self.spmHelperP = self.engSPM.workspace['helperP']
 
         self.proj_images_reader.read(filename, self.engSPM)
 
@@ -945,8 +942,11 @@ class OpenNFT(QWidget):
                        self.musterInfo['tmpCond2'][-1][1],
                        self.musterInfo['tmpCond3'][-1][1])
         else:
-            xmax = max(self.musterInfo['tmpCond1'][-1][1],
-                       self.musterInfo['tmpCond2'][-1][1])
+            if not self.P['isRest']:
+                xmax = max(self.musterInfo['tmpCond1'][-1][1],
+                           self.musterInfo['tmpCond2'][-1][1])
+            else:
+                xmax = self.P['NrOfVolumes']
 
         plotitem.disableAutoRange(axis=pg.ViewBox.XAxis)
         plotitem.setXRange(1, xmax, padding=0.0)
@@ -979,6 +979,8 @@ class OpenNFT(QWidget):
 
         self.eng.workspace['P'] = self.P
         self.eng.workspace['mainLoopData'] = self.mainLoopData
+        self.eng.desktop(nargout=0)
+        self.engSPM.desktop(nargout=0)
 
         self.frameParams.setEnabled(True)
         self.gboxShortParams.setEnabled(True)
@@ -1038,8 +1040,9 @@ class OpenNFT(QWidget):
             self.engSPM.workspace['P'] = self.P
             self.previousIterStartTime = 0
 
-            with utils.timeit("  Load protocol data:"):
-                self.loadProtocolData()
+            if not self.P['isRest']:
+                with utils.timeit("  Load protocol data:"):
+                    self.loadProtocolData()
 
             with utils.timeit("  Selecting ROI:"):
                 self.selectRoi()
@@ -1047,7 +1050,8 @@ class OpenNFT(QWidget):
             self.P.update(self.eng.workspace['P'])
 
             logger.info("  Setup plots...")
-            self.createMusterInfo()
+            if not self.P['isRest']:
+                self.createMusterInfo()
             self.setupRoiPlots()
             self.setupMcPlots()
 
@@ -1097,8 +1101,11 @@ class OpenNFT(QWidget):
             if self.windowRTQA:
                 self.windowRTQA.deleteLater()
 
-            xrange = max(self.musterInfo['tmpCond1'][-1][1],
-                         self.musterInfo['tmpCond2'][-1][1])
+            if self.P['isRest']:
+                xrange = self.P['NrOfVolumes']
+            else:
+                xrange = max(self.musterInfo['tmpCond1'][-1][1],
+                             self.musterInfo['tmpCond2'][-1][1])
 
             self.windowRTQA = rtqa.RTQAWindow(xrange, parent=self)
             self.windowRTQA.volumeCheckBox.stateChanged.connect(self.onShowSnrVol)
@@ -1413,6 +1420,7 @@ class OpenNFT(QWidget):
         idx = self.cbType.findText(self.settings.value('Type', 'PSC'))
         if idx >= 0:
             self.cbType.setCurrentIndex(idx)
+        self.restCheckBox.setChecked(bool(self.settings.value('RestfulState', '')))
 
         # --- main viewer ---
         self.sbTargANG.setValue(float(self.settings.value('TargANG', 0)))
@@ -1674,11 +1682,8 @@ class OpenNFT(QWidget):
         # TODO: More general way to use any protocol
         tmpCond1 = np.array(self.P['Protocol']['Cond'][0]['OnOffsets']).astype(np.int32)
         nrCond1 = tmpCond1.shape[0]
-
-        if len(self.P['Protocol']['Cond']) > 1:
-            tmpCond2 = np.array(self.P['Protocol']['Cond'][1]['OnOffsets']).astype(np.int32)
-        else:
-            tmpCond2 = np.array([(0, 0), (0, 0)])
+        tmpCond2 = np.array(self.P['Protocol']['Cond'][1]['OnOffsets']).astype(np.int32)
+        nrCond2 = tmpCond2.shape[0]
 
         if len(self.P['Protocol']['Cond']) > 2:
             tmpCond3 = np.array(self.P['Protocol']['Cond'][2]['OnOffsets']).astype(np.int32)

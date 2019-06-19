@@ -19,7 +19,7 @@ P = evalin('base', 'P');
 jsonFile = P.ProtocolFile;
 NrOfVolumes = P.NrOfVolumes;
 nrSkipVol = P.nrSkipVol;
-
+   
 prt = loadjson(jsonFile);
 
 P.BaselineName = prt.BaselineName;
