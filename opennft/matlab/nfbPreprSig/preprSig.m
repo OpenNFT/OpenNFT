@@ -214,14 +214,14 @@ for indRoi = 1:P.NrROIs
                 betaReg = pinv(cX0) * tmp_rawTimeSeries;
                 tmp_glmProcTimeSeries = (tmp_rawTimeSeries - cX0 * betaReg)';
             else
-                % zscore() is cumulative, which limits truly recursive 
+                % zscore() is cumulative, which limits truly recursive
                 % AR(1) filtering on regressors
                 tmpRegr = [ones(tmp_ind_end,1) P.linRegr(1:tmp_ind_end) ...
                     zscore(P.motCorrParam(1:tmp_ind_end,:))];
                 if P.cglmAR1
                     tmpRegr = arRegr(P.aAR1,tmpRegr);
                 end
-                if ~P.isRest 
+                if ~P.isRest
                     cX0 = [tmpRegr P.spmDesign(1:tmp_ind_end,:)];
                     betaReg = pinv(cX0) * tmp_rawTimeSeries;
                     tmp_glmProcTimeSeries = (tmp_rawTimeSeries - ...

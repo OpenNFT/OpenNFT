@@ -667,8 +667,8 @@ class OpenNFT(QWidget):
                     self.currentCursorPos, self.currentProjection, bgType,
                     async=True, nargout=0)
 
-            if self.eng.evalin('base',
-                               'mainLoopData.statMapCreated') == 1 and not self.windowRTQA.volumeCheckBox.isChecked():
+            if (self.eng.evalin('base', 'mainLoopData.statMapCreated') == 1
+                    and not self.windowRTQA.volumeCheckBox.isChecked()):
                 nrVoxInVol = self.eng.evalin('base', 'mainLoopData.nrVoxInVol')
                 memMapFile = self.eng.evalin('base', 'P.memMapFile')
 
