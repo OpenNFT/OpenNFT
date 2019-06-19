@@ -149,69 +149,71 @@ P.isHighPass = true;
 P.isLinRegr = true;
 P.linRegr = zscore((1:double(P.NrOfVolumes-P.nrSkipVol))');
 
-SPM = setupSPM(P);
+if ~P.isRest
+    SPM = setupSPM(P);
 
-if ~P.iglmAR1
-    % exclude constant regressor
-    mainLoopData.basFct = SPM.xX.X(:,1:end-1);
-else
-    % exclude constant regressor
-    mainLoopData.basFct = arRegr(P.aAR1, SPM.xX.X(:,1:end-1));
-end
-[mainLoopData.numscan, mainLoopData.nrBasFct] = size(mainLoopData.basFct);
-% see notes above definition of spmMaskTh value
-mainLoopData.spmMaskTh = mean(SPM.xM.TH)*ones(size(SPM.xM.TH)); % SPM.xM.TH;
-mainLoopData.pVal = .01;
-mainLoopData.statMap3D_iGLM = [];
+    if ~P.iglmAR1
+        % exclude constant regressor
+        mainLoopData.basFct = SPM.xX.X(:,1:end-1);
+    else
+        % exclude constant regressor
+        mainLoopData.basFct = arRegr(P.aAR1, SPM.xX.X(:,1:end-1));
+    end
+    [mainLoopData.numscan, mainLoopData.nrBasFct] = size(mainLoopData.basFct);
+    % see notes above definition of spmMaskTh value
+    mainLoopData.spmMaskTh = mean(SPM.xM.TH)*ones(size(SPM.xM.TH)); % SPM.xM.TH;
+    mainLoopData.pVal = .01;
+    mainLoopData.statMap3D_iGLM = [];
 
-% PSC
-if isPSC && strcmp(P.Prot, 'Cont') && ~fIMAPH
-    tmpSpmDesign = SPM.xX.X(1:P.NrOfVolumes-P.nrSkipVol, 2);
-    % this contrast does not count constant term
-    mainLoopData.tContr = strcmp(P.CondNames,P.CondName)';
-end
+    % PSC
+    if isPSC && strcmp(P.Prot, 'Cont') && ~fIMAPH
+        tmpSpmDesign = SPM.xX.X(1:P.NrOfVolumes-P.nrSkipVol, 2);
+        % this contrast does not count constant term
+        mainLoopData.tContr = strcmp(P.CondNames,P.CondName)';
+    end
 
-if isPSC && strcmp(P.Prot, 'Inter') && ~fIMAPH
-    tmpSpmDesign = SPM.xX.X(1:P.NrOfVolumes-P.nrSkipVol, 2);
-    % this contrast does not count constant term
-    mainLoopData.tContr = strcmp(P.CondNames,P.CondName)';
-end
+    if isPSC && strcmp(P.Prot, 'Inter') && ~fIMAPH
+        tmpSpmDesign = SPM.xX.X(1:P.NrOfVolumes-P.nrSkipVol, 2);
+        % this contrast does not count constant term
+        mainLoopData.tContr = strcmp(P.CondNames,P.CondName)';
+    end
 
-% PSC (Phillips)
-if isPSC && strcmp(P.Prot, 'Cont') && fIMAPH
-    tmpSpmDesign = SPM.xX.X(1:P.NrOfVolumes-P.nrSkipVol,1);
-    % this contrast does not count constant term
-    mainLoopData.tContr = [1];
-end
+    % PSC (Phillips)
+    if isPSC && strcmp(P.Prot, 'Cont') && fIMAPH
+        tmpSpmDesign = SPM.xX.X(1:P.NrOfVolumes-P.nrSkipVol,1);
+        % this contrast does not count constant term
+        mainLoopData.tContr = [1];
+    end
 
-% DCM
-if isDCM && strcmp(P.Prot, 'InterBlock')
-    % this contrast does not count constant term
-    tmpSpmDesign = SPM.xX.X(1:P.lengthDCMTrial,2);
-    mainLoopData.tContr = [-1; 1];
-    [mainLoopData.DCM_EN, mainLoopData.dcmParTag, ...
-        mainLoopData.dcmParOpp] = dcmPrep(SPM);
-end
+    % DCM
+    if isDCM && strcmp(P.Prot, 'InterBlock')
+        % this contrast does not count constant term
+        tmpSpmDesign = SPM.xX.X(1:P.lengthDCMTrial,2);
+        mainLoopData.tContr = [-1; 1];
+        [mainLoopData.DCM_EN, mainLoopData.dcmParTag, ...
+            mainLoopData.dcmParOpp] = dcmPrep(SPM);
+    end
 
-% SVM
-if isSVM && strcmp(P.Prot, 'Cont')
-    mainLoopData.basFct = mainLoopData.basFct(:,2);
-    mainLoopData.nrBasFct = 1;
-    % this contrast does not count constant term
-    tmpSpmDesign = SPM.xX.X(1:P.NrOfVolumes-P.nrSkipVol,strcmp(P.CondNames,P.CondName));
-    mainLoopData.tContr = [1];
-end
+    % SVM
+    if isSVM && strcmp(P.Prot, 'Cont')
+        mainLoopData.basFct = mainLoopData.basFct(:,2);
+        mainLoopData.nrBasFct = 1;
+        % this contrast does not count constant term
+        tmpSpmDesign = SPM.xX.X(1:P.NrOfVolumes-P.nrSkipVol,strcmp(P.CondNames,P.CondName));
+        mainLoopData.tContr = [1];
+    end
 
-%% High-pass filter for iGLM given by SPM
-mainLoopData.K = SPM.xX.K;
+    %% High-pass filter for iGLM given by SPM
+    mainLoopData.K = SPM.xX.K;
 
-clear SPM
+    clear SPM
 
-%% AR(1) for cGLM in signal preproessing
-if ~P.iglmAR1
-    P.spmDesign = tmpSpmDesign;
-else
-    P.spmDesign = arRegr(P.aAR1, tmpSpmDesign);
+    %% AR(1) for cGLM in signal preproessing
+    if ~P.iglmAR1
+        P.spmDesign = tmpSpmDesign;
+    else
+        P.spmDesign = arRegr(P.aAR1, tmpSpmDesign);
+    end
 end
 
 mainLoopData.mf = [];

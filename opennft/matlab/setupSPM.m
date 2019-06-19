@@ -34,7 +34,7 @@ SPM.xBF.order      = 1;
 SPM.xBF.dt = SPM.xY.RT/SPM.xBF.T;
 
 SPM.xX.K.HParam = 128;
-
+    
 % protocol
 if isDCM && strcmp(P.Prot, 'InterBlock')
     regrInd = [...

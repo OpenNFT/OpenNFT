@@ -39,6 +39,11 @@ if (strcmp(P.Prot, 'Inter') ||  strcmp(P.Prot, 'Cont') || strcmp(P.Prot, 'ContTa
     
     mainLoopData.indVolNorm = indVol - P.nrSkipVol;
     
+    if P.isRest
+        assignin('base', 'mainLoopData', mainLoopData);
+        return;
+    end
+    
     % initalize relevant fields and a flag
     condition = P.vectEncCond(indVol - P.nrSkipVol);
     mainLoopData.condition = condition;

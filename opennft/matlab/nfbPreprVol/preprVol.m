@@ -63,13 +63,6 @@ img2DdimY = mainLoopData.img2DdimY;
 flagsSpmReslice = mainLoopData.flagsSpmReslice;
 flagsSpmRealign = mainLoopData.flagsSpmRealign;
 
-% iGLM init
-nrVoxInVol = mainLoopData.nrVoxInVol;
-nrBasFct = mainLoopData.nrBasFct;
-numscan = mainLoopData.numscan;
-spmMaskTh = mainLoopData.spmMaskTh;
-basFct = mainLoopData.basFct;
-
 % type conversion Matlab-Python bug
 indVolNorm = mainLoopData.indVolNorm;
 indVolNorm = double(indVolNorm);
@@ -181,8 +174,7 @@ else
 end
     
 
-
-
+    
 if isPSC || isSVM
     % Smoothed Vol 3D -> 2D
     smReslVol_2D = vol3Dimg2D(smReslVol, slNrImg2DdimX, slNrImg2DdimY, ...
@@ -203,6 +195,19 @@ if isDCM
         mainLoopData.smReslVol_2D = smReslVol_2D;
     end
 end
+
+if P.isRest
+    assignin('base', 'mainLoopData', mainLoopData);
+    assignin('base', 'P', P);
+    return;
+end
+
+% iGLM init
+nrVoxInVol = mainLoopData.nrVoxInVol;
+nrBasFct = mainLoopData.nrBasFct;
+numscan = mainLoopData.numscan;
+spmMaskTh = mainLoopData.spmMaskTh;
+basFct = mainLoopData.basFct;
 
 %% AR(1) iGLM, i.e. after assigning _2D matrices used for ROI's extractions
 if P.iglmAR1

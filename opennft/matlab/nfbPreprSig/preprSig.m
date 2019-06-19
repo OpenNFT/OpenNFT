@@ -45,8 +45,10 @@ indVolNorm = double(indVolNorm);
 
 % raw time-series recursion
 rawTimeSeries = mainLoopData.rawTimeSeries;
-% number of regressors of interest for cGLM
-nrRegrDesign = size(P.spmDesign,2);
+if ~P.isRest
+    % number of regressors of interest for cGLM
+    nrRegrDesign = size(P.spmDesign,2);
+end
 % number of regressors of no interest to correct with cGLM
 nrRegrToCorrect = 8; % 6 MC regressors, linear trend, constant
 
@@ -181,57 +183,59 @@ for indRoi = 1:P.NrROIs
             tmp_begin:end)';
     end
     
-    % 2.2. exemplary step-wise addition of regressors, step = total nr of
-    % Regressors, which may require a justification for particular project
-    regrStep = nrRegrDesign+nrRegrToCorrect;
-    if isPSC || isSVM
-        if (tmp_ind_end < regrStep)
-            tmpRegr = ones(tmp_ind_end,1);
-            if P.cglmAR1
-                tmpRegr = arRegr(P.aAR1,tmpRegr);
-            end
-            cX0 = tmpRegr;
-            betaReg = pinv(cX0)*tmp_rawTimeSeries;
-            tmp_glmProcTimeSeries = (tmp_rawTimeSeries - cX0*betaReg)';
-        elseif (tmp_ind_end >= regrStep) && (tmp_ind_end < 2*regrStep)
-            tmpRegr = [ones(tmp_ind_end,1) P.linRegr(1:tmp_ind_end)];
-            if P.cglmAR1
-                tmpRegr = arRegr(P.aAR1, tmpRegr);
-            end
-            cX0 = tmpRegr;
-            betaReg = pinv(cX0) * tmp_rawTimeSeries;
-            tmp_glmProcTimeSeries = (tmp_rawTimeSeries - cX0 * betaReg)';
-        elseif (tmp_ind_end >= 2*regrStep) && (tmp_ind_end < 3*regrStep)
-            tmpRegr = [ones(tmp_ind_end,1) P.linRegr(1:tmp_ind_end) ...
-                zscore(P.motCorrParam(1:tmp_ind_end,:))];
-            if P.cglmAR1
-                tmpRegr = arRegr(P.aAR1,tmpRegr);
-            end
-            cX0 = tmpRegr;
-            betaReg = pinv(cX0) * tmp_rawTimeSeries;
-            tmp_glmProcTimeSeries = (tmp_rawTimeSeries - cX0 * betaReg)';
-        else
-            % zscore() is cumulative, which limits truly recursive 
-            % AR(1) filtering on regressors
-            tmpRegr = [ones(tmp_ind_end,1) P.linRegr(1:tmp_ind_end) ...
-                zscore(P.motCorrParam(1:tmp_ind_end,:))];
-            if P.cglmAR1
-                tmpRegr = arRegr(P.aAR1,tmpRegr);
-            end
-            if ~P.isRest 
-                cX0 = [tmpRegr P.spmDesign(1:tmp_ind_end,:)];
-                betaReg = pinv(cX0) * tmp_rawTimeSeries;
-                tmp_glmProcTimeSeries = (tmp_rawTimeSeries - ...
-                    cX0 * [betaReg(1:end-1); zeros(1,1)])';
-            else
+    if ~P.isRest
+        % 2.2. exemplary step-wise addition of regressors, step = total nr of
+        % Regressors, which may require a justification for particular project
+        regrStep = nrRegrDesign+nrRegrToCorrect;
+        if isPSC || isSVM
+            if (tmp_ind_end < regrStep)
+                tmpRegr = ones(tmp_ind_end,1);
+                if P.cglmAR1
+                    tmpRegr = arRegr(P.aAR1,tmpRegr);
+                end
+                cX0 = tmpRegr;
+                betaReg = pinv(cX0)*tmp_rawTimeSeries;
+                tmp_glmProcTimeSeries = (tmp_rawTimeSeries - cX0*betaReg)';
+            elseif (tmp_ind_end >= regrStep) && (tmp_ind_end < 2*regrStep)
+                tmpRegr = [ones(tmp_ind_end,1) P.linRegr(1:tmp_ind_end)];
+                if P.cglmAR1
+                    tmpRegr = arRegr(P.aAR1, tmpRegr);
+                end
                 cX0 = tmpRegr;
                 betaReg = pinv(cX0) * tmp_rawTimeSeries;
                 tmp_glmProcTimeSeries = (tmp_rawTimeSeries - cX0 * betaReg)';
+            elseif (tmp_ind_end >= 2*regrStep) && (tmp_ind_end < 3*regrStep)
+                tmpRegr = [ones(tmp_ind_end,1) P.linRegr(1:tmp_ind_end) ...
+                    zscore(P.motCorrParam(1:tmp_ind_end,:))];
+                if P.cglmAR1
+                    tmpRegr = arRegr(P.aAR1,tmpRegr);
+                end
+                cX0 = tmpRegr;
+                betaReg = pinv(cX0) * tmp_rawTimeSeries;
+                tmp_glmProcTimeSeries = (tmp_rawTimeSeries - cX0 * betaReg)';
+            else
+                % zscore() is cumulative, which limits truly recursive 
+                % AR(1) filtering on regressors
+                tmpRegr = [ones(tmp_ind_end,1) P.linRegr(1:tmp_ind_end) ...
+                    zscore(P.motCorrParam(1:tmp_ind_end,:))];
+                if P.cglmAR1
+                    tmpRegr = arRegr(P.aAR1,tmpRegr);
+                end
+                if ~P.isRest 
+                    cX0 = [tmpRegr P.spmDesign(1:tmp_ind_end,:)];
+                    betaReg = pinv(cX0) * tmp_rawTimeSeries;
+                    tmp_glmProcTimeSeries = (tmp_rawTimeSeries - ...
+                        cX0 * [betaReg(1:end-1); zeros(1,1)])';
+                else
+                    cX0 = tmpRegr;
+                    betaReg = pinv(cX0) * tmp_rawTimeSeries;
+                    tmp_glmProcTimeSeries = (tmp_rawTimeSeries - cX0 * betaReg)';
+                end
             end
+            mainLoopData.glmProcTimeSeries(indRoi,indVolNorm) = ...
+                    tmp_glmProcTimeSeries(end);
+
         end
-        mainLoopData.glmProcTimeSeries(indRoi,indVolNorm) = ...
-                tmp_glmProcTimeSeries(end);
-        
     end
     
     % 2.3.1 alternative processign for DCM, e.g. no motion and linear trend

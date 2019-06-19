@@ -82,7 +82,7 @@ m_out.Data(l1+1:l1+l2) = backg_imgc(:);
 l3 = prod(size(backg_imgs));
 m_out.Data(l1+l2+1:l1+l2+l3) = backg_imgs(:);
 
-fname = strrep(P.memMapFile, 'shared', 'SNROrthView');
+fname = strrep(P.memMapFile, 'shared', 'OrthView');
 m_out = memmapfile(fname, 'Writable', true, 'Format', 'uint8');
 l1 = prod(size(snr_imgt));
 m_out.Data(1:l1) = snr_imgt(:);
