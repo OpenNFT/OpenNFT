@@ -979,8 +979,6 @@ class OpenNFT(QWidget):
 
         self.eng.workspace['P'] = self.P
         self.eng.workspace['mainLoopData'] = self.mainLoopData
-        self.eng.desktop(nargout=0)
-        self.engSPM.desktop(nargout=0)
 
         self.frameParams.setEnabled(True)
         self.gboxShortParams.setEnabled(True)
