@@ -61,6 +61,7 @@ from PyQt5.QtGui import QRegExpValidator
 
 from opennft import eventrecorder as erd
 from opennft import config, runmatlab, ptbscreen, mmapimage, mosaicview, projview, utils
+from opennft import statsmap
 from opennft import rtqa
 
 if config.USE_MRPULSE:
@@ -152,6 +153,7 @@ class OpenNFT(QWidget):
         self.layoutOrthView.addWidget(self.orthView)
 
         self.proj_images_reader = mmapimage.ProjectionImagesReader()
+        self.rgba_stats_map = statsmap.RgbaStatsMap()
 
         self.mcPlot = self.createMcPlot()
 
@@ -1673,7 +1675,11 @@ class OpenNFT(QWidget):
 
             self.eng.clear('strStatMap', nargout=0)
 
-        self.mosaicImageView.set_stats_map_image(stats_map_image)
+        if stats_map_image is None:
+            self.mosaicImageView.clear_stats_map()
+        else:
+            rgba_stats_map_image = self.rgba_stats_map(stats_map_image)
+            self.mosaicImageView.set_stats_map_image(rgba_stats_map_image)
 
     # --------------------------------------------------------------------------
     def createMusterInfo(self):
