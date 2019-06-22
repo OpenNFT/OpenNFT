@@ -236,99 +236,102 @@ for indRoi = 1:P.NrROIs
                     tmp_glmProcTimeSeries(end);
 
         end
-    end
     
-    % 2.3.1 alternative processign for DCM, e.g. no motion and linear trend
-    % regressors. Note, DCM could be very sensitive to cumulative signal
-    % processing. Hence, motion and the linear trend regressors are
-    % not necessary to be added cumulatively here. They could be added 
-    % when DCM needs to be computed, i.e. at the end of the entire trial, 
-    % as it is currently implmented (dcmBegin.m).
-    if isDCM
-        % subtract the absolute value of the trial
-        cX0 = ones(tmp_ind_end,1);
-        betaReg = pinv(cX0)*tmp_rawTimeSeries;
-        tmp_glmProcTimeSeries = (tmp_rawTimeSeries - cX0*betaReg)';
-        mainLoopData.glmProcTimeSeries(indRoi,indVolNorm) = ...
-            tmp_glmProcTimeSeries(end);
-    end
-    
-    % 2.3.2 alternative detrending using EMA filter, careful, exponential lags
-    enableEma = 0;
-    if enableEma
-        % EMA preset
-        thEMA = 0.98;
-        if ~isempty(find(P.beginDCMblock ==indVol-P.nrSkipVol,1))
-            mainLoopData.inpFilt(indRoi)= rawTimeSeries(indRoi,indVolNorm);
+        % 2.3.1 alternative processign for DCM, e.g. no motion and linear trend
+        % regressors. Note, DCM could be very sensitive to cumulative signal
+        % processing. Hence, motion and the linear trend regressors are
+        % not necessary to be added cumulatively here. They could be added 
+        % when DCM needs to be computed, i.e. at the end of the entire trial, 
+        % as it is currently implmented (dcmBegin.m).
+        if isDCM
+            % subtract the absolute value of the trial
+            cX0 = ones(tmp_ind_end,1);
+            betaReg = pinv(cX0)*tmp_rawTimeSeries;
+            tmp_glmProcTimeSeries = (tmp_rawTimeSeries - cX0*betaReg)';
+            mainLoopData.glmProcTimeSeries(indRoi,indVolNorm) = ...
+                tmp_glmProcTimeSeries(end);
         end
-        if (indVolNorm < 2)
-            mainLoopData.emaProcTimeSeries(indRoi,indVolNorm) = ...
-                rawTimeSeries(indRoi, indVolNorm)-rawTimeSeries(indRoi, 1);
-        else
-            [mainLoopData.emaProcTimeSeries(indRoi,indVolNorm), ...
-                mainLoopData.inpFilt(indRoi)] = ...
-                emaFilt(thEMA, rawTimeSeries(indRoi, indVolNorm), ...
-                mainLoopData.inpFilt(indRoi));
+
+        % 2.3.2 alternative detrending using EMA filter, careful, exponential lags
+        enableEma = 0;
+        if enableEma
+            % EMA preset
+            thEMA = 0.98;
+            if ~isempty(find(P.beginDCMblock ==indVol-P.nrSkipVol,1))
+                mainLoopData.inpFilt(indRoi)= rawTimeSeries(indRoi,indVolNorm);
+            end
+            if (indVolNorm < 2)
+                mainLoopData.emaProcTimeSeries(indRoi,indVolNorm) = ...
+                    rawTimeSeries(indRoi, indVolNorm)-rawTimeSeries(indRoi, 1);
+            else
+                [mainLoopData.emaProcTimeSeries(indRoi,indVolNorm), ...
+                    mainLoopData.inpFilt(indRoi)] = ...
+                    emaFilt(thEMA, rawTimeSeries(indRoi, indVolNorm), ...
+                    mainLoopData.inpFilt(indRoi));
+            end
         end
-    end
-    
-    % 3. modified Kalman low-pass filter + spike identification & correction
-    if isPSC || isSVM || isDCM
-        tmpStd = std(mainLoopData.glmProcTimeSeries(indRoi,:));
-    end
-    if isDCM
-        mainLoopData.S(indRoi).Q = .25*tmpStd^2;
-        mainLoopData.S(indRoi).R = tmpStd^2;
-    end
-    if isPSC || isSVM
-        % See Koush 2012 for setting the constants
-        mainLoopData.S(indRoi).Q = tmpStd^2;
-        mainLoopData.S(indRoi).R = 1.95*tmpStd^2;
-    end
-    kalmThreshold = .9*tmpStd;
-    [mainLoopData.kalmanProcTimeSeries(indRoi,indVolNorm), ...
-        mainLoopData.S(indRoi), mainLoopData.fPositDerivSpike(indRoi), ...
-        mainLoopData.fNegatDerivSpike(indRoi)] = ...
-        modifKalman(kalmThreshold, ...
-        mainLoopData.glmProcTimeSeries(indRoi,indVolNorm), ...
-        mainLoopData.S(indRoi), mainLoopData.fPositDerivSpike(indRoi), ...
-        mainLoopData.fNegatDerivSpike(indRoi));
-    
-    %4. Scaling
-    slWind = P.basBlockLength*P.nrBlocksInSlidingWindow;
-    [mainLoopData.scalProcTimeSeries(indRoi, indVolNorm), ...
-        mainLoopData.tmp_posMin(indRoi), mainLoopData.tmp_posMax(indRoi)] = ...
-        scaleTimeSeries(mainLoopData.kalmanProcTimeSeries(indRoi,:), ...
-        indVolNorm, slWind, P.basBlockLength, mainLoopData.initLim(indRoi),...
-        P.vectEncCond(1:indVolNorm), mainLoopData.tmp_posMin(indRoi), ...
-        mainLoopData.tmp_posMax(indRoi));
-    mainLoopData.posMin(indRoi,indVolNorm)=mainLoopData.tmp_posMin(indRoi);
-    mainLoopData.posMax(indRoi,indVolNorm)=mainLoopData.tmp_posMax(indRoi);
-    
-    % 5. z-scoring and sigmoidal transform
-    if isSVM
-        zcoredVal = ...
-            zscore(mainLoopData.scalProcTimeSeries(indRoi, 1:indVolNorm));
-        mainLoopData.scalProcTimeSeries(indRoi, indVolNorm) = ...
-            logsig(zcoredVal(end)); % or 1-logsig()
+
+        % 3. modified Kalman low-pass filter + spike identification & correction
+        if isPSC || isSVM || isDCM
+            tmpStd = std(mainLoopData.glmProcTimeSeries(indRoi,:));
+        end
+        if isDCM
+            mainLoopData.S(indRoi).Q = .25*tmpStd^2;
+            mainLoopData.S(indRoi).R = tmpStd^2;
+        end
+        if isPSC || isSVM
+            % See Koush 2012 for setting the constants
+            mainLoopData.S(indRoi).Q = tmpStd^2;
+            mainLoopData.S(indRoi).R = 1.95*tmpStd^2;
+        end
+        kalmThreshold = .9*tmpStd;
+        [mainLoopData.kalmanProcTimeSeries(indRoi,indVolNorm), ...
+            mainLoopData.S(indRoi), mainLoopData.fPositDerivSpike(indRoi), ...
+            mainLoopData.fNegatDerivSpike(indRoi)] = ...
+            modifKalman(kalmThreshold, ...
+            mainLoopData.glmProcTimeSeries(indRoi,indVolNorm), ...
+            mainLoopData.S(indRoi), mainLoopData.fPositDerivSpike(indRoi), ...
+            mainLoopData.fNegatDerivSpike(indRoi));
+
+        %4. Scaling
+        slWind = P.basBlockLength*P.nrBlocksInSlidingWindow;
+        [mainLoopData.scalProcTimeSeries(indRoi, indVolNorm), ...
+            mainLoopData.tmp_posMin(indRoi), mainLoopData.tmp_posMax(indRoi)] = ...
+            scaleTimeSeries(mainLoopData.kalmanProcTimeSeries(indRoi,:), ...
+            indVolNorm, slWind, P.basBlockLength, mainLoopData.initLim(indRoi),...
+            P.vectEncCond(1:indVolNorm), mainLoopData.tmp_posMin(indRoi), ...
+            mainLoopData.tmp_posMax(indRoi));
+        mainLoopData.posMin(indRoi,indVolNorm)=mainLoopData.tmp_posMin(indRoi);
+        mainLoopData.posMax(indRoi,indVolNorm)=mainLoopData.tmp_posMax(indRoi);
+
+        % 5. z-scoring and sigmoidal transform
+        if isSVM
+            zcoredVal = ...
+                zscore(mainLoopData.scalProcTimeSeries(indRoi, 1:indVolNorm));
+            mainLoopData.scalProcTimeSeries(indRoi, indVolNorm) = ...
+                logsig(zcoredVal(end)); % or 1-logsig()
+        end
     end
 end
 
 % update main loop variable
 mainLoopData.rawTimeSeries = rawTimeSeries;
 
-% calcualte average limits for 2 ROIs, e.g. for bilateral NF
-% NF extensions with >2 ROIs requires an additional justification
-mainLoopData.mposMax(indVolNorm)= mean(mainLoopData.posMax(:, indVolNorm));
-mainLoopData.mposMin(indVolNorm)= mean(mainLoopData.posMin(:, indVolNorm));
+if ~P.isRest
+    % calcualte average limits for 2 ROIs, e.g. for bilateral NF
+    % NF extensions with >2 ROIs requires an additional justification
+    mainLoopData.mposMax(indVolNorm)= mean(mainLoopData.posMax(:, indVolNorm));
+    mainLoopData.mposMin(indVolNorm)= mean(mainLoopData.posMin(:, indVolNorm));
 
-output.posMin = [mainLoopData.posMin; mainLoopData.mposMin];
-output.posMax = [mainLoopData.posMax; mainLoopData.mposMax];
-output.kalmanProcTimeSeries = mainLoopData.kalmanProcTimeSeries;
+    output.posMin = [mainLoopData.posMin; mainLoopData.mposMin];
+    output.posMax = [mainLoopData.posMax; mainLoopData.mposMax];
+    output.kalmanProcTimeSeries = mainLoopData.kalmanProcTimeSeries;
+    output.scalProcTimeSeries = mainLoopData.scalProcTimeSeries;
+end
+
 output.displRawTimeSeries = mainLoopData.displRawTimeSeries;
-output.scalProcTimeSeries = mainLoopData.scalProcTimeSeries;
 output.rawTimeSeries = mainLoopData.rawTimeSeries;
 output.motCorrParam = P.motCorrParam;
-
+    
 assignin('base', 'mainLoopData', mainLoopData);
 assignin('base', 'P', P);

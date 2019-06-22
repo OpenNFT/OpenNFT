@@ -690,109 +690,112 @@ class OpenNFT(QWidget):
             # t4
             self.recorder.recordEvent(erd.Times.t4, self.iteration)
 
-            if self.P['Type'] == 'DCM':
-                if self.isCalculateDcm:
-                    # here calc already in progress
-                    dcmBlocks = np.array(self.P['endDCMblock'][0])
-                    lastBlockIteration = self.iteration - self.P['nrBlankScans'] - self.P['nrSkipVol']
-                    lastBlankScan = len(np.where(dcmBlocks == lastBlockIteration)[0]) > 0
-                    if lastBlankScan:
-                        logger.info('get lastBlankScan...')
-                        logger.info('dcm blocks {}', dcmBlocks)
-
-                    if (self.tagFuture.done() and self.oppFuture.done()) or lastBlankScan:
-                        # t12 last DCM model computation is done
-                        self.recorder.recordEvent(erd.Times.t12, self.iteration)
-                        dcmTagLE = self.tagFuture.result()
-                        dcmOppLE = self.oppFuture.result()
-                        logger.info('DCM calculated')
-
-                        # feedback estimation
-                        self.displayData = self.eng.nfbCalc(self.iteration, self.displayData, dcmTagLE, dcmOppLE, True,
-                                                            nargout=1)
-
-                        # t5
-                        self.recorder.recordEvent(erd.Times.t5, self.iteration)
-                        self.isCalculateDcm = False
-
-                else:
-                    self.isCalculateDcm = self.eng.dcmBegin(self.iteration, nargout=1)
-
+            if not self.P['isRest']:
+                if self.P['Type'] == 'DCM':
                     if self.isCalculateDcm:
-                        # display blank screen in ptb helper before calculate DCM
-                        if config.USE_PTB:
-                            self.displayData['displayBlankScreen'] = 1
-                            self.displayScreen()
-                            QApplication.processEvents()
-                            self.endDisplayEvent.wait()
-                            self.endDisplayEvent.clear()
+                        # here calc already in progress
+                        dcmBlocks = np.array(self.P['endDCMblock'][0])
+                        lastBlockIteration = self.iteration - self.P['nrBlankScans'] - self.P['nrSkipVol']
+                        lastBlankScan = len(np.where(dcmBlocks == lastBlockIteration)[0]) > 0
+                        if lastBlankScan:
+                            logger.info('get lastBlankScan...')
+                            logger.info('dcm blocks {}', dcmBlocks)
 
-                        # Parallel DCM computing on two matlab engines
-                        # t11 first DCM model computation started
-                        self.recorder.recordEvent(erd.Times.t11, self.iteration)
-                        self.tagFuture = self.mlPtbDcmHelper.engine.dcmCalc(
-                            'Tag', nargout=1, async=True)
+                        if (self.tagFuture.done() and self.oppFuture.done()) or lastBlankScan:
+                            # t12 last DCM model computation is done
+                            self.recorder.recordEvent(erd.Times.t12, self.iteration)
+                            dcmTagLE = self.tagFuture.result()
+                            dcmOppLE = self.oppFuture.result()
+                            logger.info('DCM calculated')
 
-                        if config.USE_MATLAB_MODEL_HELPER:
-                            self.oppFuture = self.mlModelHelper.engine.dcmCalc(
-                                'Opp', nargout=1, async=True)
-                        else:
-                            self.oppFuture = self.mlPtbDcmHelper.engine.dcmCalc(
-                                'Opp', nargout=1, async=True)
+                            # feedback estimation
+                            self.displayData = self.eng.nfbCalc(self.iteration, self.displayData, dcmTagLE, dcmOppLE, True,
+                                                                nargout=1)
+
+                            # t5
+                            self.recorder.recordEvent(erd.Times.t5, self.iteration)
+                            self.isCalculateDcm = False
 
                     else:
-                        dcmTagLE = []
-                        dcmOppLE = []
+                        self.isCalculateDcm = self.eng.dcmBegin(self.iteration, nargout=1)
 
-            elif self.P['Type'] == 'SVM':
-                # feedback estimation
-                self.displayData = self.eng.nfbCalc(self.iteration, self.displayData, nargout=1)
+                        if self.isCalculateDcm:
+                            # display blank screen in ptb helper before calculate DCM
+                            if config.USE_PTB:
+                                self.displayData['displayBlankScreen'] = 1
+                                self.displayScreen()
+                                QApplication.processEvents()
+                                self.endDisplayEvent.wait()
+                                self.endDisplayEvent.clear()
 
-                # t5
-                self.recorder.recordEvent(erd.Times.t5, self.iteration)
-                if self.displayData and config.USE_UDP_FEEDBACK:
-                    logger.info('Sending by UDP - dispValue = {}', self.displayData['dispValue'])
-                    self.udpSender.send_data(self.displayData['dispValue'])
+                            # Parallel DCM computing on two matlab engines
+                            # t11 first DCM model computation started
+                            self.recorder.recordEvent(erd.Times.t11, self.iteration)
+                            self.tagFuture = self.mlPtbDcmHelper.engine.dcmCalc(
+                                'Tag', nargout=1, async=True)
 
-            elif self.P['Type'] == 'PSC':
-                self.displayData = self.eng.nfbCalc(self.iteration, self.displayData, nargout=1)
+                            if config.USE_MATLAB_MODEL_HELPER:
+                                self.oppFuture = self.mlModelHelper.engine.dcmCalc(
+                                    'Opp', nargout=1, async=True)
+                            else:
+                                self.oppFuture = self.mlPtbDcmHelper.engine.dcmCalc(
+                                    'Opp', nargout=1, async=True)
 
-                # t5
-                self.recorder.recordEvent(erd.Times.t5, self.iteration)
-                if self.displayData and config.USE_UDP_FEEDBACK:  # for UDP, configure here if required
-                    logger.info('Sending by UDP - dispValue = {}', self.displayData['dispValue'])
-                    self.udpSender.send_data(self.displayData['dispValue'])
+                        else:
+                            dcmTagLE = []
+                            dcmOppLE = []
 
-                if self.P['Prot'] != 'Inter':
-                    if config.USE_PTB:
-                        if self.displayData:
-                            if self.P['Prot'] == 'ContTask':
-                                #                       Here task condition is evaluated: if condition is 3 (task) and the current
-                                #                       itteration corresponds with the onset of a task block (kept in TaskFirstVol)
-                                #                       taskseq is set to one. While set to 1, Display  in ptbScreen.py
-                                #                       will use the taskse flag to call the ptbTask function.
-                                # cond = self.eng.evalin('base', 'mainLoopData.displayData.condition')
-                                cond = self.displayData['condition']
-                                if cond == 3 and int(self.P['TaskFirstVol'][0][self.iteration - 1]) == 1:
-                                    self.displayData['taskseq'] = 1
-                                    self.displayScreen()
-                                    QApplication.processEvents()
-                                    self.endDisplayEvent.wait()
-                                    self.endDisplayEvent.clear()
+                elif self.P['Type'] == 'SVM':
+                    # feedback estimation
+                    self.displayData = self.eng.nfbCalc(self.iteration, self.displayData, nargout=1)
+
+                    # t5
+                    self.recorder.recordEvent(erd.Times.t5, self.iteration)
+                    if self.displayData and config.USE_UDP_FEEDBACK:
+                        logger.info('Sending by UDP - dispValue = {}', self.displayData['dispValue'])
+                        self.udpSender.send_data(self.displayData['dispValue'])
+
+                elif self.P['Type'] == 'PSC':
+                    self.displayData = self.eng.nfbCalc(self.iteration, self.displayData, nargout=1)
+
+                    # t5
+                    self.recorder.recordEvent(erd.Times.t5, self.iteration)
+                    if self.displayData and config.USE_UDP_FEEDBACK:  # for UDP, configure here if required
+                        logger.info('Sending by UDP - dispValue = {}', self.displayData['dispValue'])
+                        self.udpSender.send_data(self.displayData['dispValue'])
+
+                    if self.P['Prot'] != 'Inter':
+                        if config.USE_PTB:
+                            if self.displayData:
+                                if self.P['Prot'] == 'ContTask':
+                                    #                       Here task condition is evaluated: if condition is 3 (task) and the current
+                                    #                       itteration corresponds with the onset of a task block (kept in TaskFirstVol)
+                                    #                       taskseq is set to one. While set to 1, Display  in ptbScreen.py
+                                    #                       will use the taskse flag to call the ptbTask function.
+                                    # cond = self.eng.evalin('base', 'mainLoopData.displayData.condition')
+                                    cond = self.displayData['condition']
+                                    if cond == 3 and int(self.P['TaskFirstVol'][0][self.iteration - 1]) == 1:
+                                        self.displayData['taskseq'] = 1
+                                        self.displayScreen()
+                                        QApplication.processEvents()
+                                        self.endDisplayEvent.wait()
+                                        self.endDisplayEvent.clear()
+                                    else:
+                                        self.displayData['taskseq'] = 0
+                                        self.displayData['displayStage'] = 'feedback'
+                                        self.displayScreen()
                                 else:
                                     self.displayData['taskseq'] = 0
                                     self.displayData['displayStage'] = 'feedback'
                                     self.displayScreen()
-                            else:
-                                self.displayData['taskseq'] = 0
-                                self.displayData['displayStage'] = 'feedback'
-                                self.displayScreen()
+
             # main logic end
 
             init = self.iteration == (self.P['nrSkipVol'] + 1)
 
             with utils.timeit('Display mosaic image:'):
-                self.displayMosaicImage()
+                if not self.imageViewMode:
+                    self.displayMosaicImage()
 
             with utils.timeit('  Drawings:'):
                 self.drawRoiPlots(init)
@@ -1420,7 +1423,7 @@ class OpenNFT(QWidget):
         idx = self.cbType.findText(self.settings.value('Type', 'PSC'))
         if idx >= 0:
             self.cbType.setCurrentIndex(idx)
-        self.restCheckBox.setChecked(bool(self.settings.value('RestfulState', '')))
+        self.restCheckBox.setChecked(bool(self.settings.value('RestfulState', '').lower()=='true'))
 
         # --- main viewer ---
         self.sbTargANG.setValue(float(self.settings.value('TargANG', 0)))
@@ -1700,7 +1703,6 @@ class OpenNFT(QWidget):
         else:
             tmpCond4 = np.array([(0, 0), (0, 0)])
 
-        nrCond2 = tmpCond2.shape[0]
         nrCond3 = tmpCond3.shape[0]
         nrCond4 = tmpCond4.shape[0]
 
@@ -1808,12 +1810,13 @@ class OpenNFT(QWidget):
 
         dataRaw = np.array(self.outputSamples[key], ndmin=2)
         dataRealRaw = np.array(self.outputSamples['rawTimeSeries'], ndmin=2)
-        dataProc = np.array(self.outputSamples['kalmanProcTimeSeries'], ndmin=2)
-        dataNorm = np.array(self.outputSamples['scalProcTimeSeries'], ndmin=2)
-
         self.drawGivenRoiPlot(init, self.rawRoiPlot, dataRaw)
-        self.drawGivenRoiPlot(init, self.procRoiPlot, dataProc)
-        self.drawGivenRoiPlot(init, self.normRoiPlot, dataNorm)
+
+        if not self.P['isRest']:
+            dataProc = np.array(self.outputSamples['kalmanProcTimeSeries'], ndmin=2)
+            dataNorm = np.array(self.outputSamples['scalProcTimeSeries'], ndmin=2)
+            self.drawGivenRoiPlot(init, self.procRoiPlot, dataProc)
+            self.drawGivenRoiPlot(init, self.normRoiPlot, dataNorm)
 
         n = len(dataRealRaw[0, :])
         self.windowRTQA.calculate_snr(init, dataRealRaw[:, n - 1], n)
@@ -1861,9 +1864,9 @@ class OpenNFT(QWidget):
     # --------------------------------------------------------------------------
     def drawMusterPlot(self, plotitem: pg.PlotItem):
         ylim = config.MUSTER_Y_LIMITS
-        self.computeMusterPlotData(ylim)
 
-        if len(self.P['Protocol']['Cond']) > 1:
+        if not self.P['isRest']:
+            self.computeMusterPlotData(ylim)
             muster = [
                 plotitem.plot(x=self.musterInfo['xCond1'],
                               y=self.musterInfo['yCond1'],
@@ -1877,23 +1880,23 @@ class OpenNFT(QWidget):
                               pen=config.MUSTER_PEN_COLORS[1],
                               brush=config.MUSTER_BRUSH_COLORS[1]),
             ]
+
+            if self.P['Prot'] != 'InterBlock':
+                muster.append(
+                    plotitem.plot(x=self.musterInfo['xCond3'],
+                                  y=self.musterInfo['yCond3'],
+                                  fillLevel=ylim[0],
+                                  pen=config.MUSTER_PEN_COLORS[2],
+                                  brush=config.MUSTER_BRUSH_COLORS[2])
+                )
         else:
             muster = [
-                plotitem.plot(x=self.musterInfo['xCond1'],
-                              y=self.musterInfo['yCond1'],
+                plotitem.plot(x=[1, self.P['NrOfVolumes']],
+                              y=[-1000, 1000],
                               fillLevel=ylim[0],
                               pen=config.MUSTER_PEN_COLORS[3],
                               brush=config.MUSTER_BRUSH_COLORS[3])
             ]
-
-        if self.P['Prot'] != 'InterBlock':
-            muster.append(
-                plotitem.plot(x=self.musterInfo['xCond3'],
-                              y=self.musterInfo['yCond3'],
-                              fillLevel=ylim[0],
-                              pen=config.MUSTER_PEN_COLORS[2],
-                              brush=config.MUSTER_BRUSH_COLORS[2])
-            )
 
         return muster
 
