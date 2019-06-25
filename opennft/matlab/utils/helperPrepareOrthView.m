@@ -13,6 +13,10 @@ function helperPrepareOrthView(P, bgType)
 % Adopted by Yury Koush based on SPM (see spm_orthviews.m)
 
 P.bgType = bgType;
+P.idxRoiImgt = []
+P.idxRoiImgc = []
+P.idxRoiImgs = []
+P.lengthROIs = []
 
 %% Background: EPI template or Anatomy
 %% default values
@@ -75,7 +79,7 @@ if isDCM
     ROIsAnat = evalin('base', 'ROIsAnat');
     ROIsOverlay = ROIsAnat;
 end
-if isPSC || isSVM
+if isPSC || isSVM || P.isRestingState
     ROIs = evalin('base', 'ROIs');
     ROIsOverlay = ROIs;
 end
@@ -126,13 +130,15 @@ assignin('base', 'displayBgEpi', displayBgEpi);
 
 assignin('base', 'ROIsOverlay', ROIsOverlay);   
 
+[slNrImg2DdimX, slNrImg2DdimY, img2DdimX, img2DdimY] = getMosaicDim(displayBgEpi.dim);
+mosaicDim = img2DdimX*img2DdimY;
+data2 = uint8(zeros(mosaicDim,1));
+
 %% images for OrthView in GUI from helper matlab
 initMemmap(P.memMapFile, 'OrthView', data, 'uint8', 'mmOrthView', format);
-
-% figure('Name', 'Bounding box center')
-% subplot(2,2,1),imshow(imgs,[]),title('Saggital') % 256x256
-% subplot(2,2,3),imshow(imgt,[]),title('Transversal') % 192x256
-% subplot(2,2,2),imshow(imgc,[]),title('Coronal') % 256x192
+initMemmap(P.memMapFile, 'BackgOrthView', data, 'uint8', 'mmOrthView', format);
+initMemmap(P.memMapFile, 'SNRVol', data2(:), 'double', 'snrVol', {'double', prod(displayBgEpi.dim), 'snrVol'});
+initMemmap(P.memMapFile, 'map_2D', data2(:), 'uint8', 'map_2D', {'uint8', mosaicDim, 'map_2D'});
 
 assignin('base', 'helperP', P);
 

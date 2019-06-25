@@ -132,7 +132,7 @@ reslVol = spm_reslice_rt(R, flagsSpmReslice);
 tStopMC = toc(tStartMotCorr);
 
 %% Smoothing
-if isPSC || isSVM
+if isPSC || isSVM || P.isRestingState
     gKernel = [5 5 5] ./ dicomInfoVox;
 end
 if isDCM
@@ -160,9 +160,9 @@ if indVolNorm > FIRST_SNR_VOLUME
         else
             % mosaic (0)
             snrMap_2D = vol3Dimg2D(snrVol, slNrImg2DdimX, slNrImg2DdimY, img2DdimX, img2DdimY, dimVol);
-            fname = strrep(P.memMapFile, 'shared', 'SNRMap');
-            m_out = memmapfile(fname, 'Writable', true, 'Format',  {'uint8', img2DdimX*img2DdimY, 'snrMap_2D'});
-            m_out.Data.snrMap_2D = uint8(snrMap_2D(:));
+            fname = strrep(P.memMapFile, 'shared', 'map_2D');
+            m_out = memmapfile(fname, 'Writable', true, 'Format',  {'uint8', img2DdimX*img2DdimY, 'map_2D'});
+            m_out.Data.map_2D = uint8(snrMap_2D(:));
         
         end
     
@@ -175,7 +175,7 @@ end
     
 
     
-if isPSC || isSVM
+if isPSC || isSVM || P.isRestingState
     % Smoothed Vol 3D -> 2D
     smReslVol_2D = vol3Dimg2D(smReslVol, slNrImg2DdimX, slNrImg2DdimY, ...
         img2DdimX, img2DdimY, dimVol);
@@ -194,12 +194,6 @@ if isDCM
             slNrImg2DdimY, img2DdimX, img2DdimY, dimVol);
         mainLoopData.smReslVol_2D = smReslVol_2D;
     end
-end
-
-if P.isRest
-    assignin('base', 'mainLoopData', mainLoopData);
-    assignin('base', 'P', P);
-    return;
 end
 
 % iGLM init
@@ -323,7 +317,7 @@ if isIGLM
         mainLoopData.statMap2D = statMap2D;
     end
     
-    if isPSC || isSVM
+    if isPSC || isSVM || P.isRestingState
         indIglm = indVolNorm;
     end
     if isDCM
@@ -359,10 +353,19 @@ if isIGLM
     if P.iglmAR1
         tmpRegr = arRegr(P.aAR1,tmpRegr);
     end
-    % combine with prepared basFct design regressors
-    basFctRegr = [basFct(1:indIglm,:), tmpRegr];
-    % account for contrast term in contrast vector (+1)
-    tContr = [tContr; zeros(nrBasFctRegr,1)];
+    if ~P.isRestingState
+        % combine with prepared basFct design regressors
+        basFctRegr = [basFct(1:indIglm,:), tmpRegr];
+        % account for contrast term in contrast vector (+1)
+        tContr = [tContr; zeros(nrBasFctRegr,1)];
+    else
+        % combine with prepared basFct design regressors
+        basFctRegr = tmpRegr;
+        % account for contrast term in contrast vector (+1)
+        if  P.isMotionRegr && P.isLinRegr && P.isHighPass
+            tContr = [tContr; zeros(nrBasFctRegr-size(P.motCorrParam,2),1)];
+        end
+    end
     % estimate iGLM
     [idxActVoxIGLM, dyntTh, tTh, Cn, Dn, s2n, tn, neg_e2n] = ...
         iGlmVol(Cn, Dn, s2n, tn, smReslVol(:), indIglm, ...
@@ -402,12 +405,16 @@ if ~isempty(idxActVoxIGLM) && max(tn) > 0 % handle empty activation map
     statMap2D = vol3Dimg2D(statMap3D, slNrImg2DdimX, slNrImg2DdimY, ...
         img2DdimX, img2DdimY, dimVol) / maxTval;
     
-    posIdx2D = find(statMap2D > 0);
-    pythonPosIdx2D = posIdx2D - 1;
+    fname = strrep(P.memMapFile, 'shared', 'map_2D');
+    m_out = memmapfile(fname, 'Writable', true, 'Format',  {'uint8', img2DdimX*img2DdimY, 'map_2D'});
+    m_out.Data.map_2D = uint8(statMap2D(:));
     
-    assignin('base', 'strIdx', matData2strData(pythonPosIdx2D));
-    tmpStrData = matData2strData(statMap2D(posIdx2D)*255);
-    assignin('base', 'strStatMap', tmpStrData);
+%     posIdx2D = find(statMap2D > 0);
+%     pythonPosIdx2D = posIdx2D - 1;
+%     
+%     assignin('base', 'strIdx', matData2strData(pythonPosIdx2D));
+%     tmpStrData = matData2strData(statMap2D(posIdx2D)*255);
+%     assignin('base', 'strStatMap', tmpStrData);
     
     % shared for SPM matlab helper
     m = evalin('base', 'mmStatVol');

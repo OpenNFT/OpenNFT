@@ -34,12 +34,12 @@ if indVol == double(P.nrSkipVol)+1
     fprintf('\n=============\n\n')
 end
 
-if (strcmp(P.Prot, 'Inter') ||  strcmp(P.Prot, 'Cont') || strcmp(P.Prot, 'ContTask'))  && ...
-        (strcmp(P.Type, 'PSC')   ||  strcmp(P.Type, 'SVM') )
+if (strcmp(P.Prot, 'Inter') ||  strcmp(P.Prot, 'Cont') || strcmp(P.Prot, 'ContTask') || strcmp(P.Prot, 'Rest'))  && ...
+        (strcmp(P.Type, 'PSC')   ||  strcmp(P.Type, 'SVM') ||  strcmp(P.Type, 'None') )
     
     mainLoopData.indVolNorm = indVol - P.nrSkipVol;
     
-    if P.isRest
+    if P.isRestingState
         assignin('base', 'mainLoopData', mainLoopData);
         return;
     end
@@ -132,6 +132,10 @@ if strcmp(P.Prot, 'InterBlock') && strcmp(P.Type, 'DCM')
     displayData.condition = condition;
     displayData.dispValue = mainLoopData.dispValue;
     displayData.Reward = mainLoopData.Reward;
+end
+
+if P.isRestingState
+    displayData.feedbackType = 'none';
 end
 
 displayData.displayStage = 'instruction';

@@ -483,23 +483,24 @@ class OpenNFT(QWidget):
             'idxRoiImgs': [],
             'idxRoiImgc': [],
             'lengthROIs': [],
+            'isRestingState' : self.P['isRestingState'],
         }
 
         self.engSPM.helperPrepareOrthView(self.spmHelperP, 'bgEPI', nargout=0)
-        self.engSPM.helperPrepareOrthViewRTQA(self.spmHelperP, 'bgEPI', nargout=0)
 
     # --------------------------------------------------------------------------
     def getOrthViewImages(self):
-        filename = self.eng.evalin('base', 'P.memMapFile')
+        filenameTargetOverlay = self.eng.evalin('base', 'P.memMapFile')
+        filenameBackgroundOverlay = self.eng.evalin('base', 'P.memMapFile')
 
-        # file for SNR
-        filename = filename.replace('shared', 'OrthView')
-        # file for background
-        filenameBackg = filename.replace('shared', 'BackgOrthView')
+        # file for SNR or stat
+        filenameTargetOverlay = filenameTargetOverlay.replace('shared', 'OrthView')
+        # file for background anat or epi
+        filenameBackgroundOverlay = filenameBackgroundOverlay.replace('shared', 'BackgOrthView')
         # ROI from helperP
         self.spmHelperP = self.engSPM.workspace['helperP']
 
-        self.proj_images_reader.read(filename, self.engSPM)
+        self.proj_images_reader.read(filenameTargetOverlay, self.engSPM)
 
     # --------------------------------------------------------------------------
     def displayScreen(self):
@@ -665,8 +666,8 @@ class OpenNFT(QWidget):
                 else:
                     bgType = 'bgAnat'
 
-                self.orthViewUpdateFuture = self.engSPM.helperUpdateOrthViewRTQA(
-                    self.currentCursorPos, self.currentProjection, bgType,
+                self.orthViewUpdateFuture = self.engSPM.helperUpdateOrthView(
+                    self.currentCursorPos, self.currentProjection, bgType, True,
                     async=True, nargout=0)
 
             if (self.eng.evalin('base', 'mainLoopData.statMapCreated') == 1
@@ -680,7 +681,7 @@ class OpenNFT(QWidget):
                     bgType = 'bgAnat'
 
                 self.orthViewUpdateFuture = self.engSPM.helperUpdateOrthView(
-                    self.currentCursorPos, self.currentProjection, bgType,
+                    self.currentCursorPos, self.currentProjection, bgType, False,
                     async=True, nargout=0)
 
             # spatio-temporal data processing
@@ -690,104 +691,103 @@ class OpenNFT(QWidget):
             # t4
             self.recorder.recordEvent(erd.Times.t4, self.iteration)
 
-            if not self.P['isRest']:
-                if self.P['Type'] == 'DCM':
+            if self.P['Type'] == 'DCM':
+                if self.isCalculateDcm:
+                    # here calc already in progress
+                    dcmBlocks = np.array(self.P['endDCMblock'][0])
+                    lastBlockIteration = self.iteration - self.P['nrBlankScans'] - self.P['nrSkipVol']
+                    lastBlankScan = len(np.where(dcmBlocks == lastBlockIteration)[0]) > 0
+                    if lastBlankScan:
+                        logger.info('get lastBlankScan...')
+                        logger.info('dcm blocks {}', dcmBlocks)
+
+                    if (self.tagFuture.done() and self.oppFuture.done()) or lastBlankScan:
+                        # t12 last DCM model computation is done
+                        self.recorder.recordEvent(erd.Times.t12, self.iteration)
+                        dcmTagLE = self.tagFuture.result()
+                        dcmOppLE = self.oppFuture.result()
+                        logger.info('DCM calculated')
+
+                        # feedback estimation
+                        self.displayData = self.eng.nfbCalc(self.iteration, self.displayData, dcmTagLE, dcmOppLE, True,
+                                                            nargout=1)
+
+                        # t5
+                        self.recorder.recordEvent(erd.Times.t5, self.iteration)
+                        self.isCalculateDcm = False
+
+                else:
+                    self.isCalculateDcm = self.eng.dcmBegin(self.iteration, nargout=1)
+
                     if self.isCalculateDcm:
-                        # here calc already in progress
-                        dcmBlocks = np.array(self.P['endDCMblock'][0])
-                        lastBlockIteration = self.iteration - self.P['nrBlankScans'] - self.P['nrSkipVol']
-                        lastBlankScan = len(np.where(dcmBlocks == lastBlockIteration)[0]) > 0
-                        if lastBlankScan:
-                            logger.info('get lastBlankScan...')
-                            logger.info('dcm blocks {}', dcmBlocks)
+                        # display blank screen in ptb helper before calculate DCM
+                        if config.USE_PTB:
+                            self.displayData['displayBlankScreen'] = 1
+                            self.displayScreen()
+                            QApplication.processEvents()
+                            self.endDisplayEvent.wait()
+                            self.endDisplayEvent.clear()
 
-                        if (self.tagFuture.done() and self.oppFuture.done()) or lastBlankScan:
-                            # t12 last DCM model computation is done
-                            self.recorder.recordEvent(erd.Times.t12, self.iteration)
-                            dcmTagLE = self.tagFuture.result()
-                            dcmOppLE = self.oppFuture.result()
-                            logger.info('DCM calculated')
+                        # Parallel DCM computing on two matlab engines
+                        # t11 first DCM model computation started
+                        self.recorder.recordEvent(erd.Times.t11, self.iteration)
+                        self.tagFuture = self.mlPtbDcmHelper.engine.dcmCalc(
+                            'Tag', nargout=1, async=True)
 
-                            # feedback estimation
-                            self.displayData = self.eng.nfbCalc(self.iteration, self.displayData, dcmTagLE, dcmOppLE, True,
-                                                                nargout=1)
-
-                            # t5
-                            self.recorder.recordEvent(erd.Times.t5, self.iteration)
-                            self.isCalculateDcm = False
+                        if config.USE_MATLAB_MODEL_HELPER:
+                            self.oppFuture = self.mlModelHelper.engine.dcmCalc(
+                                'Opp', nargout=1, async=True)
+                        else:
+                            self.oppFuture = self.mlPtbDcmHelper.engine.dcmCalc(
+                                'Opp', nargout=1, async=True)
 
                     else:
-                        self.isCalculateDcm = self.eng.dcmBegin(self.iteration, nargout=1)
+                        dcmTagLE = []
+                        dcmOppLE = []
 
-                        if self.isCalculateDcm:
-                            # display blank screen in ptb helper before calculate DCM
-                            if config.USE_PTB:
-                                self.displayData['displayBlankScreen'] = 1
-                                self.displayScreen()
-                                QApplication.processEvents()
-                                self.endDisplayEvent.wait()
-                                self.endDisplayEvent.clear()
+            elif self.P['Type'] == 'SVM':
+                # feedback estimation
+                self.displayData = self.eng.nfbCalc(self.iteration, self.displayData, nargout=1)
 
-                            # Parallel DCM computing on two matlab engines
-                            # t11 first DCM model computation started
-                            self.recorder.recordEvent(erd.Times.t11, self.iteration)
-                            self.tagFuture = self.mlPtbDcmHelper.engine.dcmCalc(
-                                'Tag', nargout=1, async=True)
+                # t5
+                self.recorder.recordEvent(erd.Times.t5, self.iteration)
+                if self.displayData and config.USE_UDP_FEEDBACK:
+                    logger.info('Sending by UDP - dispValue = {}', self.displayData['dispValue'])
+                    self.udpSender.send_data(self.displayData['dispValue'])
 
-                            if config.USE_MATLAB_MODEL_HELPER:
-                                self.oppFuture = self.mlModelHelper.engine.dcmCalc(
-                                    'Opp', nargout=1, async=True)
-                            else:
-                                self.oppFuture = self.mlPtbDcmHelper.engine.dcmCalc(
-                                    'Opp', nargout=1, async=True)
+            elif self.P['Type'] == 'PSC':
+                self.displayData = self.eng.nfbCalc(self.iteration, self.displayData, nargout=1)
 
-                        else:
-                            dcmTagLE = []
-                            dcmOppLE = []
+                # t5
+                self.recorder.recordEvent(erd.Times.t5, self.iteration)
+                if self.displayData and config.USE_UDP_FEEDBACK:  # for UDP, configure here if required
+                    logger.info('Sending by UDP - dispValue = {}', self.displayData['dispValue'])
+                    self.udpSender.send_data(self.displayData['dispValue'])
 
-                elif self.P['Type'] == 'SVM':
-                    # feedback estimation
-                    self.displayData = self.eng.nfbCalc(self.iteration, self.displayData, nargout=1)
-
-                    # t5
-                    self.recorder.recordEvent(erd.Times.t5, self.iteration)
-                    if self.displayData and config.USE_UDP_FEEDBACK:
-                        logger.info('Sending by UDP - dispValue = {}', self.displayData['dispValue'])
-                        self.udpSender.send_data(self.displayData['dispValue'])
-
-                elif self.P['Type'] == 'PSC':
-                    self.displayData = self.eng.nfbCalc(self.iteration, self.displayData, nargout=1)
-
-                    # t5
-                    self.recorder.recordEvent(erd.Times.t5, self.iteration)
-                    if self.displayData and config.USE_UDP_FEEDBACK:  # for UDP, configure here if required
-                        logger.info('Sending by UDP - dispValue = {}', self.displayData['dispValue'])
-                        self.udpSender.send_data(self.displayData['dispValue'])
-
-                    if self.P['Prot'] != 'Inter':
-                        if config.USE_PTB:
-                            if self.displayData:
-                                if self.P['Prot'] == 'ContTask':
-                                    #                       Here task condition is evaluated: if condition is 3 (task) and the current
-                                    #                       itteration corresponds with the onset of a task block (kept in TaskFirstVol)
-                                    #                       taskseq is set to one. While set to 1, Display  in ptbScreen.py
-                                    #                       will use the taskse flag to call the ptbTask function.
-                                    # cond = self.eng.evalin('base', 'mainLoopData.displayData.condition')
-                                    cond = self.displayData['condition']
-                                    if cond == 3 and int(self.P['TaskFirstVol'][0][self.iteration - 1]) == 1:
-                                        self.displayData['taskseq'] = 1
-                                        self.displayScreen()
-                                        QApplication.processEvents()
-                                        self.endDisplayEvent.wait()
-                                        self.endDisplayEvent.clear()
-                                    else:
-                                        self.displayData['taskseq'] = 0
-                                        self.displayData['displayStage'] = 'feedback'
-                                        self.displayScreen()
+                if self.P['Prot'] != 'Inter':
+                    if config.USE_PTB:
+                        if self.displayData:
+                            if self.P['Prot'] == 'ContTask':
+                                #                       Here task condition is evaluated: if condition is 3 (task) and the current
+                                #                       itteration corresponds with the onset of a task block (kept in TaskFirstVol)
+                                #                       taskseq is set to one. While set to 1, Display  in ptbScreen.py
+                                #                       will use the taskse flag to call the ptbTask function.
+                                # cond = self.eng.evalin('base', 'mainLoopData.displayData.condition')
+                                cond = self.displayData['condition']
+                                if cond == 3 and int(self.P['TaskFirstVol'][0][self.iteration - 1]) == 1:
+                                    self.displayData['taskseq'] = 1
+                                    self.displayScreen()
+                                    QApplication.processEvents()
+                                    self.endDisplayEvent.wait()
+                                    self.endDisplayEvent.clear()
                                 else:
                                     self.displayData['taskseq'] = 0
                                     self.displayData['displayStage'] = 'feedback'
                                     self.displayScreen()
+                            else:
+                                self.displayData['taskseq'] = 0
+                                self.displayData['displayStage'] = 'feedback'
+                                self.displayScreen()
 
             # main logic end
 
@@ -929,9 +929,14 @@ class OpenNFT(QWidget):
         proc = self.procRoiPlot.getPlotItem()
         norm = self.normRoiPlot.getPlotItem()
 
-        self.basicSetupPlot(rawTimeSeries, grid=False)
-        self.basicSetupPlot(proc, grid=False)
-        self.basicSetupPlot(norm, grid=False)
+        if self.P['isRestingState']:
+            grid = True;
+        else:
+            grid = False
+
+        self.basicSetupPlot(rawTimeSeries, grid)
+        self.basicSetupPlot(proc, grid)
+        self.basicSetupPlot(norm, grid)
 
     # --------------------------------------------------------------------------
     def setupMcPlots(self):
@@ -947,11 +952,11 @@ class OpenNFT(QWidget):
                        self.musterInfo['tmpCond2'][-1][1],
                        self.musterInfo['tmpCond3'][-1][1])
         else:
-            if not self.P['isRest']:
+            if not self.P['isRestingState']:
                 xmax = max(self.musterInfo['tmpCond1'][-1][1],
                            self.musterInfo['tmpCond2'][-1][1])
             else:
-                xmax = self.P['NrOfVolumes']
+                xmax = (self.P['NrOfVolumes']-self.P['nrSkipVol'])
 
         plotitem.disableAutoRange(axis=pg.ViewBox.XAxis)
         plotitem.setXRange(1, xmax, padding=0.0)
@@ -1043,7 +1048,7 @@ class OpenNFT(QWidget):
             self.engSPM.workspace['P'] = self.P
             self.previousIterStartTime = 0
 
-            if not self.P['isRest']:
+            if not self.P['isRestingState']:
                 with utils.timeit("  Load protocol data:"):
                     self.loadProtocolData()
 
@@ -1053,7 +1058,7 @@ class OpenNFT(QWidget):
             self.P.update(self.eng.workspace['P'])
 
             logger.info("  Setup plots...")
-            if not self.P['isRest']:
+            if not self.P['isRestingState']:
                 self.createMusterInfo()
             self.setupRoiPlots()
             self.setupMcPlots()
@@ -1104,8 +1109,8 @@ class OpenNFT(QWidget):
             if self.windowRTQA:
                 self.windowRTQA.deleteLater()
 
-            if self.P['isRest']:
-                xrange = self.P['NrOfVolumes']
+            if self.P['isRestingState']:
+                xrange = (self.P['NrOfVolumes']-self.P['nrSkipVol'])
             else:
                 xrange = max(self.musterInfo['tmpCond1'][-1][1],
                              self.musterInfo['tmpCond2'][-1][1])
@@ -1333,12 +1338,14 @@ class OpenNFT(QWidget):
         else:
             bgType = 'bgAnat'
 
-        if self.windowRTQA.volumeCheckBox.isChecked():
-            self.orthViewUpdateFuture = self.engSPM.helperUpdateOrthViewRTQA(
-                pos, proj, bgType, async=True, nargout=0)
-        else:
-            self.orthViewUpdateFuture = self.engSPM.helperUpdateOrthView(
-                pos, proj, bgType, async=True, nargout=0)
+        self.orthViewUpdateFuture = self.engSPM.helperUpdateOrthView(
+            pos, proj, bgType, self.windowRTQA.volumeCheckBox.isChecked(), async=True, nargout=0)
+        # if self.windowRTQA.volumeCheckBox.isChecked():
+        #     self.orthViewUpdateFuture = self.engSPM.helperUpdateOrthViewRTQA(
+        #         pos, proj, bgType, async=True, nargout=0)
+        # else:
+        #     self.orthViewUpdateFuture = self.engSPM.helperUpdateOrthView(
+        #         pos, proj, bgType, async=True, nargout=0)
 
 
     # --------------------------------------------------------------------------
@@ -1423,7 +1430,7 @@ class OpenNFT(QWidget):
         idx = self.cbType.findText(self.settings.value('Type', 'PSC'))
         if idx >= 0:
             self.cbType.setCurrentIndex(idx)
-        self.restCheckBox.setChecked(bool(self.settings.value('RestfulState', '').lower()=='true'))
+        self.restCheckBox.setChecked(bool(self.settings.value('RestingState', '').lower()=='true'))
 
         # --- main viewer ---
         self.sbTargANG.setValue(float(self.settings.value('TargANG', 0)))
@@ -1459,6 +1466,12 @@ class OpenNFT(QWidget):
             p = [self.P['RoiAnatFolder'], self.P['RoiGroupFolder']]
             self.eng.selectROI(p, nargout=0)
             self.engSPM.selectROI(p, nargout=0)
+        elif self.P['Type'] == 'None':
+            if not os.path.isdir(self.P['RoiFilesFolder']):
+                return
+
+            self.eng.selectROI(self.P['RoiFilesFolder'], nargout=0)
+            self.engSPM.selectROI(self.P['RoiFilesFolder'], nargout=0)
 
     # --------------------------------------------------------------------------
     def actualize(self):
@@ -1499,7 +1512,7 @@ class OpenNFT(QWidget):
         self.P['DataType'] = str(self.cbDataType.currentText())
         self.P['Prot'] = str(self.cbProt.currentText())
         self.P['Type'] = str(self.cbType.currentText())
-        self.P['isRest'] = self.restCheckBox.isChecked()
+        self.P['isRestingState'] = bool(self.cbProt.currentText() == "Rest")
 
         if self.P['Prot'] == 'ContTask':
             self.P['TaskFolder'] = self.leTaskFolder.text()
@@ -1656,27 +1669,31 @@ class OpenNFT(QWidget):
         if (self.windowRTQA.volumeCheckBox.isChecked()
                 and self.eng.evalin('base', "mainLoopData.snrMapCreated") > 0
                 and background_image.size > 0):
-            with utils.timeit("Receiving 'SNRMap' from Matlab:"):
-                filename = self.eng.evalin('base', 'P.memMapFile').replace('shared', 'SNRMap')
-                stats_map_image = mmapimage.read_mosaic_image(filename, 'snrMap_2D', self.engSPM)
+            with utils.timeit("Receiving 'SNR map' from Matlab:"):
+                filename = self.eng.evalin('base', 'P.memMapFile').replace('shared', 'map_2D')
+                stats_map_image = mmapimage.read_mosaic_image(filename, 'map_2D', self.engSPM)
+
+        # ! ! ! ! ! ! ! ! ! ! ! ! !
+        # Identical parts for mosaic map images
+        # Should be removed after image displaying is done
 
         if (not self.windowRTQA.volumeCheckBox.isChecked()
                 and self.eng.evalin('base', "exist('strStatMap')") > 0
                 and background_image.size > 0):
             with utils.timeit("Receiving 'strStatMap' from Matlab:"):
-                statMap = np.fromstring(
-                    self.eng.workspace['strStatMap'], dtype=np.uint8, sep=";")
+                filename = self.eng.evalin('base', 'P.memMapFile').replace('shared', 'map_2D')
+                stats_map_image = mmapimage.read_mosaic_image(filename, 'map_2D', self.engSPM)
 
-            with utils.timeit("Receiving 'strIdx' from Matlab:"):
-                idx = np.fromstring(
-                    self.eng.workspace['strIdx'], dtype=np.uint32, sep=";")
-
-            ind = np.unravel_index(idx, background_image.shape, order='F')
-
-            stats_map_image = np.zeros_like(background_image)
-            stats_map_image[ind[0], ind[1]] = statMap
-
-            self.eng.clear('strStatMap', nargout=0)
+            # with utils.timeit("Receiving 'strIdx' from Matlab:"):
+            #     idx = np.fromstring(
+            #         self.eng.workspace['strIdx'], dtype=np.uint32, sep=";")
+            #
+            # ind = np.unravel_index(idx, background_image.shape, order='F')
+            #
+            # stats_map_image = np.zeros_like(background_image)
+            # stats_map_image[ind[0], ind[1]] = statMap
+            #
+            # self.eng.clear('strStatMap', nargout=0)
 
         if stats_map_image is None:
             self.mosaicImageView.clear_stats_map()
@@ -1810,13 +1827,12 @@ class OpenNFT(QWidget):
 
         dataRaw = np.array(self.outputSamples[key], ndmin=2)
         dataRealRaw = np.array(self.outputSamples['rawTimeSeries'], ndmin=2)
-        self.drawGivenRoiPlot(init, self.rawRoiPlot, dataRaw)
+        dataProc = np.array(self.outputSamples['kalmanProcTimeSeries'], ndmin=2)
+        dataNorm = np.array(self.outputSamples['scalProcTimeSeries'], ndmin=2)
 
-        if not self.P['isRest']:
-            dataProc = np.array(self.outputSamples['kalmanProcTimeSeries'], ndmin=2)
-            dataNorm = np.array(self.outputSamples['scalProcTimeSeries'], ndmin=2)
-            self.drawGivenRoiPlot(init, self.procRoiPlot, dataProc)
-            self.drawGivenRoiPlot(init, self.normRoiPlot, dataNorm)
+        self.drawGivenRoiPlot(init, self.rawRoiPlot, dataRaw)
+        self.drawGivenRoiPlot(init, self.procRoiPlot, dataProc)
+        self.drawGivenRoiPlot(init, self.normRoiPlot, dataNorm)
 
         n = len(dataRealRaw[0, :])
         self.windowRTQA.calculate_snr(init, dataRealRaw[:, n - 1], n)
@@ -1859,13 +1875,17 @@ class OpenNFT(QWidget):
             items.remove(m)
 
         plotitem.autoRange(items=items)
-        self.basicSetupPlot(plotitem, grid=False)
+        if self.P['isRestingState']:
+            grid = True;
+        else:
+            grid = False
+        self.basicSetupPlot(plotitem, grid)
 
     # --------------------------------------------------------------------------
     def drawMusterPlot(self, plotitem: pg.PlotItem):
         ylim = config.MUSTER_Y_LIMITS
 
-        if not self.P['isRest']:
+        if not self.P['isRestingState']:
             self.computeMusterPlotData(ylim)
             muster = [
                 plotitem.plot(x=self.musterInfo['xCond1'],
@@ -1891,7 +1911,7 @@ class OpenNFT(QWidget):
                 )
         else:
             muster = [
-                plotitem.plot(x=[1, self.P['NrOfVolumes']],
+                plotitem.plot(x=[1, (self.P['NrOfVolumes']-self.P['nrSkipVol'])],
                               y=[-1000, 1000],
                               fillLevel=ylim[0],
                               pen=config.MUSTER_PEN_COLORS[3],

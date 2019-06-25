@@ -92,6 +92,16 @@ if isPSC && (strcmp(P.Prot, 'Cont') || strcmp(P.Prot, 'ContTask'))
 
     displayData.Reward = mainLoopData.Reward;
     displayData.dispValue = mainLoopData.dispValue;
+else
+    tmp_fbVal = 0;
+    mainLoopData.dispValue = 0;
+    mainLoopData.vectNFBs(indVolNorm) = tmp_fbVal;
+    mainLoopData.blockNF = blockNF;
+    mainLoopData.firstNF = firstNF;
+    mainLoopData.Reward = '';
+
+    displayData.Reward = mainLoopData.Reward;
+    displayData.dispValue = mainLoopData.dispValue;
 end
 
 %% Intermittent PSC NF

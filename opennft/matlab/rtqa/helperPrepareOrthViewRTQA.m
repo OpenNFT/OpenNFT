@@ -18,7 +18,6 @@ P.idxRoiImgc = []
 P.idxRoiImgs = []
 P.lengthROIs = []
 
-
 %% Background: EPI template or Anatomy
 %% default values
 fAnatomyBacgkr = false;

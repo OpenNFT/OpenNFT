@@ -30,7 +30,7 @@ if isDCM
     end
     ROIsGroup = evalin('base', 'ROIsGroup');
 end
-if isPSC
+if isPSC || P.isRestingState
     ROIs = evalin('base', 'ROIs');
 end
 if isSVM
@@ -45,9 +45,11 @@ indVolNorm = double(indVolNorm);
 
 % raw time-series recursion
 rawTimeSeries = mainLoopData.rawTimeSeries;
-if ~P.isRest
+if ~P.isRestingState
     % number of regressors of interest for cGLM
     nrRegrDesign = size(P.spmDesign,2);
+else
+    nrRegrDesign = 0;
 end
 % number of regressors of no interest to correct with cGLM
 nrRegrToCorrect = 8; % 6 MC regressors, linear trend, constant
@@ -55,7 +57,7 @@ nrRegrToCorrect = 8; % 6 MC regressors, linear trend, constant
 for indRoi = 1:P.NrROIs
     
     %% Get Raw time-series
-    if isPSC
+    if isPSC || P.isRestingState
         rawTimeSeries(indRoi, indVolNorm) = mean(...
             mainLoopData.smReslVol_2D(ROIs(indRoi).mask2D>0));
     end
@@ -153,7 +155,7 @@ for indRoi = 1:P.NrROIs
     % to avoid NaNs given algnment to zero, see preprVol()    
     P.motCorrParam(1,:) = 0.00001; 
     
-    if isPSC || isSVM
+    if isPSC || isSVM || P.isRestingState
         % continuous cGLM corrections
         tmp_ind_end = indVolNorm;
         tmp_begin = 1;
@@ -182,153 +184,154 @@ for indRoi = 1:P.NrROIs
         tmp_rawTimeSeries = mainLoopData.tmp_rawTimeSeriesAR1(indRoi, ...
             tmp_begin:end)';
     end
-    
-    if ~P.isRest
-        % 2.2. exemplary step-wise addition of regressors, step = total nr of
-        % Regressors, which may require a justification for particular project
-        regrStep = nrRegrDesign+nrRegrToCorrect;
-        if isPSC || isSVM
-            if (tmp_ind_end < regrStep)
-                tmpRegr = ones(tmp_ind_end,1);
-                if P.cglmAR1
-                    tmpRegr = arRegr(P.aAR1,tmpRegr);
-                end
-                cX0 = tmpRegr;
-                betaReg = pinv(cX0)*tmp_rawTimeSeries;
-                tmp_glmProcTimeSeries = (tmp_rawTimeSeries - cX0*betaReg)';
-            elseif (tmp_ind_end >= regrStep) && (tmp_ind_end < 2*regrStep)
-                tmpRegr = [ones(tmp_ind_end,1) P.linRegr(1:tmp_ind_end)];
-                if P.cglmAR1
-                    tmpRegr = arRegr(P.aAR1, tmpRegr);
-                end
-                cX0 = tmpRegr;
-                betaReg = pinv(cX0) * tmp_rawTimeSeries;
-                tmp_glmProcTimeSeries = (tmp_rawTimeSeries - cX0 * betaReg)';
-            elseif (tmp_ind_end >= 2*regrStep) && (tmp_ind_end < 3*regrStep)
-                tmpRegr = [ones(tmp_ind_end,1) P.linRegr(1:tmp_ind_end) ...
-                    zscore(P.motCorrParam(1:tmp_ind_end,:))];
-                if P.cglmAR1
-                    tmpRegr = arRegr(P.aAR1,tmpRegr);
-                end
-                cX0 = tmpRegr;
-                betaReg = pinv(cX0) * tmp_rawTimeSeries;
-                tmp_glmProcTimeSeries = (tmp_rawTimeSeries - cX0 * betaReg)';
-            else
-                % zscore() is cumulative, which limits truly recursive
-                % AR(1) filtering on regressors
-                tmpRegr = [ones(tmp_ind_end,1) P.linRegr(1:tmp_ind_end) ...
-                    zscore(P.motCorrParam(1:tmp_ind_end,:))];
-                if P.cglmAR1
-                    tmpRegr = arRegr(P.aAR1,tmpRegr);
-                end
-                if ~P.isRest
-                    cX0 = [tmpRegr P.spmDesign(1:tmp_ind_end,:)];
-                    betaReg = pinv(cX0) * tmp_rawTimeSeries;
-                    tmp_glmProcTimeSeries = (tmp_rawTimeSeries - ...
-                        cX0 * [betaReg(1:end-1); zeros(1,1)])';
-                else
-                    cX0 = tmpRegr;
-                    betaReg = pinv(cX0) * tmp_rawTimeSeries;
-                    tmp_glmProcTimeSeries = (tmp_rawTimeSeries - cX0 * betaReg)';
-                end
+ 
+    % 2.2. exemplary step-wise addition of regressors, step = total nr of
+    % Regressors, which may require a justification for particular project
+    regrStep = nrRegrDesign+nrRegrToCorrect;
+    if isPSC || isSVM || P.isRestingState
+        if (tmp_ind_end < regrStep)
+            tmpRegr = ones(tmp_ind_end,1);
+            if P.cglmAR1
+                tmpRegr = arRegr(P.aAR1,tmpRegr);
             end
-            mainLoopData.glmProcTimeSeries(indRoi,indVolNorm) = ...
-                    tmp_glmProcTimeSeries(end);
-
-        end
-    
-        % 2.3.1 alternative processign for DCM, e.g. no motion and linear trend
-        % regressors. Note, DCM could be very sensitive to cumulative signal
-        % processing. Hence, motion and the linear trend regressors are
-        % not necessary to be added cumulatively here. They could be added 
-        % when DCM needs to be computed, i.e. at the end of the entire trial, 
-        % as it is currently implmented (dcmBegin.m).
-        if isDCM
-            % subtract the absolute value of the trial
-            cX0 = ones(tmp_ind_end,1);
+            cX0 = tmpRegr;
             betaReg = pinv(cX0)*tmp_rawTimeSeries;
             tmp_glmProcTimeSeries = (tmp_rawTimeSeries - cX0*betaReg)';
-            mainLoopData.glmProcTimeSeries(indRoi,indVolNorm) = ...
-                tmp_glmProcTimeSeries(end);
-        end
-
-        % 2.3.2 alternative detrending using EMA filter, careful, exponential lags
-        enableEma = 0;
-        if enableEma
-            % EMA preset
-            thEMA = 0.98;
-            if ~isempty(find(P.beginDCMblock ==indVol-P.nrSkipVol,1))
-                mainLoopData.inpFilt(indRoi)= rawTimeSeries(indRoi,indVolNorm);
+        elseif (tmp_ind_end >= regrStep) && (tmp_ind_end < 2*regrStep)
+            tmpRegr = [ones(tmp_ind_end,1) P.linRegr(1:tmp_ind_end)];
+            if P.cglmAR1
+                tmpRegr = arRegr(P.aAR1, tmpRegr);
             end
-            if (indVolNorm < 2)
-                mainLoopData.emaProcTimeSeries(indRoi,indVolNorm) = ...
-                    rawTimeSeries(indRoi, indVolNorm)-rawTimeSeries(indRoi, 1);
+            cX0 = tmpRegr;
+            betaReg = pinv(cX0) * tmp_rawTimeSeries;
+            tmp_glmProcTimeSeries = (tmp_rawTimeSeries - cX0 * betaReg)';
+        elseif (tmp_ind_end >= 2*regrStep) && (tmp_ind_end < 3*regrStep)
+            tmpRegr = [ones(tmp_ind_end,1) P.linRegr(1:tmp_ind_end) ...
+                zscore(P.motCorrParam(1:tmp_ind_end,:))];
+            if P.cglmAR1
+                tmpRegr = arRegr(P.aAR1,tmpRegr);
+            end
+            cX0 = tmpRegr;
+            betaReg = pinv(cX0) * tmp_rawTimeSeries;
+            tmp_glmProcTimeSeries = (tmp_rawTimeSeries - cX0 * betaReg)';
+        else
+            % zscore() is cumulative, which limits truly recursive
+            % AR(1) filtering on regressors
+            tmpRegr = [ones(tmp_ind_end,1) P.linRegr(1:tmp_ind_end) ...
+                zscore(P.motCorrParam(1:tmp_ind_end,:))];
+            if P.cglmAR1
+                tmpRegr = arRegr(P.aAR1,tmpRegr);
+            end
+            if ~P.isRestingState
+                cX0 = [tmpRegr P.spmDesign(1:tmp_ind_end,:)];
+                betaReg = pinv(cX0) * tmp_rawTimeSeries;
+                tmp_glmProcTimeSeries = (tmp_rawTimeSeries - ...
+                    cX0 * [betaReg(1:end-1); zeros(1,1)])';
             else
-                [mainLoopData.emaProcTimeSeries(indRoi,indVolNorm), ...
-                    mainLoopData.inpFilt(indRoi)] = ...
-                    emaFilt(thEMA, rawTimeSeries(indRoi, indVolNorm), ...
-                    mainLoopData.inpFilt(indRoi));
+                cX0 = tmpRegr;
+                betaReg = pinv(cX0) * tmp_rawTimeSeries;
+                tmp_glmProcTimeSeries = (tmp_rawTimeSeries - cX0 * betaReg)';
             end
         end
+        mainLoopData.glmProcTimeSeries(indRoi,indVolNorm) = ...
+                tmp_glmProcTimeSeries(end);
 
-        % 3. modified Kalman low-pass filter + spike identification & correction
-        if isPSC || isSVM || isDCM
-            tmpStd = std(mainLoopData.glmProcTimeSeries(indRoi,:));
-        end
-        if isDCM
-            mainLoopData.S(indRoi).Q = .25*tmpStd^2;
-            mainLoopData.S(indRoi).R = tmpStd^2;
-        end
-        if isPSC || isSVM
-            % See Koush 2012 for setting the constants
-            mainLoopData.S(indRoi).Q = tmpStd^2;
-            mainLoopData.S(indRoi).R = 1.95*tmpStd^2;
-        end
-        kalmThreshold = .9*tmpStd;
-        [mainLoopData.kalmanProcTimeSeries(indRoi,indVolNorm), ...
-            mainLoopData.S(indRoi), mainLoopData.fPositDerivSpike(indRoi), ...
-            mainLoopData.fNegatDerivSpike(indRoi)] = ...
-            modifKalman(kalmThreshold, ...
-            mainLoopData.glmProcTimeSeries(indRoi,indVolNorm), ...
-            mainLoopData.S(indRoi), mainLoopData.fPositDerivSpike(indRoi), ...
-            mainLoopData.fNegatDerivSpike(indRoi));
+    end
 
-        %4. Scaling
-        slWind = P.basBlockLength*P.nrBlocksInSlidingWindow;
-        [mainLoopData.scalProcTimeSeries(indRoi, indVolNorm), ...
-            mainLoopData.tmp_posMin(indRoi), mainLoopData.tmp_posMax(indRoi)] = ...
-            scaleTimeSeries(mainLoopData.kalmanProcTimeSeries(indRoi,:), ...
-            indVolNorm, slWind, P.basBlockLength, mainLoopData.initLim(indRoi),...
-            P.vectEncCond(1:indVolNorm), mainLoopData.tmp_posMin(indRoi), ...
-            mainLoopData.tmp_posMax(indRoi));
-        mainLoopData.posMin(indRoi,indVolNorm)=mainLoopData.tmp_posMin(indRoi);
-        mainLoopData.posMax(indRoi,indVolNorm)=mainLoopData.tmp_posMax(indRoi);
+    % 2.3.1 alternative processign for DCM, e.g. no motion and linear trend
+    % regressors. Note, DCM could be very sensitive to cumulative signal
+    % processing. Hence, motion and the linear trend regressors are
+    % not necessary to be added cumulatively here. They could be added 
+    % when DCM needs to be computed, i.e. at the end of the entire trial, 
+    % as it is currently implmented (dcmBegin.m).
+    if isDCM
+        % subtract the absolute value of the trial
+        cX0 = ones(tmp_ind_end,1);
+        betaReg = pinv(cX0)*tmp_rawTimeSeries;
+        tmp_glmProcTimeSeries = (tmp_rawTimeSeries - cX0*betaReg)';
+        mainLoopData.glmProcTimeSeries(indRoi,indVolNorm) = ...
+            tmp_glmProcTimeSeries(end);
+    end
 
-        % 5. z-scoring and sigmoidal transform
-        if isSVM
-            zcoredVal = ...
-                zscore(mainLoopData.scalProcTimeSeries(indRoi, 1:indVolNorm));
-            mainLoopData.scalProcTimeSeries(indRoi, indVolNorm) = ...
-                logsig(zcoredVal(end)); % or 1-logsig()
+    % 2.3.2 alternative detrending using EMA filter, careful, exponential lags
+    enableEma = 0;
+    if enableEma
+        % EMA preset
+        thEMA = 0.98;
+        if ~isempty(find(P.beginDCMblock ==indVol-P.nrSkipVol,1))
+            mainLoopData.inpFilt(indRoi)= rawTimeSeries(indRoi,indVolNorm);
+        end
+        if (indVolNorm < 2)
+            mainLoopData.emaProcTimeSeries(indRoi,indVolNorm) = ...
+                rawTimeSeries(indRoi, indVolNorm)-rawTimeSeries(indRoi, 1);
+        else
+            [mainLoopData.emaProcTimeSeries(indRoi,indVolNorm), ...
+                mainLoopData.inpFilt(indRoi)] = ...
+                emaFilt(thEMA, rawTimeSeries(indRoi, indVolNorm), ...
+                mainLoopData.inpFilt(indRoi));
         end
     end
+
+    % 3. modified Kalman low-pass filter + spike identification & correction
+    if isPSC || isSVM || isDCM || P.isRestingState
+        tmpStd = std(mainLoopData.glmProcTimeSeries(indRoi,:));
+    end
+    if isDCM
+        mainLoopData.S(indRoi).Q = .25*tmpStd^2;
+        mainLoopData.S(indRoi).R = tmpStd^2;
+    end
+    if isPSC || isSVM || P.isRestingState
+        % See Koush 2012 for setting the constants
+        mainLoopData.S(indRoi).Q = tmpStd^2;
+        mainLoopData.S(indRoi).R = 1.95*tmpStd^2;
+    end
+    kalmThreshold = .9*tmpStd;
+    [mainLoopData.kalmanProcTimeSeries(indRoi,indVolNorm), ...
+        mainLoopData.S(indRoi), mainLoopData.fPositDerivSpike(indRoi), ...
+        mainLoopData.fNegatDerivSpike(indRoi)] = ...
+        modifKalman(kalmThreshold, ...
+        mainLoopData.glmProcTimeSeries(indRoi,indVolNorm), ...
+        mainLoopData.S(indRoi), mainLoopData.fPositDerivSpike(indRoi), ...
+        mainLoopData.fNegatDerivSpike(indRoi));
+
+    %4. Scaling
+    if ~P.isRestingState
+        slWind = P.basBlockLength*P.nrBlocksInSlidingWindow;
+    else
+        slWind = P.NrOfVolumes - P.nrSkipVol;
+    end
+    [mainLoopData.scalProcTimeSeries(indRoi, indVolNorm), ...
+        mainLoopData.tmp_posMin(indRoi), mainLoopData.tmp_posMax(indRoi)] = ...
+        scaleTimeSeries(mainLoopData.kalmanProcTimeSeries(indRoi,:), ...
+        indVolNorm, slWind, mainLoopData.initLim(indRoi),...
+        mainLoopData.tmp_posMin(indRoi), ...
+        mainLoopData.tmp_posMax(indRoi), P);
+    mainLoopData.posMin(indRoi,indVolNorm)=mainLoopData.tmp_posMin(indRoi);
+    mainLoopData.posMax(indRoi,indVolNorm)=mainLoopData.tmp_posMax(indRoi);
+
+    % 5. z-scoring and sigmoidal transform
+    if isSVM
+        zcoredVal = ...
+            zscore(mainLoopData.scalProcTimeSeries(indRoi, 1:indVolNorm));
+        mainLoopData.scalProcTimeSeries(indRoi, indVolNorm) = ...
+            logsig(zcoredVal(end)); % or 1-logsig()
+    end
+    
 end
 
 % update main loop variable
 mainLoopData.rawTimeSeries = rawTimeSeries;
 
-if ~P.isRest
-    % calcualte average limits for 2 ROIs, e.g. for bilateral NF
-    % NF extensions with >2 ROIs requires an additional justification
-    mainLoopData.mposMax(indVolNorm)= mean(mainLoopData.posMax(:, indVolNorm));
-    mainLoopData.mposMin(indVolNorm)= mean(mainLoopData.posMin(:, indVolNorm));
+% calcualte average limits for 2 ROIs, e.g. for bilateral NF
+% NF extensions with >2 ROIs requires an additional justification
+mainLoopData.mposMax(indVolNorm)= mean(mainLoopData.posMax(:, indVolNorm));
+mainLoopData.mposMin(indVolNorm)= mean(mainLoopData.posMin(:, indVolNorm));
 
-    output.posMin = [mainLoopData.posMin; mainLoopData.mposMin];
-    output.posMax = [mainLoopData.posMax; mainLoopData.mposMax];
-    output.kalmanProcTimeSeries = mainLoopData.kalmanProcTimeSeries;
-    output.scalProcTimeSeries = mainLoopData.scalProcTimeSeries;
-end
+output.posMin = [mainLoopData.posMin; mainLoopData.mposMin];
+output.posMax = [mainLoopData.posMax; mainLoopData.mposMax];
+output.scalProcTimeSeries = mainLoopData.scalProcTimeSeries;
 
+output.kalmanProcTimeSeries = mainLoopData.kalmanProcTimeSeries;
 output.displRawTimeSeries = mainLoopData.displRawTimeSeries;
 output.rawTimeSeries = mainLoopData.rawTimeSeries;
 output.motCorrParam = P.motCorrParam;

@@ -149,9 +149,13 @@ P.isHighPass = true;
 P.isLinRegr = true;
 P.linRegr = zscore((1:double(P.NrOfVolumes-P.nrSkipVol))');
 
-if ~P.isRest
-    SPM = setupSPM(P);
+SPM = setupSPM(P);
+% TODO: To check
+% High-pass filter
+mainLoopData.K.X0 = SPM.xX.K.X0;
 
+if ~P.isRestingState
+    
     if ~P.iglmAR1
         % exclude constant regressor
         mainLoopData.basFct = SPM.xX.X(:,1:end-1);
@@ -214,6 +218,16 @@ if ~P.isRest
     else
         P.spmDesign = arRegr(P.aAR1, tmpSpmDesign);
     end
+else
+    mainLoopData.basFct = [];
+    mainLoopData.nrBasFct = 0;
+    mainLoopData.numscan = 0;
+    [mainLoopData.numscan, mainLoopData.nrHighPassFct] = size(mainLoopData.K.X0);
+    P.spmDesign = [];
+    mainLoopData.tContr = ones(6,1);
+    mainLoopData.spmMaskTh = mean(SPM.xM.TH)*ones(size(SPM.xM.TH));
+    mainLoopData.pVal = .1;
+    mainLoopData.statMap3D_iGLM = [];
 end
 
 mainLoopData.mf = [];
