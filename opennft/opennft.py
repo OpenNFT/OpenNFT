@@ -1430,7 +1430,6 @@ class OpenNFT(QWidget):
         idx = self.cbType.findText(self.settings.value('Type', 'PSC'))
         if idx >= 0:
             self.cbType.setCurrentIndex(idx)
-        self.restCheckBox.setChecked(bool(self.settings.value('RestingState', '').lower()=='true'))
 
         # --- main viewer ---
         self.sbTargANG.setValue(float(self.settings.value('TargANG', 0)))
