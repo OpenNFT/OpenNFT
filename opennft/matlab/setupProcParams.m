@@ -89,17 +89,21 @@ mainLoopData.firstNF = 0;
 %% DCM Settings
 if isDCM
     % This is to simplify the P.Protocol parameter listings for DCM,
-    % in scans
-    P.lengthDCMTrial = 108;
-    P.lengthDCMPeriod = 150;
-    P.beginDCMblock = [1:150:1050];
-    P.endDCMblock = [108:150:1050];
-    P.indNFTrial = 0;
-    P.nrNFtrials = 7;
-    P.nrDisplayScans = 4; % feedback display duration in scans
-    P.nrBlankScans = 38;  % DCM estiation duration in scans
-    P.dcmRemoveInterval = P.nrBlankScans + P.nrDisplayScans;
     
+    % -- read timing parameters from JSON file ----------------------------
+    prt = loadjson(P.ProtocolFile);
+    tim = prt.dcmdef.timings;
+    % in scans
+    P.indNFTrial        = 0;
+    P.lengthDCMTrial    = tim.trialLength;
+    P.nrNFtrials        = tim.numberOfTrials;
+    P.nrDisplayScans    = tim.feedbackDisplayDurationInScans; 
+    P.nrBlankScans      = tim.feedbackEstimationDurationInScans;
+    P.dcmRemoveInterval = P.nrBlankScans + P.nrDisplayScans;
+    P.lengthDCMPeriod   = P.lengthDCMTrial+P.nrDisplayScans+P.nrBlankScans;
+    P.beginDCMblock     = double([1:P.lengthDCMPeriod:P.lengthDCMPeriod*P.nrNFtrials]);
+    P.endDCMblock       = double([P.lengthDCMTrial:P.lengthDCMPeriod:P.lengthDCMPeriod*P.nrNFtrials]);
+
     % used adaptive DCM ROIs per trial: 1-Group, 2-New, 3-Advanced
     mainLoopData.adaptROIs = [];
     % DCM block counter
