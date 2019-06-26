@@ -1683,17 +1683,6 @@ class OpenNFT(QWidget):
                 filename = self.eng.evalin('base', 'P.memMapFile').replace('shared', 'map_2D')
                 stats_map_image = mmapimage.read_mosaic_image(filename, 'map_2D', self.engSPM)
 
-            # with utils.timeit("Receiving 'strIdx' from Matlab:"):
-            #     idx = np.fromstring(
-            #         self.eng.workspace['strIdx'], dtype=np.uint32, sep=";")
-            #
-            # ind = np.unravel_index(idx, background_image.shape, order='F')
-            #
-            # stats_map_image = np.zeros_like(background_image)
-            # stats_map_image[ind[0], ind[1]] = statMap
-            #
-            # self.eng.clear('strStatMap', nargout=0)
-
         if stats_map_image is None:
             self.mosaicImageView.clear_stats_map()
         else:
