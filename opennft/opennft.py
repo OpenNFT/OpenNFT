@@ -1698,7 +1698,11 @@ class OpenNFT(QWidget):
             self.mosaicImageView.clear_stats_map()
         else:
             rgba_stats_map_image = self.rgba_stats_map(stats_map_image)
-            self.mosaicImageView.set_stats_map_image(rgba_stats_map_image)
+
+            if rgba_stats_map_image is None:
+                self.mosaicImageView.clear_stats_map()
+            else:
+                self.mosaicImageView.set_stats_map_image(rgba_stats_map_image)
 
     # --------------------------------------------------------------------------
     def createMusterInfo(self):

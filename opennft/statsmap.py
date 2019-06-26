@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
 
+import typing as t
+
+from loguru import logger
 import numpy as np
 
 from matplotlib import cm
@@ -30,9 +33,13 @@ class RgbaStatsMap:
         self._cmap = cmap
         self._cmap.set_bad(alpha=0.0)
 
-    def __call__(self, stats_map: np.ndarray, auto_thresholds: bool = True) -> np.ndarray:
+    def __call__(self, stats_map: np.ndarray, auto_thresholds: bool = True) -> t.Optional[np.ndarray]:
         # Zero value represents "no value"
         stats_map_ma = np.ma.masked_equal(stats_map, self._no_value)
+
+        if all(stats_map_ma.mask):
+            logger.warning('There are no any values on stats map')
+            return
 
         if auto_thresholds:
             self._compute_thresholds(stats_map_ma)
