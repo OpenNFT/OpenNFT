@@ -91,8 +91,8 @@ if isDCM
     % This is to simplify the P.Protocol parameter listings for DCM,
     
     % -- read timing parameters from JSON file ----------------------------
-    
     tim = loadTimings(P.ProtocolFile); 
+    
     % in scans
     P.indNFTrial        = 0;
     P.lengthDCMTrial    = tim.trialLength;
@@ -100,7 +100,7 @@ if isDCM
     P.nrDisplayScans    = tim.feedbackDisplayDurationInScans; 
     P.nrBlankScans      = tim.feedbackEstimationDurationInScans;
     P.dcmRemoveInterval = P.nrBlankScans + P.nrDisplayScans;
-    P.lengthDCMPeriod   = P.lengthDCMTrial+P.nrDisplayScans+P.nrBlankScans;
+    P.lengthDCMPeriod   = P.lengthDCMTrial + P.nrDisplayScans + P.nrBlankScans;
     P.beginDCMblock     = double([1:P.lengthDCMPeriod:P.lengthDCMPeriod*P.nrNFtrials]);
     P.endDCMblock       = double([P.lengthDCMTrial:P.lengthDCMPeriod:P.lengthDCMPeriod*P.nrNFtrials]);
 
