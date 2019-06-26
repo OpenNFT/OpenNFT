@@ -38,7 +38,11 @@ function [ snrVol, meanNonSmoothed, m2NonSmoothed, meanSmoothed, m2Smoothed ] = 
     end
 
     if any(variance)
-        snrVol = meanSmoothed ./ (variance.^.5);
+        if isSmoothed
+            snrVol = meanSmoothed ./ (variance.^.5);
+        else
+            snrVol = meanNonSmoothed ./ (variance.^.5);
+        end        
     end
 
 end
