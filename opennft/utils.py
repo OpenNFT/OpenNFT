@@ -14,6 +14,8 @@ import hashlib
 import random
 import uuid
 
+from loguru import logger
+
 import numpy as np
 from PyQt5 import QtCore, QtWidgets
 
@@ -35,7 +37,7 @@ def timeit(message):
         to *= 1e6
         units = 'mcs'
 
-    print(message + ' {:.2f} {}'.format(to, units))
+    logger.opt(depth=2).info('{} {:.2f} {}', message, to, units)
 
 
 def generate_random_number_string(num=5):
