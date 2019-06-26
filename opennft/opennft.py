@@ -1677,7 +1677,7 @@ class OpenNFT(QWidget):
         # Should be removed after image displaying is done
 
         if (not self.windowRTQA.volumeCheckBox.isChecked()
-                and self.eng.evalin('base', "exist('strStatMap')") > 0
+                and self.eng.evalin('base', "mainLoopData.statMapCreated") > 0
                 and background_image.size > 0):
             with utils.timeit("Receiving 'strStatMap' from Matlab:"):
                 filename = self.eng.evalin('base', 'P.memMapFile').replace('shared', 'map_2D')
