@@ -1664,22 +1664,9 @@ class OpenNFT(QWidget):
 
         stats_map_image = None
 
-        # SNR map display
-        if (self.windowRTQA.volumeCheckBox.isChecked()
-                and self.eng.evalin('base', "mainLoopData.snrMapCreated") > 0
-                and background_image.size > 0):
+        # SNR/Stat map display
+        if self.eng.evalin('base', "mainLoopData.snrMapCreated") > 0 and background_image.size > 0:
             with utils.timeit("Receiving 'SNR map' from Matlab:"):
-                filename = self.eng.evalin('base', 'P.memMapFile').replace('shared', 'map_2D')
-                stats_map_image = mmapimage.read_mosaic_image(filename, 'map_2D', self.engSPM)
-
-        # ! ! ! ! ! ! ! ! ! ! ! ! !
-        # Identical parts for mosaic map images
-        # Should be removed after image displaying is done
-
-        if (not self.windowRTQA.volumeCheckBox.isChecked()
-                and self.eng.evalin('base', "mainLoopData.statMapCreated") > 0
-                and background_image.size > 0):
-            with utils.timeit("Receiving 'strStatMap' from Matlab:"):
                 filename = self.eng.evalin('base', 'P.memMapFile').replace('shared', 'map_2D')
                 stats_map_image = mmapimage.read_mosaic_image(filename, 'map_2D', self.engSPM)
 
