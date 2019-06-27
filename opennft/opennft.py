@@ -1027,7 +1027,7 @@ class OpenNFT(QWidget):
     # --------------------------------------------------------------------------
     def setup(self):
         if not hasattr(self, 'resetDone'):
-            logger.warn("Couldn't connect Matlab.\n PRESS INITIALIZE FIRST!")
+            logger.warning("Couldn't connect Matlab.\n PRESS INITIALIZE FIRST!")
             return
 
         with utils.timeit('Setup finished:'):
