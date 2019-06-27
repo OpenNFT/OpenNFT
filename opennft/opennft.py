@@ -1647,7 +1647,8 @@ class OpenNFT(QWidget):
 
     # --------------------------------------------------------------------------
     def displayMosaicImage(self):
-        background_image = np.array([], dtype=np.uint8)
+        background_image = None
+        stats_map_image = None
 
         if 'imgViewTempl' not in self.P:
             if self.eng.evalin('base', 'length(imgViewTempl)') > 0:
@@ -1662,10 +1663,8 @@ class OpenNFT(QWidget):
             else:
                 return
 
-        stats_map_image = None
-
         # SNR/Stat map display
-        if self.eng.evalin('base', "mainLoopData.snrMapCreated") > 0 and background_image.size > 0:
+        if background_image is not None and self.eng.evalin('base', "mainLoopData.snrMapCreated") > 0:
             with utils.timeit("Receiving 'SNR map' from Matlab:"):
                 filename = self.eng.evalin('base', 'P.memMapFile').replace('shared', 'map_2D')
                 stats_map_image = mmapimage.read_mosaic_image(filename, 'map_2D', self.engSPM)
