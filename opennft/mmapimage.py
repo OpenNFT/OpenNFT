@@ -23,6 +23,8 @@ def read_mosaic_image(memmap_filename: str, image_name, eng) -> np.ndarray:
     """Reads mosaic image from memmap file
 
     :param memmap_filename: memmap file name
+    :param image_name: name of image in matlab
+    :param eng: matlab engine unstance
     :return: numpy array-like image object
     """
     shape = get_image_shape(image_name, eng, nargout=2)
