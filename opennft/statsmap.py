@@ -37,7 +37,7 @@ class RgbaStatsMap:
         # Zero value represents "no value"
         stats_map_ma = np.ma.masked_equal(stats_map, self._no_value)
 
-        if all(stats_map_ma.mask):
+        if stats_map_ma.mask.all():
             logger.warning('There are no any values on stats map')
             return
 

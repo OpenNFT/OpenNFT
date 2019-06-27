@@ -67,7 +67,6 @@ from opennft import rtqa
 if config.USE_MRPULSE:
     from opennft import mrpulse
 
-
 # Enable antialiasing for prettier plots
 pg.setConfigOptions(antialias=True)
 
@@ -413,7 +412,7 @@ class OpenNFT(QWidget):
         self.leUDPFeedbackPort.setEnabled(self.cbUseUDPFeedback.isChecked())
         self.leUDPFeedbackControlChar.setEnabled(self.cbUseUDPFeedback.isChecked())
         self.cbUDPSendCondition.setEnabled(self.cbUseUDPFeedback.isChecked())
-        if not(self.cbUseUDPFeedback.isChecked()):
+        if not (self.cbUseUDPFeedback.isChecked()):
             self.cbUDPSendCondition.setChecked(False)
 
     # --------------------------------------------------------------------------
@@ -439,7 +438,7 @@ class OpenNFT(QWidget):
     # --------------------------------------------------------------------------
     def getFreeMemmapFilename(self):
         path = os.path.normpath(self.P['WorkFolder'])
-        fname = os.path.join(path,'OrthView.dat')
+        fname = os.path.join(path, 'OrthView.dat')
         if not os.path.exists(fname):
             return fname
 
@@ -448,7 +447,7 @@ class OpenNFT(QWidget):
             f.close()
             return fname
         except IOError as e:
-            fname = os.path.join(path,'OrthView1.dat')
+            fname = os.path.join(path, 'OrthView1.dat')
 
         if not os.path.exists(fname):
             return fname
@@ -483,7 +482,7 @@ class OpenNFT(QWidget):
             'idxRoiImgs': [],
             'idxRoiImgc': [],
             'lengthROIs': [],
-            'isRestingState' : self.P['isRestingState'],
+            'isRestingState': self.P['isRestingState'],
         }
 
         self.engSPM.helperPrepareOrthView(self.spmHelperP, 'bgEPI', nargout=0)
@@ -563,7 +562,7 @@ class OpenNFT(QWidget):
 
             self.displayData = self.eng.initDispalyData(self.iteration)
 
-            #t6, display instruction prior to data acquisition
+            # t6, display instruction prior to data acquisition
             self.recorder.recordEvent(erd.Times.t6, self.iteration)
 
             if self.P['Type'] == 'PSC':
@@ -573,7 +572,7 @@ class OpenNFT(QWidget):
 
                 if self.iteration > self.P['nrSkipVol'] and config.UDP_SEND_CONDITION:
                     self.udpSender.send_data(
-                            self.P['CondNames'][int(self.eng.evalin('base', 'mainLoopData.condition')) - 1])
+                        self.P['CondNames'][int(self.eng.evalin('base', 'mainLoopData.condition')) - 1])
 
                 elif self.P['Type'] == 'DCM':
                     if not self.isCalculateDcm and config.USE_PTB:
@@ -646,9 +645,11 @@ class OpenNFT(QWidget):
             if self.iteration == 1:
                 with utils.timeit('  setup after first volume:'):
                     self.eng.setupFirstVolume(fname, nargout=0)
-                    self.engSPM.assignin('base', 'matTemplMotCorr', self.eng.evalin('base', 'mainLoopData.matTemplMotCorr'),
+                    self.engSPM.assignin('base', 'matTemplMotCorr',
+                                         self.eng.evalin('base', 'mainLoopData.matTemplMotCorr'),
                                          nargout=0)
-                    self.engSPM.assignin('base', 'dimTemplMotCorr', self.eng.evalin('base', 'mainLoopData.dimTemplMotCorr'),
+                    self.engSPM.assignin('base', 'dimTemplMotCorr',
+                                         self.eng.evalin('base', 'mainLoopData.dimTemplMotCorr'),
                                          nargout=0)
 
             # Main logic
@@ -956,7 +957,7 @@ class OpenNFT(QWidget):
                 xmax = max(self.musterInfo['tmpCond1'][-1][1],
                            self.musterInfo['tmpCond2'][-1][1])
             else:
-                xmax = (self.P['NrOfVolumes']-self.P['nrSkipVol'])
+                xmax = (self.P['NrOfVolumes'] - self.P['nrSkipVol'])
 
         plotitem.disableAutoRange(axis=pg.ViewBox.XAxis)
         plotitem.setXRange(1, xmax, padding=0.0)
@@ -1110,7 +1111,7 @@ class OpenNFT(QWidget):
                 self.windowRTQA.deleteLater()
 
             if self.P['isRestingState']:
-                xrange = (self.P['NrOfVolumes']-self.P['nrSkipVol'])
+                xrange = (self.P['NrOfVolumes'] - self.P['nrSkipVol'])
             else:
                 xrange = max(self.musterInfo['tmpCond1'][-1][1],
                              self.musterInfo['tmpCond2'][-1][1])
@@ -1346,7 +1347,6 @@ class OpenNFT(QWidget):
         # else:
         #     self.orthViewUpdateFuture = self.engSPM.helperUpdateOrthView(
         #         pos, proj, bgType, async=True, nargout=0)
-
 
     # --------------------------------------------------------------------------
     def onCheckOrthViewUpdated(self):
@@ -1664,10 +1664,14 @@ class OpenNFT(QWidget):
                 return
 
         # SNR/Stat map display
-        if background_image is not None and self.eng.evalin('base', "mainLoopData.snrMapCreated") > 0:
+        if background_image is not None \
+                and ((self.eng.evalin('base',
+                                      "mainLoopData.statMapCreated") > 0 and not self.windowRTQA.volumeCheckBox.isChecked()) \
+                     or (self.eng.evalin('base',
+                                         "mainLoopData.snrMapCreated") > 0 and self.windowRTQA.volumeCheckBox.isChecked())):
             with utils.timeit("Receiving 'SNR map' from Matlab:"):
                 filename = self.eng.evalin('base', 'P.memMapFile').replace('shared', 'map_2D')
-                stats_map_image = mmapimage.read_mosaic_image(filename, 'map_2D', self.engSPM)
+                stats_map_image = mmapimage.read_mosaic_image(filename, 'statMap2D', self.eng)
 
         if stats_map_image is None:
             self.mosaicImageView.clear_stats_map()
@@ -1889,7 +1893,7 @@ class OpenNFT(QWidget):
                 )
         else:
             muster = [
-                plotitem.plot(x=[1, (self.P['NrOfVolumes']-self.P['nrSkipVol'])],
+                plotitem.plot(x=[1, (self.P['NrOfVolumes'] - self.P['nrSkipVol'])],
                               y=[-1000, 1000],
                               fillLevel=ylim[0],
                               pen=config.MUSTER_PEN_COLORS[3],
@@ -1954,7 +1958,7 @@ class OpenNFT(QWidget):
 
         n = len(data[:, 0])
         if not n == 0:
-            self.windowRTQA.plot_fd(data[n-1,:])
+            self.windowRTQA.plot_fd(data[n - 1, :])
 
     # --------------------------------------------------------------------------
     def printToLog(self, message):
