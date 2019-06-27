@@ -67,6 +67,7 @@ class RgbaStatsMap:
         q = np.quantile(stats_map.compressed(), self._quantile_interval)
         self._minimum_threshold = q[0]
         self._maximum_threshold = q[1]
+        logger.debug('Stats map thresholds: {}', q)
 
     def _map_to_rgba(self, stats_map_ma) -> np.ndarray:
         vmin = stats_map_ma.min()
