@@ -1664,12 +1664,14 @@ class OpenNFT(QWidget):
                 return
 
         # SNR/Stat map display
-        if background_image is not None \
-                and ((self.eng.evalin('base',
-                                      "mainLoopData.statMapCreated") > 0 and not self.windowRTQA.volumeCheckBox.isChecked()) \
-                     or (self.eng.evalin('base',
-                                         "mainLoopData.snrMapCreated") > 0 and self.windowRTQA.volumeCheckBox.isChecked())):
-            with utils.timeit("Receiving 'SNR map' from Matlab:"):
+        is_stat_map_created = bool(self.eng.evalin('base', 'mainLoopData.statMapCreated'))
+        is_snr_map_created = bool(self.eng.evalin('base', 'mainLoopData.snrMapCreated'))
+        is_rtqa_volume_checked = self.windowRTQA.volumeCheckBox.isChecked()
+
+        if (background_image is not None
+                and (is_stat_map_created and not is_rtqa_volume_checked
+                     or is_snr_map_created and is_rtqa_volume_checked)):
+            with utils.timeit("Receiving 'statMap2D' from Matlab:"):
                 filename = self.eng.evalin('base', 'P.memMapFile').replace('shared', 'map_2D')
                 stats_map_image = mmapimage.read_mosaic_image(filename, 'statMap2D', self.eng)
 
