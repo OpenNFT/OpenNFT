@@ -122,20 +122,14 @@ class RTQAWindow(QtWidgets.QWidget):
 
         if state == 0:
             self.tsCheckBox.show()
-            self.tsCheckBox.setChecked(True)
             self.volumeCheckBox.show()
-            self.volumeCheckBox.setChecked(False)
             self.smoothedCheckBox.show()
-            self.smoothedCheckBox.setChecked(False)
 
             return
         if state == 1:
             self.tsCheckBox.hide()
-            self.tsCheckBox.setChecked(False)
             self.volumeCheckBox.hide()
-            self.volumeCheckBox.setChecked(False)
             self.smoothedCheckBox.hide()
-            self.smoothedCheckBox.setChecked(False)
 
             return
         if state == 2:

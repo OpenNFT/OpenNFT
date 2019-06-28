@@ -167,12 +167,7 @@ if indVolNorm > FIRST_SNR_VOLUME
             assignin('base', 'statMap2D', statMap2D);
         
         end
-        
-        assignin('base', 'mainLoopData', mainLoopData);
-        assignin('base', 'P', P);
-        
-        return;
-    
+           
     end
 else
     
@@ -250,7 +245,7 @@ if isIGLM
         
         statMapVect = mainLoopData.statMapVect;
         statMap3D = mainLoopData.statMap3D; % this structure is set with 0
-        statMap2D = mainLoopData.statMap2D; % this structure is set with 0
+        tempStatMap2D = mainLoopData.statMap2D; % this structure is set with 0
         
         if ~fLockedTempl
             % assign Tempalte
@@ -320,8 +315,8 @@ if isIGLM
         statMap3D = zeros(dimVol);
         mainLoopData.statMapVect = statMapVect;
         mainLoopData.statMap3D = statMap3D;
-        statMap2D = zeros(img2DdimY,img2DdimX);
-        mainLoopData.statMap2D = statMap2D;
+        tempStatMap2D = zeros(img2DdimY,img2DdimX);
+        mainLoopData.statMap2D = tempStatMap2D;
     end
     
     if isPSC || isSVM || P.isRestingState
@@ -399,7 +394,6 @@ end
 
 %% sharing iGLM results 
 mainLoopData.statMapCreated = 0;
-statMap_2D = zeros(img2DdimY,img2DdimX);
 if ~isempty(idxActVoxIGLM) && max(tn) > 0 % handle empty activation map
     % and division by 0
     maskedStatMapVect = tn(idxActVoxIGLM);
@@ -409,13 +403,15 @@ if ~isempty(idxActVoxIGLM) && max(tn) > 0 % handle empty activation map
     
     clear idxActVoxIGLM
     
-    statMap2D = vol3Dimg2D(statMap3D, slNrImg2DdimX, slNrImg2DdimY, ...
-        img2DdimX, img2DdimY, dimVol) / maxTval;
-    
-    fname = strrep(P.memMapFile, 'shared', 'map_2D');
-    m_out = memmapfile(fname, 'Writable', true, 'Format',  {'uint8', img2DdimX*img2DdimY, 'map_2D'});
-    m_out.Data.map_2D = uint8(statMap2D(:));
-    assignin('base', 'statMap2D', statMap2D);
+    if ~isShowSNR && ~imageViewMode
+        statMap2D = vol3Dimg2D(statMap3D, slNrImg2DdimX, slNrImg2DdimY, ...
+            img2DdimX, img2DdimY, dimVol) / maxTval;
+
+        fname = strrep(P.memMapFile, 'shared', 'map_2D');
+        m_out = memmapfile(fname, 'Writable', true, 'Format',  {'uint8', img2DdimX*img2DdimY, 'map_2D'});
+        m_out.Data.map_2D = uint8(statMap2D(:));
+        assignin('base', 'statMap2D', statMap2D);
+    end
     
 %     posIdx2D = find(statMap2D > 0);
 %     pythonPosIdx2D = posIdx2D - 1;

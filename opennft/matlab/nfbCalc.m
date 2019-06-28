@@ -96,8 +96,6 @@ else
     tmp_fbVal = 0;
     mainLoopData.dispValue = 0;
     mainLoopData.vectNFBs(indVolNorm) = tmp_fbVal;
-    mainLoopData.blockNF = blockNF;
-    mainLoopData.firstNF = firstNF;
     mainLoopData.Reward = '';
 
     displayData.Reward = mainLoopData.Reward;
