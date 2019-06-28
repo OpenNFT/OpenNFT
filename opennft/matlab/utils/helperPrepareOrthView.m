@@ -138,7 +138,7 @@ data2 = uint8(zeros(mosaicDim,1));
 initMemmap(P.memMapFile, 'OrthView', data, 'uint8', 'mmOrthView', format);
 initMemmap(P.memMapFile, 'BackgOrthView', data, 'uint8', 'mmOrthView', format);
 initMemmap(P.memMapFile, 'SNRVol', data2(:), 'double', 'snrVol', {'double', prod(displayBgEpi.dim), 'snrVol'});
-initMemmap(P.memMapFile, 'map_2D', uint8(zeros(img2DdimX, img2DdimY)), 'uint8', 'map_2D');
+initMemmap(P.memMapFile, 'map_2D', uint8(zeros(img2DdimX, img2DdimY)), 'uint16', 'map_2D');
 
 assignin('base', 'helperP', P);
 
