@@ -160,7 +160,8 @@ if indVolNorm > FIRST_SNR_VOLUME
         else
             % mosaic (0)
             statMap2D = vol3Dimg2D(snrVol, slNrImg2DdimX, slNrImg2DdimY, img2DdimX, img2DdimY, dimVol);
-            statMap2D = statMap2D-min(statMap2D(:)) / max(statMap2D(:)) * 65535;
+            statMap2D = statMap2D-min(statMap2D(:));
+            statMap2D = (statMap2D / max(statMap2D(:))) * 65535;
             fname = strrep(P.memMapFile, 'shared', 'map_2D');
             m_out = memmapfile(fname, 'Writable', true, 'Format',  {'uint16', img2DdimX*img2DdimY, 'map_2D'});
             m_out.Data.map_2D = uint16(statMap2D(:));     
@@ -407,7 +408,7 @@ if ~isempty(idxActVoxIGLM) && max(tn) > 0 % handle empty activation map
         statMap2D = vol3Dimg2D(statMap3D, slNrImg2DdimX, slNrImg2DdimY, ...
             img2DdimX, img2DdimY, dimVol) / maxTval;
 
-        statMap2D = statMap2D-min(statMap2D(:)) / max(statMap2D(:)) * 65535;
+        statMap2D = statMap2D * 65535;
         fname = strrep(P.memMapFile, 'shared', 'map_2D');
         m_out = memmapfile(fname, 'Writable', true, 'Format',  {'uint16', img2DdimX*img2DdimY, 'map_2D'});
         m_out.Data.map_2D = uint16(statMap2D(:));
