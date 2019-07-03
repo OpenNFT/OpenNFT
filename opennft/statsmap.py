@@ -14,7 +14,7 @@ class RgbaStatsMap:
     """
 
     _no_value = 0.0
-    _quantile_interval = [0.05, 0.95]
+    _threshold_coeff = 0.0005
     _cmap = None
 
     def __init__(self):
@@ -64,10 +64,17 @@ class RgbaStatsMap:
         self._maximum_threshold = value
 
     def _compute_thresholds(self, stats_map):
-        q = np.quantile(stats_map.compressed(), self._quantile_interval)
-        self._minimum_threshold = q[0]
-        self._maximum_threshold = q[1]
-        logger.debug('Stats map thresholds: {}', q)
+        data = np.sort(stats_map.compressed().ravel())
+
+        self._minimum_threshold = np.median(data[:int(self._threshold_coeff * data.size)])
+        if np.isnan(self._minimum_threshold):
+            self._minimum_threshold = data.min()
+
+        self._maximum_threshold = np.median(data[int(data.size - self._threshold_coeff * data.size):])
+        if np.isnan(self._maximum_threshold):
+            self._maximum_threshold = data.max()
+
+        logger.debug('Stats map thresholds: {}', [self._minimum_threshold, self._maximum_threshold])
 
     def _map_to_rgba(self, stats_map_ma) -> np.ndarray:
         vmin = stats_map_ma.min()
