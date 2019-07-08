@@ -17,12 +17,10 @@ from pyqtgraph.Qt import QtCore
 from pyqtgraph.Qt import QtGui
 
 
-# ==============================================================================
 class ProjectionImageView(pg.ViewBox):
 
     cursorPositionChanged = QtCore.Signal(tuple)
 
-    # --------------------------------------------------------------------------
     def __init__(self, parent=None, border=None, enableMouse=True, name=None):
 
         super().__init__(
@@ -32,59 +30,57 @@ class ProjectionImageView(pg.ViewBox):
             name=name,
             lockAspect=True,
             enableMenu=False,
-            invertX=False,
             invertY=True,
         )
 
-        self._imageItem = pg.ImageItem(autoDownsample=True)
-        self.addItem(self._imageItem)
+        self._background_imitem = pg.ImageItem(autoDownsample=True)
+        self._stats_map_imitem = pg.ImageItem(autoDownsample=True)
 
-        self._imageShape = [0, 0]
+        self.addItem(self._background_imitem)
+        self.addItem(self._stats_map_imitem)
+
+        self._image_shape = [0, 0]
         self._coords = (0, 0)
 
-    # --------------------------------------------------------------------------
     def suggestPadding(self, axis):
         return 0.01
 
-    # --------------------------------------------------------------------------
-    def setImage(self, image):
-        self._imageShape = image.shape
-        self._imageItem.setImage(np.transpose(image, axes=(1, 0, 2)))
+    def set_background_image(self, image):
+        self._image_shape = image.shape
+        self._background_imitem.setImage(image.T)
 
-    # --------------------------------------------------------------------------
+    def set_stats_map_image(self, image):
+        self._stats_map_imitem.setImage(np.transpose(image, axes=(1, 0, 2)))
+
     def clear(self):
-        self._imageShape = [0, 0]
+        self._image_shape = [0, 0]
         self._coords = (0, 0)
-        self._imageItem.clear()
+        self._background_imitem.clear()
+        self._stats_map_imitem.clear()
 
-    # --------------------------------------------------------------------------
     def mouseClickEvent(self, ev):
         self._changePositionCursor(ev)
         ev.accept()
 
-    # --------------------------------------------------------------------------
     def mouseDragEvent(self, ev, axis=None):
         #self._changePositionCursor(ev)
         ev.accept()
 
-    # --------------------------------------------------------------------------
     def wheelEvent(self, ev, axis=None):
         ev.ignore()
 
-    # --------------------------------------------------------------------------
     def getCoords(self):
         return self._coords
 
-    # --------------------------------------------------------------------------
     def _changePositionCursor(self, ev):
-        w = self._imageShape[1]
-        h = self._imageShape[0]
+        w = self._image_shape[1]
+        h = self._image_shape[0]
 
         if h == 0 or w == 0:
             return
 
         viewPos = self.mapSceneToView(ev.scenePos())
-        imagePos = self._imageItem.mapFromView(viewPos)
+        imagePos = self._background_imitem.mapFromView(viewPos)
 
         x = int(imagePos.x())
         y = int(imagePos.y())
@@ -110,7 +106,6 @@ class ProjectionImageView(pg.ViewBox):
         self.cursorPositionChanged.emit(self._coords)
 
 
-# ==============================================================================
 class ProjectionsWidget(QtGui.QWidget):
 
     cursorPositionChanged = QtCore.Signal(tuple, tuple)
@@ -159,25 +154,29 @@ class ProjectionsWidget(QtGui.QWidget):
             self._coronalViewBox: (0, 0, 1),
         }
 
-    # --------------------------------------------------------------------------
-    def setTransversalImage(self, image):
-        self._transversalViewBox.setImage(image)
+    def set_transversal_background_image(self, image):
+        self._transversalViewBox.set_background_image(image)
 
-    # --------------------------------------------------------------------------
-    def setSagittalImage(self, image):
-        self._sagittalViewBox.setImage(image)
+    def set_sagittal_background_image(self, image):
+        self._sagittalViewBox.set_background_image(image)
 
-    # --------------------------------------------------------------------------
-    def setCoronalImage(self, image):
-        self._coronalViewBox.setImage(image)
+    def set_coronal_background_image(self, image):
+        self._coronalViewBox.set_background_image(image)
 
-    # --------------------------------------------------------------------------
+    def set_transversal_stats_map_image(self, image):
+        self._transversalViewBox.set_stats_map_image(image)
+
+    def set_sagittal_stats_map_image(self, image):
+        self._sagittalViewBox.set_stats_map_image(image)
+
+    def set_coronal_stats_map_image(self, image):
+        self._coronalViewBox.set_stats_map_image(image)
+
     def clear(self):
         self._transversalViewBox.clear()
         self._sagittalViewBox.clear()
         self._coronalViewBox.clear()
 
-    # --------------------------------------------------------------------------
     def _setupViewBoxLayout(self, viewbox, row, col):
         layout = self._glayout.addLayout(row=row, col=col)
 
@@ -186,7 +185,6 @@ class ProjectionsWidget(QtGui.QWidget):
 
         return layout
 
-    # --------------------------------------------------------------------------
     def _onCursorPositionChanged(self, pos):
         proj = self.sender()
 

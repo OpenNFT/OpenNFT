@@ -70,7 +70,7 @@ class ProjectionImagesReader:
             offset = 0
 
             for proj_name, image_name in self._projection_images_mapping.items():
-                shape = get_image_shape(image_name, matlab_engine, nargout=3)
+                shape = get_image_shape(image_name, matlab_engine, nargout=2)
                 self._projection_images[proj_name] = read_memmap_image(fp, shape, offset)
                 offset += shape.prod()
 

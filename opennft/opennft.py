@@ -151,7 +151,8 @@ class OpenNFT(QWidget):
         self.orthView.setVisible(False)
         self.layoutOrthView.addWidget(self.orthView)
 
-        self.proj_images_reader = mmapimage.ProjectionImagesReader()
+        self.proj_background_images_reader = mmapimage.ProjectionImagesReader()
+        self.proj_stats_map_images_reader = mmapimage.ProjectionImagesReader()
         self.rgba_stats_map = statsmap.RgbaStatsMap()
 
         self.mcPlot = self.createMcPlot()
@@ -499,7 +500,8 @@ class OpenNFT(QWidget):
         # ROI from helperP
         self.spmHelperP = self.engSPM.workspace['helperP']
 
-        self.proj_images_reader.read(filenameTargetOverlay, self.engSPM)
+        self.proj_background_images_reader.read(filenameBackgroundOverlay, self.engSPM)
+        self.proj_stats_map_images_reader.read(filenameTargetOverlay, self.engSPM)
 
     # --------------------------------------------------------------------------
     def displayScreen(self):
@@ -1174,7 +1176,8 @@ class OpenNFT(QWidget):
         if config.USE_SLEEP_IN_STOP:
             time.sleep(2)
 
-        self.proj_images_reader.clear()
+        self.proj_background_images_reader.clear()
+        self.proj_stats_map_images_reader.clear()
 
         self.resetDone = False
 
@@ -1358,9 +1361,21 @@ class OpenNFT(QWidget):
         # with utils.timeit('Getting new orthview projections...'):
         self.getOrthViewImages()
 
-        self.orthView.setTransversalImage(self.proj_images_reader.transversal)
-        self.orthView.setSagittalImage(self.proj_images_reader.sagittal)
-        self.orthView.setCoronalImage(self.proj_images_reader.coronal)
+        self.orthView.set_transversal_background_image(self.proj_background_images_reader.transversal)
+        self.orthView.set_sagittal_background_image(self.proj_background_images_reader.sagittal)
+        self.orthView.set_coronal_background_image(self.proj_background_images_reader.coronal)
+
+        transversal_map = self.rgba_stats_map(self.proj_stats_map_images_reader.transversal)
+        if transversal_map is not None:
+            self.orthView.set_transversal_stats_map_image(transversal_map)
+
+        sagittal_map = self.rgba_stats_map(self.proj_stats_map_images_reader.sagittal)
+        if sagittal_map is not None:
+            self.orthView.set_sagittal_stats_map_image(sagittal_map)
+
+        coronal_map = self.rgba_stats_map(self.proj_stats_map_images_reader.coronal)
+        if coronal_map is not None:
+            self.orthView.set_coronal_stats_map_image(coronal_map)
 
         self.orthViewUpdateInProgress = False
 
