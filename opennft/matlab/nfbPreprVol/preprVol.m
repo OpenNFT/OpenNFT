@@ -143,6 +143,8 @@ mainLoopData.gKernel = gKernel;
 smReslVol = zeros(dimVol);
 spm_smooth(reslVol, smReslVol, gKernel);
 
+statMap2D = zeros(img2DdimY, img2DdimX);
+
 if indVolNorm > FIRST_SNR_VOLUME
     
     [snrVol, mainLoopData.meanVol, mainLoopData.m2Vol, mainLoopData.meanVolSmoothed, mainLoopData.m2VolSmoothed] = snr_calc(indVolNorm, reslVol, smReslVol, mainLoopData.meanVol, mainLoopData.m2Vol,  mainLoopData.meanVolSmoothed, mainLoopData.m2VolSmoothed, isSmoothed);
