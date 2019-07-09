@@ -89,17 +89,21 @@ mainLoopData.firstNF = 0;
 %% DCM Settings
 if isDCM
     % This is to simplify the P.Protocol parameter listings for DCM,
-    % in scans
-    P.lengthDCMTrial = 108;
-    P.lengthDCMPeriod = 150;
-    P.beginDCMblock = [1:150:1050];
-    P.endDCMblock = [108:150:1050];
-    P.indNFTrial = 0;
-    P.nrNFtrials = 7;
-    P.nrDisplayScans = 4; % feedback display duration in scans
-    P.nrBlankScans = 38;  % DCM estiation duration in scans
-    P.dcmRemoveInterval = P.nrBlankScans + P.nrDisplayScans;
     
+    % -- read timing parameters from JSON file ----------------------------
+    tim = loadTimings(P.ProtocolFile); 
+    
+    % in scans
+    P.indNFTrial        = 0;
+    P.lengthDCMTrial    = tim.trialLength;
+    P.nrNFtrials        = tim.numberOfTrials;
+    P.nrDisplayScans    = tim.feedbackDisplayDurationInScans; 
+    P.nrBlankScans      = tim.feedbackEstimationDurationInScans;
+    P.dcmRemoveInterval = P.nrBlankScans + P.nrDisplayScans;
+    P.lengthDCMPeriod   = P.lengthDCMTrial + P.nrDisplayScans + P.nrBlankScans;
+    P.beginDCMblock     = double([1:P.lengthDCMPeriod:P.lengthDCMPeriod*P.nrNFtrials]);
+    P.endDCMblock       = double([P.lengthDCMTrial:P.lengthDCMPeriod:P.lengthDCMPeriod*P.nrNFtrials]);
+
     % used adaptive DCM ROIs per trial: 1-Group, 2-New, 3-Advanced
     mainLoopData.adaptROIs = [];
     % DCM block counter
@@ -246,3 +250,50 @@ end
 
 assignin('base', 'mainLoopData', mainLoopData);
 assignin('base', 'P', P);
+
+end
+
+function tim = loadTimings(protocoFilePath)
+% Loads the DCM timings from the protocol JSON file. To be specified 
+% as follows: Within the key "dcmdef", insert a key "timings"
+%
+% "timings": {
+%     "trialLength": 108,
+%     "numberOfTrials": 7,
+%     "feedbackDisplayDurationInScans": 4,
+%     "feedbackEstimationDurationInScans": 38
+% }
+% 
+% This function will read those values and return an error if they are 
+% misspecified.
+% --------------------------------------------------------------------------
+
+% -- Read the file ---------------------------------------------------------
+
+try
+    prt = loadjson(protocoFilePath);
+catch
+    error('Invalid path to protocol file.')
+end
+
+% -- Extract timings and check for completeness and type -------------------
+
+tim            = prt.dcmdef.timings;
+requiredFields = {'trialLength','numberOfTrials',...
+                  'feedbackDisplayDurationInScans',...
+                  'feedbackEstimationDurationInScans'};
+
+for fn = requiredFields
+    if ~strcmp(fn{:},fieldnames(tim))
+        error('protocol JSON file missing field: %s',fn{:})
+    end
+end
+
+for fn = fieldnames(tim)'
+    if ~isnumeric(tim.(fn{:}))
+        error('Timings.%s is invalid. Make sure its a number.',fn{:})
+    end
+end
+
+end
+

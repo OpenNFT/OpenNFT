@@ -40,7 +40,15 @@
             "nograph": 1,
 			"centre": 1,
 			"nonlinear": 0
-        }
+		},
+		
+		"timings": {
+			"trialLength": 108,
+			"numberOfTrials": 7,
+			"feedbackDisplayDurationInScans": 4,
+			"feedbackEstimationDurationInScans": 38
+
+		}
 
 	},
 
