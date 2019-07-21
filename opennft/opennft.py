@@ -1019,7 +1019,9 @@ class OpenNFT(QWidget):
         self.procRoiPlot.getPlotItem().clear()
         self.rawRoiPlot.getPlotItem().clear()
         self.normRoiPlot.getPlotItem().clear()
+
         self.mosaicImageView.clear()
+        self.orthView.clear()
 
         self.isMainLoopEntered = False
         self.typicalFileSize = 0
@@ -1180,9 +1182,6 @@ class OpenNFT(QWidget):
         self.proj_stats_map_images_reader.clear()
 
         self.resetDone = False
-
-        self.mosaicImageView.clear()
-        self.orthView.clear()
 
         try:
             while not self.nfbFinStarted.done():
