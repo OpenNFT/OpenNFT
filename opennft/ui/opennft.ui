@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1730</width>
-    <height>988</height>
+    <width>1149</width>
+    <height>846</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -187,6 +187,9 @@
    </item>
    <item>
     <widget class="QStackedWidget" name="stackedWidgetMain">
+     <property name="currentIndex">
+      <number>0</number>
+     </property>
      <widget class="QWidget" name="pageMain">
       <layout class="QVBoxLayout" name="verticalLayout_4" stretch="0">
        <property name="leftMargin">
@@ -223,7 +226,7 @@
            <property name="frameShadow">
             <enum>QFrame::Raised</enum>
            </property>
-           <layout class="QVBoxLayout" name="layoutLeft" stretch="0,0,0,1,1,1">
+           <layout class="QVBoxLayout" name="layoutLeft" stretch="0,0,0,1">
             <property name="leftMargin">
              <number>0</number>
             </property>
@@ -242,7 +245,7 @@
                <bool>false</bool>
               </property>
               <property name="frameShape">
-               <enum>QFrame::StyledPanel</enum>
+               <enum>QFrame::NoFrame</enum>
               </property>
               <property name="frameShadow">
                <enum>QFrame::Raised</enum>
@@ -391,13 +394,37 @@
              </layout>
             </item>
             <item>
-             <layout class="QVBoxLayout" name="layoutPlot1"/>
-            </item>
-            <item>
-             <layout class="QVBoxLayout" name="layoutPlot2"/>
-            </item>
-            <item>
-             <layout class="QVBoxLayout" name="layoutPlot3"/>
+             <widget class="QFrame" name="frameLeftPlots">
+              <property name="frameShape">
+               <enum>QFrame::NoFrame</enum>
+              </property>
+              <property name="frameShadow">
+               <enum>QFrame::Raised</enum>
+              </property>
+              <layout class="QVBoxLayout" name="layoutLeftPlots">
+               <property name="leftMargin">
+                <number>0</number>
+               </property>
+               <property name="topMargin">
+                <number>0</number>
+               </property>
+               <property name="rightMargin">
+                <number>0</number>
+               </property>
+               <property name="bottomMargin">
+                <number>0</number>
+               </property>
+               <item>
+                <layout class="QVBoxLayout" name="layoutPlot1"/>
+               </item>
+               <item>
+                <layout class="QVBoxLayout" name="layoutPlot2"/>
+               </item>
+               <item>
+                <layout class="QVBoxLayout" name="layoutPlot3"/>
+               </item>
+              </layout>
+             </widget>
             </item>
            </layout>
           </widget>
@@ -595,8 +622,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>1712</width>
-            <height>939</height>
+            <width>1131</width>
+            <height>797</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_5">

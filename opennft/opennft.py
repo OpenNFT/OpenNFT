@@ -253,8 +253,8 @@ class OpenNFT(QWidget):
             plotLayout.addWidget(mainPlotWidget)
 
             # Fix layouts stretch after replacing
-            for i, s in enumerate([0, 0, 0, 1, 1, 1]):
-                self.layoutLeft.setStretch(i, s)
+            for i, s in enumerate([1, 1, 1]):
+                self.layoutLeftPlots.setStretch(i, s)
 
             return True
 
