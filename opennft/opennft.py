@@ -1130,6 +1130,7 @@ class OpenNFT(QWidget):
         else:
             self.startFilesystemWatching()
 
+        self.orthViewUpdateCheckTimer.stop()
         self.orthViewUpdateCheckTimer.start(50)
 
     # --------------------------------------------------------------------------
@@ -1139,7 +1140,7 @@ class OpenNFT(QWidget):
 
         self.fs_observer.stop()
         self.call_timer.stop()
-        self.orthViewUpdateCheckTimer.stop()
+
         if hasattr(config, 'USE_PTB') and config.USE_PTB:
             self.ptbScreen.deinitialize()
             if not self.stopDisplayThread:
@@ -1148,11 +1149,6 @@ class OpenNFT(QWidget):
                 self.displayThread.join()
                 self.stopDisplayThread = False
                 self.displayEvent.clear()
-
-        if self.orthViewUpdateFuture:
-            if not self.orthViewUpdateFuture.done():
-                self.orthViewUpdateFuture.cancel()
-        self.orthViewUpdateFuture = None
 
         if config.USE_SLEEP_IN_STOP:
             time.sleep(2)
@@ -1326,6 +1322,7 @@ class OpenNFT(QWidget):
 
         self.orthViewUpdateFuture = self.engSPM.helperUpdateOrthView(
             pos, proj, bgType, self.windowRTQA.volumeCheckBox.isChecked(), async=True, nargout=0)
+
         # if self.windowRTQA.volumeCheckBox.isChecked():
         #     self.orthViewUpdateFuture = self.engSPM.helperUpdateOrthViewRTQA(
         #         pos, proj, bgType, async=True, nargout=0)
@@ -1342,7 +1339,6 @@ class OpenNFT(QWidget):
 
         # with utils.timeit('Getting new orthview projections...'):
         self.getOrthViewImages()
-
         self.orthView.set_transversal_background_image(self.proj_background_images_reader.transversal)
         self.orthView.set_sagittal_background_image(self.proj_background_images_reader.sagittal)
         self.orthView.set_coronal_background_image(self.proj_background_images_reader.coronal)
@@ -1365,6 +1361,7 @@ class OpenNFT(QWidget):
             self.orthView.set_coronal_stats_map_image(coronal_map)
 
         self.orthViewUpdateInProgress = False
+        self.orthViewUpdateFuture = None
 
     # --------------------------------------------------------------------------
     def loadSettingsFromSetFile(self):
