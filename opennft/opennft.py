@@ -137,7 +137,6 @@ class OpenNFT(QWidget):
         self.stopDisplayThread = True
 
         self.pbMoreParameters.setChecked(False)
-        self.frameParams.setVisible(False)
 
         pg.setConfigOption('foreground',
                            self.palette().color(QPalette.Foreground))
@@ -145,10 +144,9 @@ class OpenNFT(QWidget):
         self.plotBgColor = (255, 255, 255)
 
         self.mosaicImageView = mosaicview.MosaicImageViewWidget(self)
-        self.layoutImageRoi.addWidget(self.mosaicImageView)
+        self.layoutMosaic.addWidget(self.mosaicImageView)
 
         self.orthView = projview.ProjectionsWidget(self)
-        self.orthView.setVisible(False)
         self.layoutOrthView.addWidget(self.orthView)
 
         self.proj_background_images_reader = mmapimage.ProjectionImagesReader()
@@ -255,17 +253,9 @@ class OpenNFT(QWidget):
             plotLayout.addWidget(mainPlotWidget)
 
             # Fix layouts stretch after replacing
-            self.layoutLeft.setStretch(0, 0)
-            self.layoutLeft.setStretch(1, 0)
-            self.layoutLeft.setStretch(2, 1)
-            self.layoutLeft.setStretch(3, 1)
-            self.layoutLeft.setStretch(4, 1)
+            for i, s in enumerate([0, 0, 0, 1, 1, 1]):
+                self.layoutLeft.setStretch(i, s)
 
-            self.layoutPlotsHor.setStretch(0, 3)
-            self.layoutPlotsHor.setStretch(1, 4)
-
-            self.layoutPlots.setStretch(0, 3)
-            self.layoutPlots.setStretch(1, 1)
             return True
 
         return False
@@ -335,10 +325,18 @@ class OpenNFT(QWidget):
 
     # --------------------------------------------------------------------------
     def initializeUi(self):
+        top_size = int(self.height() * 0.7)
+        bottom_size = self.height() - top_size
+        h_sizes = [top_size, bottom_size]
+        self.splitterMainVer.setSizes(h_sizes)
+
+        w_sizes = [self.width() // 2] * 2
+        self.splitterMainHor.setSizes(w_sizes)
+
         self.leFirstFile.textChanged.connect(lambda: self.textChangedDual(self.leFirstFile, self.leFirstFile2))
         self.leFirstFile2.textChanged.connect(lambda: self.textChangedDual(self.leFirstFile2, self.leFirstFile))
 
-        self.pbMoreParameters.toggled.connect(self.onChangeMode)
+        self.pbMoreParameters.toggled.connect(self.onShowMoreParameters)
 
         self.btnInit.clicked.connect(lambda: self.initialize(start=True))
         self.btnSetup.clicked.connect(self.setup)
@@ -417,24 +415,8 @@ class OpenNFT(QWidget):
             self.cbUDPSendCondition.setChecked(False)
 
     # --------------------------------------------------------------------------
-    def onChangeMode(self, flag):
-        if flag:
-            self.framePlots.setVisible(not flag)
-            self.frameParams.setVisible(flag)
-        else:
-            self.frameParams.setVisible(flag)
-            self.framePlots.setVisible(not flag)
-
-    # --------------------------------------------------------------------------
-    def changeImageViewMode(self, mode):
-        if mode == ImageViewMode.mosaic:
-            self.orthView.setVisible(False)
-            self.mosaicImageView.setVisible(True)
-        else:
-            self.orthView.setVisible(True)
-            self.mosaicImageView.setVisible(False)
-
-        self.imageViewMode = mode
+    def onShowMoreParameters(self, flag: bool):
+        self.stackedWidgetMain.setCurrentIndex(int(flag))
 
     # --------------------------------------------------------------------------
     def getFreeMemmapFilename(self):
@@ -994,7 +976,7 @@ class OpenNFT(QWidget):
         self.eng.workspace['mainLoopData'] = self.mainLoopData
 
         self.frameParams.setEnabled(True)
-        self.gboxShortParams.setEnabled(True)
+        self.frameShortParams.setEnabled(True)
         self.resetDone = True
 
         logger.info("Initialization finished ({:.2f} s)", time.time() - ts)
@@ -1135,9 +1117,6 @@ class OpenNFT(QWidget):
 
         self.btnStart.setEnabled(False)
         self.btnStop.setEnabled(True)
-
-        self.framePlots.setVisible(True)
-        self.frameParams.setVisible(False)
         self.pbMoreParameters.setChecked(False)
 
         self.iteration = 1
@@ -1320,14 +1299,18 @@ class OpenNFT(QWidget):
     # --------------------------------------------------------------------------
     def onChangeImageViewMode(self, index):
         if index == 0:
+            stack_index = 0
             mode = ImageViewMode.mosaic
         elif index == 1:
+            stack_index = 1
             mode = ImageViewMode.orthviewAnat
         else:
+            stack_index = 1
             mode = ImageViewMode.orthviewEPI
 
+        self.stackedWidgetImages.setCurrentIndex(stack_index)
         self.eng.assignin('base', 'imageViewMode', int(mode), nargout=0)
-        self.changeImageViewMode(mode)
+        self.imageViewMode = mode
 
     # --------------------------------------------------------------------------
     def onChangeOrthViewCursorPosition(self, pos, proj):
@@ -1364,15 +1347,20 @@ class OpenNFT(QWidget):
         self.orthView.set_sagittal_background_image(self.proj_background_images_reader.sagittal)
         self.orthView.set_coronal_background_image(self.proj_background_images_reader.coronal)
 
-        transversal_map = self.rgba_stats_map(self.proj_stats_map_images_reader.transversal)
+        alpha = self.sliderStatsAlpha.value() / 100.0
+
+        transversal_map = self.rgba_stats_map(
+            self.proj_stats_map_images_reader.transversal, alpha=alpha)
         if transversal_map is not None:
             self.orthView.set_transversal_stats_map_image(transversal_map)
 
-        sagittal_map = self.rgba_stats_map(self.proj_stats_map_images_reader.sagittal)
+        sagittal_map = self.rgba_stats_map(
+            self.proj_stats_map_images_reader.sagittal, alpha=alpha)
         if sagittal_map is not None:
             self.orthView.set_sagittal_stats_map_image(sagittal_map)
 
-        coronal_map = self.rgba_stats_map(self.proj_stats_map_images_reader.coronal)
+        coronal_map = self.rgba_stats_map(
+            self.proj_stats_map_images_reader.coronal, alpha=alpha)
         if coronal_map is not None:
             self.orthView.set_coronal_stats_map_image(coronal_map)
 
@@ -1692,7 +1680,8 @@ class OpenNFT(QWidget):
         if stats_map_image is None:
             self.mosaicImageView.clear_stats_map()
         else:
-            rgba_stats_map_image = self.rgba_stats_map(stats_map_image)
+            alpha = self.sliderStatsAlpha.value() / 100.0
+            rgba_stats_map_image = self.rgba_stats_map(stats_map_image, alpha=alpha)
 
             if rgba_stats_map_image is None:
                 self.mosaicImageView.clear_stats_map()
@@ -1984,8 +1973,14 @@ class OpenNFT(QWidget):
     # --------------------------------------------------------------------------
     def readAppSettings(self):
         self.appSettings.beginGroup('UI')
+
         self.restoreGeometry(self.appSettings.value(
             'WindowGeometry', self.saveGeometry()))
+        self.splitterMainVer.restoreState(self.appSettings.value(
+            'SplitterMainVerState', self.splitterMainVer.saveState()))
+        self.splitterMainHor.restoreState(self.appSettings.value(
+            'SplitterMainHorState', self.splitterMainHor.saveState()))
+
         self.appSettings.endGroup()
 
         self.appSettings.beginGroup('Params')
@@ -2000,6 +1995,8 @@ class OpenNFT(QWidget):
     def writeAppSettings(self):
         self.appSettings.beginGroup('UI')
         self.appSettings.setValue('WindowGeometry', self.saveGeometry())
+        self.appSettings.setValue('SplitterMainVerState', self.splitterMainVer.saveState())
+        self.appSettings.setValue('SplitterMainHorState', self.splitterMainHor.saveState())
         self.appSettings.endGroup()
 
         self.appSettings.beginGroup('Params')
