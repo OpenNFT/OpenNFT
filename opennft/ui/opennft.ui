@@ -187,9 +187,6 @@
    </item>
    <item>
     <widget class="QStackedWidget" name="stackedWidgetMain">
-     <property name="currentIndex">
-      <number>0</number>
-     </property>
      <widget class="QWidget" name="pageMain">
       <layout class="QVBoxLayout" name="verticalLayout_4" stretch="0">
        <property name="leftMargin">
@@ -598,8 +595,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>1331</width>
-            <height>896</height>
+            <width>1712</width>
+            <height>939</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_5">
@@ -1127,10 +1124,13 @@
                   <property name="orientation">
                    <enum>Qt::Vertical</enum>
                   </property>
+                  <property name="sizeType">
+                   <enum>QSizePolicy::Fixed</enum>
+                  </property>
                   <property name="sizeHint" stdset="0">
                    <size>
                     <width>20</width>
-                    <height>40</height>
+                    <height>20</height>
                    </size>
                   </property>
                  </spacer>
@@ -1152,10 +1152,13 @@
                   <property name="orientation">
                    <enum>Qt::Vertical</enum>
                   </property>
+                  <property name="sizeType">
+                   <enum>QSizePolicy::Fixed</enum>
+                  </property>
                   <property name="sizeHint" stdset="0">
                    <size>
                     <width>20</width>
-                    <height>40</height>
+                    <height>20</height>
                    </size>
                   </property>
                  </spacer>
@@ -1781,5 +1784,102 @@
   </layout>
  </widget>
  <resources/>
- <connections/>
+ <connections>
+  <connection>
+   <sender>sbNFRunNr2</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>sbNFRunNr</receiver>
+   <slot>setValue(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>113</x>
+     <y>84</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>58</x>
+     <y>54</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>sbNFRunNr</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>sbNFRunNr2</receiver>
+   <slot>setValue(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>58</x>
+     <y>54</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>113</x>
+     <y>84</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>sbImgSerNr2</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>sbImgSerNr</receiver>
+   <slot>setValue(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>278</x>
+     <y>84</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>58</x>
+     <y>54</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>sbImgSerNr</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>sbImgSerNr2</receiver>
+   <slot>setValue(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>58</x>
+     <y>54</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>278</x>
+     <y>84</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>leSetFile2</sender>
+   <signal>textChanged(QString)</signal>
+   <receiver>leSetFile</receiver>
+   <slot>setText(QString)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>390</x>
+     <y>53</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>58</x>
+     <y>54</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>leSetFile</sender>
+   <signal>textChanged(QString)</signal>
+   <receiver>leSetFile2</receiver>
+   <slot>setText(QString)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>58</x>
+     <y>54</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>390</x>
+     <y>53</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
 </ui>
