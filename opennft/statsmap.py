@@ -33,7 +33,8 @@ class RgbaStatsMap:
         self._cmap = cmap
         self._cmap.set_bad(alpha=0.0)
 
-    def __call__(self, stats_map: np.ndarray, auto_thresholds: bool = True) -> t.Optional[np.ndarray]:
+    def __call__(self, stats_map: np.ndarray, auto_thresholds: bool = True, alpha: float = 1.0) \
+            -> t.Optional[np.ndarray]:
         # Zero value represents "no value"
         stats_map_ma = np.ma.masked_equal(stats_map, self._no_value)
 
@@ -47,7 +48,7 @@ class RgbaStatsMap:
         stats_map_ma = np.ma.masked_outside(
             stats_map_ma, self._minimum_threshold, self._maximum_threshold)
 
-        return self._map_to_rgba(stats_map_ma)
+        return self._map_to_rgba(stats_map_ma, alpha)
 
     @property
     def minimum_threshold(self) -> float:
@@ -76,11 +77,11 @@ class RgbaStatsMap:
 
         logger.debug('Stats map thresholds: {}', [self._minimum_threshold, self._maximum_threshold])
 
-    def _map_to_rgba(self, stats_map_ma) -> np.ndarray:
+    def _map_to_rgba(self, stats_map_ma, alpha) -> np.ndarray:
         vmin = stats_map_ma.min()
         vmax = stats_map_ma.max()
 
         normalizer = colors.Normalize(vmin=vmin, vmax=vmax)
         mapper = cm.ScalarMappable(norm=normalizer, cmap=self._cmap)
 
-        return mapper.to_rgba(stats_map_ma)
+        return mapper.to_rgba(stats_map_ma, alpha=alpha)
