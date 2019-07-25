@@ -68,6 +68,7 @@ def specify_requirements():
         'matplotlib >= 2.0',
         'pyqtgraph @ https://github.com/pyqtgraph/pyqtgraph/tarball/develop',
         'pyniexp @ https://github.com/tiborauer/pyniexp/tarball/master',
+        'pynf @ https://github.com/tiborauer/pynf/tarball/master',
         'watchdog >= 0.9.0',
         'loguru >= 0.2.5',
         'pywin32 >= 224 ; platform_system == "Windows"',
