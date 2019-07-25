@@ -10,6 +10,7 @@ Written by Evgeny Prilepin
 
 """
 
+import time
 import numpy as np
 
 import pyqtgraph as pg
@@ -42,6 +43,11 @@ class ProjectionImageView(pg.ViewBox):
         self._image_shape = [0, 0]
         self._coords = (0, 0)
 
+        self._click_event = None
+        self._cursor_pos_change_timer = QtCore.QTimer(self)
+        self._cursor_pos_change_timer.setInterval(150)
+        self._cursor_pos_change_timer.timeout.connect(self._changePositionCursor)
+
     def suggestPadding(self, axis):
         return 0.01
 
@@ -59,27 +65,27 @@ class ProjectionImageView(pg.ViewBox):
         self._stats_map_imitem.clear()
 
     def mouseClickEvent(self, ev):
-        self._changePositionCursor(ev)
         ev.accept()
+        self._click_event = ev
+        self._cursor_pos_change_timer.start()
 
-    def mouseDragEvent(self, ev, axis=None):
-        #self._changePositionCursor(ev)
-        ev.accept()
-
-    def wheelEvent(self, ev, axis=None):
-        ev.ignore()
+    def mouseDoubleClickEvent(self, ev):
+        self._cursor_pos_change_timer.stop()
+        self.autoRange()
 
     def getCoords(self):
         return self._coords
 
-    def _changePositionCursor(self, ev):
+    def _changePositionCursor(self):
+        self._cursor_pos_change_timer.stop()
+
         w = self._image_shape[1]
         h = self._image_shape[0]
 
         if h == 0 or w == 0:
             return
 
-        viewPos = self.mapSceneToView(ev.scenePos())
+        viewPos = self.mapSceneToView(self._click_event.scenePos())
         imagePos = self._background_imitem.mapFromView(viewPos)
 
         x = int(imagePos.x())
