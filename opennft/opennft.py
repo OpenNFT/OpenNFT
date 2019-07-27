@@ -1305,8 +1305,10 @@ class OpenNFT(QWidget):
             mode = ImageViewMode.orthviewEPI
 
         self.stackedWidgetImages.setCurrentIndex(stack_index)
-        self.eng.assignin('base', 'imageViewMode', int(mode), nargout=0)
         self.imageViewMode = mode
+
+        if self.eng:
+            self.eng.assignin('base', 'imageViewMode', int(mode), nargout=0)
 
     # --------------------------------------------------------------------------
     def onChangeOrthViewCursorPosition(self, pos, proj):
