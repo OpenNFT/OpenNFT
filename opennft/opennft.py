@@ -203,7 +203,8 @@ class OpenNFT(QWidget):
 
         self.imageViewMode = ImageViewMode.mosaic
         self.currentCursorPos = (129, 95)
-        self.currentProjection = (1, 0, 0)
+        self.currentProjection = projview.ProjectionType.sagittal
+        self.orthViewAutoRange = True
         self.orthViewUpdateFuture = None
         self.orthViewUpdateCheckTimer = QTimer(self)
 
@@ -652,7 +653,7 @@ class OpenNFT(QWidget):
                     bgType = 'bgAnat'
 
                 self.orthViewUpdateFuture = self.engSPM.helperUpdateOrthView(
-                    self.currentCursorPos, self.currentProjection, bgType, True,
+                    self.currentCursorPos, self.currentProjection.value, bgType, True,
                     async=True, nargout=0)
 
             if (self.eng.evalin('base', 'mainLoopData.statMapCreated') == 1
@@ -666,7 +667,7 @@ class OpenNFT(QWidget):
                     bgType = 'bgAnat'
 
                 self.orthViewUpdateFuture = self.engSPM.helperUpdateOrthView(
-                    self.currentCursorPos, self.currentProjection, bgType, False,
+                    self.currentCursorPos, self.currentProjection.value, bgType, False,
                     async=True, nargout=0)
 
             # spatio-temporal data processing
@@ -1019,6 +1020,8 @@ class OpenNFT(QWidget):
         with utils.timeit('Setup finished:'):
             logger.info("Setup application...")
 
+            self.orthViewAutoRange = True
+
             # for multiply setup
             if not self.resetDone:
                 self.reset()
@@ -1315,7 +1318,7 @@ class OpenNFT(QWidget):
         self.currentCursorPos = pos
         self.currentProjection = proj
 
-        logger.info('New cursor coords {} for proj {} have been received', pos, proj)
+        logger.info('New cursor coords {} for proj "{}" have been received', pos, proj.name)
 
         if self.imageViewMode == ImageViewMode.orthviewEPI:
             bgType = 'bgEPI'
@@ -1323,7 +1326,7 @@ class OpenNFT(QWidget):
             bgType = 'bgAnat'
 
         self.orthViewUpdateFuture = self.engSPM.helperUpdateOrthView(
-            pos, proj, bgType, self.windowRTQA.volumeCheckBox.isChecked(), async=True, nargout=0)
+            pos, proj.value, bgType, self.windowRTQA.volumeCheckBox.isChecked(), async=True, nargout=0)
 
         # if self.windowRTQA.volumeCheckBox.isChecked():
         #     self.orthViewUpdateFuture = self.engSPM.helperUpdateOrthViewRTQA(
@@ -1341,6 +1344,7 @@ class OpenNFT(QWidget):
 
         # with utils.timeit('Getting new orthview projections...'):
         self.getOrthViewImages()
+
         self.orthView.set_transversal_background_image(self.proj_background_images_reader.transversal)
         self.orthView.set_sagittal_background_image(self.proj_background_images_reader.sagittal)
         self.orthView.set_coronal_background_image(self.proj_background_images_reader.coronal)
@@ -1362,6 +1366,9 @@ class OpenNFT(QWidget):
         if coronal_map is not None:
             self.orthView.set_coronal_stats_map_image(coronal_map)
 
+        self.orthView.sync_proj_view(self.currentProjection, auto_range=self.orthViewAutoRange)
+
+        self.orthViewAutoRange = False
         self.orthViewUpdateInProgress = False
         self.orthViewUpdateFuture = None
 
