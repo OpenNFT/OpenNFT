@@ -85,15 +85,13 @@ class ProjectionImageView(pg.ViewBox):
         self._clear_roi()
         colors_cycle = self._roi_colors()
 
-        for roi in rois:
+        for roi, pen in zip(rois, colors_cycle):
+            pen['width'] = 2
             roi_coords = np.array(roi)
 
             if roi_coords.size > 0:
                 y = roi_coords[:, 0]
                 x = roi_coords[:, 1]
-
-                pen = next(colors_cycle)
-                pen['width'] = 2
 
                 item = pg.PlotCurveItem(x=x, y=y, pen=pen)
 
