@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1149</width>
+    <width>1253</width>
     <height>846</height>
    </rect>
   </property>
@@ -534,6 +534,12 @@
               </item>
               <item>
                <widget class="QSlider" name="sliderStatsAlpha">
+                <property name="maximumSize">
+                 <size>
+                  <width>200</width>
+                  <height>16777215</height>
+                 </size>
+                </property>
                 <property name="maximum">
                  <number>100</number>
                 </property>
@@ -622,8 +628,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>1131</width>
-            <height>797</height>
+            <width>1331</width>
+            <height>936</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_5">
