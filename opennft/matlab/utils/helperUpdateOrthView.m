@@ -41,9 +41,9 @@ displayBgAnat = evalin('base', 'displayBgAnat');
 displayBgEpi = evalin('base', 'displayBgEpi');   
 
 if strcmpi(bgType, 'bgEPI')
-	displBackgr = displayBgEpi;
+    displBackgr = displayBgEpi;
 else
-	displBackgr = displayBgAnat;
+    displBackgr = displayBgAnat;
 end
 
 strParam.centre = findcent(newCoord, flagsPlanes);
@@ -71,8 +71,8 @@ backg_imgc = uint8(double(backg_imgc) / max(backg_imgc(:)) * 255);
 backg_imgs = uint8(double(backg_imgs) / max(backg_imgs(:)) * 255);
 
 assignin('base', 'imgt', backg_imgt);
-assignin('base', 'imgs', backg_imgc);
-assignin('base', 'imgc', backg_imgs);
+assignin('base', 'imgc', backg_imgc);
+assignin('base', 'imgs', backg_imgs);
 
 stat_imgt = uint8(stat_imgt / max(stat_imgt(:)) * 255);
 stat_imgc = uint8(double(stat_imgc) / max(stat_imgc(:)) * 255);
@@ -197,47 +197,44 @@ end
 [stat_imgt, stat_imgc, stat_imgs] = getOrthVol(coordParam, Image.vol, Image.mat);
 
 if strParam.modeDispl(1)
-    % Calculate ROIs 
-    for j=1:length(ROIs)
+    % Calculate ROIs
+    roiCount = length(ROIs);
 
-        [roi_imgt, roi_imgc, roi_imgs] = ...
-            getOrthVol(coordParam, ROIs(j).vol, ROIs(j).mat);
-        
-        tmpIdxRoiImgt = find(roi_imgt~=0 & ~isnan(roi_imgt));
-        P.idxRoiImgt = cat(1,P.idxRoiImgt, tmpIdxRoiImgt);
-        P.lengthROIs(1,j) = length(tmpIdxRoiImgt);
-        clear tmpIdxRoiImgt;
-        
-        tmpIdxRoiImgc = find(roi_imgc~=0 & ~isnan(roi_imgc));
-        P.idxRoiImgc = cat(1,P.idxRoiImgc, tmpIdxRoiImgc);
-        P.lengthROIs(2,j) = length(tmpIdxRoiImgc);
-        clear tmpIdxRoiImgc;
-        
-        tmpIdxRoiImgs = find(roi_imgs~=0 & ~isnan(roi_imgs));
-        P.idxRoiImgs = cat(1,P.idxRoiImgs, tmpIdxRoiImgs);
-        P.lengthROIs(3,j) = length(tmpIdxRoiImgs);
-        clear tmpIdxRoiImgs;
-        
+    P.tRoiBoundaries = cell(1, roiCount);
+    P.cRoiBoundaries = cell(1, roiCount);
+    P.sRoiBoundaries = cell(1, roiCount);
+
+    for j = 1:roiCount
+        [tRoiImg, cRoiImg, sRoiImg] = getOrthVol(coordParam, ROIs(j).vol, ROIs(j).mat);
+
+        P.tRoiBoundaries{j} = roiBoundary(tRoiImg);
+        P.cRoiBoundaries{j} = roiBoundary(cRoiImg);
+        P.sRoiBoundaries{j} = roiBoundary(sRoiImg);
     end
 else
-    
-    P.idxRoiImgt = [];
-    P.idxRoiImgs = [];
-    P.idxRoiImgc = [];
-    P.lengthROIs = [];
-    
+    P.tRoiBoundaries = {};
+    P.cRoiBoundaries = {};
+    P.sRoiBoundaries = {};
 end
 
-return;
+return
+
+function boundary = roiBoundary(roi)
+[row, col] = find(roi ~= 0 & ~isnan(roi));
+
+if ~isempty(row)
+    boundary = bwtraceboundary(roi, [row(1), col(1)], 'N');
+else
+    boundary = [];
+end
 
 function [imgt, imgc, imgs] = getOrthVol(coordParam, vol3D, volMat)
 global strParam
 % get blob data
 M    = strParam.Space \ strParam.premul * volMat;
-imgt = spm_slice_vol(vol3D,inv(coordParam.TM0*M),coordParam.TD,[0 NaN])';
-imgc = spm_slice_vol(vol3D,inv(coordParam.CM0*M),coordParam.CD,[0 NaN])';
-imgs = fliplr(spm_slice_vol(vol3D,inv(coordParam.SM0*M),coordParam.SD,...
-                                                                [0 NaN])');
+imgt = spm_slice_vol(vol3D,inv(coordParam.TM0*M),coordParam.TD, [0 NaN])';
+imgc = spm_slice_vol(vol3D,inv(coordParam.CM0*M),coordParam.CD, [0 NaN])';
+imgs = fliplr(spm_slice_vol(vol3D,inv(coordParam.SM0*M),coordParam.SD, [0 NaN])');
 
 return
 

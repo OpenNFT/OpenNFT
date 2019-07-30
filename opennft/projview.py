@@ -13,16 +13,19 @@ Written by Evgeny Prilepin
 import enum
 
 import numpy as np
+from cycler import cycler
 
 import pyqtgraph as pg
 from pyqtgraph.Qt import QtCore
 from pyqtgraph.Qt import QtGui
 
+from opennft import config
+
 
 class ProjectionType(enum.Enum):
-    sagittal = (0, 1, 0)
-    coronal = (0, 0, 1)
     transversal = (1, 0, 0)
+    coronal = (0, 1, 0)
+    sagittal = (0, 0, 1)
 
 
 class ProjectionImageView(pg.ViewBox):
@@ -50,6 +53,9 @@ class ProjectionImageView(pg.ViewBox):
         self._background_imitem = pg.ImageItem(autoDownsample=True)
         self._stats_map_imitem = pg.ImageItem(autoDownsample=True)
 
+        self._roi_plotdataitems = []
+        self._roi_colors = cycler(color=config.PROJ_ROI_COLORS)
+
         self.addItem(self._background_imitem)
         self.addItem(self._stats_map_imitem)
 
@@ -75,10 +81,30 @@ class ProjectionImageView(pg.ViewBox):
     def set_stats_map_image(self, image):
         self._stats_map_imitem.setImage(np.transpose(image, axes=(1, 0, 2)))
 
+    def set_roi(self, rois):
+        self._clear_roi()
+        colors_cycle = self._roi_colors()
+
+        for roi in rois:
+            roi_coords = np.array(roi)
+
+            if roi_coords.size > 0:
+                y = roi_coords[:, 0]
+                x = roi_coords[:, 1]
+
+                pen = next(colors_cycle)
+                pen['width'] = 2
+
+                item = pg.PlotCurveItem(x=x, y=y, pen=pen)
+
+                self._roi_plotdataitems.append(item)
+                self.addItem(item)
+
     def clear(self):
         self._image_shape = [0, 0]
         self._background_imitem.clear()
         self._stats_map_imitem.clear()
+        self._clear_roi()
 
     def suggestPadding(self, axis=None):
         return 0.01
@@ -104,6 +130,12 @@ class ProjectionImageView(pg.ViewBox):
     # def _viewbox_resized(self):
     #     r = self.boundingRect()
     #     self._name_textitem.setPos(r.width(), 0)
+
+    def _clear_roi(self):
+        for item in self._roi_plotdataitems:
+            item.clear()
+            self.removeItem(item)
+        self._roi_plotdataitems.clear()
 
     def _change_cursor_position(self):
         self._cursor_pos_change_timer.stop()
@@ -159,9 +191,9 @@ class ProjectionsWidget(QtGui.QWidget):
         self._glayout = pg.GraphicsLayout(border=(150, 150, 150))
         self._view.setCentralItem(self._glayout)
 
-        self._sagittal_viewbox = ProjectionImageView(
+        self._transversal_viewbox = ProjectionImageView(
             parent=self._glayout,
-            proj_type=ProjectionType.sagittal,
+            proj_type=ProjectionType.transversal,
         )
 
         self._coronal_viewbox = ProjectionImageView(
@@ -169,61 +201,74 @@ class ProjectionsWidget(QtGui.QWidget):
             proj_type=ProjectionType.coronal,
         )
 
-        self._transversal_viewbox = ProjectionImageView(
+        self._sagittal_viewbox = ProjectionImageView(
             parent=self._glayout,
-            proj_type=ProjectionType.transversal,
+            proj_type=ProjectionType.sagittal,
         )
 
         self._proj_views = {
-            ProjectionType.sagittal: self._sagittal_viewbox,
-            ProjectionType.coronal: self._coronal_viewbox,
             ProjectionType.transversal: self._transversal_viewbox,
+            ProjectionType.coronal: self._coronal_viewbox,
+            ProjectionType.sagittal: self._sagittal_viewbox,
         }
 
-        self._sagittal_layout = self._setup_viewbox_layout(self._sagittal_viewbox, 0, 0)
-        self._coronal_layout = self._setup_viewbox_layout(self._coronal_viewbox, 0, 1)
         self._transversal_layout = self._setup_viewbox_layout(self._transversal_viewbox, 1, 0)
+        self._coronal_layout = self._setup_viewbox_layout(self._coronal_viewbox, 0, 0)
+        self._sagittal_layout = self._setup_viewbox_layout(self._sagittal_viewbox, 0, 1)
 
-        self._sagittal_viewbox.cursorPositionChanged.connect(self._on_cursor_position_changed)
-        self._coronal_viewbox.cursorPositionChanged.connect(self._on_cursor_position_changed)
         self._transversal_viewbox.cursorPositionChanged.connect(self._on_cursor_position_changed)
+        self._coronal_viewbox.cursorPositionChanged.connect(self._on_cursor_position_changed)
+        self._sagittal_viewbox.cursorPositionChanged.connect(self._on_cursor_position_changed)
 
-        self._sagittal_viewbox.sigResized.connect(lambda _: self.sync_proj_view())
+        self._coronal_viewbox.sigResized.connect(self._sync_when_resize)
 
-        self._sagittal_viewbox.viewChanged.connect(self._sync_proj_view)
-        self._coronal_viewbox.viewChanged.connect(self._sync_proj_view)
         self._transversal_viewbox.viewChanged.connect(self._sync_proj_view)
+        self._coronal_viewbox.viewChanged.connect(self._sync_proj_view)
+        self._sagittal_viewbox.viewChanged.connect(self._sync_proj_view)
 
-        self._sagittal_viewbox.resetView.connect(self._reset_view)
-        self._coronal_viewbox.resetView.connect(self._reset_view)
-        self._transversal_viewbox.resetView.connect(self._reset_view)
+        self._transversal_viewbox.resetView.connect(self.reset_view)
+        self._coronal_viewbox.resetView.connect(self.reset_view)
+        self._sagittal_viewbox.resetView.connect(self.reset_view)
 
     def set_transversal_background_image(self, image):
         self._transversal_viewbox.set_background_image(image)
 
-    def set_sagittal_background_image(self, image):
-        self._sagittal_viewbox.set_background_image(image)
-
     def set_coronal_background_image(self, image):
         self._coronal_viewbox.set_background_image(image)
+
+    def set_sagittal_background_image(self, image):
+        self._sagittal_viewbox.set_background_image(image)
 
     def set_transversal_stats_map_image(self, image):
         self._transversal_viewbox.set_stats_map_image(image)
 
+    def set_coronal_stats_map_image(self, image):
+        self._coronal_viewbox.set_stats_map_image(image)
+
     def set_sagittal_stats_map_image(self, image):
         self._sagittal_viewbox.set_stats_map_image(image)
 
-    def set_coronal_stats_map_image(self, image):
-        self._coronal_viewbox.set_stats_map_image(image)
+    def set_transversal_roi(self, roi):
+        self._transversal_viewbox.set_roi(roi)
+
+    def set_coronal_roi(self, roi):
+        self._coronal_viewbox.set_roi(roi)
+
+    def set_sagittal_roi(self, roi):
+        self._sagittal_viewbox.set_roi(roi)
 
     def clear(self):
         self._transversal_viewbox.clear()
         self._sagittal_viewbox.clear()
         self._coronal_viewbox.clear()
 
-    def sync_proj_view(self, proj=ProjectionType.sagittal, auto_range=False):
-        view_range = self._proj_views[proj].viewRange()
-        self._sync_proj_view(view_range, proj, auto_range)
+    def reset_view(self):
+        self._transversal_viewbox.autoRange()
+        self._coronal_viewbox.autoRange()
+        self._sagittal_viewbox.autoRange()
+
+        view_range = self._coronal_viewbox.viewRange()
+        self._sync_proj_view(view_range, ProjectionType.coronal)
 
     def _setup_viewbox_layout(self, viewbox, row, col):
         layout = self._glayout.addLayout(row=row, col=col)
@@ -237,30 +282,27 @@ class ProjectionsWidget(QtGui.QWidget):
         self.cursorPositionChanged.emit(pos, proj_type)
 
     @staticmethod
-    def _set_view_range(view, xrange=None, yrange=None, auto_range=False):
-        if auto_range:
-            view.autoRange()
-
+    def _set_view_range(view, xrange=None, yrange=None):
         view.setRange(xRange=xrange, yRange=yrange, padding=0.0, disableAutoRange=True)
         view.state['targetRange'] = view.viewRange()
 
-    def _sync_proj_view(self, view_range, proj, auto_range=False):
+    def _sync_proj_view(self, view_range, proj):
         xrange, yrange = view_range
 
-        if proj == ProjectionType.sagittal:
-            self._set_view_range(self._coronal_viewbox, yrange=yrange, auto_range=auto_range)
-            self._set_view_range(self._transversal_viewbox, xrange=xrange, auto_range=auto_range)
+        if proj == ProjectionType.transversal:
+            self._set_view_range(self._coronal_viewbox, xrange=xrange)
+            _, yrange = self._coronal_viewbox.viewRange()
+            self._set_view_range(self._sagittal_viewbox, yrange=yrange)
 
         if proj == ProjectionType.coronal:
-            self._set_view_range(self._sagittal_viewbox, yrange=yrange, auto_range=auto_range)
-            xrange, _ = self._sagittal_viewbox.viewRange()
-            self._set_view_range(self._transversal_viewbox, xrange=xrange, auto_range=auto_range)
+            self._set_view_range(self._sagittal_viewbox, yrange=yrange)
+            self._set_view_range(self._transversal_viewbox, xrange=xrange)
 
-        if proj == ProjectionType.transversal:
-            self._set_view_range(self._sagittal_viewbox, xrange=xrange, auto_range=auto_range)
-            _, yrange = self._sagittal_viewbox.viewRange()
-            self._set_view_range(self._coronal_viewbox, yrange=yrange, auto_range=auto_range)
+        if proj == ProjectionType.sagittal:
+            self._set_view_range(self._coronal_viewbox, yrange=yrange)
+            xrange, _ = self._coronal_viewbox.viewRange()
+            self._set_view_range(self._transversal_viewbox, xrange=xrange)
 
-    def _reset_view(self):
-        self._sagittal_viewbox.autoRange()
-        self.sync_proj_view(auto_range=True)
+    def _sync_when_resize(self):
+        view_range = self._coronal_viewbox.viewRange()
+        self._sync_proj_view(view_range, ProjectionType.coronal)

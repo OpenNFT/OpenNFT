@@ -203,8 +203,8 @@ class OpenNFT(QWidget):
 
         self.imageViewMode = ImageViewMode.mosaic
         self.currentCursorPos = (129, 95)
-        self.currentProjection = projview.ProjectionType.sagittal
-        self.orthViewAutoRange = True
+        self.currentProjection = projview.ProjectionType.coronal
+        self.orthViewInitialize = True
         self.orthViewUpdateFuture = None
         self.orthViewUpdateCheckTimer = QTimer(self)
 
@@ -462,10 +462,9 @@ class OpenNFT(QWidget):
             'AnatBgFolder': os.path.normpath(self.P['AnatBgFolder']),
             'MCTempl': os.path.dirname(self.P['MCTempl']),
             'memMapFile': self.eng.evalin('base', 'P.memMapFile'),
-            'idxRoiImgt': [],
-            'idxRoiImgs': [],
-            'idxRoiImgc': [],
-            'lengthROIs': [],
+            'tRoiBoundaries': [],
+            'cRoiBoundaries': [],
+            'sRoiBoundaries': [],
             'isRestingState': self.P['isRestingState'],
         }
 
@@ -480,6 +479,7 @@ class OpenNFT(QWidget):
         filenameTargetOverlay = filenameTargetOverlay.replace('shared', 'OrthView')
         # file for background anat or epi
         filenameBackgroundOverlay = filenameBackgroundOverlay.replace('shared', 'BackgOrthView')
+
         # ROI from helperP
         self.spmHelperP = self.engSPM.workspace['helperP']
 
@@ -1020,7 +1020,7 @@ class OpenNFT(QWidget):
         with utils.timeit('Setup finished:'):
             logger.info("Setup application...")
 
-            self.orthViewAutoRange = True
+            self.orthViewInitialize = True
 
             # for multiply setup
             if not self.resetDone:
@@ -1346,8 +1346,8 @@ class OpenNFT(QWidget):
         self.getOrthViewImages()
 
         self.orthView.set_transversal_background_image(self.proj_background_images_reader.transversal)
-        self.orthView.set_sagittal_background_image(self.proj_background_images_reader.sagittal)
         self.orthView.set_coronal_background_image(self.proj_background_images_reader.coronal)
+        self.orthView.set_sagittal_background_image(self.proj_background_images_reader.sagittal)
 
         alpha = self.sliderStatsAlpha.value() / 100.0
 
@@ -1356,19 +1356,24 @@ class OpenNFT(QWidget):
         if transversal_map is not None:
             self.orthView.set_transversal_stats_map_image(transversal_map)
 
-        sagittal_map = self.rgba_stats_map(
-            self.proj_stats_map_images_reader.sagittal, alpha=alpha)
-        if sagittal_map is not None:
-            self.orthView.set_sagittal_stats_map_image(sagittal_map)
-
         coronal_map = self.rgba_stats_map(
             self.proj_stats_map_images_reader.coronal, alpha=alpha)
         if coronal_map is not None:
             self.orthView.set_coronal_stats_map_image(coronal_map)
 
-        self.orthView.sync_proj_view(self.currentProjection, auto_range=self.orthViewAutoRange)
+        sagittal_map = self.rgba_stats_map(
+            self.proj_stats_map_images_reader.sagittal, alpha=alpha)
+        if sagittal_map is not None:
+            self.orthView.set_sagittal_stats_map_image(sagittal_map)
 
-        self.orthViewAutoRange = False
+        self.orthView.set_transversal_roi(self.spmHelperP['tRoiBoundaries'])
+        self.orthView.set_coronal_roi(self.spmHelperP['cRoiBoundaries'])
+        self.orthView.set_sagittal_roi(self.spmHelperP['sRoiBoundaries'])
+
+        if self.orthViewInitialize:
+            self.orthView.reset_view()
+
+        self.orthViewInitialize = False
         self.orthViewUpdateInProgress = False
         self.orthViewUpdateFuture = None
 

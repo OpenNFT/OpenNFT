@@ -13,10 +13,9 @@ function helperPrepareOrthView(P, bgType)
 % Adopted by Yury Koush based on SPM (see spm_orthviews.m)
 
 P.bgType = bgType;
-P.idxRoiImgt = []
-P.idxRoiImgc = []
-P.idxRoiImgs = []
-P.lengthROIs = []
+P.tRoiBoundaries = {};
+P.cRoiBoundaries = {};
+P.sRoiBoundaries = {};
 
 %% Background: EPI template or Anatomy
 %% default values
@@ -104,25 +103,27 @@ strParam.centre    = mmcentre(1:3);
 strParam.modeDispl = [0 0 1]; 
 displStat = [];
 if isDCM
-    [imgt,imgs,imgc] = redrawall(displBackgr.vol, displBackgr.mat, ...
-                         ROIsAnat, displStat); % ?imgs/imgc names under spm
+    [imgt, imgc, imgs] = redrawall(displBackgr.vol, displBackgr.mat, ...
+        ROIsAnat, displStat); % ?imgs/imgc names under spm
 else
-    [imgt,imgs,imgc] = redrawall(displBackgr.vol,displBackgr.mat, ...
-                             ROIs, displStat); % ?imgs/imgc names under spm
+    [imgt, imgc, imgs] = redrawall(displBackgr.vol,displBackgr.mat, ...
+        ROIs, displStat); % ?imgs/imgc names under spm
 end
 disp('prepareOrthView() in helper matlab');
 
-format = {'uint8', size(imgt), 'imgt';...
-'uint8', size(imgs), 'imgs';...
-'uint8', size(imgc), 'imgc'};
+format = {'uint8', size(imgt), 'imgt'; ...
+          'uint8', size(imgc), 'imgc'; ...
+          'uint8', size(imgs), 'imgs'};
 
-imgt = uint8(imgt / max(max(max(imgt))) * 255);
-imgs = uint8(double(imgs) / max(max(max(imgs))) * 255);
-imgc = uint8(double(imgc) / max(max(max(imgc))) * 255);
-data = [imgt(:); imgs(:); imgc(:)];
+imgt = uint8(double(imgt) / max(imgt(:)) * 255);
+imgc = uint8(double(imgc) / max(imgc(:)) * 255);
+imgs = uint8(double(imgs) / max(imgs(:)) * 255);
+
+data = [imgt(:); imgc(:); imgs(:)];
+
 assignin('base', 'imgt', imgt);
+assignin('base', 'imgc', imgc);
 assignin('base', 'imgs', imgs);
-assignin('base', 'imgc', imgc);   
 
 assignin('base', 'displBackgr', displBackgr);   
 assignin('base', 'displayBgAnat', displayBgAnat);   
@@ -146,7 +147,7 @@ assignin('base', 'helperP', P);
 
 %% functions for redrawall()
 
-function [drawimgt,drawimgc,drawimgs] = redrawall(Vol,mat,ROIs,Stat)
+function [drawimgt, drawimgc, drawimgs] = redrawall(Vol,mat,ROIs,Stat)
 global strParam
 
 %% Calculate Background

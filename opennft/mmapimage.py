@@ -37,8 +37,8 @@ class ProjectionImagesReader:
 
     _projection_images_mapping = collections.OrderedDict([
         ('transversal', 'imgt'),
-        ('sagittal', 'imgs'),
         ('coronal', 'imgc'),
+        ('sagittal', 'imgs'),
     ])
 
     def __init__(self):

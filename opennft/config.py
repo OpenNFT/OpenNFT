@@ -83,6 +83,8 @@ MC_PLOT_COLORS = [
     (145, 130, 43),
 ]
 
+PROJ_ROI_COLORS = ['g', 'c', 'b', 'm']
+
 #debuging use only
 USE_SLEEP_IN_STOP = False
 HIDE_TEST_BTN = True
