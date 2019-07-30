@@ -55,9 +55,9 @@ class ProjectionImageView(pg.ViewBox):
 
         # self._background_imitem.setBorder({'color': pg.mkColor('g'), 'width': 1})
 
-        self._name_textitem = pg.TextItem(
-            text=name, color=pg.mkColor('g'), anchor=(1, 0))
-        self._name_textitem.setParentItem(self)
+        # self._name_textitem = pg.TextItem(
+        #     text=name, color=pg.mkColor('g'), anchor=(1, 0))
+        # self._name_textitem.setParentItem(self)
 
         self._image_shape = [0, 0]
 
@@ -66,7 +66,7 @@ class ProjectionImageView(pg.ViewBox):
         self._cursor_pos_change_timer.setInterval(150)
         self._cursor_pos_change_timer.timeout.connect(self._change_cursor_position)
 
-        self.sigResized.connect(self._viewbox_resized)
+        # self.sigResized.connect(self._viewbox_resized)
 
     def set_background_image(self, image):
         self._image_shape = image.shape
@@ -101,9 +101,9 @@ class ProjectionImageView(pg.ViewBox):
         super().mouseDragEvent(ev, axis)
         self.viewChanged.emit(tuple(self.viewRange()), self._proj_type)
 
-    def _viewbox_resized(self):
-        r = self.boundingRect()
-        self._name_textitem.setPos(r.width(), 0)
+    # def _viewbox_resized(self):
+    #     r = self.boundingRect()
+    #     self._name_textitem.setPos(r.width(), 0)
 
     def _change_cursor_position(self):
         self._cursor_pos_change_timer.stop()
