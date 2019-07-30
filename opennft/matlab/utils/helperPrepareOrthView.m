@@ -24,17 +24,17 @@ fAnatomyBacgkr = false;
 fEpiBackgr = true;
 
 if strcmp(bgType, 'bgMosaic')
-	fAnatomyBacgkr = false;
+    fAnatomyBacgkr = false;
     fEpiBackgr = true;
-end;
+end
 if strcmp(bgType, 'bgEPI')
     fAnatomyBacgkr = false;
-	fEpiBackgr = true;
-end;
+    fEpiBackgr = true;
+end
 if strcmp(bgType, 'bgAnat')
     fAnatomyBacgkr = true;
-	fEpiBackgr = false;
-end;
+    fEpiBackgr = false;
+end
 
 dirAnatBackgr = P.AnatBgFolder;
 dirEpiBackgr = P.MCTempl;
@@ -184,7 +184,7 @@ else
             0  0 0     1     ];
     SM = inv(SM0 * M);
     SD = Dims([2 3]);
-end;
+end
 
 try
     imgt  = spm_slice_vol(Vol, TM, TD, strParam.hld)';
@@ -211,18 +211,18 @@ if ok
         tmp = imgt(isfinite(imgt));
         mx = max([mx max(max(tmp))]);
         mn = min([mn min(min(tmp))]);
-    end;
+    end
     if ~isempty(imgc)
         tmp = imgc(isfinite(imgc));
         mx = max([mx max(max(tmp))]);
         mn = min([mn min(min(tmp))]);
-    end;
+    end
     if ~isempty(imgs)
         tmp = imgs(isfinite(imgs));
         mx = max([mx max(max(tmp))]);
         mn = min([mn min(min(tmp))]);
-    end;
-    if mx == mn, mx = mn + eps; end;
+    end
+    if mx == mn, mx = mn + eps; end
 else
     imgt = [];
     imgc = [];
@@ -399,7 +399,7 @@ for j=1:length(ROIs)
     %cdata=permute(shiftdim((1/64:1/64:1)'* ...
     %    colour(j,:),-1),[2 1 3]);
     %redraw_colourbar(i,j,[mn mx],cdata);
-end;
+end
 
 drawimgt = repmat(1-wt,[1 1 3]).*imgt+cimgt;
 drawimgc = repmat(1-wc,[1 1 3]).*imgc+cimgc;
@@ -418,10 +418,10 @@ if isstruct(vol)
         tmp = spm_slice_vol(vol, spm_matrix([0 0 i]), vol.dim(1:2), 0);
         imx = max(tmp(isfinite(tmp)));
         if ~isempty(imx),mx = max(mx,imx);end
-    end;
+    end
 else
     mx = max(vol(isfinite(vol)));
-end;
+end
 
 function img = scaletocmap(inpimg, mn, mx, cmap, miscol)
 if nargin < 5, miscol=1;end
@@ -453,4 +453,3 @@ Mat      = diag([res res res 1]);
 strParam.Space = strParam.Space * Mat;
 strParam.bb    = strParam.bb / res;
 return;
-
