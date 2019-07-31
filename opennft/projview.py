@@ -16,8 +16,8 @@ import numpy as np
 from cycler import cycler
 
 import pyqtgraph as pg
-from pyqtgraph.Qt import QtCore
-from pyqtgraph.Qt import QtGui
+from PyQt5 import QtCore
+from PyQt5 import QtWidgets
 
 from opennft import config
 
@@ -30,9 +30,9 @@ class ProjectionType(enum.Enum):
 
 class ProjectionImageView(pg.ViewBox):
 
-    cursorPositionChanged = QtCore.Signal(tuple, ProjectionType)
-    resetView = QtCore.Signal(ProjectionType)
-    viewChanged = QtCore.Signal(tuple, ProjectionType)
+    cursorPositionChanged = QtCore.pyqtSignal(tuple, ProjectionType)
+    resetView = QtCore.pyqtSignal(ProjectionType)
+    viewChanged = QtCore.pyqtSignal(tuple, ProjectionType)
 
     def __init__(self, parent, proj_type, border=None):
 
@@ -171,14 +171,14 @@ class ProjectionImageView(pg.ViewBox):
         self.cursorPositionChanged.emit(coords, self._proj_type)
 
 
-class ProjectionsWidget(QtGui.QWidget):
+class ProjectionsWidget(QtWidgets.QWidget):
 
-    cursorPositionChanged = QtCore.Signal(tuple, ProjectionType)
+    cursorPositionChanged = QtCore.pyqtSignal(tuple, ProjectionType)
 
     def __init__(self, parent=None, *args, **kwargs):
         super().__init__(parent, *args, **kwargs)
 
-        self._layout = QtGui.QVBoxLayout(self)
+        self._layout = QtWidgets.QVBoxLayout(self)
         self._layout.setContentsMargins(0, 0, 0, 0)
 
         self.setLayout(self._layout)
@@ -186,21 +186,21 @@ class ProjectionsWidget(QtGui.QWidget):
         self._view = pg.GraphicsView(self)
         self._layout.addWidget(self._view)
 
-        self._glayout = pg.GraphicsLayout(border=(150, 150, 150))
-        self._view.setCentralItem(self._glayout)
+        self._view_layout = pg.GraphicsLayout(border=pg.mkColor('#969696'))
+        self._view.setCentralItem(self._view_layout)
 
         self._transversal_viewbox = ProjectionImageView(
-            parent=self._glayout,
+            parent=self._view_layout,
             proj_type=ProjectionType.transversal,
         )
 
         self._coronal_viewbox = ProjectionImageView(
-            parent=self._glayout,
+            parent=self._view_layout,
             proj_type=ProjectionType.coronal,
         )
 
         self._sagittal_viewbox = ProjectionImageView(
-            parent=self._glayout,
+            parent=self._view_layout,
             proj_type=ProjectionType.sagittal,
         )
 
@@ -214,62 +214,35 @@ class ProjectionsWidget(QtGui.QWidget):
         self._coronal_layout = self._setup_viewbox_layout(self._coronal_viewbox, 0, 0)
         self._sagittal_layout = self._setup_viewbox_layout(self._sagittal_viewbox, 0, 1)
 
-        self._transversal_viewbox.cursorPositionChanged.connect(self._on_cursor_position_changed)
-        self._coronal_viewbox.cursorPositionChanged.connect(self._on_cursor_position_changed)
-        self._sagittal_viewbox.cursorPositionChanged.connect(self._on_cursor_position_changed)
+        for view in self._proj_views.values():
+            view.cursorPositionChanged.connect(self._on_cursor_position_changed)
+            view.viewChanged.connect(self._sync_proj_view)
+            view.resetView.connect(self.reset_view)
 
         self._coronal_viewbox.sigResized.connect(self._sync_when_resize)
 
-        self._transversal_viewbox.viewChanged.connect(self._sync_proj_view)
-        self._coronal_viewbox.viewChanged.connect(self._sync_proj_view)
-        self._sagittal_viewbox.viewChanged.connect(self._sync_proj_view)
+    def set_background_image(self, proj: ProjectionType, image):
+        self._proj_views[proj].set_background_image(image)
 
-        self._transversal_viewbox.resetView.connect(self.reset_view)
-        self._coronal_viewbox.resetView.connect(self.reset_view)
-        self._sagittal_viewbox.resetView.connect(self.reset_view)
+    def set_stats_map_image(self, proj: ProjectionType, image):
+        self._proj_views[proj].set_stats_map_image(image)
 
-    def set_transversal_background_image(self, image):
-        self._transversal_viewbox.set_background_image(image)
-
-    def set_coronal_background_image(self, image):
-        self._coronal_viewbox.set_background_image(image)
-
-    def set_sagittal_background_image(self, image):
-        self._sagittal_viewbox.set_background_image(image)
-
-    def set_transversal_stats_map_image(self, image):
-        self._transversal_viewbox.set_stats_map_image(image)
-
-    def set_coronal_stats_map_image(self, image):
-        self._coronal_viewbox.set_stats_map_image(image)
-
-    def set_sagittal_stats_map_image(self, image):
-        self._sagittal_viewbox.set_stats_map_image(image)
-
-    def set_transversal_roi(self, roi):
-        self._transversal_viewbox.set_roi(roi)
-
-    def set_coronal_roi(self, roi):
-        self._coronal_viewbox.set_roi(roi)
-
-    def set_sagittal_roi(self, roi):
-        self._sagittal_viewbox.set_roi(roi)
+    def set_roi(self, proj: ProjectionType, roi):
+        self._proj_views[proj].set_roi(roi)
 
     def clear(self):
-        self._transversal_viewbox.clear()
-        self._sagittal_viewbox.clear()
-        self._coronal_viewbox.clear()
+        for view in self._proj_views.values():
+            view.clear()
 
     def reset_view(self):
-        self._transversal_viewbox.autoRange()
-        self._coronal_viewbox.autoRange()
-        self._sagittal_viewbox.autoRange()
+        for view in self._proj_views.values():
+            view.autoRange()
 
         view_range = self._coronal_viewbox.viewRange()
         self._sync_proj_view(view_range, ProjectionType.coronal)
 
     def _setup_viewbox_layout(self, viewbox, row, col):
-        layout = self._glayout.addLayout(row=row, col=col)
+        layout = self._view_layout.addLayout(row=row, col=col)
 
         layout.setContentsMargins(1, 1, 1, 1)
         layout.addItem(viewbox)

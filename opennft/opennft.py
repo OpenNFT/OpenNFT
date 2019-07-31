@@ -1345,30 +1345,18 @@ class OpenNFT(QWidget):
         # with utils.timeit('Getting new orthview projections...'):
         self.getOrthViewImages()
 
-        self.orthView.set_transversal_background_image(self.proj_background_images_reader.transversal)
-        self.orthView.set_coronal_background_image(self.proj_background_images_reader.coronal)
-        self.orthView.set_sagittal_background_image(self.proj_background_images_reader.sagittal)
-
         alpha = self.sliderStatsAlpha.value() / 100.0
 
-        transversal_map = self.rgba_stats_map(
-            self.proj_stats_map_images_reader.transversal, alpha=alpha)
-        if transversal_map is not None:
-            self.orthView.set_transversal_stats_map_image(transversal_map)
+        for proj in projview.ProjectionType:
+            self.orthView.set_background_image(proj, self.proj_background_images_reader.proj_image(proj))
 
-        coronal_map = self.rgba_stats_map(
-            self.proj_stats_map_images_reader.coronal, alpha=alpha)
-        if coronal_map is not None:
-            self.orthView.set_coronal_stats_map_image(coronal_map)
+            stats_map = self.rgba_stats_map(self.proj_stats_map_images_reader.proj_image(proj), alpha=alpha)
+            if stats_map is not None:
+                self.orthView.set_stats_map_image(proj, stats_map)
 
-        sagittal_map = self.rgba_stats_map(
-            self.proj_stats_map_images_reader.sagittal, alpha=alpha)
-        if sagittal_map is not None:
-            self.orthView.set_sagittal_stats_map_image(sagittal_map)
-
-        self.orthView.set_transversal_roi(self.spmHelperP['tRoiBoundaries'])
-        self.orthView.set_coronal_roi(self.spmHelperP['cRoiBoundaries'])
-        self.orthView.set_sagittal_roi(self.spmHelperP['sRoiBoundaries'])
+        self.orthView.set_roi(projview.ProjectionType.transversal, self.spmHelperP['tRoiBoundaries'])
+        self.orthView.set_roi(projview.ProjectionType.coronal, self.spmHelperP['cRoiBoundaries'])
+        self.orthView.set_roi(projview.ProjectionType.sagittal, self.spmHelperP['sRoiBoundaries'])
 
         if self.orthViewInitialize:
             self.orthView.reset_view()

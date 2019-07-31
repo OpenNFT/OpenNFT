@@ -3,6 +3,8 @@
 import collections
 import numpy as np
 
+from opennft.projview import ProjectionType
+
 
 def get_image_shape(image_name: str, eng, nargout: int) -> np.ndarray:
     return np.array(eng.evalin('base', 'size({})'.format(image_name), nargout=nargout), dtype=np.int32)
@@ -36,9 +38,9 @@ class ProjectionImagesReader:
     """
 
     _projection_images_mapping = collections.OrderedDict([
-        ('transversal', 'imgt'),
-        ('coronal', 'imgc'),
-        ('sagittal', 'imgs'),
+        (ProjectionType.transversal, 'imgt'),
+        (ProjectionType.coronal, 'imgc'),
+        (ProjectionType.sagittal, 'imgs'),
     ])
 
     def __init__(self):
@@ -49,19 +51,24 @@ class ProjectionImagesReader:
     def transversal(self) -> np.ndarray:
         """Returns transversal image projection
         """
-        return self._projection_images['transversal']
+        return self._projection_images[ProjectionType.transversal]
 
     @property
     def sagittal(self) -> np.ndarray:
         """Returns sagittal image projection
         """
-        return self._projection_images['sagittal']
+        return self._projection_images[ProjectionType.sagittal]
 
     @property
     def coronal(self) -> np.ndarray:
         """Returns coronal image projection
         """
-        return self._projection_images['coronal']
+        return self._projection_images[ProjectionType.coronal]
+
+    def proj_image(self, proj: ProjectionType):
+        """Returns image projection for given type
+        """
+        return self._projection_images[proj]
 
     def read(self, memmap_filename: str, matlab_engine):
         """Reads projection images from memmap file
@@ -69,9 +76,9 @@ class ProjectionImagesReader:
         with open(memmap_filename, 'r') as fp:
             offset = 0
 
-            for proj_name, image_name in self._projection_images_mapping.items():
+            for proj_type, image_name in self._projection_images_mapping.items():
                 shape = get_image_shape(image_name, matlab_engine, nargout=2)
-                self._projection_images[proj_name] = read_memmap_image(fp, shape, offset)
+                self._projection_images[proj_type] = read_memmap_image(fp, shape, offset)
                 offset += shape.prod()
 
     def clear(self):
