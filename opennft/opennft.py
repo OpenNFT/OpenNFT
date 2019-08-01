@@ -166,6 +166,9 @@ class OpenNFT(QWidget):
         self.iteration = 1
         self.preiteration = 0
         self.pendingFilename = ''
+        self.resetDone = False
+        self.isInitialized = False
+        self.isSetFileChosen = False
         self.isCalculateDcm = False  # todo: rename to computeModelInProgress
         self.isMainLoopEntered = False
         self.typicalFileSize = 0
@@ -952,6 +955,8 @@ class OpenNFT(QWidget):
     def initialize(self, start=True):
         ts = time.time()
 
+        self.isInitialized = False
+
         if not runmatlab.connect_to_matlab(start=start):
             if not start:
                 logger.warning('There is no main Matlab session yet. Press "Initialize" button.')
@@ -978,7 +983,10 @@ class OpenNFT(QWidget):
 
         self.frameParams.setEnabled(True)
         self.frameShortParams.setEnabled(True)
+        self.btnSetup.setEnabled(self.isSetFileChosen)
+
         self.resetDone = True
+        self.isInitialized = True
 
         logger.info("Initialization finished ({:.2f} s)", time.time() - ts)
 
@@ -1013,7 +1021,7 @@ class OpenNFT(QWidget):
 
     # --------------------------------------------------------------------------
     def setup(self):
-        if not hasattr(self, 'resetDone'):
+        if not self.isInitialized:
             logger.error("Couldn't connect Matlab.\n PRESS INITIALIZE FIRST!")
             return
 
@@ -1230,7 +1238,8 @@ class OpenNFT(QWidget):
         self.settings = QSettings(fname, QSettings.IniFormat, self)
         self.loadSettingsFromSetFile()
 
-        self.btnSetup.setEnabled(True)
+        self.isSetFileChosen = True
+        self.btnSetup.setEnabled(self.isInitialized)
 
     # --------------------------------------------------------------------------
     def onChooseWeightsFile(self):
