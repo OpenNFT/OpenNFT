@@ -104,7 +104,8 @@ PLOT_PEN_COLORS = [ # colors used to plot motion correction metrics
     pg.mkPen(pg.mkColor(255, 56, 109), width=1.2),
     pg.mkPen(pg.mkColor(127, 0, 255), width=1.2),
     pg.mkPen(pg.mkColor(0, 147, 54), width=1.2),
-    pg.mkPen(pg.mkColor(145, 130, 43), width=1.2)]
+    pg.mkPen(pg.mkColor(145, 130, 43), width=1.2),
+    pg.mkPen(pg.mkColor(0, 0, 0), width=1.2)]
 
 
 

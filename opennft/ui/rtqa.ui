@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1154</width>
-    <height>537</height>
+    <height>543</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -17,7 +17,7 @@
    </sizepolicy>
   </property>
   <property name="windowTitle">
-   <string>RTQA</string>
+   <string>rtQA</string>
   </property>
   <layout class="QHBoxLayout" name="horizontalLayout_3" stretch="1,0">
    <item>
@@ -67,30 +67,21 @@
          <item>
           <layout class="QHBoxLayout" name="horizontalLayout">
            <item>
-            <layout class="QVBoxLayout" name="verticalLayout_10" stretch="1,0">
+            <layout class="QVBoxLayout" name="verticalLayout_11" stretch="0,1">
              <item>
-              <layout class="QVBoxLayout" name="mcPlot"/>
-             </item>
-             <item>
-              <widget class="QLabel" name="mcLabel">
+              <widget class="QLabel" name="fdLabel">
+               <property name="font">
+                <font>
+                 <pointsize>12</pointsize>
+                </font>
+               </property>
                <property name="text">
-                <string>mcLabel</string>
+                <string>fdLabel</string>
                </property>
               </widget>
              </item>
-            </layout>
-           </item>
-           <item>
-            <layout class="QVBoxLayout" name="verticalLayout_11" stretch="1,0">
              <item>
-              <layout class="QVBoxLayout" name="tdPlot"/>
-             </item>
-             <item>
-              <widget class="QLabel" name="tdLabel">
-               <property name="text">
-                <string>tdLabel</string>
-               </property>
-              </widget>
+              <layout class="QVBoxLayout" name="fdPlot"/>
              </item>
             </layout>
            </item>
@@ -99,30 +90,44 @@
          <item>
           <layout class="QHBoxLayout" name="horizontalLayout_2">
            <item>
-            <layout class="QVBoxLayout" name="verticalLayout_13" stretch="1,0">
+            <layout class="QVBoxLayout" name="verticalLayout_13" stretch="0,1">
              <item>
-              <layout class="QVBoxLayout" name="fdPlot"/>
-             </item>
-             <item>
-              <widget class="QLabel" name="fdLabel">
+              <widget class="QLabel" name="tdLabel">
+               <property name="font">
+                <font>
+                 <pointsize>12</pointsize>
+                </font>
+               </property>
                <property name="text">
-                <string>fdLabel</string>
+                <string>tdLabel</string>
                </property>
               </widget>
              </item>
+             <item>
+              <layout class="QVBoxLayout" name="tdPlot"/>
+             </item>
             </layout>
            </item>
+          </layout>
+         </item>
+         <item>
+          <layout class="QHBoxLayout" name="horizontalLayout_5">
            <item>
-            <layout class="QVBoxLayout" name="verticalLayout_12" stretch="1,0">
-             <item>
-              <layout class="QVBoxLayout" name="rdPlot"/>
-             </item>
+            <layout class="QVBoxLayout" name="verticalLayout_12" stretch="0,0">
              <item>
               <widget class="QLabel" name="rdLabel">
+               <property name="font">
+                <font>
+                 <pointsize>12</pointsize>
+                </font>
+               </property>
                <property name="text">
                 <string>rdLabel</string>
                </property>
               </widget>
+             </item>
+             <item>
+              <layout class="QVBoxLayout" name="rdPlot"/>
              </item>
             </layout>
            </item>
@@ -295,27 +300,23 @@
          <item>
           <widget class="QGroupBox" name="groupBox">
            <property name="title">
-            <string>GroupBox</string>
+            <string>Submodes</string>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_14">
             <item>
-             <widget class="QRadioButton" name="mdRadioButton">
+             <widget class="QRadioButton" name="fdRadioButton">
               <property name="text">
-               <string>Motion Displacement</string>
+               <string>Framewise displacement</string>
+              </property>
+              <property name="checked">
+               <bool>true</bool>
               </property>
              </widget>
             </item>
             <item>
-             <widget class="QRadioButton" name="radioButton_2">
+             <widget class="QRadioButton" name="mcrRadioButton">
               <property name="text">
-               <string>RadioButton</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QRadioButton" name="radioButton_3">
-              <property name="text">
-               <string>RadioButton</string>
+               <string>Van Dijk criteria</string>
               </property>
              </widget>
             </item>

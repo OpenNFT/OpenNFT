@@ -24,6 +24,7 @@ class FD:
         self.threshold = c.DEFAULT_FD_THRESHOLDS
 
         self.xmax = xmax
+        self.fd = 0;
 
                 
     # FD computation 
@@ -38,60 +39,26 @@ class FD:
               sum(np.absolute(self._ri(j)-self._ri(i))) * self.radius
               
     def all_fd(self):
-       fd = np.zeros(self.data.shape[0])
-       for i in range(1, self.data.shape[0]):
-           fd[i] = self._ij_FD(i-1,i)
-       return fd
+       i = len(self.data)-1
+       self.fd = np.append(self.fd, self._ij_FD(i-1,i))
+       return self.fd
 
-    def draw_mc_plots(self, init, outputSamples, plotitem, md):
-        if not outputSamples:
-            return
-    
-        # get data, compute X from data length
-        k = np.array(outputSamples['motCorrParam'])
-        self.data = np.array(k).astype(np.float)
+    def draw_mc_plots(self, data, trPlotitem, rotPlotitem, fdPlotitem):
+
+        self.data = np.vstack((self.data,data))
         x = np.arange(1, self.data.shape[0] + 1, dtype=np.float64)
-                    
-        # retrieve plot information from openNFT
-        mctrrot = plotitem
-    
-        # initialise plot
-        if init:
-            mctrrot.clear()
-                        
-            if md in self.mode['tr']:
-                for i in range(0, 3):
-                    mctrrot.plot(x=x, y=self.data[:, i], pen=c.PLOT_PEN_COLORS[i], name=self.names[i])
-                        
-            elif md in self.mode['rot']:
-                for i in range(3, 6):
-                    mctrrot.plot(x=x, y=self.data[:, i], pen=c.PLOT_PEN_COLORS[i], name=self.names[i])
-                        
-            elif md in self.mode['fd']:
-                mctrrot.plot(x=x, y=self.all_fd(), pen=c.PLOT_PEN_COLORS[0], name='FD')
-                for i,t in enumerate(self.threshold):
-                    mctrrot.plot(x=np.arange(0,self.xmax, dtype=np.float64), y=float(t)*np.ones(self.xmax), pen=c.PLOT_PEN_COLORS[i+1], name='thr' + str(i))
-                
-            else:
-                for i in range(0, 6):
-                    mctrrot.plot(x=x, y=self.data[:, i],pen=c.PLOT_PEN_COLORS[i], name=self.names[i])
 
-        if md in self.mode['tr']:
-            for i,plt in enumerate(mctrrot.listDataItems()):
-                plt.setData(x=x, y=self.data[:, i])
-        
-        elif md in self.mode['rot']:
-            for i,plt in enumerate(mctrrot.listDataItems()):
-                plt.setData(x=x, y=self.data[:, i+3])
-        
-        elif md in self.mode['fd']:
-            for i,plt in enumerate(mctrrot.listDataItems()):
-                if i == 0:
-                    plt.setData(x=x, y=self.all_fd())
-                else:
-                    t = self.threshold[i-1]
-                    plt.setData(x=np.arange(0,self.xmax, dtype=np.float64), y=float(t)*np.ones(self.xmax))
+        trPlotitem.clear()
+        rotPlotitem.clear()
+        fdPlotitem.clear()
 
-        else: # legacy
-            for i,plt in enumerate(mctrrot.listDataItems()):
-                plt.setData(x=x, y=self.data[:, i])
+        for i in range(0, 3):
+            trPlotitem.plot(x=x, y=self.data[:, i], pen=c.PLOT_PEN_COLORS[i], name=self.names[i])
+
+        for i in range(3, 6):
+            rotPlotitem.plot(x=x, y=self.data[:, i], pen=c.PLOT_PEN_COLORS[i], name=self.names[i])
+
+        fdPlotitem.plot(x=x, y=self.all_fd(), pen=c.PLOT_PEN_COLORS[0], name='FD')
+        for i,t in enumerate(self.threshold):
+            fdPlotitem.plot(x=np.arange(0,self.xmax, dtype=np.float64), y=float(t)*np.ones(self.xmax), pen=c.PLOT_PEN_COLORS[i+1], name='thr' + str(i))
+
