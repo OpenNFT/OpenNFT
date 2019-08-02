@@ -497,20 +497,19 @@ class OpenNFT(QWidget):
         self.engSPM.helperPrepareOrthView(self.spmHelperP, 'bgEPI', nargout=0)
 
     # --------------------------------------------------------------------------
-    def getOrthViewImages(self):
-        filenameTargetOverlay = self.eng.evalin('base', 'P.memMapFile')
-        filenameBackgroundOverlay = self.eng.evalin('base', 'P.memMapFile')
+    def readOrthViewImages(self):
+        memmap_fname = self.eng.evalin('base', 'P.memMapFile')
 
-        # file for SNR or stat
-        filenameTargetOverlay = filenameTargetOverlay.replace('shared', 'OrthView')
-        # file for background anat or epi
-        filenameBackgroundOverlay = filenameBackgroundOverlay.replace('shared', 'BackgOrthView')
+        # background anat or epi
+        background_memmap_fname = memmap_fname.replace('shared', 'BackgOrthView')
+        self.proj_background_images_reader.read(background_memmap_fname, self.engSPM)
+
+        # SNR or stat map
+        map_memmap_fname = memmap_fname.replace('shared', 'OrthView')
+        self.proj_map_images_reader.read(map_memmap_fname, self.engSPM)
 
         # ROI from helperP
         self.spmHelperP = self.engSPM.workspace['helperP']
-
-        self.proj_background_images_reader.read(filenameBackgroundOverlay, self.engSPM)
-        self.proj_map_images_reader.read(filenameTargetOverlay, self.engSPM)
 
     # --------------------------------------------------------------------------
     def displayScreen(self):
@@ -1406,7 +1405,7 @@ class OpenNFT(QWidget):
         self.orthViewUpdateInProgress = True
 
         # with utils.timeit('Getting new orthview projections...'):
-        self.getOrthViewImages()
+        self.readOrthViewImages()
 
         alpha = self.sliderStatsAlpha.value() / 100.0
 
