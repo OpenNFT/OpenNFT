@@ -1028,6 +1028,8 @@ class OpenNFT(QWidget):
         self.rawRoiPlot.getPlotItem().clear()
         self.normRoiPlot.getPlotItem().clear()
 
+        self.hot_map_thresholds_widget.reset()
+
         self.mosaicImageView.clear()
         self.orthView.clear()
 
@@ -1129,8 +1131,6 @@ class OpenNFT(QWidget):
             else:
                 xrange = max(self.musterInfo['tmpCond1'][-1][1],
                              self.musterInfo['tmpCond2'][-1][1])
-
-            self.hot_map_thresholds_widget.reset()
 
             self.windowRTQA = rtqa.RTQAWindow(xrange, parent=self)
             self.windowRTQA.volumeCheckBox.stateChanged.connect(self.onShowSnrVol)
@@ -1361,6 +1361,9 @@ class OpenNFT(QWidget):
         #         pos, proj, bgType, async=True, nargout=0)
 
     def onSetMapImageManually(self):
+        if self.resetDone:
+            return
+
         self.hot_map_thresholds_widget.auto_thresholds = False
 
         alpha = self.sliderStatsAlpha.value() / 100.0
