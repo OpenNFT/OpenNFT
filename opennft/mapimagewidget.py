@@ -17,6 +17,7 @@ from PyQt5 import QtCore
 from opennft import pgext
 
 
+ColormapType = t.Union[str, colors.Colormap]
 Thresholds = collections.namedtuple('Thresholds', ('lower', 'upper'))
 
 
@@ -61,8 +62,7 @@ class RgbaMapImage:
 
     _cmap = None
 
-    def __init__(self, colormap: t.Union[str, colors.Colormap] = 'hot',
-                 no_value: float = 0.0):
+    def __init__(self, colormap: ColormapType = 'hot', no_value: float = 0.0):
         self._no_value = no_value
         self.colormap = colormap
 
@@ -111,8 +111,10 @@ class MapImageThresholdsWidget(QtWidgets.QWidget):
     MAX_THRESHOLD = 255
     STEP = 5
 
-    def __init__(self, parent: QtCore.QObject = None):
+    def __init__(self, parent: QtCore.QObject = None, colormap: ColormapType = 'hot'):
         super().__init__(parent)
+
+        self._colormap = colormap
 
         self._lower_threshold_spinbox = QtWidgets.QDoubleSpinBox(self)
         self._upper_threshold_spinbox = QtWidgets.QDoubleSpinBox(self)
@@ -187,7 +189,7 @@ class MapImageThresholdsWidget(QtWidgets.QWidget):
 
     def compute_rgba(self, map_image, alpha: float = 1.0):
         thresholds = self._get_thresholds()
-        rgba_stats_map = RgbaMapImage(no_value=self._map_no_value)
+        rgba_stats_map = RgbaMapImage(colormap=self._colormap, no_value=self._map_no_value)
         return rgba_stats_map(map_image, thresholds, alpha)
 
     def resizeEvent(self, ev):
@@ -200,7 +202,7 @@ class MapImageThresholdsWidget(QtWidgets.QWidget):
 
         colorbar_values = np.linspace(0., 1., w)
         colorbar_image = np.array(colorbar_values, ndmin=2).repeat(h, axis=0)
-        colorbar_rgba = RgbaMapImage(no_value=-1)(colorbar_image)
+        colorbar_rgba = RgbaMapImage(colormap=self._colormap, no_value=-1)(colorbar_image)
 
         self._colorbar_imageitem.setImage(colorbar_rgba.transpose((1, 0, 2)))
         self._colorbar_viewbox.autoRange()
