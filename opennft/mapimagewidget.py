@@ -61,9 +61,10 @@ class RgbaMapImage:
 
     _cmap = None
 
-    def __init__(self, no_value: float = 0.0):
+    def __init__(self, colormap: t.Union[str, colors.Colormap] = 'hot',
+                 no_value: float = 0.0):
         self._no_value = no_value
-        self.colormap = 'hot'
+        self.colormap = colormap
 
     @property
     def colormap(self) -> colors.Colormap:
