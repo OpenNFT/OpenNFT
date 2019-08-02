@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1253</width>
+    <width>1393</width>
     <height>846</height>
    </rect>
   </property>
@@ -491,7 +491,7 @@
              </widget>
             </item>
             <item>
-             <layout class="QHBoxLayout" name="horizontalLayout_6" stretch="0,0,0,0,1,1">
+             <layout class="QHBoxLayout" name="horizontalLayout_6" stretch="0,0,0,0,1,0,0,1,0">
               <item>
                <widget class="QLabel" name="label_12">
                 <property name="text">
@@ -528,12 +528,18 @@
               <item>
                <widget class="QLabel" name="label_3">
                 <property name="text">
-                 <string>Stats Transparency</string>
+                 <string>Transparency</string>
                 </property>
                </widget>
               </item>
               <item>
                <widget class="QSlider" name="sliderStatsAlpha">
+                <property name="minimumSize">
+                 <size>
+                  <width>80</width>
+                  <height>0</height>
+                 </size>
+                </property>
                 <property name="maximumSize">
                  <size>
                   <width>200</width>
@@ -553,6 +559,23 @@
                  <enum>QSlider::NoTicks</enum>
                 </property>
                </widget>
+              </item>
+              <item>
+               <widget class="Line" name="line_8">
+                <property name="orientation">
+                 <enum>Qt::Vertical</enum>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QLabel" name="label_15">
+                <property name="text">
+                 <string>Thresholds</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <layout class="QHBoxLayout" name="layoutHotMapThresholds"/>
               </item>
               <item>
                <spacer name="horizontalSpacer_8">

@@ -59,10 +59,18 @@ from PyQt5.QtCore import QSettings, QTimer, QEvent, QRegExp
 from PyQt5.uic import loadUi
 from PyQt5.QtGui import QRegExpValidator
 
-from opennft import eventrecorder as erd
-from opennft import config, runmatlab, ptbscreen, mmapimage, mosaicview, projview, utils
-from opennft import statsmap
-from opennft import rtqa
+from opennft import (
+    config,
+    runmatlab,
+    ptbscreen,
+    mmapimage,
+    mosaicview,
+    projview,
+    mapimagewidget,
+    utils,
+    rtqa,
+    eventrecorder as erd,
+)
 
 if config.USE_MRPULSE:
     from opennft import mrpulse
@@ -150,8 +158,10 @@ class OpenNFT(QWidget):
         self.layoutOrthView.addWidget(self.orthView)
 
         self.proj_background_images_reader = mmapimage.ProjectionImagesReader()
-        self.proj_stats_map_images_reader = mmapimage.ProjectionImagesReader()
-        self.rgba_stats_map = statsmap.RgbaStatsMap()
+        self.proj_map_images_reader = mmapimage.ProjectionImagesReader()
+
+        self.hot_map_thresholds_widget = mapimagewidget.MapImageThresholdsWidget(self)
+        self.layoutHotMapThresholds.addWidget(self.hot_map_thresholds_widget)
 
         self.mcPlot = self.createMcPlot()
 
@@ -225,6 +235,9 @@ class OpenNFT(QWidget):
         self.writeAppSettings()
         self.stop()
         self.hide()
+
+        self.proj_background_images_reader.clear()
+        self.proj_map_images_reader.clear()
 
         self.eng = None
         self.engSPM = None
@@ -394,6 +407,10 @@ class OpenNFT(QWidget):
         self.leUDPFeedbackIP.setValidator(
             QRegExpValidator(QRegExp("[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}"), self))
         self.cbUseUDPFeedback.stateChanged.connect(self.onChangeUseUDPFeedback)
+
+        self.sliderStatsAlpha.valueChanged.connect(self.onSetMapImageManually)
+        self.hot_map_thresholds_widget.thresholds_manually_changed.connect(self.onSetMapImageManually)
+
         self.onChangeUseUDPFeedback()
 
     # --------------------------------------------------------------------------
@@ -487,7 +504,7 @@ class OpenNFT(QWidget):
         self.spmHelperP = self.engSPM.workspace['helperP']
 
         self.proj_background_images_reader.read(filenameBackgroundOverlay, self.engSPM)
-        self.proj_stats_map_images_reader.read(filenameTargetOverlay, self.engSPM)
+        self.proj_map_images_reader.read(filenameTargetOverlay, self.engSPM)
 
     # --------------------------------------------------------------------------
     def displayScreen(self):
@@ -1113,6 +1130,8 @@ class OpenNFT(QWidget):
                 xrange = max(self.musterInfo['tmpCond1'][-1][1],
                              self.musterInfo['tmpCond2'][-1][1])
 
+            self.hot_map_thresholds_widget.reset()
+
             self.windowRTQA = rtqa.RTQAWindow(xrange, parent=self)
             self.windowRTQA.volumeCheckBox.stateChanged.connect(self.onShowSnrVol)
             self.windowRTQA.smoothedCheckBox.stateChanged.connect(self.onSmoothedChecked)
@@ -1163,9 +1182,6 @@ class OpenNFT(QWidget):
 
         if config.USE_SLEEP_IN_STOP:
             time.sleep(2)
-
-        self.proj_background_images_reader.clear()
-        self.proj_stats_map_images_reader.clear()
 
         self.resetDone = False
 
@@ -1344,6 +1360,24 @@ class OpenNFT(QWidget):
         #     self.orthViewUpdateFuture = self.engSPM.helperUpdateOrthView(
         #         pos, proj, bgType, async=True, nargout=0)
 
+    def onSetMapImageManually(self):
+        self.hot_map_thresholds_widget.auto_thresholds = False
+
+        alpha = self.sliderStatsAlpha.value() / 100.0
+
+        # TODO: Fix mosaic image read/display
+        # if self.imageViewMode == ImageViewMode.mosaic:
+        #     self.displayMosaicImage()
+
+        for proj in projview.ProjectionType:
+            map_image = self.proj_map_images_reader.proj_image(proj)
+
+            if map_image is not None:
+                rgba_map_image = self.hot_map_thresholds_widget.compute_rgba(map_image, alpha=alpha)
+
+                if rgba_map_image is not None:
+                    self.orthView.set_map_image(proj, rgba_map_image)
+
     # --------------------------------------------------------------------------
     def onCheckOrthViewUpdated(self):
         if not self.orthViewUpdateFuture or not self.orthViewUpdateFuture.done():
@@ -1356,12 +1390,25 @@ class OpenNFT(QWidget):
 
         alpha = self.sliderStatsAlpha.value() / 100.0
 
-        for proj in projview.ProjectionType:
-            self.orthView.set_background_image(proj, self.proj_background_images_reader.proj_image(proj))
+        if self.imageViewMode != ImageViewMode.mosaic:
+            maps_values = np.array([], dtype=np.uint8)
 
-            stats_map = self.rgba_stats_map(self.proj_stats_map_images_reader.proj_image(proj), alpha=alpha)
-            if stats_map is not None:
-                self.orthView.set_stats_map_image(proj, stats_map)
+            for proj in projview.ProjectionType:
+                map_image = self.proj_map_images_reader.proj_image(proj)
+                maps_values = np.append(maps_values, map_image.ravel())
+
+            if maps_values.size > 0:
+                self.hot_map_thresholds_widget.compute_thresholds(maps_values)
+
+        for proj in projview.ProjectionType:
+            bg_image = self.proj_background_images_reader.proj_image(proj)
+            self.orthView.set_background_image(proj, bg_image)
+
+            map_image = self.proj_map_images_reader.proj_image(proj)
+            rgba_map_image = self.hot_map_thresholds_widget.compute_rgba(map_image, alpha=alpha)
+
+            if rgba_map_image is not None:
+                self.orthView.set_map_image(proj, rgba_map_image)
 
         self.orthView.set_roi(projview.ProjectionType.transversal, self.spmHelperP['tRoiBoundaries'])
         self.orthView.set_roi(projview.ProjectionType.coronal, self.spmHelperP['cRoiBoundaries'])
@@ -1658,7 +1705,7 @@ class OpenNFT(QWidget):
     # --------------------------------------------------------------------------
     def displayMosaicImage(self):
         background_image = None
-        stats_map_image = None
+        map_image = None
 
         if 'imgViewTempl' not in self.P:
             if self.eng.evalin('base', 'length(imgViewTempl)') > 0:
@@ -1683,18 +1730,18 @@ class OpenNFT(QWidget):
                      or is_snr_map_created and is_rtqa_volume_checked)):
             with utils.timeit("Receiving 'statMap2D' from Matlab:"):
                 filename = self.eng.evalin('base', 'P.memMapFile').replace('shared', 'map_2D')
-                stats_map_image = mmapimage.read_mosaic_image(filename, 'statMap2D', self.eng)
+                map_image = mmapimage.read_mosaic_image(filename, 'statMap2D', self.eng)
 
-        if stats_map_image is None:
-            self.mosaicImageView.clear_stats_map()
-        else:
+        if map_image is not None:
             alpha = self.sliderStatsAlpha.value() / 100.0
-            rgba_stats_map_image = self.rgba_stats_map(stats_map_image, alpha=alpha)
 
-            if rgba_stats_map_image is None:
-                self.mosaicImageView.clear_stats_map()
-            else:
-                self.mosaicImageView.set_stats_map_image(rgba_stats_map_image)
+            self.hot_map_thresholds_widget.compute_thresholds(map_image)
+            rgba_map_image = self.hot_map_thresholds_widget.compute_rgba(map_image, alpha=alpha)
+
+            if rgba_map_image is not None:
+                self.mosaicImageView.set_map_image(rgba_map_image)
+        else:
+            self.mosaicImageView.clear_map()
 
     # --------------------------------------------------------------------------
     def createMusterInfo(self):

@@ -16,7 +16,7 @@ class MosaicImageViewWidget(QtWidgets.QWidget):
         super().__init__(parent=parent)
 
         self._background_imitem = pg.ImageItem(autoDownsample=True)
-        self._stats_map_imitem = pg.ImageItem(autoDownsample=True)
+        self._map_imitem = pg.ImageItem(autoDownsample=True)
 
         viewbox = pgext.ViewBoxWithoutPadding(
             lockAspect=True,
@@ -26,7 +26,7 @@ class MosaicImageViewWidget(QtWidgets.QWidget):
         )
 
         viewbox.addItem(self._background_imitem)
-        viewbox.addItem(self._stats_map_imitem)
+        viewbox.addItem(self._map_imitem)
 
         glayout = pg.GraphicsLayoutWidget(self)
         glayout.ci.layout.setContentsMargins(0, 0, 0, 0)
@@ -41,12 +41,12 @@ class MosaicImageViewWidget(QtWidgets.QWidget):
     def set_background_image(self, image: np.ndarray):
         self._background_imitem.setImage(image.T)
 
-    def set_stats_map_image(self, image: np.ndarray):
-        self._stats_map_imitem.setImage(image.transpose((1, 0, 2)))
+    def set_map_image(self, image: np.ndarray):
+        self._map_imitem.setImage(image.transpose((1, 0, 2)))
 
     def clear(self):
         self._background_imitem.clear()
-        self._stats_map_imitem.clear()
+        self._map_imitem.clear()
 
-    def clear_stats_map(self):
-        self._stats_map_imitem.clear()
+    def clear_map(self):
+        self._map_imitem.clear()
