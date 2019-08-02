@@ -1373,7 +1373,8 @@ class OpenNFT(QWidget):
         #         pos, proj, bgType, async=True, nargout=0)
 
     def onInteractWithMapImage(self):
-        self.hot_map_thresholds_widget.auto_thresholds = False
+        if self.sender() is self.hot_map_thresholds_widget:
+            self.hot_map_thresholds_widget.auto_thresholds = False
 
         alpha = self.sliderStatsAlpha.value() / 100.0
 
