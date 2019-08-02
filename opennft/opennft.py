@@ -1373,19 +1373,19 @@ class OpenNFT(QWidget):
         #         pos, proj, bgType, async=True, nargout=0)
 
     def onInteractWithMapImage(self):
-        if self.resetDone:
-            return
-
         self.hot_map_thresholds_widget.auto_thresholds = False
 
         alpha = self.sliderStatsAlpha.value() / 100.0
 
         if self.imageViewMode == ImageViewMode.mosaic:
-            rgba_map_image = self.hot_map_thresholds_widget.compute_rgba(
-                self.mosaic_map_image_reader.image, alpha=alpha)
+            map_image = self.mosaic_map_image_reader.image
 
-            if rgba_map_image is not None:
-                self.mosaicImageView.set_map_image(rgba_map_image)
+            if map_image is not None:
+                rgba_map_image = self.hot_map_thresholds_widget.compute_rgba(
+                    map_image, alpha=alpha)
+
+                if rgba_map_image is not None:
+                    self.mosaicImageView.set_map_image(rgba_map_image)
 
         for proj in projview.ProjectionType:
             map_image = self.proj_map_images_reader.proj_image(proj)
