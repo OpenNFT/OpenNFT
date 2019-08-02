@@ -21,6 +21,10 @@ ColormapType = t.Union[str, colors.Colormap]
 Thresholds = collections.namedtuple('Thresholds', ('lower', 'upper'))
 
 
+HOT_COLORMAP = 'hot'
+COLD_COLORMAP = 'Blues_r'
+
+
 class MapImageThresholdsCalculator:
     """Statistics/CNR map thresholds calculator class
 
@@ -62,7 +66,7 @@ class RgbaMapImage:
 
     _cmap = None
 
-    def __init__(self, colormap: ColormapType = 'hot', no_value: float = 0.0):
+    def __init__(self, colormap: ColormapType = HOT_COLORMAP, no_value: float = 0.0):
         self._no_value = no_value
         self.colormap = colormap
 
@@ -111,7 +115,7 @@ class MapImageThresholdsWidget(QtWidgets.QWidget):
     MAX_THRESHOLD = 255
     STEP = 5
 
-    def __init__(self, parent: QtCore.QObject = None, colormap: ColormapType = 'hot'):
+    def __init__(self, parent: QtCore.QObject = None, colormap: ColormapType = HOT_COLORMAP):
         super().__init__(parent)
 
         self._colormap = colormap
