@@ -406,12 +406,13 @@ class OpenNFT(QWidget):
         self.cbUsePTB.stateChanged.connect(self.onChangePTB)
         self.onChangePTB()
 
-        self.leTCPDataIP.setValidator(QRegExpValidator(QRegExp("[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}"), self))
+        ipv4_regexp = QRegExp(r"[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}")
+
+        self.leTCPDataIP.setValidator(QRegExpValidator(ipv4_regexp, self))
         self.cbUseTCPData.stateChanged.connect(self.onChangeUseTCPData)
         self.onChangeUseTCPData()
 
-        self.leUDPFeedbackIP.setValidator(
-            QRegExpValidator(QRegExp("[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}"), self))
+        self.leUDPFeedbackIP.setValidator(QRegExpValidator(ipv4_regexp, self))
         self.cbUseUDPFeedback.stateChanged.connect(self.onChangeUseUDPFeedback)
 
         self.sliderStatsAlpha.valueChanged.connect(self.onInteractWithMapImage)
