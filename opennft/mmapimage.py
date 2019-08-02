@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 
 import collections
+import typing as t
+
 import numpy as np
 
 from opennft.projview import ProjectionType
@@ -31,6 +33,26 @@ def read_mosaic_image(memmap_filename: str, image_name, eng) -> np.ndarray:
     """
     shape = get_image_shape(image_name, eng, nargout=2)
     return read_memmap_image(memmap_filename, shape=shape, offset=0)
+
+
+class MosaicImageReader:
+    """The class for reading mosaic images from memmap file
+    """
+
+    def __init__(self, image_name: str):
+        self._image = None  # type: t.Optional[np.ndarray]
+        self._image_name = image_name
+        self.clear()
+
+    @property
+    def image(self):
+        return self._image
+
+    def read(self, memmap_filename: str, matlab_engine):
+        self._image = read_mosaic_image(memmap_filename, self._image_name, matlab_engine)
+
+    def clear(self):
+        self._image = None
 
 
 class ProjectionImagesReader:
