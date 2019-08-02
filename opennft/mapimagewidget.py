@@ -173,8 +173,7 @@ class MapImageThresholdsWidget(QtWidgets.QWidget):
 
     def reset(self):
         self._auto_thresholds = True
-        self._lower_threshold_spinbox.setValue(0.0)
-        self._upper_threshold_spinbox.setValue(255.0)
+        self._set_thresholds(Thresholds(self.MIN_THRESHOLD, self.MAX_THRESHOLD))
 
     def compute_thresholds(self, map_values: np.ndarray):
         if not self.auto_thresholds:
@@ -183,14 +182,7 @@ class MapImageThresholdsWidget(QtWidgets.QWidget):
         thr_claculator = MapImageThresholdsCalculator(no_value=self._map_no_value)
         thresholds = thr_claculator(map_values)
 
-        self._lower_threshold_spinbox.blockSignals(True)
-        self._upper_threshold_spinbox.blockSignals(True)
-
-        self._lower_threshold_spinbox.setValue(thresholds.lower)
-        self._upper_threshold_spinbox.setValue(thresholds.upper)
-
-        self._lower_threshold_spinbox.blockSignals(False)
-        self._upper_threshold_spinbox.blockSignals(False)
+        self._set_thresholds(thresholds)
 
     def compute_rgba(self, map_image, alpha: float = 1.0):
         thresholds = self._get_thresholds()
@@ -211,6 +203,16 @@ class MapImageThresholdsWidget(QtWidgets.QWidget):
 
         self._colorbar_imageitem.setImage(colorbar_rgba.transpose((1, 0, 2)))
         self._colorbar_viewbox.autoRange()
+
+    def _set_thresholds(self, thresholds):
+        self._lower_threshold_spinbox.blockSignals(True)
+        self._upper_threshold_spinbox.blockSignals(True)
+
+        self._lower_threshold_spinbox.setValue(thresholds.lower)
+        self._upper_threshold_spinbox.setValue(thresholds.upper)
+
+        self._lower_threshold_spinbox.blockSignals(False)
+        self._upper_threshold_spinbox.blockSignals(False)
 
     def _get_thresholds(self):
         lower = self._lower_threshold_spinbox.value()
