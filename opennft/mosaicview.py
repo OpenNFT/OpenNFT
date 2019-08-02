@@ -18,25 +18,28 @@ class MosaicImageViewWidget(QtWidgets.QWidget):
         self._background_imitem = pg.ImageItem(autoDownsample=True)
         self._map_imitem = pg.ImageItem(autoDownsample=True)
 
-        viewbox = pgext.ViewBoxWithoutPadding(
+        self._viewbox = pgext.ViewBoxWithoutPadding(
             lockAspect=True,
-            enableMouse=False,
+            enableMouse=True,
             enableMenu=False,
             invertY=True,
         )
 
-        viewbox.addItem(self._background_imitem)
-        viewbox.addItem(self._map_imitem)
+        self._viewbox.addItem(self._background_imitem)
+        self._viewbox.addItem(self._map_imitem)
 
         glayout = pg.GraphicsLayoutWidget(self)
         glayout.ci.layout.setContentsMargins(0, 0, 0, 0)
-        glayout.addItem(viewbox)
+        glayout.addItem(self._viewbox)
 
         self._layout = QtWidgets.QVBoxLayout(self)
         self._layout.setContentsMargins(0, 0, 0, 0)
         self._layout.addWidget(glayout)
 
         self.setLayout(self._layout)
+
+    def mouseDoubleClickEvent(self, ev):
+        self._viewbox.autoRange()
 
     def set_background_image(self, image: np.ndarray):
         self._background_imitem.setImage(image.T)
