@@ -64,22 +64,14 @@ class RgbaMapImage:
     """Represents the mapper map image to RGBA
     """
 
-    _cmap = None
-
     def __init__(self, colormap: ColormapType = HOT_COLORMAP, no_value: float = 0.0):
         self._no_value = no_value
-        self.colormap = colormap
 
-    @property
-    def colormap(self) -> colors.Colormap:
-        return self._cmap
+        if isinstance(colormap, str):
+            colormap = cm.get_cmap(colormap)
 
-    @colormap.setter
-    def colormap(self, cmap: colors.Colormap):
-        if isinstance(cmap, str):
-            cmap = cm.get_cmap(cmap)
-        self._cmap = cmap
-        self._cmap.set_bad(alpha=0.0)
+        self._colormap = colormap
+        self._colormap.set_bad(alpha=0.0)
 
     def __call__(self, map_image: np.ndarray, thresholds: t.Optional[Thresholds] = None,
                  alpha: float = 1.0) -> t.Optional[np.ndarray]:
@@ -100,7 +92,7 @@ class RgbaMapImage:
         vmax = stats_map_ma.max()
 
         normalizer = colors.Normalize(vmin=vmin, vmax=vmax)
-        mapper = cm.ScalarMappable(norm=normalizer, cmap=self._cmap)
+        mapper = cm.ScalarMappable(norm=normalizer, cmap=self._colormap)
 
         return mapper.to_rgba(stats_map_ma, alpha=alpha)
 
