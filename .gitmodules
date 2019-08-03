@@ -1,0 +1,3 @@
+[submodule "opennft/matlab/mlniexp"]
+	path = opennft/matlab/mlniexp
+	url = https://github.com/tiborauer/mlniexp
