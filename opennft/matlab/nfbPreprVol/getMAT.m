@@ -2,7 +2,7 @@ function mat = getMAT(hdr,dim)
 %
 % Function to format brain volume orientation information.
 % Note, it is currently disabled in OpenNFT, due to large heterogenity of
-% real-time export comnfigurations.
+% real-time export configurations.
 % Note, an end-user is adviced to carefully ensure the spatial orientation 
 % of their real-time data.
 %
