@@ -124,14 +124,6 @@ class OpenNFT(QWidget):
         self.udpSender.close()
 
     # --------------------------------------------------------------------------
-    def initTcpReceiver(self):
-        self.TcpReceiver = 0
-
-    # --------------------------------------------------------------------------
-    def finalizeTcpReceiver(self):
-        self.TcpReceiver
-
-    # --------------------------------------------------------------------------
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -413,6 +405,9 @@ class OpenNFT(QWidget):
         self.call_timer.timeout.connect(self.callMainLoopIteration)
         self.orthViewUpdateCheckTimer.timeout.connect(self.onCheckOrthViewUpdated)
 
+        self.cbDataType.currentTextChanged.connect(self.onChangeDataType)
+        self.onChangeDataType()
+
         self.cbUsePTB.stateChanged.connect(self.onChangePTB)
         self.onChangePTB()
 
@@ -462,6 +457,12 @@ class OpenNFT(QWidget):
         else:
             neg_map_state = getattr(self, '__neg_map_state', self.negMapCheckBox.isChecked())
             self.negMapCheckBox.setChecked(neg_map_state)
+
+    # --------------------------------------------------------------------------
+    def onChangeDataType(self):
+        self.cbgetMAT.setChecked(self.cbgetMAT.isChecked() and self.cbDataType.currentText() == 'DICOM')
+        self.cbgetMAT.setEnabled(self.cbDataType.currentText() == 'DICOM')
+        print(self.cbgetMAT.isChecked())
 
     # --------------------------------------------------------------------------
     def onChangePTB(self):
@@ -1188,7 +1189,6 @@ class OpenNFT(QWidget):
             self.eng.nfbInitReward(nargout=0)
 
             self.initUdpSender()
-            self.initTcpReceiver()
 
             self.btnStart.setEnabled(True)
             self.btnRTQA.setEnabled(True)
@@ -1296,8 +1296,6 @@ class OpenNFT(QWidget):
 
         if self.fFinNFB:
             self.finalizeUdpSender()
-            if self.cbUseTCPData.isChecked():
-                self.finalizeTcpReceiver()
             self.eng.workspace['rtQA_python'] = self.windowRTQA.data_packing()
             self.nfbFinStarted = self.eng.nfbSave(self.iteration, nargout=0, async=True)
             self.fFinNFB = False
@@ -1690,6 +1688,10 @@ class OpenNFT(QWidget):
         self.P['MatrixSizeX'] = self.sbMatrixSize.value()
 
         # --- bottom left ---
+        self.P['UseTCPData'] = self.cbUseTCPData.isChecked()
+        if self.P['UseTCPData']:
+            self.P['TCPDataIP'] = self.leTCPDataIP.text()
+            self.P['TCPDataPort'] = int(self.leTCPDataPort.text())
         self.P['DisplayFeedbackFullscreen'] = self.cbDisplayFeedbackFullscreen.isChecked()
 
         # --- bottom right ---
