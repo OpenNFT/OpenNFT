@@ -462,7 +462,6 @@ class OpenNFT(QWidget):
     def onChangeDataType(self):
         self.cbgetMAT.setChecked(self.cbgetMAT.isChecked() and self.cbDataType.currentText() == 'DICOM')
         self.cbgetMAT.setEnabled(self.cbDataType.currentText() == 'DICOM')
-        print(self.cbgetMAT.isChecked())
 
     # --------------------------------------------------------------------------
     def onChangePTB(self):
@@ -1607,6 +1606,7 @@ class OpenNFT(QWidget):
         idx = self.cbDataType.findText(self.settings.value('DataType', 'DICOM'))
         if idx >= 0:
             self.cbDataType.setCurrentIndex(idx)
+        self.cbgetMAT.setChecked(str(self.settings.value('GetMAT')).lower() == 'true')
         idx = self.cbProt.findText(self.settings.value('Prot', 'Inter'))
         if idx >= 0:
             self.cbProt.setCurrentIndex(idx)
@@ -1696,6 +1696,7 @@ class OpenNFT(QWidget):
 
         # --- bottom right ---
         self.P['DataType'] = str(self.cbDataType.currentText())
+        self.P['getMAT'] = self.cbgetMAT.isChecked()
         self.P['Prot'] = str(self.cbProt.currentText())
         self.P['Type'] = str(self.cbType.currentText())
         self.P['isRestingState'] = bool(self.cbProt.currentText() == "Rest")
@@ -1808,6 +1809,7 @@ class OpenNFT(QWidget):
 
         # --- bottom right ---
         self.settings.setValue('DataType', self.P['DataType'])
+        self.settings.setValue('GetMAT', self.P['getMAT'])
         self.settings.setValue('Prot', self.P['Prot'])
         self.settings.setValue('Type', self.P['Type'])
 
