@@ -645,19 +645,22 @@ class OpenNFT(QWidget):
                         logger.info('Sending by UDP - instrValue = ')  # + str(self.displayData['instrValue'])
                         # self.udpSender.send_data(self.displayData['instrValue'])
 
-        try:
-            fname = self.files_queue.get_nowait()
-        except queue.Empty:
-            if (self.previousIterStartTime > 0) and (self.preiteration < self.iteration):
-                if (time.time() - self.previousIterStartTime) > (self.P['TR'] / 1000):
-                    logger.info('Scanner is too slow...')
-            self.isMainLoopEntered = False
-            self.preiteration = self.iteration
-            return
+        if self.cbUseTCPData.isChecked() and self.eng.evalin('base','tcp.BytesAvailable'):
+            fname = self.P['FirstFileName'] # first file is required for initialization
+        else:
+            try:
+                fname = self.files_queue.get_nowait()
+            except queue.Empty:
+                if (self.previousIterStartTime > 0) and (self.preiteration < self.iteration):
+                    if (time.time() - self.previousIterStartTime) > (self.P['TR'] / 1000):
+                        logger.info('Scanner is too slow...')
+                self.isMainLoopEntered = False
+                self.preiteration = self.iteration
+                return
 
-        if not self.cbOfflineMode.isChecked() and self.files_queue.qsize() > 0:
-            logger.info("Toolbox is too slow, on file {}", fname)
-            logger.info("{} files in queue", self.files_queue.qsize())
+            if not self.cbOfflineMode.isChecked() and self.files_queue.qsize() > 0:
+                logger.info("Toolbox is too slow, on file {}", fname)
+                logger.info("{} files in queue", self.files_queue.qsize())
 
         self.preiteration = self.iteration
 
@@ -673,7 +676,7 @@ class OpenNFT(QWidget):
         #        return
 
         # data acquisition
-        if not self.cbOfflineMode.isChecked():
+        if not(self.cbUseTCPData.isChecked()) and not(self.cbOfflineMode.isChecked()):
             if not self.checkFileIsReady(path, fname):
                 self.isMainLoopEntered = False
                 return
