@@ -102,7 +102,7 @@
         <bool>false</bool>
        </property>
        <property name="text">
-        <string>RTQA</string>
+        <string>rtQA</string>
        </property>
       </widget>
      </item>
@@ -651,8 +651,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>1331</width>
-            <height>936</height>
+            <width>960</width>
+            <height>739</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_5">

@@ -24,7 +24,8 @@ class FD:
         self.threshold = c.DEFAULT_FD_THRESHOLDS
 
         self.xmax = xmax
-        self.fd = 0;
+        self.fd = 0
+        self.vdCriteria = [0]
 
                 
     # FD computation 
@@ -41,9 +42,21 @@ class FD:
     def all_fd(self):
        i = len(self.data)-1
        self.fd = np.append(self.fd, self._ij_FD(i-1,i))
-       return self.fd
 
-    def draw_mc_plots(self, data, trPlotitem, rotPlotitem, fdPlotitem):
+    def Van_Dijk_criteria(self):
+
+        n = len(self.vdCriteria) - 1
+        rmsDisp = 0;
+
+        for i in range(3):
+            rmsDisp += self.data[n, i]**2
+
+        rmsDisp = np.sqrt(rmsDisp)
+
+        self.vdCriteria = np.append(self.vdCriteria, abs(self.vdCriteria[n]-rmsDisp))
+
+
+    def draw_mc_plots(self, data, vdFlag, trPlotitem, rotPlotitem, fdPlotitem):
 
         self.data = np.vstack((self.data,data))
         x = np.arange(1, self.data.shape[0] + 1, dtype=np.float64)
@@ -51,6 +64,8 @@ class FD:
         trPlotitem.clear()
         rotPlotitem.clear()
         fdPlotitem.clear()
+        self.Van_Dijk_criteria()
+        self.all_fd()
 
         for i in range(0, 3):
             trPlotitem.plot(x=x, y=self.data[:, i], pen=c.PLOT_PEN_COLORS[i], name=self.names[i])
@@ -58,7 +73,14 @@ class FD:
         for i in range(3, 6):
             rotPlotitem.plot(x=x, y=self.data[:, i], pen=c.PLOT_PEN_COLORS[i], name=self.names[i])
 
-        fdPlotitem.plot(x=x, y=self.all_fd(), pen=c.PLOT_PEN_COLORS[0], name='FD')
-        for i,t in enumerate(self.threshold):
-            fdPlotitem.plot(x=np.arange(0,self.xmax, dtype=np.float64), y=float(t)*np.ones(self.xmax), pen=c.PLOT_PEN_COLORS[i+1], name='thr' + str(i))
+        if vdFlag:
+            fdPlotitem.plot(x=x, y=self.vdCriteria, pen=c.PLOT_PEN_COLORS[0], name='Micro displacement')
+            fdPlotitem.plot(x=np.arange(0, self.xmax, dtype=np.float64), y=self.threshold[0] * np.ones(self.xmax),
+                            pen=c.PLOT_PEN_COLORS[2], name='thr')
+        else:
+            fdPlotitem.plot(x=x, y=self.fd, pen=c.PLOT_PEN_COLORS[0], name='FD')
+            thresholds = self.threshold[1:3]
+            for i, t in enumerate(thresholds):
+                fdPlotitem.plot(x=np.arange(0, self.xmax, dtype=np.float64), y=float(t) * np.ones(self.xmax),
+                                pen=c.PLOT_PEN_COLORS[i + 1], name='thr' + str(i))
 

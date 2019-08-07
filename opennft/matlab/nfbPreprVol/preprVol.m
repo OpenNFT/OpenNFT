@@ -14,10 +14,12 @@ function preprVol(inpFileName, indVol)
 
 P = evalin('base', 'P');
 mainLoopData = evalin('base', 'mainLoopData');
-isShowSNR = evalin('base', 'isShowSNR');
+rtQAMode = evalin('base', 'rtQAMode');
+isShowRtqaVol = evalin('base', 'isShowRtqaVol');
 isSmoothed = evalin('base', 'isSmoothed');
 imageViewMode = evalin('base', 'imageViewMode');
 FIRST_SNR_VOLUME = evalin('base', 'FIRST_SNR_VOLUME');
+rtQAData = evalin('base', 'rtQAData');
 
 if indVol <= P.nrSkipVol
     return;
@@ -147,21 +149,28 @@ statMap2D = zeros(img2DdimY, img2DdimX);
 
 if indVolNorm > FIRST_SNR_VOLUME
     
-    [snrVol, mainLoopData.meanVol, mainLoopData.m2Vol, mainLoopData.meanVolSmoothed, mainLoopData.m2VolSmoothed] = snr_calc(indVolNorm, reslVol, smReslVol, mainLoopData.meanVol, mainLoopData.m2Vol,  mainLoopData.meanVolSmoothed, mainLoopData.m2VolSmoothed, isSmoothed);
-    mainLoopData.snrMapCreated = 1; 
+    [outputVol, rtQAData.snrData ] = snr_calc(indVolNorm, reslVol, smReslVol, rtQAData.snrData, isSmoothed);
     
+    [cnrVol, rtQAData.basData, rtQAData.condData] = cnr_calc(indVolNorm, reslVol, smReslVol, rtQAData.basData, rtQAData.condData, isSmoothed);
     
-    if isShowSNR
+    rtQAData.snrMapCreated = 1; 
+    
+    if isShowRtqaVol
+        
+        if rtQAMode
+            % 0 - SNR mode, 2 - CNR mode
+            outputVol = cnrVol;
+        end
    
         if imageViewMode == 1 || imageViewMode == 2
             % orthviewAnat (1) || orthviewEPI (2)
-            fname = strrep(P.memMapFile, 'shared', 'SNRVol');
-            m_out = memmapfile(fname, 'Writable', true, 'Format',  {'double', prod(dimVol), 'snrVol'});
-            m_out.Data.snrVol = double(snrVol(:));
+            fname = strrep(P.memMapFile, 'shared', 'RTQAVol');
+            m_out = memmapfile(fname, 'Writable', true, 'Format',  {'double', prod(dimVol), 'rtQAVol'});
+            m_out.Data.rtQAVol = double(outputVol(:));
 
         else
             % mosaic (0)
-            statMap2D = vol3Dimg2D(snrVol, slNrImg2DdimX, slNrImg2DdimY, img2DdimX, img2DdimY, dimVol);
+            statMap2D = vol3Dimg2D(outputVol, slNrImg2DdimX, slNrImg2DdimY, img2DdimX, img2DdimY, dimVol);
             statMap2D = statMap2D-min(statMap2D(:));
             statMap2D = (statMap2D / max(statMap2D(:))) * 255;
             fname = strrep(P.memMapFile, 'shared', 'map_2D');
@@ -174,7 +183,7 @@ if indVolNorm > FIRST_SNR_VOLUME
     end
 else
     
-    mainLoopData.snrMapCreated = 0; 
+    rtQAData.snrMapCreated = 0; 
     
 end
     
@@ -406,7 +415,7 @@ if ~isempty(idxActVoxIGLM) && max(tn) > 0 % handle empty activation map
     
     clear idxActVoxIGLM
     
-    if ~isShowSNR && ~imageViewMode
+    if ~isShowRtqaVol && ~imageViewMode
         statMap2D = vol3Dimg2D(statMap3D, slNrImg2DdimX, slNrImg2DdimY, ...
             img2DdimX, img2DdimY, dimVol) / maxTval;
 
@@ -416,13 +425,6 @@ if ~isempty(idxActVoxIGLM) && max(tn) > 0 % handle empty activation map
         m_out.Data.map_2D = uint8(statMap2D(:));
         assignin('base', 'statMap2D', statMap2D);
     end
-    
-%     posIdx2D = find(statMap2D > 0);
-%     pythonPosIdx2D = posIdx2D - 1;
-%     
-%     assignin('base', 'strIdx', matData2strData(pythonPosIdx2D));
-%     tmpStrData = matData2strData(statMap2D(posIdx2D)*255);
-%     assignin('base', 'strStatMap', tmpStrData);
     
     % shared for SPM matlab helper
     m = evalin('base', 'mmStatVol');
@@ -493,6 +495,7 @@ if isDCM
     P.indNFTrial = indNFTrial;
 end
 
+assignin('base', 'rtQAData', rtQAData);
 assignin('base', 'mainLoopData', mainLoopData);
 assignin('base', 'P', P);
 

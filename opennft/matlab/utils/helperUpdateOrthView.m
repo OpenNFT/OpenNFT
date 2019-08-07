@@ -1,4 +1,4 @@
-function helperUpdateOrthView(cursorPos, flagsPlanes, bgType, isShowSNR)
+function helperUpdateOrthView(cursorPos, flagsPlanes, bgType, isShowRTQA)
 % Function to update orthogonal viewer.
 %
 % input:
@@ -51,11 +51,11 @@ strParam.centre = findcent(newCoord, flagsPlanes);
 %                                     Background + Stat, Background + ROIs]
 strParam.modeDispl = [1 0 0]; 
 
-if isShowSNR
-   fname = strrep(P.memMapFile, 'shared', 'SNRVol');
-   snr = memmapfile(fname, 'Writable', false, 'Format',  {'double', prod(displayBgEpi.dim), 'snrVol'});
-   snrRaw = reshape(snr.Data.snrVol,displayBgEpi.dim);
-   displImg.vol = snrRaw;
+if isShowRTQA
+   fname = strrep(P.memMapFile, 'shared', 'RTQAVol');
+   snr = memmapfile(fname, 'Writable', false, 'Format',  {'double', prod(displayBgEpi.dim), 'rtQAVol'});
+   rtqaVolTRaw = reshape(snr.Data.rtQAVol,displayBgEpi.dim);
+   displImg.vol = rtqaVolTRaw;
    displImg.mat = matTemplMotCorr;
 else
    fname = strrep(P.memMapFile, 'shared', 'statVol');

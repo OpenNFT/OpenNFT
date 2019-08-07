@@ -215,6 +215,7 @@ class OpenNFT(QWidget):
 
         self.P = {}
         self.mainLoopData = {}
+        self.rtQAData = {}
         self.reultFromHelper = None
 
         self.imageViewMode = ImageViewMode.mosaic
@@ -477,6 +478,8 @@ class OpenNFT(QWidget):
         self.mainLoopData['DataType'] = self.cbDataType.currentText()
 
         self.eng.workspace['mainLoopData'] = self.mainLoopData
+
+        self.eng.workspace['rtQAData'] = self.rtQAData
 
         self.eng.setupProcParams(nargout=0)
 
@@ -805,6 +808,18 @@ class OpenNFT(QWidget):
 
             init = self.iteration == (self.P['nrSkipVol'] + 1)
 
+            # rtQA calculation for time-series
+            if bool(self.outputSamples):
+                dataRealRaw = np.array(self.outputSamples['rawTimeSeries'], ndmin=2)
+                dataMC = np.array(self.outputSamples['motCorrParam'], ndmin=2)
+                n = len(dataRealRaw[0, :])
+                data = dataRealRaw[:, n - 1]
+                self.windowRTQA.calculate_snr(init, data, n)
+                self.windowRTQA.calculate_cnr(data, n)
+                self.windowRTQA.plot_rtQA()
+                if not n == 0:
+                    self.windowRTQA.plot_mcmd(dataMC[n - 1, :])
+
             with utils.timeit('Display mosaic image:'):
                 if not self.imageViewMode:
                     self.displayMosaicImage()
@@ -1003,6 +1018,8 @@ class OpenNFT(QWidget):
 
         self.eng.workspace['P'] = self.P
         self.eng.workspace['mainLoopData'] = self.mainLoopData
+        self.eng.workspace['rtQAData'] = self.rtQAData
+
 
         self.frameParams.setEnabled(True)
         self.frameShortParams.setEnabled(True)
@@ -1017,11 +1034,13 @@ class OpenNFT(QWidget):
     def reset(self):
         self.P = {}
         self.mainLoopData = {}
+        self.rtQAData = {}
         self.reultFromHelper = None
         self.reachedFirstFile = False
 
         self.eng.workspace['P'] = self.P
         self.eng.workspace['mainLoopData'] = self.mainLoopData
+        self.eng.workspace['rtQAData'] = self.rtQAData
         self.fFinNFB = False
         self.outputSamples = {}
         self.musterInfo = {}
@@ -1144,11 +1163,26 @@ class OpenNFT(QWidget):
                 xrange = max(self.musterInfo['tmpCond1'][-1][1],
                              self.musterInfo['tmpCond2'][-1][1])
 
-            self.windowRTQA = rtqa.RTQAWindow(xrange, parent=self)
-            self.windowRTQA.volumeCheckBox.stateChanged.connect(self.onShowSnrVol)
-            self.windowRTQA.smoothedCheckBox.stateChanged.connect(self.onSmoothedChecked)
+            # TODO: Check indexes
+            # indBas = np.array(self.P['inds'][0])
+            # indCond = np.array(self.P['inds'][1])
+            indBas = 0
+            indCond = 0
+            if not self.P['isRestingState']:
+                for i in range(len(self.P['ProtBAS'])):
+                    n = len(self.P['ProtBAS'][i])
+                    indBas = np.append(indBas, self.P['ProtBAS'][i][n-6:n])
+                for i in range(len(self.P['ProtNF'])):
+                    n = len(self.P['ProtNF'][i])
+                    indCond = np.append(indCond, self.P['ProtNF'][i][n-6:n])
 
-            self.eng.assignin('base', 'isShowSNR', self.windowRTQA.volumeCheckBox.isChecked(), nargout=0)
+            self.windowRTQA = rtqa.RTQAWindow(xrange, indBas, indCond, parent=self)
+            self.windowRTQA.volumeCheckBox.stateChanged.connect(self.onShowRtqaVol)
+            self.windowRTQA.smoothedCheckBox.stateChanged.connect(self.onSmoothedChecked)
+            self.windowRTQA.comboBox.currentIndexChanged.connect(self.onModeChanged)
+
+            self.eng.assignin('base', 'rtQAMode', self.windowRTQA.comboBox.currentIndex(), nargout=0)
+            self.eng.assignin('base', 'isShowRtqaVol', self.windowRTQA.volumeCheckBox.isChecked(), nargout=0)
             self.eng.assignin('base', 'isSmoothed', self.windowRTQA.smoothedCheckBox.isChecked(), nargout=0)
             self.eng.assignin('base', 'imageViewMode', int(self.imageViewMode), nargout=0)
             self.eng.assignin('base', 'FIRST_SNR_VOLUME', config.FIRST_SNR_VOLUME, nargout=0)
@@ -1227,13 +1261,18 @@ class OpenNFT(QWidget):
         config.USE_RTQA = True
 
     # --------------------------------------------------------------------------
-    def onShowSnrVol(self):
-        self.eng.assignin('base', 'isShowSNR', self.windowRTQA.volumeCheckBox.isChecked(), nargout=0)
+    def onShowRtqaVol(self):
+        self.eng.assignin('base', 'isShowRtqaVol', self.windowRTQA.volumeCheckBox.isChecked(), nargout=0)
 
     # --------------------------------------------------------------------------
 
     def onSmoothedChecked(self):
         self.eng.assignin('base', 'isSmoothed', self.windowRTQA.smoothedCheckBox.isChecked(), nargout=0)
+
+    # --------------------------------------------------------------------------
+
+    def onModeChanged(self):
+        self.eng.assignin('base', 'rtQAMode', self.windowRTQA.comboBox.currentIndex(), nargout=0)
 
     # --------------------------------------------------------------------------
     def onChooseSetFile(self):
@@ -1364,13 +1403,6 @@ class OpenNFT(QWidget):
 
         self.orthViewUpdateFuture = self.engSPM.helperUpdateOrthView(
             pos, proj.value, bgType, self.windowRTQA.volumeCheckBox.isChecked(), async=True, nargout=0)
-
-        # if self.windowRTQA.volumeCheckBox.isChecked():
-        #     self.orthViewUpdateFuture = self.engSPM.helperUpdateOrthViewRTQA(
-        #         pos, proj, bgType, async=True, nargout=0)
-        # else:
-        #     self.orthViewUpdateFuture = self.engSPM.helperUpdateOrthView(
-        #         pos, proj, bgType, async=True, nargout=0)
 
     def onInteractWithMapImage(self):
         if self.sender() is self.hot_map_thresholds_widget:
@@ -1742,7 +1774,7 @@ class OpenNFT(QWidget):
 
         # SNR/Stat map display
         is_stat_map_created = bool(self.eng.evalin('base', 'mainLoopData.statMapCreated'))
-        is_snr_map_created = bool(self.eng.evalin('base', 'mainLoopData.snrMapCreated'))
+        is_snr_map_created = bool(self.eng.evalin('base', 'rtQAData.snrMapCreated'))
         is_rtqa_volume_checked = self.windowRTQA.volumeCheckBox.isChecked()
 
         if (background_image is not None
@@ -1890,17 +1922,12 @@ class OpenNFT(QWidget):
             key = 'rawTimeSeries'
 
         dataRaw = np.array(self.outputSamples[key], ndmin=2)
-        dataRealRaw = np.array(self.outputSamples['rawTimeSeries'], ndmin=2)
         dataProc = np.array(self.outputSamples['kalmanProcTimeSeries'], ndmin=2)
         dataNorm = np.array(self.outputSamples['scalProcTimeSeries'], ndmin=2)
 
         self.drawGivenRoiPlot(init, self.rawRoiPlot, dataRaw)
         self.drawGivenRoiPlot(init, self.procRoiPlot, dataProc)
         self.drawGivenRoiPlot(init, self.normRoiPlot, dataNorm)
-
-        n = len(dataRealRaw[0, :])
-        self.windowRTQA.calculate_snr(init, dataRealRaw[:, n - 1], n)
-        self.windowRTQA.plot_snr(init)
 
     # --------------------------------------------------------------------------
     def drawGivenRoiPlot(self, init, plotwidget: pg.PlotWidget, data):
@@ -2037,10 +2064,6 @@ class OpenNFT(QWidget):
         for pt, i1, in zip(
                 self.drawMcPlots.__dict__['mctrrot'], range(0, 6)):
             pt.setData(x=x, y=data[:, i1])
-
-        n = len(data[:, 0])
-        if not n == 0:
-            self.windowRTQA.plot_fd(data[n - 1, :])
 
     # --------------------------------------------------------------------------
     def printToLog(self, message):

@@ -22,6 +22,7 @@ function setupProcParams()
 
 P = evalin('base', 'P');
 mainLoopData = evalin('base', 'mainLoopData');
+rtQAData = evalin('base', 'rtQAData');
 
 [isPSC, isDCM, isSVM, isIGLM] = getFlagsType(P);
 
@@ -86,11 +87,27 @@ mainLoopData.mposMin = [];
 mainLoopData.blockNF = 0;
 mainLoopData.firstNF = 0;
 
-mainLoopData.meanVolSmoothed = [];
-mainLoopData.m2VolSmoothed = [];
-mainLoopData.meanVol = [];
-mainLoopData.m2Vol = [];
-mainLoopData.snrMapCreated = 0;  
+rtQAData.snrData.meanSmoothed = [];
+rtQAData.snrData.m2Smoothed = [];
+rtQAData.snrData.meanNonSmoothed = [];
+rtQAData.snrData.m2NonSmoothed = [];
+rtQAData.snrMapCreated = 0; 
+
+rtQAData.basData.mean = [];
+rtQAData.basData.m2 = [];
+rtQAData.basData.meanSmoothed = [];
+rtQAData.basData.m2Smoothed = [];
+rtQAData.basData.iteration = 1;
+indexesBas = cell2mat(P.ProtBAS);
+rtQAData.basData.indexesBas = indexesBas(:,end-6:end); 
+
+rtQAData.condData.mean = [];
+rtQAData.condData.m2 = [];
+rtQAData.condData.meanSmoothed = [];
+rtQAData.condData.m2Smoothed = [];
+rtQAData.condData.iteration = 1;
+indexesCond = cell2mat(P.ProtNF);
+rtQAData.condData.indexesCond = indexesCond(:,end-6:end); 
 
 %% DCM Settings
 if isDCM
@@ -153,6 +170,17 @@ SPM = setupSPM(P);
 % TODO: To check
 % High-pass filter
 mainLoopData.K.X0 = SPM.xX.K.X0;
+
+bas = [];
+cond = [];
+for i=1:150
+    if SPM.xX.X(i,2)>0.5
+    cond = [ cond i ];
+    else
+    bas = [ bas i ];
+    end;
+end;
+P.inds = { bas, cond }
 
 if ~P.isRestingState
     
@@ -266,5 +294,6 @@ if ~exist(P.nfbDataFolder, 'dir')
     mkdir(P.nfbDataFolder);
 end
 
+assignin('base', 'rtQAData', rtQAData);
 assignin('base', 'mainLoopData', mainLoopData);
 assignin('base', 'P', P);

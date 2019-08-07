@@ -139,15 +139,36 @@
      </widget>
      <widget class="QWidget" name="pageCnrPlot">
       <layout class="QVBoxLayout" name="verticalLayout_6">
+       <property name="spacing">
+        <number>6</number>
+       </property>
+       <property name="leftMargin">
+        <number>0</number>
+       </property>
+       <property name="topMargin">
+        <number>0</number>
+       </property>
+       <property name="rightMargin">
+        <number>0</number>
+       </property>
+       <property name="bottomMargin">
+        <number>0</number>
+       </property>
        <item>
-        <widget class="QLabel" name="label">
-         <property name="text">
-          <string>CNR plot</string>
+        <layout class="QVBoxLayout" name="cnrPlot">
+         <property name="spacing">
+          <number>6</number>
          </property>
-         <property name="alignment">
-          <set>Qt::AlignCenter</set>
+         <property name="topMargin">
+          <number>0</number>
          </property>
-        </widget>
+         <property name="rightMargin">
+          <number>0</number>
+         </property>
+         <property name="bottomMargin">
+          <number>0</number>
+         </property>
+        </layout>
        </item>
       </layout>
      </widget>
@@ -283,7 +304,7 @@
          </item>
         </layout>
        </widget>
-       <widget class="QWidget" name="page_8">
+       <widget class="QWidget" name="pageMcmdOptions">
         <layout class="QVBoxLayout" name="verticalLayout_15">
          <property name="leftMargin">
           <number>0</number>
@@ -338,7 +359,23 @@
          </item>
         </layout>
        </widget>
-       <widget class="QWidget" name="page_9"/>
+       <widget class="QWidget" name="pageCnrOptions">
+        <layout class="QVBoxLayout" name="verticalLayout_10">
+         <item>
+          <spacer name="verticalSpacer_3">
+           <property name="orientation">
+            <enum>Qt::Vertical</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>20</width>
+             <height>407</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+        </layout>
+       </widget>
        <widget class="QWidget" name="page_10"/>
        <widget class="QWidget" name="page_11"/>
        <widget class="QWidget" name="page_12"/>
