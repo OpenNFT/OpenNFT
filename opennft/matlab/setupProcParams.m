@@ -65,6 +65,7 @@ if P.UseTCPData
             end
         end
     end
+    tcp.ReceiveInitial;
     % tcp.Quiet = true;
 end
 
