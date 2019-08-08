@@ -629,7 +629,7 @@ class OpenNFT(QWidget):
                         #self.udpSender.send_data(self.displayData['instrValue'])
 
         if self.cbUseTCPData.isChecked() and self.eng.evalin('base','tcp.BytesAvailable'):
-            fname = self.P['FirstFileName'] # first file is required for initialization
+            fname = os.path.join(self.P['WatchFolder'], self.P['FirstFileName']) # first file is required for initialization
         else:
             try:
                 fname = self.files_queue.get_nowait()
@@ -659,7 +659,7 @@ class OpenNFT(QWidget):
         #        return
 
         # data acquisition
-        if not(self.cbUseTCPData.isChecked()) and not(self.cbOfflineMode.isChecked()):
+        if (not(self.cbUseTCPData.isChecked()) or not(self.reachedFirstFile)) and not(self.cbOfflineMode.isChecked()):
             if not self.checkFileIsReady(path, fname):
                 self.isMainLoopEntered = False
                 return
