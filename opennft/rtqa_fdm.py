@@ -25,7 +25,14 @@ class FD:
 
         self.xmax = xmax
         self.fd = 0
+        self.meanFD = 0
         self.vdCriteria = [0]
+
+        self.excFD = [0, 0]
+        self.excVD = 0
+
+        self.excFDIndexes = np.zeros((xmax, 2))
+        self.excVDIndexes = np.zeros((xmax, 1))
 
                 
     # FD computation 
@@ -40,8 +47,16 @@ class FD:
               sum(np.absolute(self._ri(j)-self._ri(i))) * self.radius
               
     def all_fd(self):
-       i = len(self.data)-1
-       self.fd = np.append(self.fd, self._ij_FD(i-1,i))
+        i = len(self.data)-1
+        self.fd = np.append(self.fd, self._ij_FD(i-1, i))
+        self.meanFD = self.meanFD + (self.fd[i] - self.meanFD) / i
+
+        if self.fd[i] >= self.threshold[1]:
+           self.excFD[0] += 1
+           self.excFDIndexes[i, 0] = 1
+           if self.fd[i] >= self.threshold[2]:
+              self.excFD[1] += 1
+              self.excFDIndexes[i, 1] = 1
 
     def Van_Dijk_criteria(self):
 
@@ -54,6 +69,10 @@ class FD:
         rmsDisp = np.sqrt(rmsDisp)
 
         self.vdCriteria = np.append(self.vdCriteria, abs(self.vdCriteria[n]-rmsDisp))
+
+        if self.vdCriteria[n+1]>=self.threshold[0]:
+            self.excVD += 1
+            self.excFDIndexes[i, 0] = 1
 
 
     def draw_mc_plots(self, data, vdFlag, trPlotitem, rotPlotitem, fdPlotitem):

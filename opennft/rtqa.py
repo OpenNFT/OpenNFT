@@ -164,7 +164,6 @@ class RTQAWindow(QtWidgets.QWidget):
 
             self.makeRoiPlotLegend(self.fdLabel, names, pens)
 
-
     def makeRoiPlotLegend(self, label, names, pens):
         label.setText('')
         legendText = '<html><head/><body><p>'
@@ -178,6 +177,19 @@ class RTQAWindow(QtWidgets.QWidget):
 
         label.setText(legendText)
 
+    def makeTextValueLabel(self, label, names, pens):
+
+        label.setText('')
+        text = '<html><head/><body><p>'
+        for n, c in zip(names, pens):
+            cname = c.color().name()
+            text += (
+                    '<span style="font-weight:600;color:{};">'.format(cname) + '{}</span><br>'.format(n))
+
+        text += '</p></body></html>'
+
+        label.setText(text)
+
     def closeEvent(self, event):
         self.hide()
         event.accept()
@@ -188,7 +200,6 @@ class RTQAWindow(QtWidgets.QWidget):
         self.variances['varRaw'] = np.zeros((sz, 0))
         self.rSNR['snrRaw'] = np.zeros((sz, 0))
         self.rCNR = np.zeros((sz, self._fd.xmax+1))
-
 
     def plot_ts(self, plotitem, data):
 
@@ -219,8 +230,6 @@ class RTQAWindow(QtWidgets.QWidget):
         plotitem = self.cnrplot.getPlotItem()
         data = np.array(self.rCNR[:, 0:len(self.rSNR["snrRaw"][0])], ndmin=2)
         self.plot_ts(plotitem,data)
-
-
 
     def calculate_snr(self, init, data, iteration):
         sz = data.size
@@ -257,6 +266,16 @@ class RTQAWindow(QtWidgets.QWidget):
         if iteration < 8:
             snr = np.zeros((sz, 1))
         self.rSNR['snrRaw'] = np.append(self.rSNR['snrRaw'], snr, axis=1)
+
+        if not self.comboBox.currentIndex():
+
+            names = ['SNR ']
+            pens = [config.PLOT_PEN_COLORS[6]]
+            for i in range(sz):
+                names.append('ROI_' + str(i + 1) + ' ' + '{0:.3f}'.format(float(snr[i])))
+                pens.append(pg.mkPen(color=config.ROI_PLOT_COLORS[i], width=1.2))
+
+            self.makeTextValueLabel(self.valuesLabel, names, pens)
 
     def calculate_cnr(self, data, indexVolume):
 
@@ -295,6 +314,48 @@ class RTQAWindow(QtWidgets.QWidget):
                 varCond = self.m2Cond[i] / (self.iterCond - 1)
                 self.rCNR[i][indexVolume] = (self.meanCond[i] - self.meanBas[i]) / ((varCond + varBas) ** (.5))
 
+            if self.comboBox.currentIndex()==2:
+                names = ['СNR ']
+                pens = [config.PLOT_PEN_COLORS[6]]
+                for i in range(sz):
+                    names.append('ROI_' + str(i + 1) + ' ' + '{0:.3f}'.format(float(self.rCNR[i][indexVolume])))
+                    pens.append(pg.mkPen(color=config.ROI_PLOT_COLORS[i], width=1.2))
+
+                self.makeTextValueLabel(self.valuesLabel, names, pens)
 
     def plot_mcmd(self, data):
         self._fd.draw_mc_plots(data, self.mcrRadioButton.isChecked(), self._plot_translat, self._plot_rotat, self._plot_fd)
+        names = ['Framewise displacement ']
+        pens = [config.PLOT_PEN_COLORS[6]]
+        names.append('Exceed threshold 1: ' + str(int(self._fd.excFD[0])))
+        pens.append(config.PLOT_PEN_COLORS[1])
+        names.append('Exceed threshold 2: ' + str(int(self._fd.excFD[1])))
+        pens.append(config.PLOT_PEN_COLORS[2])
+        names.append('Micro displacement ')
+        pens.append(config.PLOT_PEN_COLORS[6])
+        names.append('Exceed threshold: ' + str(int(self._fd.excVD)))
+        pens.append(config.PLOT_PEN_COLORS[2])
+        names.append('Mean framewise displacement ')
+        pens.append(config.PLOT_PEN_COLORS[6])
+        names.append('{0:.3f}'.format(self._fd.meanFD))
+        pens.append(config.PLOT_PEN_COLORS[6])
+        self.makeTextValueLabel(self.mcmdValuesLabel, names, pens)
+
+    def data_packing(self):
+
+        tsRTQA = dict.fromkeys(['meanSNR', 'm2SNR', 'rSNR',
+                                'meanBas', 'm2Bas', 'meanCond', 'm2Cond', 'rCNR',
+                                'excFDIndexes', 'excVDIndexes'])
+
+        tsRTQA['meanSNR'] = matlab.double(self.means['meanRaw'].tolist())
+        tsRTQA['m2SNR'] = matlab.double(self.m2['m2Raw'].tolist())
+        tsRTQA['rSNR'] = matlab.double(self.rSNR['snrRaw'].tolist())
+        tsRTQA['meanBas'] = matlab.double(self.meanBas.tolist())
+        tsRTQA['m2Bas'] = matlab.double(self.m2Bas.tolist())
+        tsRTQA['meanCond'] = matlab.double(self.meanCond.tolist())
+        tsRTQA['m2Cond'] = matlab.double(self.m2Cond.tolist())
+        tsRTQA['rCNR'] = matlab.double(self.rCNR.tolist())
+        tsRTQA['excFDIndexes'] = matlab.double(self._fd.excFDIndexes.tolist())
+        tsRTQA['excVDIndexes'] = matlab.double(self._fd.excVDIndexes.tolist())
+
+        return tsRTQA

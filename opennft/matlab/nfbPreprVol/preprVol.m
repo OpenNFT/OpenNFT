@@ -149,15 +149,17 @@ statMap2D = zeros(img2DdimY, img2DdimX);
 
 if indVolNorm > FIRST_SNR_VOLUME
     
-    [outputVol, rtQAData.snrData ] = snr_calc(indVolNorm, reslVol, smReslVol, rtQAData.snrData, isSmoothed);
+    [ rtQAData.snrData ] = snr_calc(indVolNorm, reslVol, smReslVol, rtQAData.snrData, isSmoothed);
     
-    [cnrVol, rtQAData.basData, rtQAData.condData] = cnr_calc(indVolNorm, reslVol, smReslVol, rtQAData.basData, rtQAData.condData, isSmoothed);
-    
+    if ~P.isRestingState
+        [ rtQAData.cnrData ] = cnr_calc(indVolNorm, reslVol, smReslVol, rtQAData.cnrData, isSmoothed);
+    end;
+        
     rtQAData.snrMapCreated = 1; 
     
     if isShowRtqaVol
         
-        if rtQAMode
+        if rtQAMode && ~P.isRestingState
             % 0 - SNR mode, 2 - CNR mode
             outputVol = cnrVol;
         end

@@ -24,7 +24,7 @@ PTB_MATLAB_NAME = 'MATLAB_NFB_PTB'
 SPM_MATLAB_NAME = 'MATLAB_NFB_SPM'
 MODEL_HELPER_MATLAB_NAME = 'MATLAB_NFB_MODEL_HELPER'
 
-MAIN_MATLAB_STARTUP_OPTIONS = '-nodesktop'
+MAIN_MATLAB_STARTUP_OPTIONS = '-desktop'
 PTB_MATLAB_STARTUP_OPTIONS = '-nodesktop'
 SPM_MATLAB_STARTUP_OPTIONS = '-nodesktop'
 MODEL_HELPER_MATLAB_STARTUP_OPTIONS = '-nodesktop'
@@ -106,6 +106,8 @@ PLOT_PEN_COLORS = [ # colors used to plot motion correction metrics
     pg.mkPen(pg.mkColor(0, 147, 54), width=1.2),
     pg.mkPen(pg.mkColor(145, 130, 43), width=1.2),
     pg.mkPen(pg.mkColor(0, 0, 0), width=1.2)]
+
+
 
 
 

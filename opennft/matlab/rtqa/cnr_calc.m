@@ -1,7 +1,10 @@
-function [ cnrVol, basData, condData ] = cnr_calc( index, vol, volSmoothed, basData, condData, isSmoothed )
+function [ cnrData ] = cnr_calc( index, vol, volSmoothed, cnrData, isSmoothed )
 
     shape = size(vol);
-    cnrVol = zeros(shape);
+    cnrData.cnrVol = zeros(shape);
+    
+    basData = cnrData.basData;
+    condData = cnrData.condData;
     
     if ismember(index,basData.indexesBas)
         if isempty(basData.mean)
@@ -61,7 +64,7 @@ function [ cnrVol, basData, condData ] = cnr_calc( index, vol, volSmoothed, basD
             varianceCond = condData.m2 / (condData.iteration - 1);
         end
                
-        cnrVol = (meanCond - meanBas) ./ ((varianceBas + varianceCond).^.5);
+        cnrData.cnrVol = (meanCond - meanBas) ./ ((varianceBas + varianceCond).^.5);
         
         % filtering
 %         meanCNR = mean(cnrVol(:));
@@ -84,6 +87,8 @@ function [ cnrVol, basData, condData ] = cnr_calc( index, vol, volSmoothed, basD
         
     end
         
+    cnrData.basData = basData;
+    cnrData.condData = condData;
     
 end
 

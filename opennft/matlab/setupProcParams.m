@@ -87,27 +87,43 @@ mainLoopData.mposMin = [];
 mainLoopData.blockNF = 0;
 mainLoopData.firstNF = 0;
 
+P_rtQA.meanSNR = [];
+P_rtQA.m2SNR = [];
+P_rtQA.rSNR = [];
+P_rtQA.meanBas = [];
+P_rtQA.m2Bas = [];
+P_rtQA.meanCond = [];
+P_rtQA.m2Cond = [];
+P_rtQA.rCNR = [];
+P_rtQA.excFDIndexes = [];
+P_rtQA.excVDIndexes = [];
+
+rtQAData.snrData.vol = [];
 rtQAData.snrData.meanSmoothed = [];
 rtQAData.snrData.m2Smoothed = [];
 rtQAData.snrData.meanNonSmoothed = [];
 rtQAData.snrData.m2NonSmoothed = [];
 rtQAData.snrMapCreated = 0; 
 
-rtQAData.basData.mean = [];
-rtQAData.basData.m2 = [];
-rtQAData.basData.meanSmoothed = [];
-rtQAData.basData.m2Smoothed = [];
-rtQAData.basData.iteration = 1;
-indexesBas = cell2mat(P.ProtBAS);
-rtQAData.basData.indexesBas = indexesBas(:,end-6:end); 
+if ~P.isRestingState
+    rtQAData.cnrData.cnrVol = []
+    
+    rtQAData.cnrData.basData.mean = [];
+    rtQAData.cnrData.basData.m2 = [];
+    rtQAData.cnrData.basData.meanSmoothed = [];
+    rtQAData.cnrData.basData.m2Smoothed = [];
+    rtQAData.cnrData.basData.iteration = 1;
+    indexesBas = cell2mat(P.ProtBAS);
+    rtQAData.cnrData.basData.indexesBas = indexesBas(:,end-6:end); 
 
-rtQAData.condData.mean = [];
-rtQAData.condData.m2 = [];
-rtQAData.condData.meanSmoothed = [];
-rtQAData.condData.m2Smoothed = [];
-rtQAData.condData.iteration = 1;
-indexesCond = cell2mat(P.ProtNF);
-rtQAData.condData.indexesCond = indexesCond(:,end-6:end); 
+    rtQAData.cnrData.condData.mean = [];
+    rtQAData.cnrData.condData.m2 = [];
+    rtQAData.cnrData.condData.meanSmoothed = [];
+    rtQAData.cnrData.condData.m2Smoothed = [];
+    rtQAData.cnrData.condData.iteration = 1;
+    indexesCond = cell2mat(P.ProtNF);
+    rtQAData.cnrData.condData.indexesCond = indexesCond(:,end-6:end);
+end
 
 %% DCM Settings
 if isDCM
@@ -171,16 +187,17 @@ SPM = setupSPM(P);
 % High-pass filter
 mainLoopData.K.X0 = SPM.xX.K.X0;
 
-bas = [];
-cond = [];
-for i=1:150
-    if SPM.xX.X(i,2)>0.5
-    cond = [ cond i ];
-    else
-    bas = [ bas i ];
-    end;
-end;
-P.inds = { bas, cond }
+% TODO: check indexes
+% bas = [];
+% cond = [];
+% for i=1:150
+%     if SPM.xX.X(i,2)>0.5
+%     cond = [ cond i ];
+%     else
+%     bas = [ bas i ];
+%     end;
+% end;
+% P.inds = { bas, cond }
 
 if ~P.isRestingState
     
@@ -295,5 +312,6 @@ if ~exist(P.nfbDataFolder, 'dir')
 end
 
 assignin('base', 'rtQAData', rtQAData);
+assignin('base', 'P_rtQA', P_rtQA);
 assignin('base', 'mainLoopData', mainLoopData);
 assignin('base', 'P', P);

@@ -815,7 +815,8 @@ class OpenNFT(QWidget):
                 n = len(dataRealRaw[0, :])
                 data = dataRealRaw[:, n - 1]
                 self.windowRTQA.calculate_snr(init, data, n)
-                self.windowRTQA.calculate_cnr(data, n)
+                if not self.P['isRestingState']:
+                    self.windowRTQA.calculate_cnr(data, n)
                 self.windowRTQA.plot_rtQA()
                 if not n == 0:
                     self.windowRTQA.plot_mcmd(dataMC[n - 1, :])
@@ -1250,6 +1251,7 @@ class OpenNFT(QWidget):
             self.finalizeUdpSender()
             if self.cbUseTCPData.isChecked():
                 self.finalizeTcpReceiver()
+            self.eng.workspace['P_rtQA'] = self.windowRTQA.data_packing()
             self.nfbFinStarted = self.eng.nfbSave(self.iteration, nargout=0, async=True)
             self.fFinNFB = False
 

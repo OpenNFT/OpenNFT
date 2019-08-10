@@ -16,12 +16,18 @@ disp('Save...')
 
 P = evalin('base', 'P');
 mainLoopData = evalin('base', 'mainLoopData');
+rtQAData = evalin('base', 'rtQAData');
+P_rtQA = evalin('base', 'P_rtQA');
 evalin('base', 'clear mmImgViewTempl;');
 evalin('base', 'clear mmStatVol;');
 evalin('base', 'clear mmOrthView;');
 [isPSC, isDCM, isSVM, isIGLM] = getFlagsType(P);
 
 folder = P.nfbDataFolder;
+
+% save rtqa data
+save([folder '\rtQAData.mat'], '-struct', 'rtQAData');
+save([folder '\P_rtQA.mat'], '-struct', 'P_rtQA');
 
 % save feedback values
 save([folder filesep P.SubjectID '_' ...
