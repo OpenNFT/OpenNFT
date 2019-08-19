@@ -42,6 +42,7 @@ import re
 import fnmatch
 import threading
 import multiprocessing
+import importlib
 
 from loguru import logger
 
@@ -53,9 +54,9 @@ from watchdog.events import FileSystemEventHandler
 
 from pyniexp.connection import Udp
 
-from PyQt5.QtWidgets import QApplication, QWidget, QFileDialog
-from PyQt5.QtGui import QIcon, QPalette
-from PyQt5.QtCore import QSettings, QTimer, QEvent, QRegExp
+from PyQt5.QtWidgets import QApplication, QWidget, QDialog, QFileDialog
+from PyQt5.QtGui import QIcon, QPalette, QStandardItemModel, QStandardItem
+from PyQt5.QtCore import QSettings, QTimer, QEvent, QRegExp, Qt
 from PyQt5.uic import loadUi
 from PyQt5.QtGui import QRegExpValidator
 
@@ -93,6 +94,26 @@ class CreateFileEventHandler(FileSystemEventHandler):
 class ViewBoxWithoutPadding(pg.ViewBox):
     def suggestPadding(self, axis):
         return 0.0
+
+
+class PluginWindow(QDialog):
+    def __init__(self, parent=None):
+        self.plugins = {}
+
+        super().__init__(parent=parent, flags=Qt.Dialog)
+        loadUi(utils.get_ui_file('plugins.ui'), self)
+
+        model = QStandardItemModel(self.lvPlugins)
+        for p in os.listdir(config.PLUGIN_PATH):
+            if p[0] == '_': continue
+            plMod = 'opennft.' + os.path.basename(config.PLUGIN_PATH).lower() + '.' + p[:-3]
+            mod = importlib.import_module(plMod)
+            plName = mod.META['plugin_name']
+            self.plugins[plName] = plMod
+            item = QStandardItem(plName)
+            item.setCheckable(True)
+            model.appendRow(item)
+        self.lvPlugins.setModel(model)
 
 
 # --------------------------------------------------------------------------
@@ -181,6 +202,8 @@ class OpenNFT(QWidget):
 
         self.eng = None
         self.engSPM = None
+
+        self.plugins = []
 
         self.fFinNFB = False
         self.orthViewUpdateInProgress = False
@@ -381,6 +404,7 @@ class OpenNFT(QWidget):
         self.pbMoreParameters.toggled.connect(self.onChangeMode)
 
         self.btnInit.clicked.connect(lambda: self.initialize(start=True))
+        self.btnPlugins.clicked.connect(self.showPluginDlg)
         self.btnSetup.clicked.connect(self.setup)
         self.btnStart.clicked.connect(self.start)
         self.btnStop.clicked.connect(self.stop)
@@ -433,6 +457,18 @@ class OpenNFT(QWidget):
         self.cbUseUDPFeedback.stateChanged.connect(self.onChangeUseUDPFeedback)
         self.onChangeUseUDPFeedback()
 
+    # --------------------------------------------------------------------------
+    def showPluginDlg(self):
+        self.plw = PluginWindow()
+        self.plw.setWindowTitle("Plugins")
+        self.plw.setWindowModality(Qt.ApplicationModal)
+        if self.plw.exec_():
+            pass
+
+    # --------------------------------------------------------------------------
+    def updatePlugins(self):
+        pass
+    
     # --------------------------------------------------------------------------
     def onChangePTB(self):
         self.cbScreenId.setEnabled(self.cbUsePTB.isChecked())
@@ -704,6 +740,7 @@ class OpenNFT(QWidget):
 
         # t3
         self.recorder.recordEvent(erd.Times.t3, self.iteration)
+        self.pluginUpdate()
 
         if self.eng.evalin('base', 'mainLoopData.statMapCreated') == 1:
             nrVoxInVol = self.eng.evalin('base', 'mainLoopData.nrVoxInVol')
