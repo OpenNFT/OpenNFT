@@ -107,19 +107,22 @@ class ViewBoxWithoutPadding(pg.ViewBox):
 
 class PluginWindow(QDialog):
     def __init__(self, parent=None):
-        self.plugins = {}
+        self.plugins = []
 
         super().__init__(parent=parent, flags=Qt.Dialog)
         loadUi(utils.get_ui_file('plugins.ui'), self)
+
+        self.setWindowTitle("Plugins")
+        self.setWindowModality(Qt.ApplicationModal)
 
         model = QStandardItemModel(self.lvPlugins)
         for p in os.listdir(config.PLUGIN_PATH):
             if p[0] == '_': continue
             plMod = 'opennft.' + os.path.basename(config.PLUGIN_PATH).lower() + '.' + p[:-3]
-            mod = importlib.import_module(plMod)
-            plName = mod.META['plugin_name']
-            self.plugins[plName] = plMod
+            self.plugins += [importlib.import_module(plMod)]
+            plName = self.plugins[-1].META['plugin_name']
             item = QStandardItem(plName)
+            item.setEditable(False)
             item.setCheckable(True)
             model.appendRow(item)
         self.lvPlugins.setModel(model)
@@ -496,11 +499,17 @@ class OpenNFT(QWidget):
     # --------------------------------------------------------------------------
     def showPluginDlg(self):
         self.plw = PluginWindow()
-        self.plw.setWindowTitle("Plugins")
-        self.plw.setWindowModality(Qt.ApplicationModal)
         if self.plw.exec_():
-            pass
+            self.plugins = []
+            for p in range(0,len(self.plw.plugins)):
+                if self.plw.lvPlugins.model().item(p).checkState():
+                    self.plugins += [self.plw.plugins[p]]
 
+    # --------------------------------------------------------------------------
+    def loadPlugins(self):
+        for p in self.plugins:
+            print(p.META['plugin_load'].format(**self.P))
+    
     # --------------------------------------------------------------------------
     def updatePlugins(self):
         pass
@@ -1178,10 +1187,13 @@ class OpenNFT(QWidget):
             self.engSPM.workspace['P'] = self.P
             self.previousIterStartTime = 0
 
+            with utils.timeit("  Load plugins:"):
+                self.loadPlugins()
+            
             if not self.P['isRestingState']:
                 with utils.timeit("  Load protocol data:"):
                     self.loadProtocolData()
-
+            
             with utils.timeit("  Selecting ROI:"):
                 self.selectRoi()
 

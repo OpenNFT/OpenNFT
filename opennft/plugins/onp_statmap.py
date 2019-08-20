@@ -5,9 +5,11 @@ from time import sleep
 META = {
     "plugin_name": "Stat Map",
     "plugin_type": "data_processor",
-    "plugin_time": "t3", # according to opennft.eventrecorder.Times"data": "mainLoopData.tn",
+    "plugin_time": "t3", # according to opennft.eventrecorder.Times
+    "plugin_load": "myImageProcess(({MatrixSizeX}, {MatrixSizeY}, {NrOfSlices}))",
+    "data": "mainLoopData.tn",
     "data_source": "self.eng",
-    "data_import": "load_image"    
+    "data_load": "load_image"
 }
 
 imgDim = (5,5,3)

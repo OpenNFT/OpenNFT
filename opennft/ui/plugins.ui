@@ -38,6 +38,9 @@
      <height>192</height>
     </rect>
    </property>
+   <property name="selectionMode">
+    <enum>QAbstractItemView::NoSelection</enum>
+   </property>
   </widget>
  </widget>
  <resources/>
