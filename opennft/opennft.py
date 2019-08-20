@@ -501,18 +501,26 @@ class OpenNFT(QWidget):
         self.plw = PluginWindow()
         if self.plw.exec_():
             self.plugins = []
-            for p in range(0,len(self.plw.plugins)):
+            for p in range(len(self.plw.plugins)):
                 if self.plw.lvPlugins.model().item(p).checkState():
-                    self.plugins += [self.plw.plugins[p]]
+                    self.plugins += [{'module': self.plw.plugins[p]}]
 
     # --------------------------------------------------------------------------
-    def loadPlugins(self):
-        for p in self.plugins:
-            print(p.META['plugin_load'].format(**self.P))
+    def initializePlugins(self):
+        for i in range(len(self.plugins)):
+            self.plugins[i]['object'] = eval("self.plugins[i]['module']." + self.plugins[i]['module'].META['plugin_init'].format(**self.P))
+    
+    # --------------------------------------------------------------------------
+    def finalizePlugins(self):
+        for i in range(len(self.plugins)):
+            self.plugins[i]['object'] = None
     
     # --------------------------------------------------------------------------
     def updatePlugins(self):
-        pass
+        for i in range(len(self.plugins)):
+            m = self.plugins[i]['module'].META
+            if (self.recorder.getLastEvent() == eval("erd.Times." + m['plugin_time'])) and eval(m['plugin_signal']):
+                exec("self.plugins[i]['object']." + m['plugin_exec'])
     
     # --------------------------------------------------------------------------
     def onChangePTB(self):
@@ -771,7 +779,7 @@ class OpenNFT(QWidget):
 
         # t3
         self.recorder.recordEvent(erd.Times.t3, self.iteration)
-        self.pluginUpdate()
+        self.updatePlugins()
 
         if self.windowRTQA.volumeCheckBox.isChecked() and config.FIRST_SNR_VOLUME < self.iteration:
             self.updateOrthViewAsync()
@@ -1187,8 +1195,8 @@ class OpenNFT(QWidget):
             self.engSPM.workspace['P'] = self.P
             self.previousIterStartTime = 0
 
-            with utils.timeit("  Load plugins:"):
-                self.loadPlugins()
+            with utils.timeit("  Initialize plugins:"):
+                self.initializePlugins()
             
             if not self.P['isRestingState']:
                 with utils.timeit("  Load protocol data:"):
@@ -1343,13 +1351,14 @@ class OpenNFT(QWidget):
         if config.USE_MRPULSE and hasattr(self, 'mrPulses'):
             np_arr = mrpulse.toNpData(self.mrPulses)
             self.pulseProc.terminate()
-
-        if self.P.get('nfbDataFolder'):
+        
+        if self.iteration > 1 and self.P.get('nfbDataFolder'):
             path = os.path.normpath(self.P['nfbDataFolder'])
             fname = os.path.join(path, 'TimeVectors_' + str(self.P['NFRunNr']).zfill(2) + '.txt')
             self.recorder.savetxt(fname)
 
         if self.fFinNFB:
+            self.finalizePlugins()
             self.finalizeUdpSender()
             if self.cbUseTCPData.isChecked():
                 self.finalizeTcpReceiver()
@@ -1631,7 +1640,8 @@ class OpenNFT(QWidget):
         self.sbSlicesNr.setValue(int(self.settings.value('NrOfSlices')))
         self.sbTR.setValue(int(self.settings.value('TR')))
         self.sbSkipVol.setValue(int(self.settings.value('nrSkipVol')))
-        self.sbMatrixSize.setValue(int(self.settings.value('MatrixSizeX')))
+        self.sbMatrixSizeX.setValue(int(self.settings.value('MatrixSizeX')))
+        self.sbMatrixSizeY.setValue(int(self.settings.value('MatrixSizeY')))
 
         # --- bottom left ---
         self.cbOfflineMode.setChecked(str(self.settings.value('OfflineMode', 'true')).lower() == 'true')
@@ -1742,7 +1752,8 @@ class OpenNFT(QWidget):
         self.P['NrOfSlices'] = self.sbSlicesNr.value()
         self.P['TR'] = self.sbTR.value()
         self.P['nrSkipVol'] = self.sbSkipVol.value()
-        self.P['MatrixSizeX'] = self.sbMatrixSize.value()
+        self.P['MatrixSizeX'] = self.sbMatrixSizeX.value()
+        self.P['MatrixSizeY'] = self.sbMatrixSizeY.value()
 
         # --- bottom left ---
         self.P['DisplayFeedbackFullscreen'] = self.cbDisplayFeedbackFullscreen.isChecked()
@@ -1833,6 +1844,7 @@ class OpenNFT(QWidget):
         self.settings.setValue('TR', self.P['TR'])
         self.settings.setValue('nrSkipVol', self.P['nrSkipVol'])
         self.settings.setValue('MatrixSizeX', self.P['MatrixSizeX'])
+        self.settings.setValue('MatrixSizeY', self.P['MatrixSizeY'])
 
         # --- bottom left ---
         self.settings.setValue('OfflineMode', self.cbOfflineMode.isChecked())
