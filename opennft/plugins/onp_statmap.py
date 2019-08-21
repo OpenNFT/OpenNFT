@@ -7,48 +7,36 @@ from time import sleep
 META = {
     "plugin_name": "Stat Map",
     "plugin_time": "t3", # according to opennft.eventrecorder.Times
-    "plugin_init": "myImageProcess(({MatrixSizeX}, {MatrixSizeY}, {NrOfSlices}))",
+    "plugin_init": "myImageProcess(({MatrixSizeX}, {MatrixSizeY}, {NrOfSlices}),toDraw=False)", # Setting toDraw to True significantly slows down plugin update
     "plugin_signal": "self.eng.evalin('base','isfield(mainLoopData,\\\'tn\\\')')",
     "plugin_exec": "load_image(self.eng.evalin('base','mainLoopData.tn')._data.tolist())"
 }
 
 class myImageProcess(imageProcess):
-    def __init__(self,image_dimension):
+    def __init__(self,image_dimension,toDraw=False):
         super().__init__(image_dimension,autostart=False)
-        self.figure = plt.figure(figsize=(10,10))
-        self.figure.add_axes()
-        self.figure.canvas.draw()
-        plt.pause(0.001)
         
+        self.toDraw = toDraw
+        if self.toDraw:
+            self.figure = plt.figure(figsize=(10,10))
+            self.axes = self.figure.add_axes((0,0,1,1))
+
         self.start_process()
 
+    def __del__(self):
+        if self.toDraw:
+            plt.close(self.figure)
+        
+        super().__del__()
+
     def process(self,image):
-        (vx,vy,vz) = self._image_dimension # (74, 74, 36)
+        # Convert 3D to 2D mosaic
+        (vx,vy,vz) = self._image_dimension
         mxy = int(np.ceil(np.sqrt(vz)))
-
         tiles = image.reshape(vx,vy,mxy,mxy)
-        tiles = np.moveaxis(tiles,[0,1,2,3],[1,3,0,2]).reshape(vx*mxy,vy*mxy)
+        tiles = np.moveaxis(np.rot90(tiles),[0,1,2,3],[1,3,0,2]).reshape(vx*mxy,vy*mxy)
 
-        plt.imshow(tiles,cmap='jet')
-        self.figure.canvas.draw()
-        plt.pause(0.001)
-
-# imgDim = (5,5,3)
-#
-# if __name__ == '__main__':
-#     mlp = mlproc.MatlabSharedEngineHelper(startup_options='-desktop', shared_name='test')
-#     mlp.connect(start=True, name_prefix='test')
-#     mlp.engine.assignin('base','sig',0,nargout=0)
-# 
-#     t = myImageProcess(imgDim)
-# 
-#     it = 0
-#     while it < 5:
-#         cit = mlp.engine.evalin('base','sig')
-#         if cit > it:
-#             it = cit
-#             t.load_image(mlp.engine.evalin('base','mainLoopData.tn')._data.tolist())
-#             sleep(2)
-# 
-#     t = None
-#     mlp.destroy_engine()
+        if self.toDraw:
+            self.axes.imshow(tiles,cmap='jet')
+            self.figure.canvas.draw()
+            plt.pause(0.01)
