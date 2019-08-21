@@ -36,6 +36,32 @@ else
     fIMAPH = false;
 end
 
+% TCP Data
+if P.UseTCPData
+    data.watch = P.WatchFolder;
+    data.LastName = '';
+    data.ID = '';
+    data.FirstFileName = P.FirstFileName;
+    
+    try tcp = evalin('base','tcp'); catch E
+        if strcmp(E.identifier,'MATLAB:UndefinedFunction'), tcp = ImageTCPClass(P.TCPDataPort);
+        else, throw(E); end
+    end
+
+    tcp.setHeaderFromDICOM(data);
+    if ~tcp.Open
+        try tcp.WaitForConnection; catch E
+            if strcmp(E.message,'No valid handler! already closed?')
+                
+            else
+                throw(E);
+            end
+        end
+    end
+    tcp.ReceiveInitial;
+    % tcp.Quiet = true;
+end
+
 %% SPM Settings
 % It is recommended using the same interpolation for real-time
 % realign and reslice functions. See spm_realign_rt() for further comments.
@@ -200,6 +226,9 @@ if isSVM && strcmp(P.Prot, 'Cont')
     mainLoopData.tContr = [1];
 end
 
+%% Explicit contrasts (optional)
+if isfield(P,'Contrast'), mainLoopData.tContr = P.Contrast; end
+
 %% High-pass filter for iGLM given by SPM
 mainLoopData.K = SPM.xX.K;
 
@@ -250,6 +279,7 @@ end
 
 assignin('base', 'mainLoopData', mainLoopData);
 assignin('base', 'P', P);
+if P.UseTCPData, assignin('base', 'tcp', tcp); end
 
 end
 

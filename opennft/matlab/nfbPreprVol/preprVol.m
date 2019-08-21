@@ -14,8 +14,10 @@ function preprVol(inpFileName, indVol)
 
 P = evalin('base', 'P');
 mainLoopData = evalin('base', 'mainLoopData');
+if P.UseTCPData, tcp = evalin('base', 'tcp'); end
 
 if indVol <= P.nrSkipVol
+    if P.UseTCPData, [~, ~] = tcp.ReceiveScan; end
     return;
 end
 
@@ -96,7 +98,9 @@ end
 %% EPI Data Preprocessing
 % Read Data in real-time
 if fDICOM
-    dcmData = double(dicomread(inpFileName));
+    if P.UseTCPData, [~, dcmData] = tcp.ReceiveScan;
+    else, dcmData = double(dicomread(inpFileName)); 
+    end
 end
 if fIMAPH
     % Note, possibly corrupted Phillips rt data export
@@ -111,7 +115,9 @@ end
 if fDICOM
     R(2,1).mat = matVol;
     R(2,1).dim = dimVol;
-    R(2,1).Vol = img2Dvol3D(dcmData, slNrImg2DdimX, slNrImg2DdimY, dimVol);
+    if P.UseTCPData, R(2,1).Vol = dcmData;
+    else, R(2,1).Vol = img2Dvol3D(dcmData, slNrImg2DdimX, slNrImg2DdimY, dimVol);
+    end
 end
 if fIMAPH
     R(2,1).mat = matTemplMotCorr;

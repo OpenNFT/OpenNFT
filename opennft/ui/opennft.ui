@@ -1123,6 +1123,35 @@
                                         </item>
                                     </layout>
                                 </item>
+                                <item row="0" column="1">
+                                    <widget class="QLabel" name="label_38">
+                                        <property name="text">
+                                            <string>MRI Data Type</string>
+                                        </property>
+                                        <property name="alignment">
+                                            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                                        </property>
+                                    </widget>
+                                </item>
+                                <item row="0" column="2">
+                                    <widget class="QComboBox" name="cbDataType">
+                                        <item>
+                                            <property name="text">
+                                                <string>DICOM</string>
+                                            </property>
+                                        </item>
+                                        <item>
+                                            <property name="text">
+                                                <string>IMAPH</string>
+                                            </property>
+                                        </item>
+                                        <item>
+                                            <property name="text">
+                                                <string>NII</string>
+                                            </property>
+                                        </item>
+                                    </widget>
+                                </item>        
                                 <item row="1" column="0">
                                     <layout class="QHBoxLayout" name="horizontalLayout_TCP">
                                         <property name="spacing">
@@ -1205,38 +1234,14 @@
                                         </item>
                                     </layout>
                                 </item>
-                                <item row="0" column="1">
-                                    <widget class="QLabel" name="label_38">
+                                <item row="1" column="2">
+                                    <widget class="QCheckBox" name="cbgetMAT">
                                         <property name="text">
-                                            <string>MRI Data Type</string>
+                                            <string>Calculate MAT</string>
                                         </property>
-                                        <property name="alignment">
-                                            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                                        <property name="checked">
+                                            <bool>false</bool>
                                         </property>
-                                    </widget>
-                                </item>
-                                <item row="0" column="2">
-                                    <widget class="QComboBox" name="cbDataType">
-                                        <item>
-                                            <property name="text">
-                                                <string>DICOM</string>
-                                            </property>
-                                        </item>
-                                        <item>
-                                            <property name="text">
-                                                <string>IMAPH</string>
-                                            </property>
-                                        </item>
-                                        <item>
-                                            <property name="text">
-                                                <string>NII</string>
-                                            </property>
-                                        </item>
-                                        <item>
-                                            <property name="text">
-                                                <string>TCP</string>
-                                            </property>
-                                        </item>
                                     </widget>
                                 </item>
                             </layout>
