@@ -1,8 +1,6 @@
-from opennft import mlproc
 from pyniexp.mlplugins import imageProcess
 import matplotlib.pyplot as plt
 import numpy as np
-from time import sleep
 
 META = {
     "plugin_name": "Stat Map",
