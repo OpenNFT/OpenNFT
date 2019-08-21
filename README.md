@@ -25,7 +25,7 @@ Install with conda and Python 3.5:
 - `$ conda create -n OpenNFT_venv python=3.5 pip setuptools`
 - `$ conda activate OpenNFT_venv`
 - `(OpenNFT_venv)$ python -m pip install -U pip setuptools`
-- (optional for numpy+MKL) `(OpenNFT_venv)$ pip install http://www.silx.org/pub/wheelhouse/numpy-1.13.1+mkl-cp35-cp35m-win_amd64.whl`
+- (optional for numpy+MKL) `(OpenNFT_venv)$ conda install mkl numpy`
 - `(OpenNFT_venv)$ pip install git+https://github.com/OpenNFT/OpenNFT.git --install-option "--matlab-root=<MATLABROOT>"`
 
 Install without conda using your existing Python (>=3.5, <3.7):
