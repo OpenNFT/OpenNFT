@@ -22,7 +22,7 @@ function setupProcParams()
 
 P = evalin('base', 'P');
 mainLoopData = evalin('base', 'mainLoopData');
-rtQAData = evalin('base', 'rtQAData');
+rtQA_matlab = evalin('base', 'rtQA_matlab');
 
 [isPSC, isDCM, isSVM, isIGLM] = getFlagsType(P);
 
@@ -57,13 +57,17 @@ S.P = S.Q;
 S.x = 0;
 fPositDerivSpike = 0;
 fNegatDerivSpike = 0;
+% fPositDerivSpike = zeros(P.NrROIs,P.VolumesNumber);
+% fNegatDerivSpike = zeros(P.NrROIs,P.VolumesNumber);
 S(1:P.NrROIs) = S;
 fPositDerivSpike(1:P.NrROIs) = fPositDerivSpike;
 fNegatDerivSpike(1:P.NrROIs) = fNegatDerivSpike;
-
 mainLoopData.S = S;
 mainLoopData.fPositDerivSpike(1:P.NrROIs) = fPositDerivSpike;
 mainLoopData.fNegatDerivSpike(1:P.NrROIs) = fNegatDerivSpike;
+% mainLoopData.fPositDerivSpike = fPositDerivSpike;
+% mainLoopData.fNegatDerivSpike = fNegatDerivSpike;
+
 
 % Scaling Init
 tmp_posMin(1:P.NrROIs) = 0;
@@ -87,42 +91,46 @@ mainLoopData.mposMin = [];
 mainLoopData.blockNF = 0;
 mainLoopData.firstNF = 0;
 
-P_rtQA.meanSNR = [];
-P_rtQA.m2SNR = [];
-P_rtQA.rSNR = [];
-P_rtQA.meanBas = [];
-P_rtQA.m2Bas = [];
-P_rtQA.meanCond = [];
-P_rtQA.m2Cond = [];
-P_rtQA.rCNR = [];
-P_rtQA.excFDIndexes = [];
-P_rtQA.excVDIndexes = [];
+rtQA_python.meanSNR = [];
+rtQA_python.m2SNR = [];
+rtQA_python.rSNR = [];
+rtQA_python.meanBas = [];
+rtQA_python.m2Bas = [];
+rtQA_python.meanCond = [];
+rtQA_python.m2Cond = [];
+rtQA_python.rCNR = [];
+rtQA_python.excFDIndexes_1 = [];
+rtQA_python.excFDIndexes_2 = [];
+rtQA_python.excMDIndexes = [];
 
-rtQAData.snrData.vol = [];
-rtQAData.snrData.meanSmoothed = [];
-rtQAData.snrData.m2Smoothed = [];
-rtQAData.snrData.meanNonSmoothed = [];
-rtQAData.snrData.m2NonSmoothed = [];
-rtQAData.snrMapCreated = 0; 
+rtQA_matlab.kalmanSpikesPos = zeros(P.NrROIs,P.VolumesNumber);
+rtQA_matlab.kalmanSpikesNeg = zeros(P.NrROIs,P.VolumesNumber);
+
+rtQA_matlab.snrData.snrVol = [];
+rtQA_matlab.snrData.meanSmoothed = [];
+rtQA_matlab.snrData.m2Smoothed = [];
+rtQA_matlab.snrData.meanNonSmoothed = [];
+rtQA_matlab.snrData.m2NonSmoothed = [];
+rtQA_matlab.snrMapCreated = 0; 
 
 if ~P.isRestingState
-    rtQAData.cnrData.cnrVol = []
+    rtQA_matlab.cnrData.cnrVol = []
     
-    rtQAData.cnrData.basData.mean = [];
-    rtQAData.cnrData.basData.m2 = [];
-    rtQAData.cnrData.basData.meanSmoothed = [];
-    rtQAData.cnrData.basData.m2Smoothed = [];
-    rtQAData.cnrData.basData.iteration = 1;
+    rtQA_matlab.cnrData.basData.mean = [];
+    rtQA_matlab.cnrData.basData.m2 = [];
+    rtQA_matlab.cnrData.basData.meanSmoothed = [];
+    rtQA_matlab.cnrData.basData.m2Smoothed = [];
+    rtQA_matlab.cnrData.basData.iteration = 1;
     indexesBas = cell2mat(P.ProtBAS);
-    rtQAData.cnrData.basData.indexesBas = indexesBas(:,end-6:end); 
+    rtQA_matlab.cnrData.basData.indexesBas = indexesBas(:,end-6:end); 
 
-    rtQAData.cnrData.condData.mean = [];
-    rtQAData.cnrData.condData.m2 = [];
-    rtQAData.cnrData.condData.meanSmoothed = [];
-    rtQAData.cnrData.condData.m2Smoothed = [];
-    rtQAData.cnrData.condData.iteration = 1;
+    rtQA_matlab.cnrData.condData.mean = [];
+    rtQA_matlab.cnrData.condData.m2 = [];
+    rtQA_matlab.cnrData.condData.meanSmoothed = [];
+    rtQA_matlab.cnrData.condData.m2Smoothed = [];
+    rtQA_matlab.cnrData.condData.iteration = 1;
     indexesCond = cell2mat(P.ProtNF);
-    rtQAData.cnrData.condData.indexesCond = indexesCond(:,end-6:end);
+    rtQA_matlab.cnrData.condData.indexesCond = indexesCond(:,end-6:end);
 end
 
 %% DCM Settings
@@ -311,7 +319,7 @@ if ~exist(P.nfbDataFolder, 'dir')
     mkdir(P.nfbDataFolder);
 end
 
-assignin('base', 'rtQAData', rtQAData);
-assignin('base', 'P_rtQA', P_rtQA);
+assignin('base', 'rtQA_matlab', rtQA_matlab);
+assignin('base', 'rtQA_python', rtQA_python);
 assignin('base', 'mainLoopData', mainLoopData);
 assignin('base', 'P', P);

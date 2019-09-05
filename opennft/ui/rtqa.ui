@@ -349,7 +349,7 @@
             <item>
              <widget class="QRadioButton" name="mcrRadioButton">
               <property name="text">
-               <string>Van Dijk criteria</string>
+               <string>Micro displacement</string>
               </property>
              </widget>
             </item>

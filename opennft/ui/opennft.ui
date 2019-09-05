@@ -501,6 +501,9 @@
               </item>
               <item>
                <widget class="QComboBox" name="cbImageViewMode">
+                <property name="enabled">
+                 <bool>false</bool>
+                </property>
                 <item>
                  <property name="text">
                   <string>Mosaic</string>

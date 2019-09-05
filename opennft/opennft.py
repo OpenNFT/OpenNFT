@@ -215,7 +215,7 @@ class OpenNFT(QWidget):
 
         self.P = {}
         self.mainLoopData = {}
-        self.rtQAData = {}
+        self.rtQA_matlab = {}
         self.reultFromHelper = None
 
         self.imageViewMode = ImageViewMode.mosaic
@@ -233,6 +233,7 @@ class OpenNFT(QWidget):
         self.initialize(start=False)
 
         self.windowRTQA = None
+        self.isStopped = False
 
     # --------------------------------------------------------------------------
     def closeEvent(self, e):
@@ -479,7 +480,7 @@ class OpenNFT(QWidget):
 
         self.eng.workspace['mainLoopData'] = self.mainLoopData
 
-        self.eng.workspace['rtQAData'] = self.rtQAData
+        self.eng.workspace['rtQA_matlab'] = self.rtQA_matlab
 
         self.eng.setupProcParams(nargout=0)
 
@@ -814,10 +815,10 @@ class OpenNFT(QWidget):
                 dataMC = np.array(self.outputSamples['motCorrParam'], ndmin=2)
                 n = len(dataRealRaw[0, :])
                 data = dataRealRaw[:, n - 1]
-                self.windowRTQA.calculate_snr(init, data, n)
+                self.windowRTQA.calculate_snr(data, n)
                 if not self.P['isRestingState']:
                     self.windowRTQA.calculate_cnr(data, n)
-                self.windowRTQA.plot_rtQA()
+                self.windowRTQA.plot_rtQA(n)
                 if not n == 0:
                     self.windowRTQA.plot_mcmd(dataMC[n - 1, :])
 
@@ -1019,7 +1020,7 @@ class OpenNFT(QWidget):
 
         self.eng.workspace['P'] = self.P
         self.eng.workspace['mainLoopData'] = self.mainLoopData
-        self.eng.workspace['rtQAData'] = self.rtQAData
+        self.eng.workspace['rtQA_matlab'] = self.rtQA_matlab
 
 
         self.frameParams.setEnabled(True)
@@ -1029,19 +1030,20 @@ class OpenNFT(QWidget):
         self.resetDone = True
         self.isInitialized = True
 
+
         logger.info("Initialization finished ({:.2f} s)", time.time() - ts)
 
     # --------------------------------------------------------------------------
     def reset(self):
         self.P = {}
         self.mainLoopData = {}
-        self.rtQAData = {}
+        self.rtQA_matlab = {}
         self.reultFromHelper = None
         self.reachedFirstFile = False
 
         self.eng.workspace['P'] = self.P
         self.eng.workspace['mainLoopData'] = self.mainLoopData
-        self.eng.workspace['rtQAData'] = self.rtQAData
+        self.eng.workspace['rtQA_matlab'] = self.rtQA_matlab
         self.fFinNFB = False
         self.outputSamples = {}
         self.musterInfo = {}
@@ -1177,10 +1179,14 @@ class OpenNFT(QWidget):
                     n = len(self.P['ProtNF'][i])
                     indCond = np.append(indCond, self.P['ProtNF'][i][n-6:n])
 
-            self.windowRTQA = rtqa.RTQAWindow(xrange, indBas, indCond, parent=self)
+            self.cbImageViewMode.setEnabled(False)
+
+            self.windowRTQA = rtqa.RTQAWindow(int(self.P['NrROIs']),xrange, indBas, indCond, parent=self)
             self.windowRTQA.volumeCheckBox.stateChanged.connect(self.onShowRtqaVol)
             self.windowRTQA.smoothedCheckBox.stateChanged.connect(self.onSmoothedChecked)
             self.windowRTQA.comboBox.currentIndexChanged.connect(self.onModeChanged)
+            if self.P['isRestingState']:
+                self.windowRTQA.comboBox.model().item(2).setEnabled(False)
 
             self.eng.assignin('base', 'rtQAMode', self.windowRTQA.comboBox.currentIndex(), nargout=0)
             self.eng.assignin('base', 'isShowRtqaVol', self.windowRTQA.volumeCheckBox.isChecked(), nargout=0)
@@ -1188,10 +1194,13 @@ class OpenNFT(QWidget):
             self.eng.assignin('base', 'imageViewMode', int(self.imageViewMode), nargout=0)
             self.eng.assignin('base', 'FIRST_SNR_VOLUME', config.FIRST_SNR_VOLUME, nargout=0)
 
+            self.isStopped = False;
+
     # --------------------------------------------------------------------------
     def start(self):
         logger.info("*** Started ***")
 
+        self.cbImageViewMode.setEnabled(True)
         self.btnStart.setEnabled(False)
         self.btnStop.setEnabled(True)
         self.pbMoreParameters.setChecked(False)
@@ -1212,6 +1221,9 @@ class OpenNFT(QWidget):
 
     # --------------------------------------------------------------------------
     def stop(self):
+
+        self.isStopped = True;
+
         self.btnStop.setEnabled(False)
         self.btnStart.setEnabled(False)
 
@@ -1251,7 +1263,7 @@ class OpenNFT(QWidget):
             self.finalizeUdpSender()
             if self.cbUseTCPData.isChecked():
                 self.finalizeTcpReceiver()
-            self.eng.workspace['P_rtQA'] = self.windowRTQA.data_packing()
+            self.eng.workspace['rtQA_python'] = self.windowRTQA.data_packing()
             self.nfbFinStarted = self.eng.nfbSave(self.iteration, nargout=0, async=True)
             self.fFinNFB = False
 
@@ -1265,6 +1277,8 @@ class OpenNFT(QWidget):
     # --------------------------------------------------------------------------
     def onShowRtqaVol(self):
         self.eng.assignin('base', 'isShowRtqaVol', self.windowRTQA.volumeCheckBox.isChecked(), nargout=0)
+        if self.isStopped:
+            self.eng.offlineImageSwitch(nargout=0)
 
     # --------------------------------------------------------------------------
 
@@ -1275,6 +1289,8 @@ class OpenNFT(QWidget):
 
     def onModeChanged(self):
         self.eng.assignin('base', 'rtQAMode', self.windowRTQA.comboBox.currentIndex(), nargout=0)
+        if self.isStopped:
+            self.eng.offlineImageSwitch(nargout=0)
 
     # --------------------------------------------------------------------------
     def onChooseSetFile(self):
@@ -1776,7 +1792,7 @@ class OpenNFT(QWidget):
 
         # SNR/Stat map display
         is_stat_map_created = bool(self.eng.evalin('base', 'mainLoopData.statMapCreated'))
-        is_snr_map_created = bool(self.eng.evalin('base', 'rtQAData.snrMapCreated'))
+        is_snr_map_created = bool(self.eng.evalin('base', 'rtQA_matlab.snrMapCreated'))
         is_rtqa_volume_checked = self.windowRTQA.volumeCheckBox.isChecked()
 
         if (background_image is not None

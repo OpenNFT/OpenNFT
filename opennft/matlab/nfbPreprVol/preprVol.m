@@ -19,7 +19,7 @@ isShowRtqaVol = evalin('base', 'isShowRtqaVol');
 isSmoothed = evalin('base', 'isSmoothed');
 imageViewMode = evalin('base', 'imageViewMode');
 FIRST_SNR_VOLUME = evalin('base', 'FIRST_SNR_VOLUME');
-rtQAData = evalin('base', 'rtQAData');
+rtQA_matlab = evalin('base', 'rtQA_matlab');
 
 if indVol <= P.nrSkipVol
     return;
@@ -149,20 +149,22 @@ statMap2D = zeros(img2DdimY, img2DdimX);
 
 if indVolNorm > FIRST_SNR_VOLUME
     
-    [ rtQAData.snrData ] = snr_calc(indVolNorm, reslVol, smReslVol, rtQAData.snrData, isSmoothed);
+    [ rtQA_matlab.snrData ] = snr_calc(indVolNorm, reslVol, smReslVol, rtQA_matlab.snrData, isSmoothed);
     
     if ~P.isRestingState
-        [ rtQAData.cnrData ] = cnr_calc(indVolNorm, reslVol, smReslVol, rtQAData.cnrData, isSmoothed);
+        [ rtQA_matlab.cnrData ] = cnr_calc(indVolNorm, reslVol, smReslVol, rtQA_matlab.cnrData, isSmoothed);
     end;
         
-    rtQAData.snrMapCreated = 1; 
+    rtQA_matlab.snrMapCreated = 1; 
     
     if isShowRtqaVol
         
-        if rtQAMode && ~P.isRestingState
+        if ~rtQAMode || P.isRestingState
             % 0 - SNR mode, 2 - CNR mode
-            outputVol = cnrVol;
-        end
+            outputVol = rtQA_matlab.snrData.snrVol;
+        else
+            outputVol = rtQA_matlab.cnrData.cnrVol;
+        end;
    
         if imageViewMode == 1 || imageViewMode == 2
             % orthviewAnat (1) || orthviewEPI (2)
@@ -185,7 +187,7 @@ if indVolNorm > FIRST_SNR_VOLUME
     end
 else
     
-    rtQAData.snrMapCreated = 0; 
+    rtQA_matlab.snrMapCreated = 0; 
     
 end
     
@@ -417,15 +419,19 @@ if ~isempty(idxActVoxIGLM) && max(tn) > 0 % handle empty activation map
     
     clear idxActVoxIGLM
     
-    if ~isShowRtqaVol && ~imageViewMode
-        statMap2D = vol3Dimg2D(statMap3D, slNrImg2DdimX, slNrImg2DdimY, ...
-            img2DdimX, img2DdimY, dimVol) / maxTval;
+    
+    statMap2D = vol3Dimg2D(statMap3D, slNrImg2DdimX, slNrImg2DdimY, ...
+        img2DdimX, img2DdimY, dimVol) / maxTval;
 
-        statMap2D = statMap2D * 255;
+    statMap2D = statMap2D * 255;
+        
+    if ~isShowRtqaVol && ~imageViewMode
+        
         fname = strrep(P.memMapFile, 'shared', 'map_2D');
         m_out = memmapfile(fname, 'Writable', true, 'Format',  {'uint8', img2DdimX*img2DdimY, 'map_2D'});
         m_out.Data.map_2D = uint8(statMap2D(:));
         assignin('base', 'statMap2D', statMap2D);
+        
     end
     
     % shared for SPM matlab helper
@@ -497,7 +503,7 @@ if isDCM
     P.indNFTrial = indNFTrial;
 end
 
-assignin('base', 'rtQAData', rtQAData);
+assignin('base', 'rtQA_matlab', rtQA_matlab);
 assignin('base', 'mainLoopData', mainLoopData);
 assignin('base', 'P', P);
 

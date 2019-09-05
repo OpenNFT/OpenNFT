@@ -16,23 +16,54 @@ disp('Save...')
 
 P = evalin('base', 'P');
 mainLoopData = evalin('base', 'mainLoopData');
-rtQAData = evalin('base', 'rtQAData');
-P_rtQA = evalin('base', 'P_rtQA');
-evalin('base', 'clear mmImgViewTempl;');
-evalin('base', 'clear mmStatVol;');
-evalin('base', 'clear mmOrthView;');
+rtQA_matlab = evalin('base', 'rtQA_matlab');
+rtQA_python = evalin('base', 'rtQA_python');
+% evalin('base', 'clear mmImgViewTempl;');
+% evalin('base', 'clear mmStatVol;');
+% evalin('base', 'clear mmOrthView;');
 [isPSC, isDCM, isSVM, isIGLM] = getFlagsType(P);
 
 folder = P.nfbDataFolder;
 
 % save rtqa data
-save([folder '\rtQAData.mat'], '-struct', 'rtQAData');
-save([folder '\P_rtQA.mat'], '-struct', 'P_rtQA');
+save([folder '\rtQA_matlab.mat'], '-struct', 'rtQA_matlab');
+save([folder '\rtQA_python.mat'], '-struct', 'rtQA_python');
+
+% save last volume stat data for offline access
+slNrImg2DdimX = mainLoopData.slNrImg2DdimX;
+slNrImg2DdimY = mainLoopData.slNrImg2DdimY;
+img2DdimX = mainLoopData.img2DdimX;
+img2DdimY = mainLoopData.img2DdimY;
+dimVol = mainLoopData.dimVol;
+tn = mainLoopData.tn;
+indVolNorm = mainLoopData.indVolNorm;
+indVolNorm = double(indVolNorm);
+idxActVoxIGLM = mainLoopData.idxActVoxIGLM{indVolNorm};
+statMap3D = mainLoopData.statMap3D;
+
+maskedStatMapVect = tn(idxActVoxIGLM);
+maxTval = max(maskedStatMapVect);
+if isempty(maxTval)
+    maxTval = 1;
+end
+statMapVect = maskedStatMapVect;
+statMap3D(idxActVoxIGLM) = statMapVect;
+
+statMap2D = vol3Dimg2D(statMap3D, slNrImg2DdimX, slNrImg2DdimY, img2DdimX, img2DdimY, dimVol) / maxTval;
+statMap2D = statMap2D * 255;
+
+mainLoopData.statMap2D = statMap2D;
+mainLoopData.statMap3D = statMap3D;
+m = evalin('base', 'mmStatVol');
+m.Data.statVol = statMap3D;
+assignin('base', 'mainLoopData', mainLoopData);
 
 % save feedback values
-save([folder filesep P.SubjectID '_' ...
-    num2str(P.NFRunNr) '_NFBs' '.mat'], ...
-    '-struct', 'mainLoopData', 'vectNFBs');
+if ~P.isRestingState
+    save([folder filesep P.SubjectID '_' ...
+        num2str(P.NFRunNr) '_NFBs' '.mat'], ...
+        '-struct', 'mainLoopData', 'vectNFBs');
+end
 
 % save time-series
 if P.NrROIs >0
@@ -90,8 +121,10 @@ if isDCM
     roiData.ROIsGlmAnat = evalin('base', 'ROIsGlmAnat');
     roiData.ROIoptimGlmAnat = evalin('base', 'ROIoptimGlmAnat');
 end
-save([folder filesep P.SubjectID '_' ...
-    num2str(P.NFRunNr) '_roiData' '.mat'], 'roiData');
+if ~P.isRestingState
+    save([folder filesep P.SubjectID '_' ...
+        num2str(P.NFRunNr) '_roiData' '.mat'], 'roiData');
+end
 
 % concatenate two TimeVector event files
 fileTimeVectors_display = [folder filesep 'TimeVectors_display_' ...

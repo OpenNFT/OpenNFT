@@ -12,6 +12,7 @@ function [ cnrData ] = cnr_calc( index, vol, volSmoothed, cnrData, isSmoothed )
             basData.m2 = zeros(shape);
             basData.meanSmoothed = volSmoothed;
             basData.m2Smoothed = zeros(shape);
+            cnrData.basData = basData;
             return;
         end
         
@@ -34,6 +35,7 @@ function [ cnrData ] = cnr_calc( index, vol, volSmoothed, cnrData, isSmoothed )
             condData.m2 = zeros(shape);
             condData.meanSmoothed = volSmoothed;
             condData.m2Smoothed = zeros(shape);
+            cnrData.condData = condData;
             return
         end
         

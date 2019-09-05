@@ -15,7 +15,7 @@ from opennft.rtqa_fdm import FD
 
 class RTQAWindow(QtWidgets.QWidget):
 
-    def __init__(self, xrange, indBas, indCond, parent=None):
+    def __init__(self, sz, xrange, indBas, indCond, parent=None):
         super().__init__(parent=parent, flags=QtCore.Qt.Window)
 
         uic.loadUi(utils.get_ui_file('rtqa.ui'), self)
@@ -120,15 +120,14 @@ class RTQAWindow(QtWidgets.QWidget):
 
         self.tsCheckBox.setChecked(True)
 
-        self.means = dict.fromkeys(['meanRaw'])
-        self.m2 = dict.fromkeys(['m2Raw'])
-        self.variances = dict.fromkeys(['varRaw'])
-        self.rSNR = dict.fromkeys(['snrRaw'])
-        self.meanBas = np.array(0)
-        self.m2Bas = np.array(0)
-        self.meanCond = np.array(0)
-        self.m2Cond = np.array(0)
-        self.rCNR = np.array(0)
+        self.mean = np.zeros((sz, 1))
+        self.m2 = np.zeros((sz, 1))
+        self.rSNR = np.zeros((sz, xrange))
+        self.meanBas = np.zeros((sz, 1))
+        self.m2Bas = np.zeros((sz, 1))
+        self.meanCond = np.zeros((sz, 1))
+        self.m2Cond = np.zeros((sz, 1))
+        self.rCNR = np.zeros((sz, xrange))
 
     def onComboboxChanged(self):
 
@@ -140,7 +139,6 @@ class RTQAWindow(QtWidgets.QWidget):
             return
         if state == 2:
             self.stackedWidgetOptions.setCurrentIndex(0);
-            return
         if state == 3:
             return
         if state == 4:
@@ -163,6 +161,8 @@ class RTQAWindow(QtWidgets.QWidget):
                 pens.append(config.PLOT_PEN_COLORS[i + 1])
 
             self.makeRoiPlotLegend(self.fdLabel, names, pens)
+
+        self._fd.draw_mc_plots(self.mcrRadioButton.isChecked(), self._plot_translat, self._plot_rotat, self._plot_fd)
 
     def makeRoiPlotLegend(self, label, names, pens):
         label.setText('')
@@ -194,13 +194,6 @@ class RTQAWindow(QtWidgets.QWidget):
         self.hide()
         event.accept()
 
-    def dictInit(self, sz):
-        self.means['meanRaw'] = np.zeros((sz, 0))
-        self.m2['m2Raw'] = np.zeros((sz, 0))
-        self.variances['varRaw'] = np.zeros((sz, 0))
-        self.rSNR['snrRaw'] = np.zeros((sz, 0))
-        self.rCNR = np.zeros((sz, self._fd.xmax+1))
-
     def plot_ts(self, plotitem, data):
 
         if self.tsCheckBox.isChecked():
@@ -221,29 +214,23 @@ class RTQAWindow(QtWidgets.QWidget):
             for p, y in zip(self.plot_ts.__dict__[plotitem], data):
                 p.setData(x=x, y=np.array(y))
 
-    def plot_rtQA(self):
+    def plot_rtQA(self, n):
 
         plotitem = self.snrplot.getPlotItem()
-        data = np.array(self.rSNR["snrRaw"], ndmin=2)
+        data = self.rSNR[:, 0:n]
         self.plot_ts(plotitem,data)
 
         plotitem = self.cnrplot.getPlotItem()
-        data = np.array(self.rCNR[:, 0:len(self.rSNR["snrRaw"][0])], ndmin=2)
+        data = self.rCNR[:, 0:n]
         self.plot_ts(plotitem,data)
 
-    def calculate_snr(self, init, data, iteration):
+    def calculate_snr(self, data, iteration):
         sz = data.size
         snr = np.zeros((sz, 1))
 
-        if init:
-            self.dictInit(sz)
-            mean = np.zeros((sz, 1))
-            m2 = np.zeros((sz, 1))
-            variance = np.zeros((sz, 1))
-        else:
-            mean = self.means["meanRaw"]
-            m2 = self.m2["m2Raw"]
-            variance = self.variances["varRaw"]
+        variance = np.zeros((sz, 1))
+        mean = self.mean
+        m2 = self.m2
 
         n = iteration
         meanPrev = mean
@@ -260,12 +247,12 @@ class RTQAWindow(QtWidgets.QWidget):
             else:
                 snr[i] = mean[i] / (variance[i] ** (.5))
 
-        self.means["meanRaw"] = mean
-        self.m2["m2Raw"] = m2
-        self.variances["varRaw"] = variance
+        self.mean = mean
+        self.m2 = m2
         if iteration < 8:
             snr = np.zeros((sz, 1))
-        self.rSNR['snrRaw'] = np.append(self.rSNR['snrRaw'], snr, axis=1)
+        for i in range(sz):
+            self.rSNR[i][n-1] = snr[i]
 
         if not self.comboBox.currentIndex():
 
@@ -312,32 +299,37 @@ class RTQAWindow(QtWidgets.QWidget):
             for i in range(sz):
                 varBas = self.m2Bas[i] / (self.iterBas - 1)
                 varCond = self.m2Cond[i] / (self.iterCond - 1)
-                self.rCNR[i][indexVolume] = (self.meanCond[i] - self.meanBas[i]) / ((varCond + varBas) ** (.5))
+                self.rCNR[i][indexVolume-1] = (self.meanCond[i] - self.meanBas[i]) / ((varCond + varBas) ** (.5))
 
             if self.comboBox.currentIndex()==2:
                 names = ['СNR ']
                 pens = [config.PLOT_PEN_COLORS[6]]
                 for i in range(sz):
-                    names.append('ROI_' + str(i + 1) + ' ' + '{0:.3f}'.format(float(self.rCNR[i][indexVolume])))
+                    names.append('ROI_' + str(i + 1) + ' ' + '{0:.3f}'.format(float(self.rCNR[i][indexVolume-1])))
                     pens.append(pg.mkPen(color=config.ROI_PLOT_COLORS[i], width=1.2))
 
                 self.makeTextValueLabel(self.valuesLabel, names, pens)
 
     def plot_mcmd(self, data):
-        self._fd.draw_mc_plots(data, self.mcrRadioButton.isChecked(), self._plot_translat, self._plot_rotat, self._plot_fd)
-        names = ['Framewise displacement ']
+        self._fd.calc_mc_plots(data)
+        self._fd.draw_mc_plots(self.mcrRadioButton.isChecked(), self._plot_translat, self._plot_rotat, self._plot_fd)
+        names = ['<u>FD</u> ']
         pens = [config.PLOT_PEN_COLORS[6]]
-        names.append('Exceed threshold 1: ' + str(int(self._fd.excFD[0])))
+        names.append('Threshold 1: ' + str(int(self._fd.excFD[0])))
         pens.append(config.PLOT_PEN_COLORS[1])
-        names.append('Exceed threshold 2: ' + str(int(self._fd.excFD[1])))
+        names.append('Threshold 2: ' + str(int(self._fd.excFD[1])))
         pens.append(config.PLOT_PEN_COLORS[2])
-        names.append('Micro displacement ')
+        names.append('<br><u>MD</u> ')
         pens.append(config.PLOT_PEN_COLORS[6])
-        names.append('Exceed threshold: ' + str(int(self._fd.excVD)))
+        names.append('Threshold: ' + str(int(self._fd.excVD)))
         pens.append(config.PLOT_PEN_COLORS[2])
-        names.append('Mean framewise displacement ')
+        names.append('<br><u>Mean FD</u> ')
         pens.append(config.PLOT_PEN_COLORS[6])
         names.append('{0:.3f}'.format(self._fd.meanFD))
+        pens.append(config.PLOT_PEN_COLORS[6])
+        names.append('<br><u>Mean MD</u> ')
+        pens.append(config.PLOT_PEN_COLORS[6])
+        names.append('{0:.3f}'.format(self._fd.meanMD))
         pens.append(config.PLOT_PEN_COLORS[6])
         self.makeTextValueLabel(self.mcmdValuesLabel, names, pens)
 
@@ -345,17 +337,18 @@ class RTQAWindow(QtWidgets.QWidget):
 
         tsRTQA = dict.fromkeys(['meanSNR', 'm2SNR', 'rSNR',
                                 'meanBas', 'm2Bas', 'meanCond', 'm2Cond', 'rCNR',
-                                'excFDIndexes', 'excVDIndexes'])
+                                'excFDIndexes_1', 'excFDIndexes_2', 'excMDIndexes'])
 
-        tsRTQA['meanSNR'] = matlab.double(self.means['meanRaw'].tolist())
-        tsRTQA['m2SNR'] = matlab.double(self.m2['m2Raw'].tolist())
-        tsRTQA['rSNR'] = matlab.double(self.rSNR['snrRaw'].tolist())
+        tsRTQA['meanSNR'] = matlab.double(self.mean.tolist())
+        tsRTQA['m2SNR'] = matlab.double(self.m2.tolist())
+        tsRTQA['rSNR'] = matlab.double(self.rSNR.tolist())
         tsRTQA['meanBas'] = matlab.double(self.meanBas.tolist())
         tsRTQA['m2Bas'] = matlab.double(self.m2Bas.tolist())
         tsRTQA['meanCond'] = matlab.double(self.meanCond.tolist())
         tsRTQA['m2Cond'] = matlab.double(self.m2Cond.tolist())
         tsRTQA['rCNR'] = matlab.double(self.rCNR.tolist())
-        tsRTQA['excFDIndexes'] = matlab.double(self._fd.excFDIndexes.tolist())
-        tsRTQA['excVDIndexes'] = matlab.double(self._fd.excVDIndexes.tolist())
+        tsRTQA['excFDIndexes_1'] = matlab.double(self._fd.excFDIndexes_1.tolist())
+        tsRTQA['excFDIndexes_2'] = matlab.double(self._fd.excFDIndexes_2.tolist())
+        tsRTQA['excMDIndexes'] = matlab.double(self._fd.excMDIndexes.tolist())
 
         return tsRTQA

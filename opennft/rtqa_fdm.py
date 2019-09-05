@@ -26,13 +26,15 @@ class FD:
         self.xmax = xmax
         self.fd = 0
         self.meanFD = 0
-        self.vdCriteria = [0]
+        self.md = [0]
+        self.meanMD = 0
 
         self.excFD = [0, 0]
         self.excVD = 0
 
-        self.excFDIndexes = np.zeros((xmax, 2))
-        self.excVDIndexes = np.zeros((xmax, 1))
+        self.excFDIndexes_1 = np.array([-1])
+        self.excFDIndexes_2 = np.array([-1])
+        self.excMDIndexes = np.array([-1])
 
                 
     # FD computation 
@@ -53,14 +55,23 @@ class FD:
 
         if self.fd[i] >= self.threshold[1]:
            self.excFD[0] += 1
-           self.excFDIndexes[i, 0] = 1
+
+           if self.excFDIndexes_1[-1] == -1:
+               self.excFDIndexes_1 = [i - 1]
+           else:
+               self.excFDIndexes_1 = np.append(self.excFDIndexes_1, i - 1)
+
            if self.fd[i] >= self.threshold[2]:
               self.excFD[1] += 1
-              self.excFDIndexes[i, 1] = 1
 
-    def Van_Dijk_criteria(self):
+              if self.excFDIndexes_2[-1] == -1:
+                  self.excFDIndexes_2 = [i - 1]
+              else:
+                  self.excFDIndexes_2 = np.append(self.excFDIndexes_2, i - 1)
 
-        n = len(self.vdCriteria) - 1
+    def micro_displacement(self):
+
+        n = len(self.data) - 1
         rmsDisp = 0;
 
         for i in range(3):
@@ -68,23 +79,30 @@ class FD:
 
         rmsDisp = np.sqrt(rmsDisp)
 
-        self.vdCriteria = np.append(self.vdCriteria, abs(self.vdCriteria[n]-rmsDisp))
+        self.md = np.append(self.md, abs(self.md[-1]-rmsDisp))
+        self.meanMD = self.meanMD + (self.md[-1] - self.meanMD) / n
 
-        if self.vdCriteria[n+1]>=self.threshold[0]:
+        if self.md[n] >= self.threshold[0]:
             self.excVD += 1
-            self.excFDIndexes[i, 0] = 1
+            if self.excMDIndexes[-1] == -1:
+                self.excMDIndexes = [ n-1 ]
+            else:
+                self.excMDIndexes = np.append(self.excMDIndexes, n-1)
 
 
-    def draw_mc_plots(self, data, vdFlag, trPlotitem, rotPlotitem, fdPlotitem):
+    def calc_mc_plots(self, data):
 
         self.data = np.vstack((self.data,data))
+        self.micro_displacement()
+        self.all_fd()
+
+    def draw_mc_plots(self, mdFlag, trPlotitem, rotPlotitem, fdPlotitem):
+
         x = np.arange(1, self.data.shape[0] + 1, dtype=np.float64)
 
         trPlotitem.clear()
         rotPlotitem.clear()
         fdPlotitem.clear()
-        self.Van_Dijk_criteria()
-        self.all_fd()
 
         for i in range(0, 3):
             trPlotitem.plot(x=x, y=self.data[:, i], pen=c.PLOT_PEN_COLORS[i], name=self.names[i])
@@ -92,8 +110,8 @@ class FD:
         for i in range(3, 6):
             rotPlotitem.plot(x=x, y=self.data[:, i], pen=c.PLOT_PEN_COLORS[i], name=self.names[i])
 
-        if vdFlag:
-            fdPlotitem.plot(x=x, y=self.vdCriteria, pen=c.PLOT_PEN_COLORS[0], name='Micro displacement')
+        if mdFlag:
+            fdPlotitem.plot(x=x, y=self.md, pen=c.PLOT_PEN_COLORS[0], name='Micro displacement')
             fdPlotitem.plot(x=np.arange(0, self.xmax, dtype=np.float64), y=self.threshold[0] * np.ones(self.xmax),
                             pen=c.PLOT_PEN_COLORS[2], name='thr')
         else:

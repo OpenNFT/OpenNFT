@@ -12,6 +12,7 @@ function output = preprSig(indVol)
 % Written by Yury Koush
 
 P = evalin('base', 'P');
+rtQA_matlab = evalin('base', 'rtQA_matlab');
 mainLoopData = evalin('base', 'mainLoopData');
 
 output = struct;
@@ -293,6 +294,8 @@ for indRoi = 1:P.NrROIs
         mainLoopData.glmProcTimeSeries(indRoi,indVolNorm), ...
         mainLoopData.S(indRoi), mainLoopData.fPositDerivSpike(indRoi), ...
         mainLoopData.fNegatDerivSpike(indRoi));
+    rtQA_matlab.kalmanSpikesPos(indRoi,indVolNorm) = mainLoopData.fPositDerivSpike(indRoi);    
+    rtQA_matlab.kalmanSpikesNeg(indRoi,indVolNorm) = mainLoopData.fNegatDerivSpike(indRoi);
 
     %4. Scaling
     if ~P.isRestingState
@@ -337,4 +340,5 @@ output.rawTimeSeries = mainLoopData.rawTimeSeries;
 output.motCorrParam = P.motCorrParam;
     
 assignin('base', 'mainLoopData', mainLoopData);
+assignin('base', 'rtQA_matlab', rtQA_matlab);
 assignin('base', 'P', P);

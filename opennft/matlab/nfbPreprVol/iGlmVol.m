@@ -72,7 +72,7 @@ if p == 0 && n > nrBasFct+2
     end
     
     eqContr = invNn * contr; % equivalent contrast
-    tn = (An*eqContr) ./ sqrt(e2n / n .* (eqContr' * eqContr)); % Eq. (23)
+    tn = (An*eqContr) ./ sqrt(e2n / n .* (eqContr' * eqContr)); % Eq. (23)    
 else
     neg_e2n = [];
 end
