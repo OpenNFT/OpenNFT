@@ -237,6 +237,7 @@ class OpenNFT(QWidget):
 
     # --------------------------------------------------------------------------
     def closeEvent(self, e):
+
         self.writeAppSettings()
         self.stop()
         self.hide()
@@ -819,7 +820,11 @@ class OpenNFT(QWidget):
                 if not self.P['isRestingState']:
                     self.windowRTQA.calculate_cnr(data, n)
                 self.windowRTQA.plot_rtQA(n)
-                if not n == 0:
+                if n > 1:
+                    data = np.array(self.eng.evalin('base','mainLoopData.glmProcTimeSeries(:,end)'), ndmin=2)
+                    posSpike = np.array(self.eng.evalin('base','rtQA_matlab.kalmanSpikesPos(:,mainLoopData.indVolNorm)'), ndmin=2)
+                    negSpike = np.array(self.eng.evalin('base','rtQA_matlab.kalmanSpikesNeg(:,mainLoopData.indVolNorm)'), ndmin=2)
+                    self.windowRTQA.plot_stepsAndSpikes(data, posSpike, negSpike)
                     self.windowRTQA.plot_mcmd(dataMC[n - 1, :])
 
             with utils.timeit('Display mosaic image:'):

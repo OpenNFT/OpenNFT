@@ -24,6 +24,10 @@ P = evalin('base', 'P');
 mainLoopData = evalin('base', 'mainLoopData');
 rtQA_matlab = evalin('base', 'rtQA_matlab');
 
+evalin('base', 'clear mmImgViewTempl;');
+evalin('base', 'clear mmStatVol;');
+evalin('base', 'clear mmOrthView;');
+
 [isPSC, isDCM, isSVM, isIGLM] = getFlagsType(P);
 
 if strcmp(P.DataType, 'DICOM')

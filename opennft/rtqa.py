@@ -58,6 +58,20 @@ class RTQAWindow(QtWidgets.QWidget):
         p.disableAutoRange(axis=pg.ViewBox.XAxis)
         p.setXRange(1, xrange, padding=0.0)
 
+        self.spikesStepsPlot = pg.PlotWidget(self)
+        self.spikesStepsPlot.setBackground((255, 255, 255))
+        self.spikesAndStepsPlot.addWidget(self.spikesStepsPlot)
+
+        p = self.spikesStepsPlot.getPlotItem()
+        p.setTitle('Spikes and Steps', size='')
+        p.setLabel('left', "Amplitude [a.u.]")
+        p.setMenuEnabled(enableMenu=False)
+        p.setMouseEnabled(x=False, y=False)
+        p.showGrid(x=True, y=True, alpha=1)
+        p.installEventFilter(self)
+        p.disableAutoRange(axis=pg.ViewBox.XAxis)
+        p.setXRange(1, xrange, padding=0.0)
+
         self._plot_translat = pg.PlotWidget(self)
         self._plot_translat.setBackground((255, 255, 255))
         self.tdPlot.addWidget(self._plot_translat)
@@ -128,6 +142,9 @@ class RTQAWindow(QtWidgets.QWidget):
         self.meanCond = np.zeros((sz, 1))
         self.m2Cond = np.zeros((sz, 1))
         self.rCNR = np.zeros((sz, xrange))
+        self.glmProcTimeSeries = np.zeros((sz, 1))
+        self.posSpikes = dict.fromkeys(['{:d}'.format(x) for x in range(sz)], np.array(0))
+        self.negSpikes = dict.fromkeys(['{:d}'.format(x) for x in range(sz)], np.array(0))
 
     def onComboboxChanged(self):
 
@@ -301,7 +318,7 @@ class RTQAWindow(QtWidgets.QWidget):
                 varCond = self.m2Cond[i] / (self.iterCond - 1)
                 self.rCNR[i][indexVolume-1] = (self.meanCond[i] - self.meanBas[i]) / ((varCond + varBas) ** (.5))
 
-            if self.comboBox.currentIndex()==2:
+            if self.comboBox.currentIndex() == 2:
                 names = ['СNR ']
                 pens = [config.PLOT_PEN_COLORS[6]]
                 for i in range(sz):
@@ -311,6 +328,7 @@ class RTQAWindow(QtWidgets.QWidget):
                 self.makeTextValueLabel(self.valuesLabel, names, pens)
 
     def plot_mcmd(self, data):
+
         self._fd.calc_mc_plots(data)
         self._fd.draw_mc_plots(self.mcrRadioButton.isChecked(), self._plot_translat, self._plot_rotat, self._plot_fd)
         names = ['<u>FD</u> ']
@@ -332,6 +350,79 @@ class RTQAWindow(QtWidgets.QWidget):
         names.append('{0:.3f}'.format(self._fd.meanMD))
         pens.append(config.PLOT_PEN_COLORS[6])
         self.makeTextValueLabel(self.mcmdValuesLabel, names, pens)
+
+    def plot_stepsAndSpikes(self, data, posSpike, negSpike):
+
+        self.glmProcTimeSeries = np.append(self.glmProcTimeSeries, data, axis=1)
+        sz, l = self.glmProcTimeSeries.shape
+
+        for i in range(sz):
+            if posSpike[i] == 1:
+                if self.posSpikes[str(i)].any():
+                    self.posSpikes[str(i)] = np.append(self.posSpikes[str(i)], l-1)
+                else:
+                    self.posSpikes[str(i)] = np.array([l-1])
+            if negSpike[i] == 1:
+                if self.negSpikes[str(i)].any():
+                    self.negSpikes[str(i)] = np.append(self.negSpikes[str(i)], l-1)
+                else:
+                    self.negSpikes[str(i)] = np.array([l-1])
+
+        x = np.arange(0, l, dtype=np.float64)
+
+        plotitem = self.spikesStepsPlot.getPlotItem()
+        plotitem.clear()
+        plots = []
+
+        for i, c in zip(range(sz), config.ROI_PLOT_COLORS):
+            pen = pg.mkPen(color=c, width=config.ROI_PLOT_WIDTH)
+            p = plotitem.plot(pen=pen)
+            plots.append(p)
+
+        for p, y in zip(plots, self.glmProcTimeSeries):
+            p.setData(x=x, y=np.array(y))
+
+        for i, c in zip(range(sz), config.ROI_PLOT_COLORS):
+            if self.posSpikes[str(i)].any():
+                brush = pg.mkBrush(color=c)
+                p = plotitem.scatterPlot(symbol='o', size=20, brush=brush)
+                plots.append(p)
+                plots[-1].setData(x=x[self.posSpikes[str(i)]], y=self.glmProcTimeSeries[i, self.posSpikes[str(i)]])
+
+                pen = pg.mkPen(color=pg.mkColor(0, 0, 0), width=1.5*config.ROI_PLOT_WIDTH)
+                p = plotitem.plot(pen=pen)
+                plots.append(p)
+
+                mask = np.zeros((l, 1))
+                mask[self.posSpikes[str(i)]] = 1
+                mask[self.posSpikes[str(i)]-1] = 1
+                y = np.array(self.glmProcTimeSeries[i,:])
+                y = y[np.where(mask == 1)[0]]
+                x1 = x
+                x1 = x1[np.where(mask == 1)[0]]
+
+                plots[-1].setData(x=x1, y=y, connect='pairs')
+
+            if self.negSpikes[str(i)].any():
+                brush = pg.mkBrush(color=c)
+                p = plotitem.scatterPlot(symbol='d', size=20, brush=brush)
+                plots.append(p)
+                plots[-1].setData(x=x[self.negSpikes[str(i)]], y=self.glmProcTimeSeries[i, self.negSpikes[str(i)]])
+
+                pen = pg.mkPen(color=pg.mkColor(0, 0, 0), width=1.5*config.ROI_PLOT_WIDTH)
+                p = plotitem.plot(pen=pen)
+                plots.append(p)
+
+                mask = np.zeros((l, 1))
+                mask[self.negSpikes[str(i)]] = 1
+                mask[self.negSpikes[str(i)]-1] = 1
+                y = np.array(self.glmProcTimeSeries[i,:])
+                y = y[np.where(mask == 1)[0]]
+                x1 = x
+                x1 = x1[np.where(mask == 1)[0]]
+
+                plots[-1].setData(x=x1, y=y, connect='pairs')
+
 
     def data_packing(self):
 
