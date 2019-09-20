@@ -59,12 +59,15 @@ if isShowRTQA
    displImg.mat = matTemplMotCorr;
 else
    fname = strrep(P.memMapFile, 'shared', 'statVol');
-   m_in = memmapfile(fname, 'Writable', false, 'Format', {'double', dimTemplMotCorr, 'statVol'});
-   displImg.vol = m_in.Data.statVol; 
+   m_in = memmapfile(fname, 'Writable', false, 'Format',  {'double', displayBgEpi.dim, 'posStatVol'; 'double', displayBgEpi.dim, 'negStatVol'});
+   displImg.vol = m_in.Data.posStatVol;
    displImg.mat = matTemplMotCorr;   
+   displImg_neg.vol = m_in.Data.negStatVol;
+   displImg_neg.mat = matTemplMotCorr; 
 end
 
 [backg_imgt,backg_imgc,backg_imgs, stat_imgt, stat_imgc, stat_imgs, P] = redrawall(displBackgr.vol, displBackgr.mat, ROIsOverlay, displImg, P);
+[backg_imgt,backg_imgc,backg_imgs, stat_imgt_neg, stat_imgc_neg, stat_imgs_neg, P] = redrawall(displBackgr.vol, displBackgr.mat, ROIsOverlay, displImg_neg, P);
 
 backg_imgt = uint8(backg_imgt / max(backg_imgt(:)) * 255);
 backg_imgc = uint8(double(backg_imgc) / max(backg_imgc(:)) * 255);
@@ -100,6 +103,15 @@ l2 = prod(size(stat_imgc));
 m_out.Data(l1+1:l1+l2) = stat_imgc(:);
 l3 = prod(size(stat_imgs));
 m_out.Data(l1+l2+1:l1+l2+l3) = stat_imgs(:);
+
+fname = strrep(P.memMapFile, 'shared', 'OrthView_neg');
+m_out = memmapfile(fname, 'Writable', true, 'Format', 'uint8');
+l1 = prod(size(stat_imgt_neg));
+m_out.Data(1:l1) = stat_imgt_neg(:);
+l2 = prod(size(stat_imgc_neg));
+m_out.Data(l1+1:l1+l2) = stat_imgc_neg(:);
+l3 = prod(size(stat_imgs_neg));
+m_out.Data(l1+l2+1:l1+l2+l3) = stat_imgs_neg(:);
 
 assignin('base', 'helperP', P);
 

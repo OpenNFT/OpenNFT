@@ -26,6 +26,7 @@ rtQA_matlab = evalin('base', 'rtQA_matlab');
 
 evalin('base', 'clear mmImgViewTempl;');
 evalin('base', 'clear mmStatVol;');
+evalin('base', 'clear mmStatMap;');
 evalin('base', 'clear mmOrthView;');
 
 [isPSC, isDCM, isSVM, isIGLM] = getFlagsType(P);
@@ -61,16 +62,12 @@ S.P = S.Q;
 S.x = 0;
 fPositDerivSpike = 0;
 fNegatDerivSpike = 0;
-% fPositDerivSpike = zeros(P.NrROIs,P.VolumesNumber);
-% fNegatDerivSpike = zeros(P.NrROIs,P.VolumesNumber);
 S(1:P.NrROIs) = S;
 fPositDerivSpike(1:P.NrROIs) = fPositDerivSpike;
 fNegatDerivSpike(1:P.NrROIs) = fNegatDerivSpike;
 mainLoopData.S = S;
 mainLoopData.fPositDerivSpike(1:P.NrROIs) = fPositDerivSpike;
 mainLoopData.fNegatDerivSpike(1:P.NrROIs) = fNegatDerivSpike;
-% mainLoopData.fPositDerivSpike = fPositDerivSpike;
-% mainLoopData.fNegatDerivSpike = fNegatDerivSpike;
 
 
 % Scaling Init
@@ -99,9 +96,9 @@ rtQA_python.meanSNR = [];
 rtQA_python.m2SNR = [];
 rtQA_python.rSNR = [];
 rtQA_python.meanBas = [];
-rtQA_python.m2Bas = [];
+rtQA_python.varBas = [];
 rtQA_python.meanCond = [];
-rtQA_python.m2Cond = [];
+rtQA_python.varCond = [];
 rtQA_python.rCNR = [];
 rtQA_python.excFDIndexes_1 = [];
 rtQA_python.excFDIndexes_2 = [];
@@ -125,16 +122,12 @@ if ~P.isRestingState
     rtQA_matlab.cnrData.basData.meanSmoothed = [];
     rtQA_matlab.cnrData.basData.m2Smoothed = [];
     rtQA_matlab.cnrData.basData.iteration = 1;
-    indexesBas = cell2mat(P.ProtBAS);
-    rtQA_matlab.cnrData.basData.indexesBas = indexesBas(:,end-6:end); 
 
     rtQA_matlab.cnrData.condData.mean = [];
     rtQA_matlab.cnrData.condData.m2 = [];
     rtQA_matlab.cnrData.condData.meanSmoothed = [];
     rtQA_matlab.cnrData.condData.m2Smoothed = [];
     rtQA_matlab.cnrData.condData.iteration = 1;
-    indexesCond = cell2mat(P.ProtNF);
-    rtQA_matlab.cnrData.condData.indexesCond = indexesCond(:,end-6:end);
 end
 
 %% DCM Settings
@@ -199,18 +192,16 @@ SPM = setupSPM(P);
 % High-pass filter
 mainLoopData.K.X0 = SPM.xX.K.X0;
 
-% TODO: check indexes
-% bas = [];
-% cond = [];
-% for i=1:150
-%     if SPM.xX.X(i,2)>0.5
-%     cond = [ cond i ];
-%     else
-%     bas = [ bas i ];
-%     end;
-% end;
-% P.inds = { bas, cond }
-
+if ~P.isRestingState
+    tmpindexesCond = find(SPM.xX.X(:,2)>0.6);
+    tmpindexesBas = find(SPM.xX.X(:,2)<0.1);
+    indexesBas = tmpindexesBas(1:end-1)+1;
+    indexesCond = tmpindexesCond-1;
+    P.inds = { indexesBas, indexesCond }
+    rtQA_matlab.cnrData.basData.indexesBas = indexesBas;
+    rtQA_matlab.cnrData.condData.indexesCond = indexesCond;
+end
+    
 if ~P.isRestingState
     
     if ~P.iglmAR1
@@ -230,27 +221,31 @@ if ~P.isRestingState
     if isPSC && strcmp(P.Prot, 'Cont') && ~fIMAPH
         tmpSpmDesign = SPM.xX.X(1:P.NrOfVolumes-P.nrSkipVol, 2);
         % this contrast does not count constant term
-        mainLoopData.tContr = strcmp(P.CondNames,P.CondName)';
+        mainLoopData.tContr.pos = strcmp(P.CondNames,P.CondName)';
+        mainLoopData.tContr.neg = ~mainLoopData.tContr.pos;
     end
 
     if isPSC && strcmp(P.Prot, 'Inter') && ~fIMAPH
         tmpSpmDesign = SPM.xX.X(1:P.NrOfVolumes-P.nrSkipVol, 2);
         % this contrast does not count constant term
-        mainLoopData.tContr = strcmp(P.CondNames,P.CondName)';
+        mainLoopData.tContr.pos = strcmp(P.CondNames,P.CondName)';
+        mainLoopData.tContr.neg = ~mainLoopData.tContr.pos;
     end
 
     % PSC (Phillips)
     if isPSC && strcmp(P.Prot, 'Cont') && fIMAPH
         tmpSpmDesign = SPM.xX.X(1:P.NrOfVolumes-P.nrSkipVol,1);
         % this contrast does not count constant term
-        mainLoopData.tContr = [1];
+        mainLoopData.tContr.pos = [1];
+        mainLoopData.tContr.neg = [-1];
     end
 
     % DCM
     if isDCM && strcmp(P.Prot, 'InterBlock')
         % this contrast does not count constant term
         tmpSpmDesign = SPM.xX.X(1:P.lengthDCMTrial,2);
-        mainLoopData.tContr = [-1; 1];
+        mainLoopData.tContr.pos = [-1; 1];
+        mainLoopData.tContr.neg = [1; -1];
         [mainLoopData.DCM_EN, mainLoopData.dcmParTag, ...
             mainLoopData.dcmParOpp] = dcmPrep(SPM);
     end
@@ -261,7 +256,8 @@ if ~P.isRestingState
         mainLoopData.nrBasFct = 1;
         % this contrast does not count constant term
         tmpSpmDesign = SPM.xX.X(1:P.NrOfVolumes-P.nrSkipVol,strcmp(P.CondNames,P.CondName));
-        mainLoopData.tContr = [1];
+        mainLoopData.tContr.pos = [1];
+        mainLoopData.tContr.neg = [-1];
     end
 
     %% High-pass filter for iGLM given by SPM
@@ -281,7 +277,8 @@ else
     mainLoopData.numscan = 0;
     [mainLoopData.numscan, mainLoopData.nrHighPassFct] = size(mainLoopData.K.X0);
     P.spmDesign = [];
-    mainLoopData.tContr = ones(6,1);
+    mainLoopData.tContr.pos = ones(6,1);
+    mainLoopData.tContr.neg = -ones(6,1);
     mainLoopData.spmMaskTh = mean(SPM.xM.TH)*ones(size(SPM.xM.TH));
     mainLoopData.pVal = .1;
     mainLoopData.statMap3D_iGLM = [];

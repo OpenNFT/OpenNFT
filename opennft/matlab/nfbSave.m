@@ -38,24 +38,39 @@ dimVol = mainLoopData.dimVol;
 tn = mainLoopData.tn;
 indVolNorm = mainLoopData.indVolNorm;
 indVolNorm = double(indVolNorm);
-idxActVoxIGLM = mainLoopData.idxActVoxIGLM{indVolNorm};
-statMap3D = mainLoopData.statMap3D;
+idxActVoxIGLM.pos = mainLoopData.idxActVoxIGLM.pos{indVolNorm};
+statMap3D_pos = mainLoopData.statMap3D_pos;
 
-maskedStatMapVect = tn(idxActVoxIGLM);
+maskedStatMapVect = tn.pos(idxActVoxIGLM.pos);
 maxTval = max(maskedStatMapVect);
 if isempty(maxTval)
     maxTval = 1;
 end
 statMapVect = maskedStatMapVect;
-statMap3D(idxActVoxIGLM) = statMapVect;
+statMap3D_pos(idxActVoxIGLM.pos) = statMapVect;
 
-statMap2D = vol3Dimg2D(statMap3D, slNrImg2DdimX, slNrImg2DdimY, img2DdimX, img2DdimY, dimVol) / maxTval;
-statMap2D = statMap2D * 255;
+statMap2D_pos = vol3Dimg2D(statMap3D_pos, slNrImg2DdimX, slNrImg2DdimY, img2DdimX, img2DdimY, dimVol) / maxTval;
+statMap2D_pos = statMap2D_pos * 255;
 
-mainLoopData.statMap2D = statMap2D;
-mainLoopData.statMap3D = statMap3D;
+maskedStatMapVect = tn.neg(idxActVoxIGLM.neg);
+maxTval = max(maskedStatMapVect);
+if isempty(maxTval)
+    maxTval = 1;
+end
+statMapVect = maskedStatMapVect;
+statMap3D_neg(idxActVoxIGLM.neg) = statMapVect;
+
+statMap2D_neg = vol3Dimg2D(statMap3D_neg, slNrImg2DdimX, slNrImg2DdimY, img2DdimX, img2DdimY, dimVol) / maxTval;
+statMap2D_neg = statMap2D_neg * 255;
+
+mainLoopData.statMap2D_pos = statMap2D_pos;
+mainLoopData.statMap2D_neg = statMap2D_neg;
+
+mainLoopData.statMap2D = statMap2D_pos;
+mainLoopData.statMap3D = statMap3D_pos;
+
 m = evalin('base', 'mmStatVol');
-m.Data.statVol = statMap3D;
+m.Data.posStatVol = statMap3D_pos;
 assignin('base', 'mainLoopData', mainLoopData);
 
 % save feedback values

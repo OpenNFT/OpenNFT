@@ -814,18 +814,18 @@ class OpenNFT(QWidget):
             if bool(self.outputSamples):
                 dataRealRaw = np.array(self.outputSamples['rawTimeSeries'], ndmin=2)
                 dataMC = np.array(self.outputSamples['motCorrParam'], ndmin=2)
-                n = len(dataRealRaw[0, :])
-                data = dataRealRaw[:, n - 1]
+                n = len(dataRealRaw[0, :])-1
+                data = dataRealRaw[:, n ]
                 self.windowRTQA.calculate_snr(data, n)
                 if not self.P['isRestingState']:
                     self.windowRTQA.calculate_cnr(data, n)
-                self.windowRTQA.plot_rtQA(n)
-                if n > 1:
+                self.windowRTQA.plot_rtQA(init, n)
+                if n > 0:
                     data = np.array(self.eng.evalin('base','mainLoopData.glmProcTimeSeries(:,end)'), ndmin=2)
                     posSpike = np.array(self.eng.evalin('base','rtQA_matlab.kalmanSpikesPos(:,mainLoopData.indVolNorm)'), ndmin=2)
                     negSpike = np.array(self.eng.evalin('base','rtQA_matlab.kalmanSpikesNeg(:,mainLoopData.indVolNorm)'), ndmin=2)
                     self.windowRTQA.plot_stepsAndSpikes(data, posSpike, negSpike)
-                    self.windowRTQA.plot_mcmd(dataMC[n - 1, :])
+                    self.windowRTQA.plot_mcmd(dataMC[n, :])
 
             with utils.timeit('Display mosaic image:'):
                 if not self.imageViewMode:
@@ -1168,25 +1168,16 @@ class OpenNFT(QWidget):
             if self.P['isRestingState']:
                 xrange = (self.P['NrOfVolumes'] - self.P['nrSkipVol'])
             else:
+                self.computeMusterPlotData(config.MUSTER_Y_LIMITS)
                 xrange = max(self.musterInfo['tmpCond1'][-1][1],
                              self.musterInfo['tmpCond2'][-1][1])
 
-            # TODO: Check indexes
-            # indBas = np.array(self.P['inds'][0])
-            # indCond = np.array(self.P['inds'][1])
-            indBas = 0
-            indCond = 0
-            if not self.P['isRestingState']:
-                for i in range(len(self.P['ProtBAS'])):
-                    n = len(self.P['ProtBAS'][i])
-                    indBas = np.append(indBas, self.P['ProtBAS'][i][n-6:n])
-                for i in range(len(self.P['ProtNF'])):
-                    n = len(self.P['ProtNF'][i])
-                    indCond = np.append(indCond, self.P['ProtNF'][i][n-6:n])
+            indBas = np.array(self.P['inds'][0])-1
+            indCond = np.array(self.P['inds'][1])-1
 
             self.cbImageViewMode.setEnabled(False)
 
-            self.windowRTQA = rtqa.RTQAWindow(int(self.P['NrROIs']),xrange, indBas, indCond, parent=self)
+            self.windowRTQA = rtqa.RTQAWindow(int(self.P['NrROIs']),xrange, indBas, indCond, self.musterInfo, parent=self)
             self.windowRTQA.volumeCheckBox.stateChanged.connect(self.onShowRtqaVol)
             self.windowRTQA.smoothedCheckBox.stateChanged.connect(self.onSmoothedChecked)
             self.windowRTQA.comboBox.currentIndexChanged.connect(self.onModeChanged)
@@ -1805,7 +1796,7 @@ class OpenNFT(QWidget):
                      or is_snr_map_created and is_rtqa_volume_checked)):
 
             with utils.timeit("Receiving 'statMap2D' from Matlab:"):
-                filename = self.eng.evalin('base', 'P.memMapFile').replace('shared', 'map_2D')
+                filename = self.eng.evalin('base', 'P.memMapFile').replace('shared', 'statMap')
                 self.mosaic_map_image_reader.read(filename, self.eng)
             map_image = self.mosaic_map_image_reader.image
 

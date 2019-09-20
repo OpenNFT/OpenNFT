@@ -71,14 +71,17 @@ if p == 0 && n > nrBasFct+2
         e2n(zero_e2n) = 1e10;
     end
     
-    eqContr = invNn * contr; % equivalent contrast
-    tn = (An*eqContr) ./ sqrt(e2n / n .* (eqContr' * eqContr)); % Eq. (23)    
+    eqContr = invNn * contr.pos; % equivalent positive contrast
+    tn.pos = (An*eqContr) ./ sqrt(e2n / n .* (eqContr' * eqContr)); % Eq. (23)    
+    eqContr = invNn * contr.neg; % negative contrast
+    tn.neg = (An*eqContr) ./ sqrt(e2n / n .* (eqContr' * eqContr)); % Eq. (23)    
 else
     neg_e2n = [];
 end
 
 % thresholding with analysis threshold
-iglmActVox = find(tn > tTh(n));
+iglmActVox.pos = find(tn.pos > tTh(n));
+iglmActVox.neg = find(tn.neg > tTh(n));
 
 % statistical image masking, as set by SPM structure, see
 % setupProcParams.m
@@ -86,5 +89,6 @@ recTh = recTh + spmMaskTh(n) * spmMaskTh(n); % cumulative sum of squares
 spmActVox = find(sigma2n > recTh);
 
 % intersect of iGLM and SPM indexes
-idxActVox = intersect(iglmActVox, spmActVox);
+idxActVox.pos = intersect(iglmActVox.pos, spmActVox);
+idxActVox.neg = intersect(iglmActVox.neg, spmActVox);
 clear iglmActVox spmActVox

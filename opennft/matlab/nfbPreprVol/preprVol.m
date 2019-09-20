@@ -145,7 +145,7 @@ mainLoopData.gKernel = gKernel;
 smReslVol = zeros(dimVol);
 spm_smooth(reslVol, smReslVol, gKernel);
 
-statMap2D = zeros(img2DdimY, img2DdimX);
+statMap2D_pos = zeros(img2DdimY, img2DdimX);
 
 if indVolNorm > FIRST_SNR_VOLUME
     
@@ -174,13 +174,12 @@ if indVolNorm > FIRST_SNR_VOLUME
 
         else
             % mosaic (0)
-            statMap2D = vol3Dimg2D(outputVol, slNrImg2DdimX, slNrImg2DdimY, img2DdimX, img2DdimY, dimVol);
-            statMap2D = statMap2D-min(statMap2D(:));
-            statMap2D = (statMap2D / max(statMap2D(:))) * 255;
-            fname = strrep(P.memMapFile, 'shared', 'map_2D');
-            m_out = memmapfile(fname, 'Writable', true, 'Format',  {'uint8', img2DdimX*img2DdimY, 'map_2D'});
-            m_out.Data.map_2D = uint8(statMap2D(:));     
-            assignin('base', 'statMap2D', statMap2D);
+            statMap2D_pos = vol3Dimg2D(outputVol, slNrImg2DdimX, slNrImg2DdimY, img2DdimX, img2DdimY, dimVol);
+            statMap2D_pos = statMap2D_pos-min(statMap2D_pos(:));
+            statMap2D_pos = (statMap2D_pos / max(statMap2D_pos(:))) * 255;
+            m = evalin('base', 'mmStatVol');
+            m.Data.posStatVol = statMap2D_pos;   
+            assignin('base', 'statMap2D_pos', statMap2D_pos);
         
         end
            
@@ -260,7 +259,8 @@ if isIGLM
         dyntTh = mainLoopData.dyntTh;
         
         statMapVect = mainLoopData.statMapVect;
-        statMap3D = mainLoopData.statMap3D; % this structure is set with 0
+        statMap3D_pos = mainLoopData.statMap3D_pos; % this structure is set with 0
+        statMap3D_neg = mainLoopData.statMap3D_neg; % this structure is set with 0
         tempStatMap2D = mainLoopData.statMap2D; % this structure is set with 0
         
         if ~fLockedTempl
@@ -322,15 +322,18 @@ if isIGLM
         Cn = zeros(nrBasFct + nrBasFctRegr);
         Dn = zeros(nrVoxInVol, nrBasFct + nrBasFctRegr);
         s2n = zeros(nrVoxInVol, 1);
-        tn = zeros(nrVoxInVol, 1);
+        tn.pos = zeros(nrVoxInVol, 1);
+        tn.neg = zeros(nrVoxInVol, 1);
         tTh = zeros(numscan, 1);
         dyntTh = 0;
         mainLoopData.iGLMinit = 'done';
         
         statMapVect = zeros(nrVoxInVol, 1);
-        statMap3D = zeros(dimVol);
+        statMap3D_pos = zeros(dimVol);
+        statMap3D_neg = zeros(dimVol);
         mainLoopData.statMapVect = statMapVect;
-        mainLoopData.statMap3D = statMap3D;
+        mainLoopData.statMap3D_pos = statMap3D_pos;
+        mainLoopData.statMap3D_neg = statMap3D_neg;
         tempStatMap2D = zeros(img2DdimY,img2DdimX);
         mainLoopData.statMap2D = tempStatMap2D;
     end
@@ -375,15 +378,19 @@ if isIGLM
         % combine with prepared basFct design regressors
         basFctRegr = [basFct(1:indIglm,:), tmpRegr];
         % account for contrast term in contrast vector (+1)
-        tContr = [tContr; zeros(nrBasFctRegr,1)];
+        tContr.pos = [tContr.pos; zeros(nrBasFctRegr,1)];
+        
+        tContr.neg = [tContr.neg; zeros(nrBasFctRegr,1)];
     else
         % combine with prepared basFct design regressors
         basFctRegr = tmpRegr;
         % account for contrast term in contrast vector (+1)
         if  P.isMotionRegr && P.isLinRegr && P.isHighPass
-            tContr = [tContr; zeros(nrBasFctRegr-size(P.motCorrParam,2),1)];
+            tContr.pos = [tContr.pos; zeros(nrBasFctRegr-size(P.motCorrParam,2),1)];
+            tContr.neg = [tContr.neg; zeros(nrBasFctRegr-size(P.motCorrParam,2),1)];
         end
     end
+    
     % estimate iGLM
     [idxActVoxIGLM, dyntTh, tTh, Cn, Dn, s2n, tn, neg_e2n] = ...
         iGlmVol(Cn, Dn, s2n, tn, smReslVol(:), indIglm, ...
@@ -403,54 +410,78 @@ if isIGLM
     mainLoopData.tn = tn;
     mainLoopData.tTh = tTh;
     mainLoopData.dyntTh = dyntTh;
-    mainLoopData.idxActVoxIGLM{indVolNorm} = idxActVoxIGLM;
+    mainLoopData.idxActVoxIGLM.pos{indVolNorm} = idxActVoxIGLM.pos;
+    mainLoopData.idxActVoxIGLM.neg{indVolNorm} = idxActVoxIGLM.neg;
 else
-    idxActVoxIGLM = [];
+    idxActVoxIGLM.pos = [];
+    idxActVoxIGLM.neg = [];
 end
 
 %% sharing iGLM results 
 mainLoopData.statMapCreated = 0;
-if ~isempty(idxActVoxIGLM) && max(tn) > 0 % handle empty activation map
+if ~isempty(idxActVoxIGLM.pos) && max(tn.pos) > 0 % handle empty activation map
     % and division by 0
-    maskedStatMapVect = tn(idxActVoxIGLM);
-    maxTval = max(maskedStatMapVect);
-    statMapVect = maskedStatMapVect;
-    statMap3D(idxActVoxIGLM) = statMapVect;
-    
-    clear idxActVoxIGLM
-    
-    
-    statMap2D = vol3Dimg2D(statMap3D, slNrImg2DdimX, slNrImg2DdimY, ...
-        img2DdimX, img2DdimY, dimVol) / maxTval;
-
-    statMap2D = statMap2D * 255;
+    maskedStatMapVect_pos = tn.pos(idxActVoxIGLM.pos);
+    maxTval_pos = max(maskedStatMapVect_pos);
+    statMapVect = maskedStatMapVect_pos;
+    statMap3D_pos(idxActVoxIGLM.pos) = statMapVect;
         
+    statMap2D_pos = vol3Dimg2D(statMap3D_pos, slNrImg2DdimX, slNrImg2DdimY, ...
+        img2DdimX, img2DdimY, dimVol) / maxTval_pos;
+    statMap2D_pos = statMap2D_pos * 255;
+   
     if ~isShowRtqaVol && ~imageViewMode
         
-        fname = strrep(P.memMapFile, 'shared', 'map_2D');
-        m_out = memmapfile(fname, 'Writable', true, 'Format',  {'uint8', img2DdimX*img2DdimY, 'map_2D'});
-        m_out.Data.map_2D = uint8(statMap2D(:));
-        assignin('base', 'statMap2D', statMap2D);
+        m_out =  evalin('base', 'mmStatMap');
+        m_out.Data.posStatMap = uint8(statMap2D_pos);
+        assignin('base', 'statMap2D_pos', statMap2D_pos);
         
     end
     
     % shared for SPM matlab helper
     m = evalin('base', 'mmStatVol');
-    m.Data.statVol = statMap3D;
+    m.Data.posStatVol = statMap3D_pos;
     mainLoopData.statMapCreated = 1;    
+end
+if ~isempty(idxActVoxIGLM.neg) && max(tn.neg) > 0
+        
+    maskedStatMapVect_neg = tn.neg(idxActVoxIGLM.neg);
+    maxTval_neg = max(maskedStatMapVect_neg);
+    statMapVect = maskedStatMapVect_neg;
+    statMap3D_neg(idxActVoxIGLM.neg) = statMapVect;
+    
+    clear idxActVoxIGLM    
+     
+    statMap2D_neg = vol3Dimg2D(statMap3D_neg, slNrImg2DdimX, slNrImg2DdimY, ...
+        img2DdimX, img2DdimY, dimVol) / maxTval_neg;
+    statMap2D_neg = statMap2D_neg * 255;
+    
+    if ~isShowRtqaVol && ~imageViewMode
+        
+        m_out =  evalin('base', 'mmStatMap');
+        m_out.Data.negStatMap = uint8(statMap2D_neg);
+        assignin('base', 'statMap2D_neg', statMap2D_neg);
+        
+    end
+    
+    % shared for SPM matlab helper
+    m = evalin('base', 'mmStatVol');
+    m.Data.negStatVol = statMap3D_neg;
+%     mainLoopData.statMapCreated = 1;            
+
 end
 
 %% storage of iGLM results, could be disabled to save time
 if ~isDCM
     if indIglm == P.NrOfVolumes - P.nrSkipVol
-        mainLoopData.statMap3D_iGLM = statMap3D;
+        mainLoopData.statMap3D_iGLM = statMap3D_pos;
     end
 else
     if indIglm == P.lengthDCMTrial
         mainLoopData.statMap3D_iGLM(:,:,:,mainLoopData.NrDCMblocks+1) = ...
-            statMap3D;
+            statMap3D_pos;
         % save, optional
-        statVolData = statMap3D;
+        statVolData = statMap3D_pos;
         % FIXME
         save([P.nfbDataFolder filesep 'statVolData_' sprintf('%02d', ...
             mainLoopData.NrDCMblocks+1) '.mat'],'statVolData');
@@ -474,12 +505,12 @@ if isDCM
             ROIsAnat(iROI).mask2D(isnan(ROIsAnat(iROI).mask2D))=0;
             
             ROIsGlmAnat(iROI).mask2D(indNFTrial+1) = ...
-                {statMap2D & ROIsAnat(iROI).mask2D};
+                {statMap2D_pos & ROIsAnat(iROI).mask2D};
             clear tmpVect
             tmpVect = find(cell2mat(ROIsGlmAnat(iROI).mask2D(indNFTrial+1))>0);
             if ~isempty(tmpVect) && length(tmpVect)>10
                 ROIsGlmAnat(iROI).meanGlmAnatROI(indNFTrial+1) = ...
-                    mean(statMap2D(tmpVect));
+                    mean(statMap2D_pos(tmpVect));
             else
                 ROIsGlmAnat(iROI).meanGlmAnatROI(indNFTrial+1) = 0;
             end

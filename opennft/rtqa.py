@@ -15,7 +15,7 @@ from opennft.rtqa_fdm import FD
 
 class RTQAWindow(QtWidgets.QWidget):
 
-    def __init__(self, sz, xrange, indBas, indCond, parent=None):
+    def __init__(self, sz, xrange, indBas, indCond, musterInfo, parent=None):
         super().__init__(parent=parent, flags=QtCore.Qt.Window)
 
         uic.loadUi(utils.get_ui_file('rtqa.ui'), self)
@@ -24,8 +24,10 @@ class RTQAWindow(QtWidgets.QWidget):
         self.names = ['X', 'Y', 'Z', 'Pitch', 'Roll', 'Yaw', 'FD']
         self.indBas = indBas
         self.indCond = indCond
-        self.iterBas = 1
-        self.iterCond = 1
+        self.iterBas = 0
+        self.iterCond = 0
+
+        self.musterInfo = musterInfo
 
         self.comboBox.currentTextChanged.connect(self.onComboboxChanged)
         self.mcrRadioButton.toggled.connect(self.onRadioButtonStateChanged)
@@ -134,12 +136,15 @@ class RTQAWindow(QtWidgets.QWidget):
 
         self.tsCheckBox.setChecked(True)
 
-        self.mean = np.zeros((sz, 1))
+        self.rMean = np.zeros((sz, xrange))
         self.m2 = np.zeros((sz, 1))
+        self.rVar = np.zeros((sz, xrange))
         self.rSNR = np.zeros((sz, xrange))
-        self.meanBas = np.zeros((sz, 1))
+        self.meanBas = np.zeros((sz, xrange))
+        self.varBas = np.zeros((sz, xrange))
         self.m2Bas = np.zeros((sz, 1))
-        self.meanCond = np.zeros((sz, 1))
+        self.meanCond = np.zeros((sz, xrange))
+        self.varCond = np.zeros((sz, xrange))
         self.m2Cond = np.zeros((sz, 1))
         self.rCNR = np.zeros((sz, xrange))
         self.glmProcTimeSeries = np.zeros((sz, 1))
@@ -211,65 +216,122 @@ class RTQAWindow(QtWidgets.QWidget):
         self.hide()
         event.accept()
 
-    def plot_ts(self, plotitem, data):
+    def plot_ts(self, init, plotitem, data):
 
         if self.tsCheckBox.isChecked():
 
             sz, l = data.shape
-            x = np.arange(0, l, dtype=np.float64)
 
-            plotitem.clear()
-            plots = []
+            if init:
 
-            for i, c in zip(range(sz), config.ROI_PLOT_COLORS):
-                pen = pg.mkPen(color=c, width=config.ROI_PLOT_WIDTH)
-                p = plotitem.plot(pen=pen)
-                plots.append(p)
+                plotitem.clear()
+                plots = []
 
-            self.plot_ts.__dict__[plotitem] = plots
+                muster = self.drawMusterPlot(plotitem)
 
-            for p, y in zip(self.plot_ts.__dict__[plotitem], data):
+                for i, c in zip(range(sz), config.ROI_PLOT_COLORS):
+                    pen = pg.mkPen(color=c, width=config.ROI_PLOT_WIDTH)
+                    p = plotitem.plot(pen=pen)
+                    plots.append(p)
+
+                self.plot_ts.__dict__[plotitem] = plots, muster
+
+            x = np.arange(1, l+1, dtype=np.float64)
+
+            for p, y in zip(self.plot_ts.__dict__[plotitem][0], data):
                 p.setData(x=x, y=np.array(y))
 
-    def plot_rtQA(self, n):
+            items = plotitem.listDataItems()
+
+            for m in self.plot_ts.__dict__[plotitem][1]:
+                items.remove(m)
+
+            if data.any():
+                plotitem.setYRange(np.min(data), np.max(data), padding=0.0)
+
+    def plot_rtQA(self, init, n):
 
         plotitem = self.snrplot.getPlotItem()
         data = self.rSNR[:, 0:n]
-        self.plot_ts(plotitem,data)
+        self.plot_ts(init, plotitem, data)
 
         plotitem = self.cnrplot.getPlotItem()
         data = self.rCNR[:, 0:n]
-        self.plot_ts(plotitem,data)
+        self.plot_ts(init, plotitem, data)
+
+    def drawMusterPlot(self, plotitem):
+        ylim = config.MUSTER_Y_LIMITS
+
+        if self.comboBox.model().item(2).isEnabled():
+            muster = [
+                plotitem.plot(x=self.musterInfo['xCond1'],
+                              y=self.musterInfo['yCond1'],
+                              fillLevel=ylim[0],
+                              pen=config.MUSTER_PEN_COLORS[0],
+                              brush=config.MUSTER_BRUSH_COLORS[0]),
+
+                plotitem.plot(x=self.musterInfo['xCond2'],
+                              y=self.musterInfo['yCond2'],
+                              fillLevel=ylim[0],
+                              pen=config.MUSTER_PEN_COLORS[1],
+                              brush=config.MUSTER_BRUSH_COLORS[1]),
+            ]
+
+            if self.musterInfo['xCond3'][0] == -1:
+                muster.append(
+                    plotitem.plot(x=self.musterInfo['xCond3'],
+                                  y=self.musterInfo['yCond3'],
+                                  fillLevel=ylim[0],
+                                  pen=config.MUSTER_PEN_COLORS[2],
+                                  brush=config.MUSTER_BRUSH_COLORS[2])
+                )
+        else:
+            muster = [
+                plotitem.plot(x=[1, (self.P['NrOfVolumes'] - self.P['nrSkipVol'])],
+                              y=[-1000, 1000],
+                              fillLevel=ylim[0],
+                              pen=config.MUSTER_PEN_COLORS[3],
+                              brush=config.MUSTER_BRUSH_COLORS[3])
+            ]
+
+        return muster
 
     def calculate_snr(self, data, iteration):
         sz = data.size
         snr = np.zeros((sz, 1))
+        n = iteration
 
-        variance = np.zeros((sz, 1))
-        mean = self.mean
+        variance = self.rVar[:, n-1]
+        mean = self.rMean[:, n-1]
         m2 = self.m2
 
-        n = iteration
         meanPrev = mean
 
-        for i in range(sz):
-            mean[i] = mean[i] + (data[i] - mean[i]) / n
-            if n == 1:
-                variance[i] = 0
-            else:
-                m2[i] = m2[i] + (data[i] - meanPrev[i]) * (data[i] - mean[i])
-                variance[i] = m2[i] / (n - 1)
-            if variance[i] == 0:
-                snr[i] = 0
-            else:
-                snr[i] = mean[i] / (variance[i] ** (.5))
+        if n:
 
-        self.mean = mean
+            for i in range(sz):
+                mean[i] = mean[i] + (data[i] - mean[i]) / n
+                if n == 1:
+                    variance[i] = 0
+                else:
+                    m2[i] = m2[i] + (data[i] - meanPrev[i]) * (data[i] - mean[i])
+                    variance[i] = m2[i] / (n - 1)
+                if variance[i] == 0:
+                    snr[i] = 0
+                else:
+                    snr[i] = mean[i] / (variance[i] ** (.5))
+
+        else:
+
+            mean = data
+
+        self.rMean[:, n] = mean
         self.m2 = m2
+        self.rVar[:, n] = variance
         if iteration < 8:
             snr = np.zeros((sz, 1))
         for i in range(sz):
-            self.rSNR[i][n-1] = snr[i]
+            self.rSNR[i][n] = snr[i]
 
         if not self.comboBox.currentIndex():
 
@@ -286,37 +348,50 @@ class RTQAWindow(QtWidgets.QWidget):
         sz = data.size
 
         if indexVolume in self.indBas:
-            if not self.meanBas.any():
-                self.meanBas = data
-                self.m2Bas = np.zeros((sz, 1))
-                return
+            if not self.iterBas:
+                self.meanBas[:, indexVolume] = data
+                self.varBas[:, indexVolume] = np.zeros(sz)
+                self.iterBas += 1
 
-            meanPrev = self.meanBas
-            self.iterBas+=1
+            else:
 
-            for i in range(sz):
-                self.meanBas[i] = self.meanBas[i] + (data[i] - self.meanBas[i]) / self.iterBas
-                self.m2Bas[i] = self.m2Bas[i] + (data[i] - meanPrev[i]) * (data[i] - self.meanBas[i])
+                self.iterBas += 1
+
+                for i in range(sz):
+                    self.meanBas[i, indexVolume] = self.meanBas[i, indexVolume-1] + (data[i] - self.meanBas[i,indexVolume-1]) / self.iterBas
+                    self.m2Bas[i] = self.m2Bas[i] + (data[i] - self.meanBas[i, indexVolume-1]) * (data[i] - self.meanBas[i, indexVolume])
+                    self.varBas[i, indexVolume] = self.m2Bas[i] / (self.iterBas - 1)
+
+        else:
+
+            self.meanBas[:, indexVolume] = self.meanBas[:, indexVolume-1]
+            self.varBas[:, indexVolume] = self.varBas[:, indexVolume-1]
 
         if indexVolume in self.indCond:
-            if not self.meanCond.any():
-                self.meanCond = data
-                self.m2Cond = np.zeros((sz, 1))
-                return
 
-            meanPrev = self.meanCond
-            self.iterCond+=1
+            if not self.iterCond:
+                self.meanCond[:, indexVolume] = data
+                self.varCond[:, indexVolume] = np.zeros(sz)
+                self.iterCond += 1
+
+            else:
+
+                self.iterCond += 1
+
+                for i in range(sz):
+                    self.meanCond[i, indexVolume] = self.meanCond[i, indexVolume-1] + (data[i] - self.meanCond[i, indexVolume-1]) / self.iterCond
+                    self.m2Cond[i] = self.m2Cond[i] + (data[i] - self.meanCond[i, indexVolume-1]) * (data[i] - self.meanCond[i, indexVolume])
+                    self.varCond[i, indexVolume] = self.m2Cond[i] / (self.iterCond - 1)
+
+        else:
+
+            self.meanCond[:, indexVolume] = self.meanCond[:, indexVolume - 1]
+            self.varCond[:, indexVolume] = self.varCond[:, indexVolume - 1]
+
+        if self.iterCond:
 
             for i in range(sz):
-                self.meanCond[i] = self.meanCond[i] + (data[i] - self.meanCond[i]) / self.iterCond
-                self.m2Cond[i] = self.m2Cond[i] + (data[i] - meanPrev[i]) * (data[i] - self.meanCond[i])
-
-        if self.meanCond.any():
-
-            for i in range(sz):
-                varBas = self.m2Bas[i] / (self.iterBas - 1)
-                varCond = self.m2Cond[i] / (self.iterCond - 1)
-                self.rCNR[i][indexVolume-1] = (self.meanCond[i] - self.meanBas[i]) / ((varCond + varBas) ** (.5))
+                self.rCNR[i, indexVolume] = (self.meanCond[i, indexVolume] - self.meanBas[i, indexVolume]) / (np.sqrt(self.varCond[i, indexVolume] + self.varBas[i, indexVolume]))
 
             if self.comboBox.currentIndex() == 2:
                 names = ['СNR ']
@@ -374,12 +449,16 @@ class RTQAWindow(QtWidgets.QWidget):
         plotitem.clear()
         plots = []
 
+        muster = self.drawMusterPlot(plotitem)
+
         for i, c in zip(range(sz), config.ROI_PLOT_COLORS):
             pen = pg.mkPen(color=c, width=config.ROI_PLOT_WIDTH)
             p = plotitem.plot(pen=pen)
             plots.append(p)
 
-        for p, y in zip(plots, self.glmProcTimeSeries):
+        self.plot_stepsAndSpikes.__dict__[plotitem] = plots, muster
+
+        for p, y in zip(self.plot_stepsAndSpikes.__dict__[plotitem][0], self.glmProcTimeSeries):
             p.setData(x=x, y=np.array(y))
 
         for i, c in zip(range(sz), config.ROI_PLOT_COLORS):
@@ -423,20 +502,28 @@ class RTQAWindow(QtWidgets.QWidget):
 
                 plots[-1].setData(x=x1, y=y, connect='pairs')
 
+        items = plotitem.listDataItems()
+
+        for m in self.plot_stepsAndSpikes.__dict__[plotitem][1]:
+            items.remove(m)
+
+        if data.any():
+            plotitem.setYRange(np.min(self.glmProcTimeSeries), np.max(self.glmProcTimeSeries), padding=0.0)
+
 
     def data_packing(self):
 
-        tsRTQA = dict.fromkeys(['meanSNR', 'm2SNR', 'rSNR',
-                                'meanBas', 'm2Bas', 'meanCond', 'm2Cond', 'rCNR',
+        tsRTQA = dict.fromkeys(['rMean', 'rVar', 'rSNR',
+                                'meanBas', 'varBas', 'meanCond', 'varCond', 'rCNR',
                                 'excFDIndexes_1', 'excFDIndexes_2', 'excMDIndexes'])
 
-        tsRTQA['meanSNR'] = matlab.double(self.mean.tolist())
-        tsRTQA['m2SNR'] = matlab.double(self.m2.tolist())
+        tsRTQA['rMean'] = matlab.double(self.rMean.tolist())
+        tsRTQA['rVar'] = matlab.double(self.rVar.tolist())
         tsRTQA['rSNR'] = matlab.double(self.rSNR.tolist())
         tsRTQA['meanBas'] = matlab.double(self.meanBas.tolist())
-        tsRTQA['m2Bas'] = matlab.double(self.m2Bas.tolist())
+        tsRTQA['varBas'] = matlab.double(self.varBas.tolist())
         tsRTQA['meanCond'] = matlab.double(self.meanCond.tolist())
-        tsRTQA['m2Cond'] = matlab.double(self.m2Cond.tolist())
+        tsRTQA['varCond'] = matlab.double(self.varCond.tolist())
         tsRTQA['rCNR'] = matlab.double(self.rCNR.tolist())
         tsRTQA['excFDIndexes_1'] = matlab.double(self._fd.excFDIndexes_1.tolist())
         tsRTQA['excFDIndexes_2'] = matlab.double(self._fd.excFDIndexes_2.tolist())
