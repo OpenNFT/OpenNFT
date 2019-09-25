@@ -677,29 +677,14 @@ class OpenNFT(QWidget):
             self.recorder.recordEvent(erd.Times.t3, self.iteration)
 
             if self.windowRTQA.volumeCheckBox.isChecked() and config.FIRST_SNR_VOLUME < self.iteration:
-
-                if self.imageViewMode == ImageViewMode.orthviewEPI:
-                    bgType = 'bgEPI'
-                else:
-                    bgType = 'bgAnat'
-
-                self.orthViewUpdateFuture = self.engSPM.helperUpdateOrthView(
-                    self.currentCursorPos, self.currentProjection.value, bgType, True,
-                    async=True, nargout=0)
+                self.updateOrthViewAsync(rtqa=True)
 
             if (self.eng.evalin('base', 'mainLoopData.statMapCreated') == 1
                     and not self.windowRTQA.volumeCheckBox.isChecked()):
                 nrVoxInVol = self.eng.evalin('base', 'mainLoopData.nrVoxInVol')
                 memMapFile = self.eng.evalin('base', 'P.memMapFile')
 
-                if self.imageViewMode == ImageViewMode.orthviewEPI:
-                    bgType = 'bgEPI'
-                else:
-                    bgType = 'bgAnat'
-
-                self.orthViewUpdateFuture = self.engSPM.helperUpdateOrthView(
-                    self.currentCursorPos, self.currentProjection.value, bgType, False,
-                    async=True, nargout=0)
+                self.updateOrthViewAsync(rtqa=False)
 
             # spatio-temporal data processing
             with utils.timeit('  preprocess signal:'):
@@ -1402,21 +1387,25 @@ class OpenNFT(QWidget):
 
         if self.eng:
             self.eng.assignin('base', 'imageViewMode', int(mode), nargout=0)
+        if self.engSPM:
+            self.updateOrthViewAsync(rtqa=self.windowRTQA.volumeCheckBox.isChecked())
 
-    # --------------------------------------------------------------------------
-    def onChangeOrthViewCursorPosition(self, pos, proj):
-        self.currentCursorPos = pos
-        self.currentProjection = proj
-
-        logger.info('New cursor coords {} for proj "{}" have been received', pos, proj.name)
-
+    def updateOrthViewAsync(self, rtqa: bool = False):
         if self.imageViewMode == ImageViewMode.orthviewEPI:
             bgType = 'bgEPI'
         else:
             bgType = 'bgAnat'
 
         self.orthViewUpdateFuture = self.engSPM.helperUpdateOrthView(
-            pos, proj.value, bgType, self.windowRTQA.volumeCheckBox.isChecked(), async=True, nargout=0)
+            self.currentCursorPos, self.currentProjection.value, bgType,
+            rtqa, async=True, nargout=0)
+
+    def onChangeOrthViewCursorPosition(self, pos, proj):
+        self.currentCursorPos = pos
+        self.currentProjection = proj
+
+        logger.debug('New cursor coords {} for proj "{}" have been received', pos, proj.name)
+        self.updateOrthViewAsync(rtqa=self.windowRTQA.volumeCheckBox.isChecked())
 
     def onInteractWithMapImage(self):
         if self.sender() is self.hot_map_thresholds_widget:
