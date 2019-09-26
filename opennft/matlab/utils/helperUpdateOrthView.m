@@ -50,6 +50,7 @@ strParam.centre = findcent(newCoord, flagsPlanes);
 % TODO GUI: Display modes: [Background + Stat + ROIs, 
 %                                     Background + Stat, Background + ROIs]
 strParam.modeDispl = [1 0 0]; 
+displImg_neg = [];
 
 if isShowRTQA
    fname = strrep(P.memMapFile, 'shared', 'RTQAVol');
@@ -67,8 +68,27 @@ else
 end
 
 [backg_imgt,backg_imgc,backg_imgs, stat_imgt, stat_imgc, stat_imgs, P] = redrawall(displBackgr.vol, displBackgr.mat, ROIsOverlay, displImg, P);
-[backg_imgt,backg_imgc,backg_imgs, stat_imgt_neg, stat_imgc_neg, stat_imgs_neg, P] = redrawall(displBackgr.vol, displBackgr.mat, ROIsOverlay, displImg_neg, P);
+if ~isempty(displImg_neg)
+    [backg_imgt,backg_imgc,backg_imgs, stat_imgt_neg, stat_imgc_neg, stat_imgs_neg, P] = redrawall(displBackgr.vol, displBackgr.mat, ROIsOverlay, displImg_neg, P);
+    
+    stat_imgt_neg = uint8(stat_imgt_neg / max(stat_imgt_neg(:)) * 255);
+    stat_imgc_neg = uint8(double(stat_imgc_neg) / max(stat_imgc_neg(:)) * 255);
+    stat_imgs_neg = uint8(double(stat_imgs_neg) / max(stat_imgs_neg(:)) * 255);
 
+    assignin('base', 'stat_imgt', stat_imgt_neg);
+    assignin('base', 'stat_imgc', stat_imgc_neg);
+    assignin('base', 'stat_imgs', stat_imgs_neg);
+    
+    fname = strrep(P.memMapFile, 'shared', 'OrthView_neg');
+    m_out = memmapfile(fname, 'Writable', true, 'Format', 'uint8');
+    l1 = prod(size(stat_imgt_neg));
+    m_out.Data(1:l1) = stat_imgt_neg(:);
+    l2 = prod(size(stat_imgc_neg));
+    m_out.Data(l1+1:l1+l2) = stat_imgc_neg(:);
+    l3 = prod(size(stat_imgs_neg));
+    m_out.Data(l1+l2+1:l1+l2+l3) = stat_imgs_neg(:);
+end
+    
 backg_imgt = uint8(backg_imgt / max(backg_imgt(:)) * 255);
 backg_imgc = uint8(double(backg_imgc) / max(backg_imgc(:)) * 255);
 backg_imgs = uint8(double(backg_imgs) / max(backg_imgs(:)) * 255);
@@ -103,15 +123,6 @@ l2 = prod(size(stat_imgc));
 m_out.Data(l1+1:l1+l2) = stat_imgc(:);
 l3 = prod(size(stat_imgs));
 m_out.Data(l1+l2+1:l1+l2+l3) = stat_imgs(:);
-
-fname = strrep(P.memMapFile, 'shared', 'OrthView_neg');
-m_out = memmapfile(fname, 'Writable', true, 'Format', 'uint8');
-l1 = prod(size(stat_imgt_neg));
-m_out.Data(1:l1) = stat_imgt_neg(:);
-l2 = prod(size(stat_imgc_neg));
-m_out.Data(l1+1:l1+l2) = stat_imgc_neg(:);
-l3 = prod(size(stat_imgs_neg));
-m_out.Data(l1+l2+1:l1+l2+l3) = stat_imgs_neg(:);
 
 assignin('base', 'helperP', P);
 
