@@ -55,9 +55,24 @@ DONOT_USE_QFILE_NATIVE_DIALOG = False
 # plotting initialization
 PLOT_GRID_ALPHA = 0.7
 ROI_PLOT_WIDTH = 2.0
-ROI_PLOT_COLORS = ['b', 'r', 'g']
+ROI_PLOT_COLORS = [
+    pg.mkColor(0, 0, 255, 255),
+    pg.mkColor(255, 0, 0, 255),
+    pg.mkColor(0, 255, 0, 255)
+]
+ROI_MEAN_COLORS = [
+    pg.mkColor(0, 125, 255, 255),
+    pg.mkColor(255, 125, 0, 255),
+    pg.mkColor(125, 255, 0, 255)
+]
+ROI_VAR_COLORS = [
+    pg.mkColor(125, 0, 255, 255),
+    pg.mkColor(255, 0, 125, 255),
+    pg.mkColor(0, 255, 125, 255)
+]
 MUSTER_Y_LIMITS = (-1000, 1000)
-MUSTER_PLOT_ALPHA = 220
+# transparency of design template overlay
+MUSTER_PLOT_ALPHA = 50
 MAX_ROI_NAME_LENGTH = 6
 
 MUSTER_PEN_COLORS = [

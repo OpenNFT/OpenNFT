@@ -51,7 +51,6 @@ class RTQAWindow(QtWidgets.QWidget):
         self.cnrPlot.addWidget(self.cnrplot)
 
         p = self.cnrplot.getPlotItem()
-        p.setTitle('Contrast-Noise Ratio', size='')
         p.setLabel('left', "Amplitude [a.u.]")
         p.setMenuEnabled(enableMenu=False)
         p.setMouseEnabled(x=False, y=False)
@@ -59,6 +58,51 @@ class RTQAWindow(QtWidgets.QWidget):
         p.installEventFilter(self)
         p.disableAutoRange(axis=pg.ViewBox.XAxis)
         p.setXRange(1, xrange, padding=0.0)
+
+        self.meanplot = pg.PlotWidget(self)
+        self.meanplot.setBackground((255, 255, 255))
+        self.meanPlot.addWidget(self.meanplot)
+
+        p = self.meanplot.getPlotItem()
+        p.setLabel('left', "Amplitude [a.u.]")
+        p.setMenuEnabled(enableMenu=False)
+        p.setMouseEnabled(x=False, y=False)
+        p.showGrid(x=True, y=True, alpha=1)
+        p.installEventFilter(self)
+        p.disableAutoRange(axis=pg.ViewBox.XAxis)
+        p.setXRange(1, xrange, padding=0.0)
+
+        names = ['ROI_1 rMean', 'ROI_1 basMean', 'ROI_1 condMean']
+        color = [config.ROI_PLOT_COLORS[0], config.ROI_MEAN_COLORS[0], config.ROI_VAR_COLORS[0]]
+        for i in range(sz-1):
+            names.append('ROI_' + str(i + 2) + ' rMean')
+            names.append('ROI_' + str(i + 2) + ' basMean')
+            names.append('ROI_' + str(i + 2) + ' condMean')
+            color = color + [config.ROI_PLOT_COLORS[i + 1]] + [config.ROI_MEAN_COLORS[i + 1]] + [config.ROI_VAR_COLORS[i + 1]]
+        pens = []
+        for i in range(sz*3):
+            pens = pens + [pg.mkPen(color[i], width=1.2)]
+        self.makeRoiPlotLegend(self.labelMean, names, pens)
+
+        self.varplot = pg.PlotWidget(self)
+        self.varplot.setBackground((255, 255, 255))
+        self.varPlot.addWidget(self.varplot)
+
+        p = self.varplot.getPlotItem()
+        p.setLabel('left', "Amplitude [a.u.]")
+        p.setMenuEnabled(enableMenu=False)
+        p.setMouseEnabled(x=False, y=False)
+        p.showGrid(x=True, y=True, alpha=1)
+        p.installEventFilter(self)
+        p.disableAutoRange(axis=pg.ViewBox.XAxis)
+        p.setXRange(1, xrange, padding=0.0)
+
+        names = ['ROI_1 rVariance', 'ROI_1 basVariance', 'ROI_1 condVariance']
+        for i in range(sz - 1):
+            names.append('ROI_' + str(i + 2) + ' rVariance')
+            names.append('ROI_' + str(i + 2) + ' basVariance')
+            names.append('ROI_' + str(i + 2) + ' condVariance')
+        self.makeRoiPlotLegend(self.labelVar, names, pens)
 
         self.spikesStepsPlot = pg.PlotWidget(self)
         self.spikesStepsPlot.setBackground((255, 255, 255))
@@ -258,6 +302,54 @@ class RTQAWindow(QtWidgets.QWidget):
         plotitem = self.cnrplot.getPlotItem()
         data = self.rCNR[:, 0:n]
         self.plot_ts(init, plotitem, data)
+
+        plotitem = self.meanplot.getPlotItem()
+        data = np.append(self.rMean[:, 0:n], self.meanBas[:, 0:n], axis=0)
+        data = np.append(data, self.meanCond[:, 0:n], axis=0)
+        m = len(self.rSNR[:, 1])
+        color = config.ROI_PLOT_COLORS[0:m] + config.ROI_MEAN_COLORS[0:m] + config.ROI_VAR_COLORS[0:m]
+        style = [QtCore.Qt.SolidLine, QtCore.Qt.DashLine, QtCore.Qt.DashLine]
+        self.plot_rStatValues(init, plotitem, data, color, style)
+
+        plotitem = self.varplot.getPlotItem()
+        data = np.append(self.rVar[:, 0:n], self.varBas[:, 0:n], axis=0)
+        data = np.append(data, self.varCond[:, 0:n], axis=0)
+        self.plot_rStatValues(init, plotitem, data, color, style)
+
+    def plot_rStatValues(self, init, plotitem, data, color, style):
+
+        if self.tsCheckBox.isChecked():
+
+            sz, l = data.shape
+
+            if init:
+
+                plotitem.clear()
+                plots = []
+
+                muster = self.drawMusterPlot(plotitem)
+
+                style = np.repeat(style, sz/3)
+
+                for i, c, s in zip(range(sz), color, style):
+                    pen = pg.mkPen(c, width=3.0, style=QtCore.Qt.PenStyle(s))
+                    p = plotitem.plot(pen=pen)
+                    plots.append(p)
+
+                self.plot_ts.__dict__[plotitem] = plots, muster
+
+            x = np.arange(1, l+1, dtype=np.float64)
+
+            for p, y in zip(self.plot_ts.__dict__[plotitem][0], data):
+                p.setData(x=x, y=np.array(y))
+
+            items = plotitem.listDataItems()
+
+            for m in self.plot_ts.__dict__[plotitem][1]:
+                items.remove(m)
+
+            if data.any():
+                plotitem.setYRange(np.min(data[1,:]), np.max(data), padding=0.0)
 
     def drawMusterPlot(self, plotitem):
         ylim = config.MUSTER_Y_LIMITS
@@ -509,7 +601,6 @@ class RTQAWindow(QtWidgets.QWidget):
 
         if data.any():
             plotitem.setYRange(np.min(self.glmProcTimeSeries), np.max(self.glmProcTimeSeries), padding=0.0)
-
 
     def data_packing(self):
 
