@@ -161,10 +161,14 @@ class OpenNFT(QWidget):
         self.mosaic_map_image_reader = mmapimage.MosaicImageReader(image_name='statMap2D')
 
         self.proj_background_images_reader = mmapimage.ProjectionImagesReader()
-        self.proj_map_images_reader = mmapimage.ProjectionImagesReader()
+        self.proj_pos_map_images_reader = mmapimage.ProjectionImagesReader()
+        self.proj_neg_map_images_reader = mmapimage.ProjectionImagesReader()
 
         self.hot_map_thresholds_widget = mapimagewidget.MapImageThresholdsWidget(self)
+        self.neg_map_thresholds_widget = mapimagewidget.MapImageThresholdsWidget(
+            self, colormap='Blues_r')
         self.layoutHotMapThresholds.addWidget(self.hot_map_thresholds_widget)
+        self.layoutNegMapThresholds.addWidget(self.neg_map_thresholds_widget)
 
         self.mcPlot = self.createMcPlot()
 
@@ -246,7 +250,8 @@ class OpenNFT(QWidget):
         self.mosaic_map_image_reader.clear()
 
         self.proj_background_images_reader.clear()
-        self.proj_map_images_reader.clear()
+        self.proj_pos_map_images_reader.clear()
+        self.proj_neg_map_images_reader.clear()
 
         self.eng = None
         self.engSPM = None
@@ -512,7 +517,10 @@ class OpenNFT(QWidget):
 
         # SNR or stat map
         map_memmap_fname = memmap_fname.replace('shared', 'OrthView')
-        self.proj_map_images_reader.read(map_memmap_fname, self.engSPM)
+        self.proj_pos_map_images_reader.read(map_memmap_fname, self.engSPM)
+
+        neg_map_memmap_fname = memmap_fname.replace('shared', 'OrthView_neg')
+        self.proj_neg_map_images_reader.read(neg_map_memmap_fname, self.engSPM)
 
         # ROI from helperP
         self.spmHelperP = self.engSPM.workspace['helperP']
@@ -1052,7 +1060,8 @@ class OpenNFT(QWidget):
         self.mosaic_map_image_reader.clear()
 
         self.proj_background_images_reader.clear()
-        self.proj_map_images_reader.clear()
+        self.proj_pos_map_images_reader.clear()
+        self.proj_neg_map_images_reader.clear()
 
         self.mosaicImageView.clear()
         self.orthView.clear()
@@ -1424,7 +1433,7 @@ class OpenNFT(QWidget):
                     self.mosaicImageView.set_map_image(rgba_map_image)
 
         for proj in projview.ProjectionType:
-            map_image = self.proj_map_images_reader.proj_image(proj)
+            map_image = self.proj_pos_map_images_reader.proj_image(proj)
 
             if map_image is not None:
                 rgba_map_image = self.hot_map_thresholds_widget.compute_rgba(
@@ -1449,7 +1458,7 @@ class OpenNFT(QWidget):
             maps_values = np.array([], dtype=np.uint8)
 
             for proj in projview.ProjectionType:
-                map_image = self.proj_map_images_reader.proj_image(proj)
+                map_image = self.proj_pos_map_images_reader.proj_image(proj)
                 maps_values = np.append(maps_values, map_image.ravel())
 
             if maps_values.size > 0:
@@ -1459,8 +1468,11 @@ class OpenNFT(QWidget):
             bg_image = self.proj_background_images_reader.proj_image(proj)
             self.orthView.set_background_image(proj, bg_image)
 
-            map_image = self.proj_map_images_reader.proj_image(proj)
+            map_image = self.proj_pos_map_images_reader.proj_image(proj)
             rgba_map_image = self.hot_map_thresholds_widget.compute_rgba(map_image, alpha=alpha)
+
+            neg_map_image = self.proj_neg_map_images_reader.proj_image(proj)
+            rgba_neg_map_image = self.neg_map_thresholds_widget.compute_rgba(neg_map_image, alpha=alpha)
 
             if rgba_map_image is not None:
                 self.orthView.set_map_image(proj, rgba_map_image)

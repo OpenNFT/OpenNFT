@@ -491,7 +491,7 @@
              </widget>
             </item>
             <item>
-             <layout class="QHBoxLayout" name="horizontalLayout_6" stretch="0,0,0,0,1,0,0,1,0">
+             <layout class="QHBoxLayout" name="horizontalLayout_6" stretch="0,0,0,0,1,0,0,1,0,0,1">
               <item>
                <widget class="QLabel" name="label_12">
                 <property name="text">
@@ -503,6 +503,12 @@
                <widget class="QComboBox" name="cbImageViewMode">
                 <property name="enabled">
                  <bool>false</bool>
+                </property>
+                <property name="maximumSize">
+                 <size>
+                  <width>150</width>
+                  <height>16777215</height>
+                 </size>
                 </property>
                 <item>
                  <property name="text">
@@ -577,7 +583,7 @@
                </widget>
               </item>
               <item>
-               <widget class="QCheckBox" name="posCheckBox">
+               <widget class="QCheckBox" name="posMapCheckBox">
                 <property name="text">
                  <string>Positive</string>
                 </property>
@@ -590,17 +596,21 @@
                <layout class="QHBoxLayout" name="layoutHotMapThresholds"/>
               </item>
               <item>
-               <spacer name="horizontalSpacer_8">
+               <widget class="Line" name="line_9">
                 <property name="orientation">
-                 <enum>Qt::Horizontal</enum>
+                 <enum>Qt::Vertical</enum>
                 </property>
-                <property name="sizeHint" stdset="0">
-                 <size>
-                  <width>300</width>
-                  <height>20</height>
-                 </size>
+               </widget>
+              </item>
+              <item>
+               <widget class="QCheckBox" name="negMapCheckBox">
+                <property name="text">
+                 <string>Negative</string>
                 </property>
-               </spacer>
+               </widget>
+              </item>
+              <item>
+               <layout class="QHBoxLayout" name="layoutNegMapThresholds"/>
               </item>
              </layout>
             </item>
@@ -663,8 +673,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>960</width>
-            <height>739</height>
+            <width>1331</width>
+            <height>936</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_5">
