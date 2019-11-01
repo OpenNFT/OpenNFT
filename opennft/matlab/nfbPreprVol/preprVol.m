@@ -177,9 +177,9 @@ if indVolNorm > FIRST_SNR_VOLUME
             statMap2D_pos = vol3Dimg2D(outputVol, slNrImg2DdimX, slNrImg2DdimY, img2DdimX, img2DdimY, dimVol);
             statMap2D_pos = statMap2D_pos-min(statMap2D_pos(:));
             statMap2D_pos = (statMap2D_pos / max(statMap2D_pos(:))) * 255;
-            m = evalin('base', 'mmStatVol');
-            m.Data.posStatVol = statMap2D_pos;   
-            assignin('base', 'statMap2D_pos', statMap2D_pos);
+            m = evalin('base', 'mmStatMap');
+            m.Data = statMap2D_pos;   
+            assignin('base', 'statMap2D', statMap2D_pos);
         
         end
            
@@ -433,8 +433,8 @@ if ~isempty(idxActVoxIGLM.pos) && max(tn.pos) > 0 % handle empty activation map
     if ~isShowRtqaVol && ~imageViewMode
         
         m_out =  evalin('base', 'mmStatMap');
-        m_out.Data.posStatMap = uint8(statMap2D_pos);
-        assignin('base', 'statMap2D_pos', statMap2D_pos);
+        m_out.Data.statMap = uint8(statMap2D_pos);
+        assignin('base', 'statMap2D', statMap2D_pos);
         
     end
     
@@ -458,8 +458,8 @@ if ~isempty(idxActVoxIGLM.neg) && max(tn.neg) > 0
     
     if ~isShowRtqaVol && ~imageViewMode
         
-        m_out =  evalin('base', 'mmStatMap');
-        m_out.Data.negStatMap = uint8(statMap2D_neg);
+        m_out =  evalin('base', 'mmStatMap_neg');
+        m_out.Data.statMap_neg = uint8(statMap2D_neg);
         assignin('base', 'statMap2D_neg', statMap2D_neg);
         
     end

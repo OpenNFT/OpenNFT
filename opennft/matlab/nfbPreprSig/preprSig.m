@@ -272,6 +272,12 @@ for indRoi = 1:P.NrROIs
                 mainLoopData.inpFilt(indRoi));
         end
     end
+    
+end
+    
+% 2. time-series iGLM
+
+for indRoi = 1:P.NrROIs
 
     % 3. modified Kalman low-pass filter + spike identification & correction
     if isPSC || isSVM || isDCM || P.isRestingState
