@@ -92,6 +92,12 @@ class ProjectionImageView(pg.ViewBox):
     def set_neg_map_visible(self, flag):
         self._neg_map_imitem.setVisible(flag)
 
+    def set_pos_map_opacity(self, value):
+        self._pos_map_imitem.setOpacity(value)
+
+    def set_neg_map_opacity(self, value):
+        self._neg_map_imitem.setOpacity(value)
+
     def set_roi(self, rois):
         self._clear_roi()
         colors_cycle = self._roi_colors()
@@ -249,6 +255,14 @@ class ProjectionsWidget(QtWidgets.QWidget):
     def set_neg_map_visible(self, flag):
         for view in self._proj_views.values():
             view.set_neg_map_visible(flag)
+
+    def set_pos_map_opacity(self, value):
+        for view in self._proj_views.values():
+            view.set_pos_map_opacity(value)
+
+    def set_neg_map_opacity(self, value):
+        for view in self._proj_views.values():
+            view.set_neg_map_opacity(value)
 
     def set_roi(self, proj: ProjectionType, roi):
         self._proj_views[proj].set_roi(roi)

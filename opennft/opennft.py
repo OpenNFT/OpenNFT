@@ -425,7 +425,6 @@ class OpenNFT(QWidget):
         self.leUDPFeedbackIP.setValidator(QRegExpValidator(ipv4_regexp, self))
         self.cbUseUDPFeedback.stateChanged.connect(self.onChangeUseUDPFeedback)
 
-        self.sliderMapsAlpha.valueChanged.connect(self.onInteractWithMapImage)
         self.pos_map_thresholds_widget.thresholds_manually_changed.connect(self.onInteractWithMapImage)
         self.neg_map_thresholds_widget.thresholds_manually_changed.connect(self.onInteractWithMapImage)
 
@@ -434,6 +433,11 @@ class OpenNFT(QWidget):
 
         self.negMapCheckBox.toggled.connect(self.mosaicImageView.set_neg_map_visible)
         self.negMapCheckBox.toggled.connect(self.orthView.set_neg_map_visible)
+
+        self.sliderMapsAlpha.valueChanged.connect(lambda v: self.mosaicImageView.set_pos_map_opacity(v/100.0))
+        self.sliderMapsAlpha.valueChanged.connect(lambda v: self.mosaicImageView.set_neg_map_opacity(v/100.0))
+        self.sliderMapsAlpha.valueChanged.connect(lambda v: self.orthView.set_pos_map_opacity(v/100.0))
+        self.sliderMapsAlpha.valueChanged.connect(lambda v: self.orthView.set_neg_map_opacity(v/100.0))
 
         self.onChangeUseUDPFeedback()
 
@@ -1430,14 +1434,11 @@ class OpenNFT(QWidget):
         if self.sender() is self.pos_map_thresholds_widget:
             self.pos_map_thresholds_widget.auto_thresholds = False
 
-        alpha = self.sliderMapsAlpha.value() / 100.0
-
         if self.imageViewMode == ImageViewMode.mosaic:
             pos_map_image = self.mosaic_pos_map_image_reader.image
 
             if pos_map_image is not None:
-                rgba_pos_map_image = self.pos_map_thresholds_widget.compute_rgba(
-                    pos_map_image, alpha=alpha)
+                rgba_pos_map_image = self.pos_map_thresholds_widget.compute_rgba(pos_map_image)
 
                 if rgba_pos_map_image is not None:
                     self.mosaicImageView.set_pos_map_image(rgba_pos_map_image)
@@ -1445,8 +1446,7 @@ class OpenNFT(QWidget):
             neg_map_image = self.mosaic_neg_map_image_reader.image
 
             if neg_map_image is not None:
-                rgba_neg_map_image = self.neg_map_thresholds_widget.compute_rgba(
-                    neg_map_image, alpha=alpha)
+                rgba_neg_map_image = self.neg_map_thresholds_widget.compute_rgba(neg_map_image)
 
                 if rgba_neg_map_image is not None:
                     self.mosaicImageView.set_neg_map_image(rgba_neg_map_image)
@@ -1480,8 +1480,6 @@ class OpenNFT(QWidget):
         # with utils.timeit('Getting new orthview projections...'):
         self.readOrthViewImages()
 
-        alpha = self.sliderMapsAlpha.value() / 100.0
-
         if self.imageViewMode != ImageViewMode.mosaic:
             pos_maps_values = np.array([], dtype=np.uint8)
             neg_maps_values = np.array([], dtype=np.uint8)
@@ -1503,10 +1501,10 @@ class OpenNFT(QWidget):
             self.orthView.set_background_image(proj, bg_image)
 
             pos_map_image = self.proj_pos_map_images_reader.proj_image(proj)
-            rgba_pos_map_image = self.pos_map_thresholds_widget.compute_rgba(pos_map_image, alpha=alpha)
+            rgba_pos_map_image = self.pos_map_thresholds_widget.compute_rgba(pos_map_image)
 
             neg_map_image = self.proj_neg_map_images_reader.proj_image(proj)
-            rgba_neg_map_image = self.neg_map_thresholds_widget.compute_rgba(neg_map_image, alpha=alpha)
+            rgba_neg_map_image = self.neg_map_thresholds_widget.compute_rgba(neg_map_image)
 
             if rgba_pos_map_image is not None:
                 self.orthView.set_pos_map_image(proj, rgba_pos_map_image)
@@ -1845,11 +1843,9 @@ class OpenNFT(QWidget):
             pos_map_image = self.mosaic_pos_map_image_reader.image
             neg_map_image = self.mosaic_neg_map_image_reader.image
 
-        alpha = self.sliderMapsAlpha.value() / 100.0
-
         if pos_map_image is not None:
             self.pos_map_thresholds_widget.compute_thresholds(pos_map_image)
-            rgba_pos_map_image = self.pos_map_thresholds_widget.compute_rgba(pos_map_image, alpha=alpha)
+            rgba_pos_map_image = self.pos_map_thresholds_widget.compute_rgba(pos_map_image)
 
             if rgba_pos_map_image is not None:
                 self.mosaicImageView.set_pos_map_image(rgba_pos_map_image)
@@ -1858,7 +1854,7 @@ class OpenNFT(QWidget):
 
         if neg_map_image is not None:
             self.neg_map_thresholds_widget.compute_thresholds(neg_map_image)
-            rgba_neg_map_image = self.neg_map_thresholds_widget.compute_rgba(neg_map_image, alpha=alpha)
+            rgba_neg_map_image = self.neg_map_thresholds_widget.compute_rgba(neg_map_image)
 
             if rgba_neg_map_image is not None:
                 self.mosaicImageView.set_neg_map_image(rgba_neg_map_image)
