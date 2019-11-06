@@ -51,13 +51,15 @@ class ProjectionImageView(pg.ViewBox):
         self._proj_type = proj_type
 
         self._background_imitem = pg.ImageItem(autoDownsample=True)
-        self._map_imitem = pg.ImageItem(autoDownsample=True)
+        self._pos_map_imitem = pg.ImageItem(autoDownsample=True)
+        self._neg_map_imitem = pg.ImageItem(autoDownsample=True)
 
         self._roi_plotdataitems = []
         self._roi_colors = cycler(color=config.PROJ_ROI_COLORS)
 
         self.addItem(self._background_imitem)
-        self.addItem(self._map_imitem)
+        self.addItem(self._pos_map_imitem)
+        self.addItem(self._neg_map_imitem)
 
         # self._background_imitem.setBorder({'color': pg.mkColor('g'), 'width': 1})
 
@@ -78,8 +80,11 @@ class ProjectionImageView(pg.ViewBox):
         self._image_shape = image.shape
         self._background_imitem.setImage(image.T)
 
-    def set_map_image(self, image):
-        self._map_imitem.setImage(np.transpose(image, axes=(1, 0, 2)))
+    def set_pos_map_image(self, image):
+        self._pos_map_imitem.setImage(np.transpose(image, axes=(1, 0, 2)))
+
+    def set_neg_map_image(self, image):
+        self._neg_map_imitem.setImage(np.transpose(image, axes=(1, 0, 2)))
 
     def set_roi(self, rois):
         self._clear_roi()
@@ -101,7 +106,8 @@ class ProjectionImageView(pg.ViewBox):
     def clear(self):
         self._image_shape = [0, 0]
         self._background_imitem.clear()
-        self._map_imitem.clear()
+        self._pos_map_imitem.clear()
+        self._neg_map_imitem.clear()
         self._clear_roi()
 
     def suggestPadding(self, axis=None):
@@ -224,8 +230,11 @@ class ProjectionsWidget(QtWidgets.QWidget):
     def set_background_image(self, proj: ProjectionType, image):
         self._proj_views[proj].set_background_image(image)
 
-    def set_map_image(self, proj: ProjectionType, image):
-        self._proj_views[proj].set_map_image(image)
+    def set_pos_map_image(self, proj: ProjectionType, image):
+        self._proj_views[proj].set_pos_map_image(image)
+
+    def set_neg_map_image(self, proj: ProjectionType, image):
+        self._proj_views[proj].set_neg_map_image(image)
 
     def set_roi(self, proj: ProjectionType, roi):
         self._proj_views[proj].set_roi(roi)

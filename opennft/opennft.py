@@ -158,16 +158,17 @@ class OpenNFT(QWidget):
         self.layoutOrthView.addWidget(self.orthView)
 
         self.mosaic_background_image_reader = mmapimage.MosaicImageReader(image_name='imgViewTempl')
-        self.mosaic_map_image_reader = mmapimage.MosaicImageReader(image_name='statMap2D')
+        self.mosaic_pos_map_image_reader = mmapimage.MosaicImageReader(image_name='statMap2D')
+        self.mosaic_neg_map_image_reader = mmapimage.MosaicImageReader(image_name='statMap2D')
 
         self.proj_background_images_reader = mmapimage.ProjectionImagesReader()
         self.proj_pos_map_images_reader = mmapimage.ProjectionImagesReader()
         self.proj_neg_map_images_reader = mmapimage.ProjectionImagesReader()
 
-        self.hot_map_thresholds_widget = mapimagewidget.MapImageThresholdsWidget(self)
-        self.neg_map_thresholds_widget = mapimagewidget.MapImageThresholdsWidget(
-            self, colormap='Blues_r')
-        self.layoutHotMapThresholds.addWidget(self.hot_map_thresholds_widget)
+        self.pos_map_thresholds_widget = mapimagewidget.MapImageThresholdsWidget(self)
+        self.neg_map_thresholds_widget = mapimagewidget.MapImageThresholdsWidget(self, colormap='Blues_r')
+
+        self.layoutHotMapThresholds.addWidget(self.pos_map_thresholds_widget)
         self.layoutNegMapThresholds.addWidget(self.neg_map_thresholds_widget)
 
         self.mcPlot = self.createMcPlot()
@@ -247,7 +248,8 @@ class OpenNFT(QWidget):
         self.hide()
 
         self.mosaic_background_image_reader.clear()
-        self.mosaic_map_image_reader.clear()
+        self.mosaic_pos_map_image_reader.clear()
+        self.mosaic_neg_map_image_reader.clear()
 
         self.proj_background_images_reader.clear()
         self.proj_pos_map_images_reader.clear()
@@ -424,7 +426,8 @@ class OpenNFT(QWidget):
         self.cbUseUDPFeedback.stateChanged.connect(self.onChangeUseUDPFeedback)
 
         self.sliderStatsAlpha.valueChanged.connect(self.onInteractWithMapImage)
-        self.hot_map_thresholds_widget.thresholds_manually_changed.connect(self.onInteractWithMapImage)
+        self.pos_map_thresholds_widget.thresholds_manually_changed.connect(self.onInteractWithMapImage)
+        self.neg_map_thresholds_widget.thresholds_manually_changed.connect(self.onInteractWithMapImage)
 
         self.onChangeUseUDPFeedback()
 
@@ -516,8 +519,8 @@ class OpenNFT(QWidget):
         self.proj_background_images_reader.read(background_memmap_fname, self.engSPM)
 
         # SNR or stat map
-        map_memmap_fname = memmap_fname.replace('shared', 'OrthView')
-        self.proj_pos_map_images_reader.read(map_memmap_fname, self.engSPM)
+        pos_map_memmap_fname = memmap_fname.replace('shared', 'OrthView')
+        self.proj_pos_map_images_reader.read(pos_map_memmap_fname, self.engSPM)
 
         neg_map_memmap_fname = memmap_fname.replace('shared', 'OrthView_neg')
         self.proj_neg_map_images_reader.read(neg_map_memmap_fname, self.engSPM)
@@ -1054,10 +1057,11 @@ class OpenNFT(QWidget):
         self.rawRoiPlot.getPlotItem().clear()
         self.normRoiPlot.getPlotItem().clear()
 
-        self.hot_map_thresholds_widget.reset()
+        self.pos_map_thresholds_widget.reset()
 
         self.mosaic_background_image_reader.clear()
-        self.mosaic_map_image_reader.clear()
+        self.mosaic_pos_map_image_reader.clear()
+        self.mosaic_neg_map_image_reader.clear()
 
         self.proj_background_images_reader.clear()
         self.proj_pos_map_images_reader.clear()
@@ -1417,30 +1421,48 @@ class OpenNFT(QWidget):
         self.updateOrthViewAsync(rtqa=self.windowRTQA.volumeCheckBox.isChecked())
 
     def onInteractWithMapImage(self):
-        if self.sender() is self.hot_map_thresholds_widget:
-            self.hot_map_thresholds_widget.auto_thresholds = False
+        if self.sender() is self.pos_map_thresholds_widget:
+            self.pos_map_thresholds_widget.auto_thresholds = False
 
         alpha = self.sliderStatsAlpha.value() / 100.0
 
         if self.imageViewMode == ImageViewMode.mosaic:
-            map_image = self.mosaic_map_image_reader.image
+            pos_map_image = self.mosaic_pos_map_image_reader.image
 
-            if map_image is not None:
-                rgba_map_image = self.hot_map_thresholds_widget.compute_rgba(
-                    map_image, alpha=alpha)
+            if pos_map_image is not None:
+                rgba_pos_map_image = self.pos_map_thresholds_widget.compute_rgba(
+                    pos_map_image, alpha=alpha)
 
-                if rgba_map_image is not None:
-                    self.mosaicImageView.set_map_image(rgba_map_image)
+                if rgba_pos_map_image is not None:
+                    self.mosaicImageView.set_pos_map_image(rgba_pos_map_image)
+
+            neg_map_image = self.mosaic_neg_map_image_reader.image
+
+            if neg_map_image is not None:
+                rgba_neg_map_image = self.neg_map_thresholds_widget.compute_rgba(
+                    neg_map_image, alpha=alpha)
+
+                if rgba_neg_map_image is not None:
+                    self.mosaicImageView.set_neg_map_image(rgba_neg_map_image)
 
         for proj in projview.ProjectionType:
-            map_image = self.proj_pos_map_images_reader.proj_image(proj)
+            pos_map_image = self.proj_pos_map_images_reader.proj_image(proj)
 
-            if map_image is not None:
-                rgba_map_image = self.hot_map_thresholds_widget.compute_rgba(
-                    map_image, alpha=alpha)
+            if pos_map_image is not None:
+                rgba_pos_map_image = self.pos_map_thresholds_widget.compute_rgba(
+                    pos_map_image, alpha=alpha)
 
-                if rgba_map_image is not None:
-                    self.orthView.set_map_image(proj, rgba_map_image)
+                if rgba_pos_map_image is not None:
+                    self.orthView.set_pos_map_image(proj, rgba_pos_map_image)
+
+            neg_map_image = self.proj_neg_map_images_reader.proj_image(proj)
+
+            if neg_map_image is not None:
+                rgba_neg_map_image = self.neg_map_thresholds_widget.compute_rgba(
+                    neg_map_image, alpha=alpha)
+
+                if rgba_neg_map_image is not None:
+                    self.orthView.set_neg_map_image(proj, rgba_neg_map_image)
 
     # --------------------------------------------------------------------------
     def onCheckOrthViewUpdated(self):
@@ -1455,27 +1477,36 @@ class OpenNFT(QWidget):
         alpha = self.sliderStatsAlpha.value() / 100.0
 
         if self.imageViewMode != ImageViewMode.mosaic:
-            maps_values = np.array([], dtype=np.uint8)
+            pos_maps_values = np.array([], dtype=np.uint8)
+            neg_maps_values = np.array([], dtype=np.uint8)
 
             for proj in projview.ProjectionType:
-                map_image = self.proj_pos_map_images_reader.proj_image(proj)
-                maps_values = np.append(maps_values, map_image.ravel())
+                pos_map_image = self.proj_pos_map_images_reader.proj_image(proj)
+                pos_maps_values = np.append(pos_maps_values, pos_map_image.ravel())
 
-            if maps_values.size > 0:
-                self.hot_map_thresholds_widget.compute_thresholds(maps_values)
+                neg_map_image = self.proj_neg_map_images_reader.proj_image(proj)
+                neg_maps_values = np.append(neg_maps_values, neg_map_image.ravel())
+
+            if pos_maps_values.size > 0:
+                self.pos_map_thresholds_widget.compute_thresholds(pos_maps_values)
+            if neg_maps_values.size > 0:
+                self.neg_map_thresholds_widget.compute_thresholds(neg_maps_values)
 
         for proj in projview.ProjectionType:
             bg_image = self.proj_background_images_reader.proj_image(proj)
             self.orthView.set_background_image(proj, bg_image)
 
-            map_image = self.proj_pos_map_images_reader.proj_image(proj)
-            rgba_map_image = self.hot_map_thresholds_widget.compute_rgba(map_image, alpha=alpha)
+            pos_map_image = self.proj_pos_map_images_reader.proj_image(proj)
+            rgba_pos_map_image = self.pos_map_thresholds_widget.compute_rgba(pos_map_image, alpha=alpha)
 
             neg_map_image = self.proj_neg_map_images_reader.proj_image(proj)
             rgba_neg_map_image = self.neg_map_thresholds_widget.compute_rgba(neg_map_image, alpha=alpha)
 
-            if rgba_map_image is not None:
-                self.orthView.set_map_image(proj, rgba_map_image)
+            if rgba_pos_map_image is not None:
+                self.orthView.set_pos_map_image(proj, rgba_pos_map_image)
+
+            if rgba_neg_map_image is not None:
+                self.orthView.set_neg_map_image(proj, rgba_neg_map_image)
 
         self.orthView.set_roi(projview.ProjectionType.transversal, self.spmHelperP['tRoiBoundaries'])
         self.orthView.set_roi(projview.ProjectionType.coronal, self.spmHelperP['cRoiBoundaries'])
@@ -1772,7 +1803,8 @@ class OpenNFT(QWidget):
     # --------------------------------------------------------------------------
     def displayMosaicImage(self):
         background_image = None
-        map_image = None
+        pos_map_image = None
+        neg_map_image = None
 
         if 'imgViewTempl' not in self.P:
             if self.eng.evalin('base', 'length(imgViewTempl)') > 0:
@@ -1796,21 +1828,36 @@ class OpenNFT(QWidget):
                 and (is_stat_map_created and not is_rtqa_volume_checked
                      or is_snr_map_created and is_rtqa_volume_checked)):
 
-            with utils.timeit("Receiving 'statMap2D' from Matlab:"):
-                filename = self.eng.evalin('base', 'P.memMapFile').replace('shared', 'statMap')
-                self.mosaic_map_image_reader.read(filename, self.eng)
-            map_image = self.mosaic_map_image_reader.image
+            with utils.timeit("Receiving mosaic maps from Matlab:"):
+                filename_pat = self.eng.evalin('base', 'P.memMapFile')
+                filename_pos = filename_pat.replace('shared', 'statMap')
+                filename_neg = filename_pat.replace('shared', 'statMap_neg')
 
-        if map_image is not None:
-            alpha = self.sliderStatsAlpha.value() / 100.0
+                self.mosaic_pos_map_image_reader.read(filename_pos, self.eng)
+                self.mosaic_neg_map_image_reader.read(filename_neg, self.eng)
 
-            self.hot_map_thresholds_widget.compute_thresholds(map_image)
-            rgba_map_image = self.hot_map_thresholds_widget.compute_rgba(map_image, alpha=alpha)
+            pos_map_image = self.mosaic_pos_map_image_reader.image
+            neg_map_image = self.mosaic_neg_map_image_reader.image
 
-            if rgba_map_image is not None:
-                self.mosaicImageView.set_map_image(rgba_map_image)
+        alpha = self.sliderStatsAlpha.value() / 100.0
+
+        if pos_map_image is not None:
+            self.pos_map_thresholds_widget.compute_thresholds(pos_map_image)
+            rgba_pos_map_image = self.pos_map_thresholds_widget.compute_rgba(pos_map_image, alpha=alpha)
+
+            if rgba_pos_map_image is not None:
+                self.mosaicImageView.set_pos_map_image(rgba_pos_map_image)
         else:
-            self.mosaicImageView.clear_map()
+            self.mosaicImageView.clear_pos_map()
+
+        if neg_map_image is not None:
+            self.neg_map_thresholds_widget.compute_thresholds(neg_map_image)
+            rgba_neg_map_image = self.neg_map_thresholds_widget.compute_rgba(neg_map_image, alpha=alpha)
+
+            if rgba_neg_map_image is not None:
+                self.mosaicImageView.set_neg_map_image(rgba_neg_map_image)
+        else:
+            self.mosaicImageView.clear_neg_map()
 
     # --------------------------------------------------------------------------
     def createMusterInfo(self):
