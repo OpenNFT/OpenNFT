@@ -425,9 +425,15 @@ class OpenNFT(QWidget):
         self.leUDPFeedbackIP.setValidator(QRegExpValidator(ipv4_regexp, self))
         self.cbUseUDPFeedback.stateChanged.connect(self.onChangeUseUDPFeedback)
 
-        self.sliderStatsAlpha.valueChanged.connect(self.onInteractWithMapImage)
+        self.sliderMapsAlpha.valueChanged.connect(self.onInteractWithMapImage)
         self.pos_map_thresholds_widget.thresholds_manually_changed.connect(self.onInteractWithMapImage)
         self.neg_map_thresholds_widget.thresholds_manually_changed.connect(self.onInteractWithMapImage)
+
+        self.posMapCheckBox.toggled.connect(self.mosaicImageView.set_pos_map_visible)
+        self.posMapCheckBox.toggled.connect(self.orthView.set_pos_map_visible)
+
+        self.negMapCheckBox.toggled.connect(self.mosaicImageView.set_neg_map_visible)
+        self.negMapCheckBox.toggled.connect(self.orthView.set_neg_map_visible)
 
         self.onChangeUseUDPFeedback()
 
@@ -1424,7 +1430,7 @@ class OpenNFT(QWidget):
         if self.sender() is self.pos_map_thresholds_widget:
             self.pos_map_thresholds_widget.auto_thresholds = False
 
-        alpha = self.sliderStatsAlpha.value() / 100.0
+        alpha = self.sliderMapsAlpha.value() / 100.0
 
         if self.imageViewMode == ImageViewMode.mosaic:
             pos_map_image = self.mosaic_pos_map_image_reader.image
@@ -1474,7 +1480,7 @@ class OpenNFT(QWidget):
         # with utils.timeit('Getting new orthview projections...'):
         self.readOrthViewImages()
 
-        alpha = self.sliderStatsAlpha.value() / 100.0
+        alpha = self.sliderMapsAlpha.value() / 100.0
 
         if self.imageViewMode != ImageViewMode.mosaic:
             pos_maps_values = np.array([], dtype=np.uint8)
@@ -1839,7 +1845,7 @@ class OpenNFT(QWidget):
             pos_map_image = self.mosaic_pos_map_image_reader.image
             neg_map_image = self.mosaic_neg_map_image_reader.image
 
-        alpha = self.sliderStatsAlpha.value() / 100.0
+        alpha = self.sliderMapsAlpha.value() / 100.0
 
         if pos_map_image is not None:
             self.pos_map_thresholds_widget.compute_thresholds(pos_map_image)

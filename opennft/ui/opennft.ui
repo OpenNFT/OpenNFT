@@ -559,6 +559,9 @@
                 <property name="text">
                  <string>Negative</string>
                 </property>
+                <property name="checked">
+                 <bool>true</bool>
+                </property>
                </widget>
               </item>
               <item>
@@ -579,7 +582,7 @@
                </widget>
               </item>
               <item>
-               <widget class="QSlider" name="sliderStatsAlpha">
+               <widget class="QSlider" name="sliderMapsAlpha">
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
                   <horstretch>0</horstretch>
