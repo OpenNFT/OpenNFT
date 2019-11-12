@@ -230,9 +230,9 @@ if strParam.modeDispl(1)
     for j = 1:roiCount
         [tRoiImg, cRoiImg, sRoiImg] = getOrthVol(coordParam, ROIs(j).vol, ROIs(j).mat);
 
-        P.tRoiBoundaries{j} = roiBoundary(tRoiImg);
-        P.cRoiBoundaries{j} = roiBoundary(cRoiImg);
-        P.sRoiBoundaries{j} = roiBoundary(sRoiImg);
+        P.tRoiBoundaries{j} = roiBoundaries(tRoiImg);
+        P.cRoiBoundaries{j} = roiBoundaries(cRoiImg);
+        P.sRoiBoundaries{j} = roiBoundaries(sRoiImg);
     end
 else
     P.tRoiBoundaries = {};
@@ -242,14 +242,9 @@ end
 
 return
 
-function boundary = roiBoundary(roi)
-[row, col] = find(roi ~= 0 & ~isnan(roi));
-
-if ~isempty(row)
-    boundary = bwtraceboundary(roi, [row(1), col(1)], 'N');
-else
-    boundary = [];
-end
+function boundaries = roiBoundaries(roi)
+roi(isnan(roi)) = 0;
+boundaries = bwboundaries(roi, 8, 'holes');
 
 function [imgt, imgc, imgs] = getOrthVol(coordParam, vol3D, volMat)
 global strParam
