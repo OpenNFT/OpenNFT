@@ -27,6 +27,7 @@ rtQA_matlab = evalin('base', 'rtQA_matlab');
 evalin('base', 'clear mmImgViewTempl;');
 evalin('base', 'clear mmStatVol;');
 evalin('base', 'clear mmStatMap;');
+evalin('base', 'clear mmStatMap_neg;');
 evalin('base', 'clear mmOrthView;');
 
 [isPSC, isDCM, isSVM, isIGLM] = getFlagsType(P);

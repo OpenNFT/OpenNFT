@@ -7,6 +7,7 @@ from PyQt5 import uic
 import numpy as np
 import pyqtgraph as pg
 import matlab
+import itertools
 
 from opennft import utils
 from opennft import config
@@ -587,13 +588,11 @@ class RTQAWindow(QtWidgets.QWidget):
                 p = plotitem.plot(pen=pen)
                 plots.append(p)
 
-                mask = np.zeros((l, 1))
-                mask[self.posSpikes[str(i)]] = 1
-                mask[self.posSpikes[str(i)]-1] = 1
-                y = np.array(self.glmProcTimeSeries[i,:])
-                y = y[np.where(mask == 1)[0]]
-                x1 = x
-                x1 = x1[np.where(mask == 1)[0]]
+                inds = self.posSpikes[str(i)]
+                inds = np.array(list(itertools.chain.from_iterable(zip(inds, inds-1))))
+
+                y = np.array(self.glmProcTimeSeries[i,inds])
+                x1 = inds
 
                 plots[-1].setData(x=x1, y=y, connect='pairs')
 
@@ -607,25 +606,23 @@ class RTQAWindow(QtWidgets.QWidget):
                 p = plotitem.plot(pen=pen)
                 plots.append(p)
 
-                mask = np.zeros((l, 1))
-                mask[self.negSpikes[str(i)]] = 1
-                mask[self.negSpikes[str(i)]-1] = 1
-                y = np.array(self.glmProcTimeSeries[i,:])
-                y = y[np.where(mask == 1)[0]]
-                x1 = x
-                x1 = x1[np.where(mask == 1)[0]]
+                inds = self.negSpikes[str(i)]
+                inds = np.array(list(itertools.chain.from_iterable(zip(inds, inds - 1))))
+
+                y = np.array(self.glmProcTimeSeries[i,inds])
+                x1 = inds
 
                 plots[-1].setData(x=x1, y=y, connect='pairs')
 
         cnt = 0;
         for i in range(sz):
             cnt = cnt + np.count_nonzero(self.posSpikes[str(i)])
-        names = ['Positive spikes: ' + str(int(cnt))]
+        names = ['( Circles ) <br>Positive spikes: ' + str(int(cnt))]
 
         cnt = 0;
         for i in range(sz):
             cnt = cnt + np.count_nonzero(self.negSpikes[str(i)])
-        names.append('<br>Negative spikes: ' + str(int(cnt)))
+        names.append('<br>( Diamonds )<br>Negative spikes: ' + str(int(cnt)))
         pens = [pg.mkPen(color=config.STAT_PLOT_COLORS[0], width=1.2), pg.mkPen(color=config.STAT_PLOT_COLORS[0], width=1.2)]
         self.makeTextValueLabel(self.spikesLabel, names, pens)
 
