@@ -111,7 +111,7 @@ class FD:
             rotPlotitem.plot(x=x, y=self.data[:, i], pen=c.PLOT_PEN_COLORS[i], name=self.names[i])
 
         if mdFlag:
-            fdPlotitem.plot(x=x, y=self.md, pen=c.PLOT_PEN_COLORS[0], name='Micro displacement')
+            fdPlotitem.plot(x=x, y=self.md, pen=c.PLOT_PEN_COLORS[0], name='MD')
             fdPlotitem.plot(x=np.arange(0, self.xmax, dtype=np.float64), y=self.threshold[0] * np.ones(self.xmax),
                             pen=c.PLOT_PEN_COLORS[2], name='thr')
         else:

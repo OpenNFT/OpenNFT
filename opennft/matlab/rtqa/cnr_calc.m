@@ -66,26 +66,7 @@ function [ cnrData ] = cnr_calc( index, vol, volSmoothed, cnrData, isSmoothed )
             varianceCond = condData.m2 / (condData.iteration - 1);
         end
                
-        cnrData.cnrVol = (meanCond - meanBas) ./ ((varianceBas + varianceCond).^.5);
-        
-        % filtering
-%         meanCNR = mean(cnrVol(:));
-%         stdCNR = std(cnrVol(:));
-%         
-%         cnrVol = cnrVol - meanCNR;
-%         cnrVol = cnrVol ./ stdCNR;
-%         meanCNR = mean(cnrVol(:));
-%         stdCNR = std(cnrVol(:));
-%         
-%         for i=1:shape(1)
-%             for j=1:shape(2)
-%                 for k=1:shape(3)
-%                     if cnrVol(i,j,k) < meanCNR+stdCNR
-%                         cnrVol(i,j,k) = 0;
-%                     end
-%                 end
-%             end
-%         end    
+        cnrData.cnrVol = (meanCond - meanBas) ./ ((varianceBas + varianceCond).^.5); 
         
     end
         

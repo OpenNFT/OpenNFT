@@ -821,7 +821,7 @@ class OpenNFT(QWidget):
                 dataRealRaw = np.array(self.outputSamples['rawTimeSeries'], ndmin=2)
                 dataMC = np.array(self.outputSamples['motCorrParam'], ndmin=2)
                 n = len(dataRealRaw[0, :])-1
-                data = dataRealRaw[:, n ]
+                data = dataRealRaw[:, n]
                 self.windowRTQA.calculate_snr(data, n)
                 if not self.P['isRestingState']:
                     self.windowRTQA.calculate_cnr(data, n)
@@ -1175,14 +1175,16 @@ class OpenNFT(QWidget):
 
             if self.P['isRestingState']:
                 xrange = (self.P['NrOfVolumes'] - self.P['nrSkipVol'])
+                indBas = 0
+                indCond = 0
             else:
                 self.computeMusterPlotData(config.MUSTER_Y_LIMITS)
                 xrange = max(self.musterInfo['tmpCond1'][-1][1],
                              self.musterInfo['tmpCond2'][-1][1])
+                indBas = np.array(self.P['inds'][0])-1
+                indCond = np.array(self.P['inds'][1])-1
 
-            indBas = np.array(self.P['inds'][0])-1
-            indCond = np.array(self.P['inds'][1])-1
-
+            self.cbImageViewMode.setCurrentIndex(0)
             self.cbImageViewMode.setEnabled(False)
 
             self.windowRTQA = rtqa.RTQAWindow(int(self.P['NrROIs']),xrange, indBas, indCond, self.musterInfo, parent=self)
@@ -1443,13 +1445,14 @@ class OpenNFT(QWidget):
                 if rgba_pos_map_image is not None:
                     self.mosaicImageView.set_pos_map_image(rgba_pos_map_image)
 
-            neg_map_image = self.mosaic_neg_map_image_reader.image
+            if self.negMapCheckBox.isChecked():
+                neg_map_image = self.mosaic_neg_map_image_reader.image
 
-            if neg_map_image is not None:
-                rgba_neg_map_image = self.neg_map_thresholds_widget.compute_rgba(neg_map_image)
+                if neg_map_image is not None:
+                    rgba_neg_map_image = self.neg_map_thresholds_widget.compute_rgba(neg_map_image)
 
-                if rgba_neg_map_image is not None:
-                    self.mosaicImageView.set_neg_map_image(rgba_neg_map_image)
+                    if rgba_neg_map_image is not None:
+                        self.mosaicImageView.set_neg_map_image(rgba_neg_map_image)
 
         for proj in projview.ProjectionType:
             pos_map_image = self.proj_pos_map_images_reader.proj_image(proj)
@@ -1461,14 +1464,16 @@ class OpenNFT(QWidget):
                 if rgba_pos_map_image is not None:
                     self.orthView.set_pos_map_image(proj, rgba_pos_map_image)
 
-            neg_map_image = self.proj_neg_map_images_reader.proj_image(proj)
+            if self.negMapCheckBox.isChecked():
 
-            if neg_map_image is not None:
-                rgba_neg_map_image = self.neg_map_thresholds_widget.compute_rgba(
-                    neg_map_image, alpha=alpha)
+                neg_map_image = self.proj_neg_map_images_reader.proj_image(proj)
 
-                if rgba_neg_map_image is not None:
-                    self.orthView.set_neg_map_image(proj, rgba_neg_map_image)
+                if neg_map_image is not None:
+                    rgba_neg_map_image = self.neg_map_thresholds_widget.compute_rgba(
+                        neg_map_image, alpha=alpha)
+
+                    if rgba_neg_map_image is not None:
+                        self.orthView.set_neg_map_image(proj, rgba_neg_map_image)
 
     # --------------------------------------------------------------------------
     def onCheckOrthViewUpdated(self):
@@ -1488,8 +1493,10 @@ class OpenNFT(QWidget):
                 pos_map_image = self.proj_pos_map_images_reader.proj_image(proj)
                 pos_maps_values = np.append(pos_maps_values, pos_map_image.ravel())
 
-                neg_map_image = self.proj_neg_map_images_reader.proj_image(proj)
-                neg_maps_values = np.append(neg_maps_values, neg_map_image.ravel())
+                if self.negMapCheckBox.isChecked():
+
+                    neg_map_image = self.proj_neg_map_images_reader.proj_image(proj)
+                    neg_maps_values = np.append(neg_maps_values, neg_map_image.ravel())
 
             if pos_maps_values.size > 0:
                 self.pos_map_thresholds_widget.compute_thresholds(pos_maps_values)
@@ -1503,13 +1510,14 @@ class OpenNFT(QWidget):
             pos_map_image = self.proj_pos_map_images_reader.proj_image(proj)
             rgba_pos_map_image = self.pos_map_thresholds_widget.compute_rgba(pos_map_image)
 
-            neg_map_image = self.proj_neg_map_images_reader.proj_image(proj)
-            rgba_neg_map_image = self.neg_map_thresholds_widget.compute_rgba(neg_map_image)
+            if self.negMapCheckBox.isChecked():
+                neg_map_image = self.proj_neg_map_images_reader.proj_image(proj)
+                rgba_neg_map_image = self.neg_map_thresholds_widget.compute_rgba(neg_map_image)
 
             if rgba_pos_map_image is not None:
                 self.orthView.set_pos_map_image(proj, rgba_pos_map_image)
 
-            if rgba_neg_map_image is not None:
+            if self.negMapCheckBox.isChecked() and rgba_neg_map_image is not None:
                 self.orthView.set_neg_map_image(proj, rgba_neg_map_image)
 
         self.orthView.set_roi(projview.ProjectionType.transversal, self.spmHelperP['tRoiBoundaries'])
@@ -1838,10 +1846,13 @@ class OpenNFT(QWidget):
                 filename_neg = filename_pat.replace('shared', 'statMap_neg')
 
                 self.mosaic_pos_map_image_reader.read(filename_pos, self.eng)
-                self.mosaic_neg_map_image_reader.read(filename_neg, self.eng)
+                if self.negMapCheckBox.isChecked():
+                    self.mosaic_neg_map_image_reader.read(filename_neg, self.eng)
 
             pos_map_image = self.mosaic_pos_map_image_reader.image
-            neg_map_image = self.mosaic_neg_map_image_reader.image
+
+            if self.negMapCheckBox.isChecked():
+                neg_map_image = self.mosaic_neg_map_image_reader.image
 
         if pos_map_image is not None:
             self.pos_map_thresholds_widget.compute_thresholds(pos_map_image)
@@ -1852,7 +1863,7 @@ class OpenNFT(QWidget):
         else:
             self.mosaicImageView.clear_pos_map()
 
-        if neg_map_image is not None:
+        if self.negMapCheckBox.isChecked() and neg_map_image is not None:
             self.neg_map_thresholds_widget.compute_thresholds(neg_map_image)
             rgba_neg_map_image = self.neg_map_thresholds_widget.compute_rgba(neg_map_image)
 

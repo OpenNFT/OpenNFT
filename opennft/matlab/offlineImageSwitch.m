@@ -19,7 +19,7 @@ function offlineImageSwitch
             outputVol = rtQA_matlab.snrData.snrVol;
         else
             outputVol = rtQA_matlab.cnrData.cnrVol;
-        end;
+        end
 
         fname = strrep(P.memMapFile, 'shared', 'RTQAVol');
         m_out = memmapfile(fname, 'Writable', true, 'Format',  {'double', prod(dimVol), 'rtQAVol'});
@@ -28,15 +28,15 @@ function offlineImageSwitch
         statMap2D = vol3Dimg2D(outputVol, slNrImg2DdimX, slNrImg2DdimY, img2DdimX, img2DdimY, dimVol);
         statMap2D = statMap2D-min(statMap2D(:));
         statMap2D = (statMap2D / max(statMap2D(:))) * 255;
-        fname = strrep(P.memMapFile, 'shared', 'map_2D');
-        m_out = memmapfile(fname, 'Writable', true, 'Format',  {'uint8', img2DdimX*img2DdimY, 'map_2D'});
-        m_out.Data.map_2D = uint8(statMap2D(:));    
+        m_out =  evalin('base', 'mmStatMap');
+        m_out.Data.statMap = uint8(statMap2D);
+        assignin('base', 'statMap2D', statMap2D); 
         
     else          
                        
-        fname = strrep(P.memMapFile, 'shared', 'map_2D');
-        m_out = memmapfile(fname, 'Writable', true, 'Format',  {'uint8', img2DdimX*img2DdimY, 'map_2D'});
-        m_out.Data.map_2D = uint8(mainLoopData.statMap2D(:));
+        m_out =  evalin('base', 'mmStatMap');
+        m_out.Data.statMap = uint8(mainLoopData.statMap2D_pos);
+        assignin('base', 'statMap2D', mainLoopData.statMap2D_pos);
         
     end
 

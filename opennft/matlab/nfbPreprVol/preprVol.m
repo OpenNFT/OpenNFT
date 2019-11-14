@@ -178,7 +178,7 @@ if indVolNorm > FIRST_SNR_VOLUME
             statMap2D_pos = statMap2D_pos-min(statMap2D_pos(:));
             statMap2D_pos = (statMap2D_pos / max(statMap2D_pos(:))) * 255;
             m = evalin('base', 'mmStatMap');
-            m.Data = statMap2D_pos;   
+            m.Data.statMap = uint8(statMap2D_pos);   
             assignin('base', 'statMap2D', statMap2D_pos);
         
         end

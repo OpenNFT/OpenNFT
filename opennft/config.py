@@ -60,17 +60,22 @@ ROI_PLOT_COLORS = [
     pg.mkColor(255, 0, 0, 255),
     pg.mkColor(0, 255, 0, 255)
 ]
-ROI_MEAN_COLORS = [
-    pg.mkColor(0, 125, 255, 255),
+STAT_PLOT_COLORS = [
+    pg.mkColor(0, 0, 0, 255),
+    pg.mkColor(255, 0, 0, 255),
+    pg.mkColor(0, 255, 0, 255)
+]
+ROI_BAS_COLORS = [
+    pg.mkColor(75, 75, 75, 255),
     pg.mkColor(255, 125, 0, 255),
     pg.mkColor(125, 255, 0, 255)
 ]
-ROI_VAR_COLORS = [
-    pg.mkColor(125, 0, 255, 255),
+ROI_COND_COLORS = [
+    pg.mkColor(125, 125, 125, 255),
     pg.mkColor(255, 0, 125, 255),
     pg.mkColor(0, 255, 125, 255)
 ]
-MUSTER_Y_LIMITS = (-1000, 1000)
+MUSTER_Y_LIMITS = (-32767, 32768)
 # transparency of design template overlay
 MUSTER_PLOT_ALPHA = 50
 MAX_ROI_NAME_LENGTH = 6

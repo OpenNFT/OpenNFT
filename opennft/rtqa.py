@@ -37,8 +37,7 @@ class RTQAWindow(QtWidgets.QWidget):
         self.snrPlot.addWidget(self.snrplot)
 
         p = self.snrplot.getPlotItem()
-        p.setTitle('Signal-Noise Ratio', size='')
-        p.setLabel('left', "Amplitude [a.u.]")
+        p.setLabel('left', "SNR [a.u.]")
         p.setMenuEnabled(enableMenu=False)
         p.setMouseEnabled(x=False, y=False)
         p.showGrid(x=True, y=True, alpha=1)
@@ -51,7 +50,7 @@ class RTQAWindow(QtWidgets.QWidget):
         self.cnrPlot.addWidget(self.cnrplot)
 
         p = self.cnrplot.getPlotItem()
-        p.setLabel('left', "Amplitude [a.u.]")
+        p.setLabel('left', "CNR [a.u.]")
         p.setMenuEnabled(enableMenu=False)
         p.setMouseEnabled(x=False, y=False)
         p.showGrid(x=True, y=True, alpha=1)
@@ -64,7 +63,7 @@ class RTQAWindow(QtWidgets.QWidget):
         self.meanPlot.addWidget(self.meanplot)
 
         p = self.meanplot.getPlotItem()
-        p.setLabel('left', "Amplitude [a.u.]")
+        p.setLabel('left', "Mean [a.u.]")
         p.setMenuEnabled(enableMenu=False)
         p.setMouseEnabled(x=False, y=False)
         p.showGrid(x=True, y=True, alpha=1)
@@ -73,12 +72,12 @@ class RTQAWindow(QtWidgets.QWidget):
         p.setXRange(1, xrange, padding=0.0)
 
         names = ['ROI_1 rMean', 'ROI_1 basMean', 'ROI_1 condMean']
-        color = [config.ROI_PLOT_COLORS[0], config.ROI_MEAN_COLORS[0], config.ROI_VAR_COLORS[0]]
+        color = [config.STAT_PLOT_COLORS[0], config.ROI_BAS_COLORS[0], config.ROI_COND_COLORS[0]]
         for i in range(sz-1):
             names.append('ROI_' + str(i + 2) + ' rMean')
             names.append('ROI_' + str(i + 2) + ' basMean')
             names.append('ROI_' + str(i + 2) + ' condMean')
-            color = color + [config.ROI_PLOT_COLORS[i + 1]] + [config.ROI_MEAN_COLORS[i + 1]] + [config.ROI_VAR_COLORS[i + 1]]
+            color = color + [config.STAT_PLOT_COLORS[i + 1]] + [config.ROI_BAS_COLORS[i + 1]] + [config.ROI_COND_COLORS[i + 1]]
         pens = []
         for i in range(sz*3):
             pens = pens + [pg.mkPen(color[i], width=1.2)]
@@ -89,7 +88,7 @@ class RTQAWindow(QtWidgets.QWidget):
         self.varPlot.addWidget(self.varplot)
 
         p = self.varplot.getPlotItem()
-        p.setLabel('left', "Amplitude [a.u.]")
+        p.setLabel('left', "Variance [a.u.]")
         p.setMenuEnabled(enableMenu=False)
         p.setMouseEnabled(x=False, y=False)
         p.showGrid(x=True, y=True, alpha=1)
@@ -104,12 +103,11 @@ class RTQAWindow(QtWidgets.QWidget):
             names.append('ROI_' + str(i + 2) + ' condVariance')
         self.makeRoiPlotLegend(self.labelVar, names, pens)
 
-        self.spikesStepsPlot = pg.PlotWidget(self)
-        self.spikesStepsPlot.setBackground((255, 255, 255))
-        self.spikesAndStepsPlot.addWidget(self.spikesStepsPlot)
+        self.spikes_plot = pg.PlotWidget(self)
+        self.spikes_plot.setBackground((255, 255, 255))
+        self.spikesPlot.addWidget(self.spikes_plot)
 
-        p = self.spikesStepsPlot.getPlotItem()
-        p.setTitle('Spikes and Steps', size='')
+        p = self.spikes_plot.getPlotItem()
         p.setLabel('left', "Amplitude [a.u.]")
         p.setMenuEnabled(enableMenu=False)
         p.setMouseEnabled(x=False, y=False)
@@ -180,6 +178,7 @@ class RTQAWindow(QtWidgets.QWidget):
 
         self.tsCheckBox.setChecked(True)
 
+        self.iteration = 1;
         self.rMean = np.zeros((sz, xrange))
         self.m2 = np.zeros((sz, 1))
         self.rVar = np.zeros((sz, xrange))
@@ -200,11 +199,31 @@ class RTQAWindow(QtWidgets.QWidget):
         state = self.comboBox.currentIndex()
 
         if state == 0:
+
+            names = ['SNR ']
+            pens = [config.PLOT_PEN_COLORS[6]]
+            sz = len(self.rSNR)
+            for i in range(sz):
+                names.append('ROI_' + str(i + 1) + ':  ' + '{0:.3f}'.format(float(self.rSNR[i][self.iteration])))
+                pens.append(pg.mkPen(color=config.ROI_PLOT_COLORS[i], width=1.2))
+
+            self.makeTextValueLabel(self.valuesLabel, names, pens)
+
             return
         if state == 1:
             return
         if state == 2:
             self.stackedWidgetOptions.setCurrentIndex(0);
+
+            names = ['СNR ']
+            pens = [config.PLOT_PEN_COLORS[6]]
+            sz = len(self.rCNR)
+            for i in range(sz):
+                names.append('ROI_' + str(i + 1) + ':  ' + '{0:.3f}'.format(float(self.rCNR[i][self.iteration])))
+                pens.append(pg.mkPen(color=config.ROI_PLOT_COLORS[i], width=1.2))
+
+            self.makeTextValueLabel(self.valuesLabel, names, pens)
+
         if state == 3:
             return
         if state == 4:
@@ -307,7 +326,7 @@ class RTQAWindow(QtWidgets.QWidget):
         data = np.append(self.rMean[:, 0:n], self.meanBas[:, 0:n], axis=0)
         data = np.append(data, self.meanCond[:, 0:n], axis=0)
         m = len(self.rSNR[:, 1])
-        color = config.ROI_PLOT_COLORS[0:m] + config.ROI_MEAN_COLORS[0:m] + config.ROI_VAR_COLORS[0:m]
+        color = config.STAT_PLOT_COLORS[0:m] + config.ROI_BAS_COLORS[0:m] + config.ROI_COND_COLORS[0:m]
         style = [QtCore.Qt.SolidLine, QtCore.Qt.DashLine, QtCore.Qt.DashLine]
         self.plot_rStatValues(init, plotitem, data, color, style)
 
@@ -349,7 +368,7 @@ class RTQAWindow(QtWidgets.QWidget):
                 items.remove(m)
 
             if data.any():
-                plotitem.setYRange(np.min(data[1,:]), np.max(data), padding=0.0)
+                plotitem.setYRange(np.min(data[np.nonzero(data)]), np.max(data), padding=0.0)
 
     def drawMusterPlot(self, plotitem):
         ylim = config.MUSTER_Y_LIMITS
@@ -379,7 +398,7 @@ class RTQAWindow(QtWidgets.QWidget):
                 )
         else:
             muster = [
-                plotitem.plot(x=[1, (self.P['NrOfVolumes'] - self.P['nrSkipVol'])],
+                plotitem.plot(x=[1, self._fd.xmax],
                               y=[-1000, 1000],
                               fillLevel=ylim[0],
                               pen=config.MUSTER_PEN_COLORS[3],
@@ -430,10 +449,12 @@ class RTQAWindow(QtWidgets.QWidget):
             names = ['SNR ']
             pens = [config.PLOT_PEN_COLORS[6]]
             for i in range(sz):
-                names.append('ROI_' + str(i + 1) + ' ' + '{0:.3f}'.format(float(snr[i])))
+                names.append('ROI_' + str(i + 1) + ': ' + '{0:.3f}'.format(float(snr[i])))
                 pens.append(pg.mkPen(color=config.ROI_PLOT_COLORS[i], width=1.2))
 
             self.makeTextValueLabel(self.valuesLabel, names, pens)
+
+        self.iteration = n;
 
     def calculate_cnr(self, data, indexVolume):
 
@@ -486,10 +507,11 @@ class RTQAWindow(QtWidgets.QWidget):
                 self.rCNR[i, indexVolume] = (self.meanCond[i, indexVolume] - self.meanBas[i, indexVolume]) / (np.sqrt(self.varCond[i, indexVolume] + self.varBas[i, indexVolume]))
 
             if self.comboBox.currentIndex() == 2:
+
                 names = ['СNR ']
                 pens = [config.PLOT_PEN_COLORS[6]]
                 for i in range(sz):
-                    names.append('ROI_' + str(i + 1) + ' ' + '{0:.3f}'.format(float(self.rCNR[i][indexVolume-1])))
+                    names.append('ROI_' + str(i + 1) + ': ' + '{0:.3f}'.format(float(self.rCNR[i][indexVolume-1])))
                     pens.append(pg.mkPen(color=config.ROI_PLOT_COLORS[i], width=1.2))
 
                 self.makeTextValueLabel(self.valuesLabel, names, pens)
@@ -537,7 +559,7 @@ class RTQAWindow(QtWidgets.QWidget):
 
         x = np.arange(0, l, dtype=np.float64)
 
-        plotitem = self.spikesStepsPlot.getPlotItem()
+        plotitem = self.spikes_plot.getPlotItem()
         plotitem.clear()
         plots = []
 
@@ -554,6 +576,7 @@ class RTQAWindow(QtWidgets.QWidget):
             p.setData(x=x, y=np.array(y))
 
         for i, c in zip(range(sz), config.ROI_PLOT_COLORS):
+
             if self.posSpikes[str(i)].any():
                 brush = pg.mkBrush(color=c)
                 p = plotitem.scatterPlot(symbol='o', size=20, brush=brush)
@@ -593,6 +616,18 @@ class RTQAWindow(QtWidgets.QWidget):
                 x1 = x1[np.where(mask == 1)[0]]
 
                 plots[-1].setData(x=x1, y=y, connect='pairs')
+
+        cnt = 0;
+        for i in range(sz):
+            cnt = cnt + np.count_nonzero(self.posSpikes[str(i)])
+        names = ['Positive spikes: ' + str(int(cnt))]
+
+        cnt = 0;
+        for i in range(sz):
+            cnt = cnt + np.count_nonzero(self.negSpikes[str(i)])
+        names.append('<br>Negative spikes: ' + str(int(cnt)))
+        pens = [pg.mkPen(color=config.STAT_PLOT_COLORS[0], width=1.2), pg.mkPen(color=config.STAT_PLOT_COLORS[0], width=1.2)]
+        self.makeTextValueLabel(self.spikesLabel, names, pens)
 
         items = plotitem.listDataItems()
 

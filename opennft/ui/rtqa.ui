@@ -40,10 +40,27 @@
         <number>0</number>
        </property>
        <item>
-        <layout class="QVBoxLayout" name="snrPlot">
+        <layout class="QVBoxLayout" name="upperSnrPlot">
          <property name="sizeConstraint">
           <enum>QLayout::SetNoConstraint</enum>
          </property>
+         <item>
+          <widget class="QLabel" name="label">
+           <property name="font">
+            <font>
+             <pointsize>10</pointsize>
+             <weight>75</weight>
+             <bold>true</bold>
+            </font>
+           </property>
+           <property name="text">
+            <string>Signal-to-Noise Ratio</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <layout class="QVBoxLayout" name="snrPlot"/>
+         </item>
         </layout>
        </item>
       </layout>
@@ -246,7 +263,25 @@
         <number>0</number>
        </property>
        <item>
-        <layout class="QVBoxLayout" name="spikesAndStepsPlot"/>
+        <layout class="QVBoxLayout" name="spikesAndStepsPlot">
+         <item>
+          <widget class="QLabel" name="label_2">
+           <property name="font">
+            <font>
+             <pointsize>10</pointsize>
+             <weight>75</weight>
+             <bold>true</bold>
+            </font>
+           </property>
+           <property name="text">
+            <string>Spikes</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <layout class="QVBoxLayout" name="spikesPlot"/>
+         </item>
+        </layout>
        </item>
       </layout>
      </widget>
@@ -459,7 +494,29 @@
          </item>
         </layout>
        </widget>
-       <widget class="QWidget" name="page_10"/>
+       <widget class="QWidget" name="page_10">
+        <widget class="QLabel" name="spikesLabel">
+         <property name="geometry">
+          <rect>
+           <x>10</x>
+           <y>10</y>
+           <width>141</width>
+           <height>51</height>
+          </rect>
+         </property>
+         <property name="font">
+          <font>
+           <pointsize>10</pointsize>
+          </font>
+         </property>
+         <property name="text">
+          <string/>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+         </property>
+        </widget>
+       </widget>
        <widget class="QWidget" name="page_11"/>
        <widget class="QWidget" name="page_12"/>
       </widget>

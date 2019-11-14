@@ -43,12 +43,10 @@ function [ snrData ] = snr_calc( iteration, vol, volSmoothed, snrData, isSmoothe
         variance = m2NonSmoothed / (n-1);
     end
 
-    if any(variance)
-        if isSmoothed
-            snrData.snrVol = meanSmoothed ./ (variance.^.5);
-        else
-            snrData.snrVol = meanNonSmoothed ./ (variance.^.5);
-        end        
+    if isSmoothed
+        snrData.snrVol = meanSmoothed ./ (variance.^.5);
+    else
+        snrData.snrVol = meanNonSmoothed ./ (variance.^.5);
     end
     
     snrData.meanSmoothed = meanSmoothed;
