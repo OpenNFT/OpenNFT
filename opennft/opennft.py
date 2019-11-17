@@ -1212,8 +1212,11 @@ class OpenNFT(QWidget):
             self.windowRTQA = rtqa.RTQAWindow(int(self.P['NrROIs']),xrange, indBas, indCond, self.musterInfo, parent=self)
             self.windowRTQA.volumeCheckBox.stateChanged.connect(self.onShowRtqaVol)
             self.windowRTQA.volumeCheckBox.stateChanged.connect(self.onChangeNegMapPolicy)
+            self.windowRTQA.volumeCheckBox.stateChanged.connect(self.onInteractWithMapImage)
+            self.windowRTQA.volumeCheckBox.toggled.connect(self.updateOrthViewAsync)
             self.windowRTQA.smoothedCheckBox.stateChanged.connect(self.onSmoothedChecked)
             self.windowRTQA.comboBox.currentIndexChanged.connect(self.onModeChanged)
+
             if self.P['isRestingState']:
                 self.windowRTQA.comboBox.model().item(2).setEnabled(False)
 
@@ -1253,7 +1256,7 @@ class OpenNFT(QWidget):
     # --------------------------------------------------------------------------
     def stop(self):
 
-        self.isStopped = True;
+        self.isStopped = True
 
         self.btnStop.setEnabled(False)
         self.btnStart.setEnabled(False)
@@ -1437,10 +1440,12 @@ class OpenNFT(QWidget):
 
         if self.eng:
             self.eng.assignin('base', 'imageViewMode', int(mode), nargout=0)
-        if self.engSPM:
-            self.updateOrthViewAsync(rtqa=self.windowRTQA.volumeCheckBox.isChecked())
+        self.updateOrthViewAsync(rtqa=self.windowRTQA.volumeCheckBox.isChecked())
 
     def updateOrthViewAsync(self, rtqa: bool = False):
+        if not self.engSPM:
+            return
+
         if self.imageViewMode == ImageViewMode.orthviewEPI:
             bgType = 'bgEPI'
         else:
