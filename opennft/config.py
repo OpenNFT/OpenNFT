@@ -24,7 +24,7 @@ PTB_MATLAB_NAME = 'MATLAB_NFB_PTB'
 SPM_MATLAB_NAME = 'MATLAB_NFB_SPM'
 MODEL_HELPER_MATLAB_NAME = 'MATLAB_NFB_MODEL_HELPER'
 
-MAIN_MATLAB_STARTUP_OPTIONS = '-desktop'
+MAIN_MATLAB_STARTUP_OPTIONS = '-nodesktop'
 PTB_MATLAB_STARTUP_OPTIONS = '-nodesktop'
 SPM_MATLAB_STARTUP_OPTIONS = '-nodesktop'
 MODEL_HELPER_MATLAB_STARTUP_OPTIONS = '-nodesktop'
@@ -50,7 +50,7 @@ USE_MATLAB_MODEL_HELPER = True
 DONOT_USE_QFILE_NATIVE_DIALOG = False
 
 # the length of the TimeVector
-#TIMEVECTOR_LENGTH = 8
+# TIMEVECTOR_LENGTH = 8
 
 # plotting initialization
 PLOT_GRID_ALPHA = 0.7
@@ -105,7 +105,7 @@ MC_PLOT_COLORS = [
 
 PROJ_ROI_COLORS = ['g', 'c', 'b', 'm', 'y']
 
-#debuging use only
+# debuging use only
 USE_SLEEP_IN_STOP = False
 HIDE_TEST_BTN = True
 
@@ -113,21 +113,19 @@ USE_RTQA = False
 FIRST_SNR_VOLUME = 2
 
 # FD defaults
-DEFAULT_FD_RADIUS = 50 # radius multiplying angular displacement in FD compution
-DEFAULT_FD_THRESHOLDS = [0.1, 0.2, 0.5] # FD thresholds to display by default
+DEFAULT_FD_RADIUS = 50  # radius multiplying angular displacement in FD compution
+DEFAULT_FD_THRESHOLDS = [0.1, 0.2, 0.5]  # FD thresholds to display by default
 
 # plot display defaults
-PLOT_BACKGROUND_COLOR = (255, 255, 255);
-PLOT_PEN_COLORS = [ # colors used to plot motion correction metrics
+PLOT_BACKGROUND_COLOR = (255, 255, 255)
+
+PLOT_PEN_COLORS = [
+    # colors used to plot motion correction metrics
     pg.mkPen(pg.mkColor(0, 46, 255), width=1.2),
     pg.mkPen(pg.mkColor(255, 123, 0), width=1.2),
     pg.mkPen(pg.mkColor(255, 56, 109), width=1.2),
     pg.mkPen(pg.mkColor(127, 0, 255), width=1.2),
     pg.mkPen(pg.mkColor(0, 147, 54), width=1.2),
     pg.mkPen(pg.mkColor(145, 130, 43), width=1.2),
-    pg.mkPen(pg.mkColor(0, 0, 0), width=1.2)]
-
-
-
-
-
+    pg.mkPen(pg.mkColor(0, 0, 0), width=1.2)
+]
