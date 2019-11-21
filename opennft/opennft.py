@@ -856,8 +856,7 @@ class OpenNFT(QWidget):
                     self.windowRTQA.plot_mcmd(dataMC[n, :])
 
             with utils.timeit('Display mosaic image:'):
-                if not self.imageViewMode:
-                    self.displayMosaicImage()
+                self.displayMosaicImage()
 
             with utils.timeit('  Drawings:'):
                 self.drawRoiPlots(init)
@@ -1440,7 +1439,9 @@ class OpenNFT(QWidget):
 
         if self.eng:
             self.eng.assignin('base', 'imageViewMode', int(mode), nargout=0)
+
         self.updateOrthViewAsync(rtqa=self.windowRTQA.volumeCheckBox.isChecked())
+        self.onInteractWithMapImage()
 
     def updateOrthViewAsync(self, rtqa: bool = False):
         if not self.engSPM:
@@ -1467,21 +1468,7 @@ class OpenNFT(QWidget):
             self.pos_map_thresholds_widget.auto_thresholds = False
 
         if self.imageViewMode == ImageViewMode.mosaic:
-            pos_map_image = self.mosaic_pos_map_image_reader.image
-
-            if pos_map_image is not None:
-                rgba_pos_map_image = self.pos_map_thresholds_widget.compute_rgba(pos_map_image)
-
-                if rgba_pos_map_image is not None:
-                    self.mosaicImageView.set_pos_map_image(rgba_pos_map_image)
-
-            neg_map_image = self.mosaic_neg_map_image_reader.image
-
-            if neg_map_image is not None:
-                rgba_neg_map_image = self.neg_map_thresholds_widget.compute_rgba(neg_map_image)
-
-                if rgba_neg_map_image is not None:
-                    self.mosaicImageView.set_neg_map_image(rgba_neg_map_image)
+            self.displayMosaicImage()
 
         for proj in projview.ProjectionType:
             pos_map_image = self.proj_pos_map_images_reader.proj_image(proj)
