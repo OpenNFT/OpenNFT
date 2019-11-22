@@ -35,8 +35,7 @@ if mainLoopData.statMapCreated
     img2DdimY = mainLoopData.img2DdimY;
     dimVol = mainLoopData.dimVol;
     tn = mainLoopData.tn;
-    indVolNorm = mainLoopData.indVolNorm;
-    indVolNorm = double(indVolNorm);
+    indVolNorm = length(mainLoopData.idxActVoxIGLM.pos);
     idxActVoxIGLM.pos = mainLoopData.idxActVoxIGLM.pos{indVolNorm};
     statMap3D_pos = mainLoopData.statMap3D_pos;
     statMap3D_neg = mainLoopData.statMap3D_neg;

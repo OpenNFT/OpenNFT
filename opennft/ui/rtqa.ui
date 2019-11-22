@@ -345,11 +345,6 @@
          <string>Spikes &amp; Steps</string>
         </property>
        </item>
-       <item>
-        <property name="text">
-         <string>Trend</string>
-        </property>
-       </item>
       </widget>
      </item>
      <item>
