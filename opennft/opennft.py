@@ -621,21 +621,23 @@ class OpenNFT(QWidget):
 
             self.displayData = self.eng.initDispalyData(self.iteration)
 
-            # t6, display instruction prior to data acquisition
+            # t6, display instruction prior to data acquisition for current iteration
             self.recorder.recordEvent(erd.Times.t6, self.iteration)
 
-            if self.P['Type'] == 'PSC':
-                if config.USE_PTB:
-                    logger.info('instruction + {}', self.iteration)
-                    self.displayScreen()
+            if self.P['Prot'] == 'Inter' or self.P['Prot'] == 'InterBlock':
 
-                if self.iteration > self.P['nrSkipVol'] and config.UDP_SEND_CONDITION:
-                    self.udpSender.send_data(
-                        self.P['CondNames'][int(self.eng.evalin('base', 'mainLoopData.condition')) - 1])
-
-                elif self.P['Type'] == 'DCM':
-                    if not self.isCalculateDcm and config.USE_PTB:
+                if self.P['Type'] == 'PSC':
+                    if config.USE_PTB:
+                        logger.info('instruction + {}', self.iteration)
                         self.displayScreen()
+
+                    if self.iteration > self.P['nrSkipVol'] and config.UDP_SEND_CONDITION:
+                        self.udpSender.send_data(
+                            self.P['CondNames'][int(self.eng.evalin('base', 'mainLoopData.condition')) - 1])
+
+                    elif self.P['Type'] == 'DCM':
+                        if not self.isCalculateDcm and config.USE_PTB:
+                            self.displayScreen()
             else:
 
                 if self.P['Type'] == 'SVM':
@@ -1912,9 +1914,9 @@ class OpenNFT(QWidget):
         else:
             # FIXME: tmpCond4 (?)
             blockLength = (
-                    tmpCond1[0][1] - tmpCond1[0][0] +
-                    tmpCond2[0][1] - tmpCond2[0][0] +
-                    tmpCond3[0][1] - tmpCond3[0][0] + 3
+                tmpCond1[0][1] - tmpCond1[0][0] +
+                tmpCond2[0][1] - tmpCond2[0][0] +
+                tmpCond3[0][1] - tmpCond3[0][0] + 3
             )
 
         # ----------------------------------------------------------------------

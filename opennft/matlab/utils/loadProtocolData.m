@@ -133,6 +133,11 @@ if strcmp(P.Prot, 'Cont') && isSVM
     end
 end
 
+% -- remove dcmdef field -- %
+if isDCM 
+    prt = rmfield(prt, 'dcmdef');
+end
+    
 P.Protocol = prt;
 assignin('base', 'P', P);
 end
