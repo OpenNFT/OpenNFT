@@ -720,14 +720,14 @@ class OpenNFT(QWidget):
             self.recorder.recordEvent(erd.Times.t3, self.iteration)
 
             if self.windowRTQA.volumeCheckBox.isChecked() and config.FIRST_SNR_VOLUME < self.iteration:
-                self.updateOrthViewAsync(rtqa=True)
+                self.updateOrthViewAsync()
 
             if (self.eng.evalin('base', 'mainLoopData.statMapCreated') == 1
                     and not self.windowRTQA.volumeCheckBox.isChecked()):
                 nrVoxInVol = self.eng.evalin('base', 'mainLoopData.nrVoxInVol')
                 memMapFile = self.eng.evalin('base', 'P.memMapFile')
 
-                self.updateOrthViewAsync(rtqa=False)
+                self.updateOrthViewAsync()
 
             # spatio-temporal data processing
             with utils.timeit('  preprocess signal:'):
@@ -1191,9 +1191,6 @@ class OpenNFT(QWidget):
             self.btnStart.setEnabled(True)
             self.btnRTQA.setEnabled(True)
 
-            if self.windowRTQA:
-                self.windowRTQA.deleteLater()
-
             if self.P['isRestingState']:
                 xrange = (self.P['NrOfVolumes'] - self.P['nrSkipVol'])
                 indBas = 0
@@ -1207,6 +1204,9 @@ class OpenNFT(QWidget):
 
             self.cbImageViewMode.setCurrentIndex(0)
             self.cbImageViewMode.setEnabled(False)
+
+            if self.windowRTQA:
+                self.windowRTQA.deleteLater()
 
             self.windowRTQA = rtqa.RTQAWindow(int(self.P['NrROIs']),xrange, indBas, indCond, self.musterInfo, parent=self)
             self.windowRTQA.volumeCheckBox.stateChanged.connect(self.onShowRtqaVol)
@@ -1322,6 +1322,11 @@ class OpenNFT(QWidget):
 
     def onModeChanged(self):
         self.eng.assignin('base', 'rtQAMode', self.windowRTQA.comboBox.currentIndex(), nargout=0)
+
+        self.onShowRtqaVol()
+        self.updateOrthViewAsync()
+        self.onInteractWithMapImage()
+
         if self.isStopped:
             self.eng.offlineImageSwitch(nargout=0)
 
@@ -1440,10 +1445,10 @@ class OpenNFT(QWidget):
         if self.eng:
             self.eng.assignin('base', 'imageViewMode', int(mode), nargout=0)
 
-        self.updateOrthViewAsync(rtqa=self.windowRTQA.volumeCheckBox.isChecked())
+        self.updateOrthViewAsync()
         self.onInteractWithMapImage()
 
-    def updateOrthViewAsync(self, rtqa: bool = False):
+    def updateOrthViewAsync(self):
         if not self.engSPM:
             return
 
@@ -1451,6 +1456,8 @@ class OpenNFT(QWidget):
             bgType = 'bgEPI'
         else:
             bgType = 'bgAnat'
+
+        rtqa = self.windowRTQA.volumeCheckBox.isChecked() if self.windowRTQA else False
 
         self.orthViewUpdateFuture = self.engSPM.helperUpdateOrthView(
             self.currentCursorPos, self.currentProjection.value, bgType,
@@ -1461,7 +1468,7 @@ class OpenNFT(QWidget):
         self.currentProjection = proj
 
         logger.debug('New cursor coords {} for proj "{}" have been received', pos, proj.name)
-        self.updateOrthViewAsync(rtqa=self.windowRTQA.volumeCheckBox.isChecked())
+        self.updateOrthViewAsync()
 
     def onInteractWithMapImage(self):
         if self.sender() is self.pos_map_thresholds_widget:
