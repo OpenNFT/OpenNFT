@@ -389,7 +389,7 @@ class RTQAWindow(QtWidgets.QWidget):
                               brush=config.MUSTER_BRUSH_COLORS[1]),
             ]
 
-            if self.musterInfo['xCond3'][0] == -1:
+            if ("xCond3" in self.musterInfo) and (self.musterInfo['xCond3'][0] != -1):
                 muster.append(
                     plotitem.plot(x=self.musterInfo['xCond3'],
                                   y=self.musterInfo['yCond3'],

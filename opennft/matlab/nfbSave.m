@@ -67,12 +67,16 @@ if mainLoopData.statMapCreated
     mainLoopData.statMap2D_pos = statMap2D_pos;
     mainLoopData.statMap2D_neg = statMap2D_neg;
 
-    mainLoopData.statMap2D = statMap2D_pos;
-    mainLoopData.statMap3D = statMap3D_pos;
-
     m = evalin('base', 'mmStatVol');
-    m.Data.posStatVol = statMap3D_pos;
+    m.Data.posStatVol = statMap3D_pos;   
     assignin('base', 'mainLoopData', mainLoopData);
+    
+    m_out =  evalin('base', 'mmStatMap');
+    m_out.Data.statMap = uint8(statMap2D_pos);
+    
+    m_out =  evalin('base', 'mmStatMap_neg');
+    m_out.Data.statMap_neg = uint8(statMap2D_neg);
+    assignin('base', 'statMap_neg', statMap2D_neg);
     
     n = mainLoopData.indVolNorm;
     var = rtQA_matlab.snrData.m2Smoothed ./ double(n-1);

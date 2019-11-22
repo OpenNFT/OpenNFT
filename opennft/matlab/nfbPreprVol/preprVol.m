@@ -179,7 +179,7 @@ if indVolNorm > FIRST_SNR_VOLUME
             statMap2D_pos = (statMap2D_pos / max(statMap2D_pos(:))) * 255;
             m = evalin('base', 'mmStatMap');
             m.Data.statMap = uint8(statMap2D_pos);   
-            assignin('base', 'statMap2D', statMap2D_pos);
+            assignin('base', 'statMap', statMap2D_pos);
         
         end
            
@@ -434,7 +434,7 @@ if ~isempty(idxActVoxIGLM.pos) && max(tn.pos) > 0 % handle empty activation map
         
         m_out =  evalin('base', 'mmStatMap');
         m_out.Data.statMap = uint8(statMap2D_pos);
-        assignin('base', 'statMap2D', statMap2D_pos);
+        assignin('base', 'statMap', statMap2D_pos);
         
     end
     
@@ -460,7 +460,7 @@ if ~isempty(idxActVoxIGLM.neg) && max(tn.neg) > 0
         
         m_out =  evalin('base', 'mmStatMap_neg');
         m_out.Data.statMap_neg = uint8(statMap2D_neg);
-        assignin('base', 'statMap2D_neg', statMap2D_neg);
+        assignin('base', 'statMap_neg', statMap2D_neg);
         
     end
     

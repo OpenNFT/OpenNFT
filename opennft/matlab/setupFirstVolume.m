@@ -80,6 +80,16 @@ initMemmap(P.memMapFile, 'statMap', uint8(zeros(img2DdimX*img2DdimY, 1)), 'uint8
 initMemmap(P.memMapFile, 'statMap_neg', uint8(zeros(img2DdimX*img2DdimY, 1)), 'uint8', ...
     'mmStatMap_neg', {'uint8', [img2DdimX, img2DdimY], 'statMap_neg' });
 
+map_template = zeros(img2DdimX,img2DdimY);
+m_out =  evalin('base', 'mmStatMap');
+m_out.Data.statMap = uint8(map_template);
+assignin('base', 'statMap', map_template);
+
+m_out =  evalin('base', 'mmStatMap_neg');
+m_out.Data.statMap_neg = uint8(map_template);
+assignin('base', 'statMap_neg', map_template);
+
+
 %% transfer background mosaic to Python
 imgVolTempl = mainLoopData.imgVolTempl;
 imgViewTempl = vol3Dimg2D(imgVolTempl, slNrImg2DdimX, slNrImg2DdimY, ...

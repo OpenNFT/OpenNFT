@@ -38,6 +38,10 @@ function offlineImageSwitch
         m_out.Data.statMap = uint8(mainLoopData.statMap2D_pos);
         assignin('base', 'statMap2D', mainLoopData.statMap2D_pos);
         
+        m_out =  evalin('base', 'mmStatMap_neg');
+        m_out.Data.statMap_neg = uint8(mainLoopData.statMap2D_neg);
+        assignin('base', 'statMap2D_neg', mainLoopData.statMap2D_neg);
+        
     end
 
 

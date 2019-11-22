@@ -229,8 +229,8 @@ if ~P.isRestingState
     if isPSC && strcmp(P.Prot, 'Inter') && ~fIMAPH
         tmpSpmDesign = SPM.xX.X(1:P.NrOfVolumes-P.nrSkipVol, 2);
         % this contrast does not count constant term
-        mainLoopData.tContr.pos =  [-1 1]';
-        mainLoopData.tContr.neg =  [1 -1]';
+        mainLoopData.tContr.pos =  [-1 1 -1]';
+        mainLoopData.tContr.neg =  [1 -1 1]';
     end
 
     % PSC (Phillips)

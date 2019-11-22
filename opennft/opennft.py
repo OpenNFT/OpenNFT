@@ -158,8 +158,8 @@ class OpenNFT(QWidget):
         self.layoutOrthView.addWidget(self.orthView)
 
         self.mosaic_background_image_reader = mmapimage.MosaicImageReader(image_name='imgViewTempl')
-        self.mosaic_pos_map_image_reader = mmapimage.MosaicImageReader(image_name='statMap2D')
-        self.mosaic_neg_map_image_reader = mmapimage.MosaicImageReader(image_name='statMap2D')
+        self.mosaic_pos_map_image_reader = mmapimage.MosaicImageReader(image_name='statMap')
+        self.mosaic_neg_map_image_reader = mmapimage.MosaicImageReader(image_name='statMap_neg')
 
         self.proj_background_images_reader = mmapimage.ProjectionImagesReader()
         self.proj_pos_map_images_reader = mmapimage.ProjectionImagesReader()
