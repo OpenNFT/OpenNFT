@@ -645,241 +645,241 @@ class OpenNFT(QWidget):
                         logger.info('Sending by UDP - instrValue = ')  # + str(self.displayData['instrValue'])
                         # self.udpSender.send_data(self.displayData['instrValue'])
 
-            try:
-                fname = self.files_queue.get_nowait()
-            except queue.Empty:
-                if (self.previousIterStartTime > 0) and (self.preiteration < self.iteration):
-                    if (time.time() - self.previousIterStartTime) > (self.P['TR'] / 1000):
-                        logger.info('Scanner is too slow...')
-                self.isMainLoopEntered = False
-                self.preiteration = self.iteration
-                return
-
-            if not self.cbOfflineMode.isChecked() and self.files_queue.qsize() > 0:
-                logger.info("Toolbox is too slow, on file {}", fname)
-                logger.info("{} files in queue", self.files_queue.qsize())
-
+        try:
+            fname = self.files_queue.get_nowait()
+        except queue.Empty:
+            if (self.previousIterStartTime > 0) and (self.preiteration < self.iteration):
+                if (time.time() - self.previousIterStartTime) > (self.P['TR'] / 1000):
+                    logger.info('Scanner is too slow...')
+            self.isMainLoopEntered = False
             self.preiteration = self.iteration
+            return
 
-            path = os.path.join(self.P['WatchFolder'], fname)
-            # if False: # this unfortunately doesn't work
-            #    try:
-            #        f = open(path, 'a')
-            #        f.close()
-            #    except IOError as e:
-            #        logger.info('Acquisition in progress - "{}"', fname)
-            #        self.files_queue.put_nowait(fname)
-            #        self.isMainLoopEntered = False
-            #        return
+        if not self.cbOfflineMode.isChecked() and self.files_queue.qsize() > 0:
+            logger.info("Toolbox is too slow, on file {}", fname)
+            logger.info("{} files in queue", self.files_queue.qsize())
 
-            # data acquisition
-            if not self.cbOfflineMode.isChecked():
-                if not self.checkFileIsReady(path, fname):
-                    self.isMainLoopEntered = False
-                    return
+        self.preiteration = self.iteration
 
-            # t2
-            self.recorder.recordEvent(erd.Times.t2, self.iteration)
+        path = os.path.join(self.P['WatchFolder'], fname)
+        # if False: # this unfortunately doesn't work
+        #    try:
+        #        f = open(path, 'a')
+        #        f.close()
+        #    except IOError as e:
+        #        logger.info('Acquisition in progress - "{}"', fname)
+        #        self.files_queue.put_nowait(fname)
+        #        self.isMainLoopEntered = False
+        #        return
 
-            if not self.reachedFirstFile:
-                if not self.P['FirstFileName'] in fname:
-                    logger.info('Volume skiped, waiting for first file')
-                    self.isMainLoopEntered = False
-                    return
-                else:
-                    logger.info('First file was reached')
-                    self.reachedFirstFile = True
-
-            if self.iteration > self.P['NrOfVolumes']:
-                logger.info('Volumes limit reached')
-                self.stop()
+        # data acquisition
+        if not self.cbOfflineMode.isChecked():
+            if not self.checkFileIsReady(path, fname):
                 self.isMainLoopEntered = False
                 return
 
-            logger.info('Call iteration for file "{}"', os.path.basename(fname))
+        # t2
+        self.recorder.recordEvent(erd.Times.t2, self.iteration)
 
-            # Start elapsed time
-            t = time.time()
+        if not self.reachedFirstFile:
+            if not self.P['FirstFileName'] in fname:
+                logger.info('Volume skiped, waiting for first file')
+                self.isMainLoopEntered = False
+                return
+            else:
+                logger.info('First file was reached')
+                self.reachedFirstFile = True
 
-            self.previousIterStartTime = t
+        if self.iteration > self.P['NrOfVolumes']:
+            logger.info('Volumes limit reached')
+            self.stop()
+            self.isMainLoopEntered = False
+            return
 
-            if self.iteration == 1:
-                with utils.timeit('  setup after first volume:'):
-                    self.eng.setupFirstVolume(fname, nargout=0)
-                    self.engSPM.assignin('base', 'matTemplMotCorr',
-                                         self.eng.evalin('base', 'mainLoopData.matTemplMotCorr'),
-                                         nargout=0)
-                    self.engSPM.assignin('base', 'dimTemplMotCorr',
-                                         self.eng.evalin('base', 'mainLoopData.dimTemplMotCorr'),
-                                         nargout=0)
+        logger.info('Call iteration for file "{}"', os.path.basename(fname))
 
-            # Main logic
-            # data preprocessing
-            with utils.timeit('  preprocess fMRI Volume:'):
-                self.eng.preprVol(fname, self.iteration, nargout=0)
+        # Start elapsed time
+        t = time.time()
 
-            # t3
-            self.recorder.recordEvent(erd.Times.t3, self.iteration)
+        self.previousIterStartTime = t
 
-            if self.windowRTQA.volumeCheckBox.isChecked() and config.FIRST_SNR_VOLUME < self.iteration:
-                self.updateOrthViewAsync()
+        if self.iteration == 1:
+            with utils.timeit('  setup after first volume:'):
+                self.eng.setupFirstVolume(fname, nargout=0)
+                self.engSPM.assignin('base', 'matTemplMotCorr',
+                                     self.eng.evalin('base', 'mainLoopData.matTemplMotCorr'),
+                                     nargout=0)
+                self.engSPM.assignin('base', 'dimTemplMotCorr',
+                                     self.eng.evalin('base', 'mainLoopData.dimTemplMotCorr'),
+                                     nargout=0)
 
-            if (self.eng.evalin('base', 'mainLoopData.statMapCreated') == 1
-                    and not self.windowRTQA.volumeCheckBox.isChecked()):
-                nrVoxInVol = self.eng.evalin('base', 'mainLoopData.nrVoxInVol')
-                memMapFile = self.eng.evalin('base', 'P.memMapFile')
+        # Main logic
+        # data preprocessing
+        with utils.timeit('  preprocess fMRI Volume:'):
+            self.eng.preprVol(fname, self.iteration, nargout=0)
 
-                self.updateOrthViewAsync()
+        # t3
+        self.recorder.recordEvent(erd.Times.t3, self.iteration)
 
-            # spatio-temporal data processing
-            with utils.timeit('  preprocess signal:'):
-                self.outputSamples = self.eng.preprSig(self.iteration)
+        if self.windowRTQA.volumeCheckBox.isChecked() and config.FIRST_SNR_VOLUME < self.iteration:
+            self.updateOrthViewAsync()
 
-            # t4
-            self.recorder.recordEvent(erd.Times.t4, self.iteration)
+        if (self.eng.evalin('base', 'mainLoopData.statMapCreated') == 1
+                and not self.windowRTQA.volumeCheckBox.isChecked()):
+            nrVoxInVol = self.eng.evalin('base', 'mainLoopData.nrVoxInVol')
+            memMapFile = self.eng.evalin('base', 'P.memMapFile')
 
-            if self.P['Type'] == 'DCM':
+            self.updateOrthViewAsync()
+
+        # spatio-temporal data processing
+        with utils.timeit('  preprocess signal:'):
+            self.outputSamples = self.eng.preprSig(self.iteration)
+
+        # t4
+        self.recorder.recordEvent(erd.Times.t4, self.iteration)
+
+        if self.P['Type'] == 'DCM':
+            if self.isCalculateDcm:
+                # here calc already in progress
+                dcmBlocks = np.array(self.P['endDCMblock'][0])
+                lastBlockIteration = self.iteration - self.P['nrBlankScans'] - self.P['nrSkipVol']
+                lastBlankScan = len(np.where(dcmBlocks == lastBlockIteration)[0]) > 0
+                if lastBlankScan:
+                    logger.info('get lastBlankScan...')
+                    logger.info('dcm blocks {}', dcmBlocks)
+
+                if (self.tagFuture.done() and self.oppFuture.done()) or lastBlankScan:
+                    # t12 last DCM model computation is done
+                    self.recorder.recordEvent(erd.Times.t12, self.iteration)
+                    dcmTagLE = self.tagFuture.result()
+                    dcmOppLE = self.oppFuture.result()
+                    logger.info('DCM calculated')
+
+                    # feedback estimation
+                    self.displayData = self.eng.nfbCalc(self.iteration, self.displayData, dcmTagLE, dcmOppLE, True,
+                                                        nargout=1)
+
+                    # t5
+                    self.recorder.recordEvent(erd.Times.t5, self.iteration)
+                    self.isCalculateDcm = False
+
+            else:
+                self.isCalculateDcm = self.eng.dcmBegin(self.iteration, nargout=1)
+
                 if self.isCalculateDcm:
-                    # here calc already in progress
-                    dcmBlocks = np.array(self.P['endDCMblock'][0])
-                    lastBlockIteration = self.iteration - self.P['nrBlankScans'] - self.P['nrSkipVol']
-                    lastBlankScan = len(np.where(dcmBlocks == lastBlockIteration)[0]) > 0
-                    if lastBlankScan:
-                        logger.info('get lastBlankScan...')
-                        logger.info('dcm blocks {}', dcmBlocks)
+                    # display blank screen in ptb helper before calculate DCM
+                    if config.USE_PTB:
+                        self.displayData['displayBlankScreen'] = 1
+                        self.displayScreen()
+                        QApplication.processEvents()
+                        self.endDisplayEvent.wait()
+                        self.endDisplayEvent.clear()
 
-                    if (self.tagFuture.done() and self.oppFuture.done()) or lastBlankScan:
-                        # t12 last DCM model computation is done
-                        self.recorder.recordEvent(erd.Times.t12, self.iteration)
-                        dcmTagLE = self.tagFuture.result()
-                        dcmOppLE = self.oppFuture.result()
-                        logger.info('DCM calculated')
+                    # Parallel DCM computing on two matlab engines
+                    # t11 first DCM model computation started
+                    self.recorder.recordEvent(erd.Times.t11, self.iteration)
+                    self.tagFuture = self.mlPtbDcmHelper.engine.dcmCalc(
+                        'Tag', nargout=1, async=True)
 
-                        # feedback estimation
-                        self.displayData = self.eng.nfbCalc(self.iteration, self.displayData, dcmTagLE, dcmOppLE, True,
-                                                            nargout=1)
-
-                        # t5
-                        self.recorder.recordEvent(erd.Times.t5, self.iteration)
-                        self.isCalculateDcm = False
+                    if config.USE_MATLAB_MODEL_HELPER:
+                        self.oppFuture = self.mlModelHelper.engine.dcmCalc(
+                            'Opp', nargout=1, async=True)
+                    else:
+                        self.oppFuture = self.mlPtbDcmHelper.engine.dcmCalc(
+                            'Opp', nargout=1, async=True)
 
                 else:
-                    self.isCalculateDcm = self.eng.dcmBegin(self.iteration, nargout=1)
+                    dcmTagLE = []
+                    dcmOppLE = []
 
-                    if self.isCalculateDcm:
-                        # display blank screen in ptb helper before calculate DCM
-                        if config.USE_PTB:
-                            self.displayData['displayBlankScreen'] = 1
-                            self.displayScreen()
-                            QApplication.processEvents()
-                            self.endDisplayEvent.wait()
-                            self.endDisplayEvent.clear()
+        elif self.P['Type'] == 'SVM':
+            # feedback estimation
+            self.displayData = self.eng.nfbCalc(self.iteration, self.displayData, nargout=1)
 
-                        # Parallel DCM computing on two matlab engines
-                        # t11 first DCM model computation started
-                        self.recorder.recordEvent(erd.Times.t11, self.iteration)
-                        self.tagFuture = self.mlPtbDcmHelper.engine.dcmCalc(
-                            'Tag', nargout=1, async=True)
+            # t5
+            self.recorder.recordEvent(erd.Times.t5, self.iteration)
+            if self.displayData and config.USE_UDP_FEEDBACK:
+                logger.info('Sending by UDP - dispValue = {}', self.displayData['dispValue'])
+                self.udpSender.send_data(self.displayData['dispValue'])
 
-                        if config.USE_MATLAB_MODEL_HELPER:
-                            self.oppFuture = self.mlModelHelper.engine.dcmCalc(
-                                'Opp', nargout=1, async=True)
-                        else:
-                            self.oppFuture = self.mlPtbDcmHelper.engine.dcmCalc(
-                                'Opp', nargout=1, async=True)
+        elif self.P['Type'] == 'PSC':
+            self.displayData = self.eng.nfbCalc(self.iteration, self.displayData, nargout=1)
 
-                    else:
-                        dcmTagLE = []
-                        dcmOppLE = []
+            # t5
+            self.recorder.recordEvent(erd.Times.t5, self.iteration)
+            if self.displayData and config.USE_UDP_FEEDBACK:  # for UDP, configure here if required
+                logger.info('Sending by UDP - dispValue = {}', self.displayData['dispValue'])
+                self.udpSender.send_data(self.displayData['dispValue'])
 
-            elif self.P['Type'] == 'SVM':
-                # feedback estimation
-                self.displayData = self.eng.nfbCalc(self.iteration, self.displayData, nargout=1)
-
-                # t5
-                self.recorder.recordEvent(erd.Times.t5, self.iteration)
-                if self.displayData and config.USE_UDP_FEEDBACK:
-                    logger.info('Sending by UDP - dispValue = {}', self.displayData['dispValue'])
-                    self.udpSender.send_data(self.displayData['dispValue'])
-
-            elif self.P['Type'] == 'PSC':
-                self.displayData = self.eng.nfbCalc(self.iteration, self.displayData, nargout=1)
-
-                # t5
-                self.recorder.recordEvent(erd.Times.t5, self.iteration)
-                if self.displayData and config.USE_UDP_FEEDBACK:  # for UDP, configure here if required
-                    logger.info('Sending by UDP - dispValue = {}', self.displayData['dispValue'])
-                    self.udpSender.send_data(self.displayData['dispValue'])
-
-                if self.P['Prot'] != 'Inter':
-                    if config.USE_PTB:
-                        if self.displayData:
-                            if self.P['Prot'] == 'ContTask':
-                                #                       Here task condition is evaluated: if condition is 3 (task) and the current
-                                #                       itteration corresponds with the onset of a task block (kept in TaskFirstVol)
-                                #                       taskseq is set to one. While set to 1, Display  in ptbScreen.py
-                                #                       will use the taskse flag to call the ptbTask function.
-                                # cond = self.eng.evalin('base', 'mainLoopData.displayData.condition')
-                                cond = self.displayData['condition']
-                                if cond == 3 and int(self.P['TaskFirstVol'][0][self.iteration - 1]) == 1:
-                                    self.displayData['taskseq'] = 1
-                                    self.displayScreen()
-                                    QApplication.processEvents()
-                                    self.endDisplayEvent.wait()
-                                    self.endDisplayEvent.clear()
-                                else:
-                                    self.displayData['taskseq'] = 0
-                                    self.displayData['displayStage'] = 'feedback'
-                                    self.displayScreen()
+            if self.P['Prot'] != 'Inter':
+                if config.USE_PTB:
+                    if self.displayData:
+                        if self.P['Prot'] == 'ContTask':
+                            #                       Here task condition is evaluated: if condition is 3 (task) and the current
+                            #                       itteration corresponds with the onset of a task block (kept in TaskFirstVol)
+                            #                       taskseq is set to one. While set to 1, Display  in ptbScreen.py
+                            #                       will use the taskse flag to call the ptbTask function.
+                            # cond = self.eng.evalin('base', 'mainLoopData.displayData.condition')
+                            cond = self.displayData['condition']
+                            if cond == 3 and int(self.P['TaskFirstVol'][0][self.iteration - 1]) == 1:
+                                self.displayData['taskseq'] = 1
+                                self.displayScreen()
+                                QApplication.processEvents()
+                                self.endDisplayEvent.wait()
+                                self.endDisplayEvent.clear()
                             else:
                                 self.displayData['taskseq'] = 0
                                 self.displayData['displayStage'] = 'feedback'
                                 self.displayScreen()
+                        else:
+                            self.displayData['taskseq'] = 0
+                            self.displayData['displayStage'] = 'feedback'
+                            self.displayScreen()
 
-            # main logic end
+        # main logic end
 
-            init = self.iteration == (self.P['nrSkipVol'] + 1)
+        init = self.iteration == (self.P['nrSkipVol'] + 1)
 
-            # rtQA calculation for time-series
-            if bool(self.outputSamples):
-                dataRealRaw = np.array(self.outputSamples['rawTimeSeries'], ndmin=2)
-                dataMC = np.array(self.outputSamples['motCorrParam'], ndmin=2)
-                n = len(dataRealRaw[0, :])-1
-                data = dataRealRaw[:, n]
-                self.windowRTQA.calculate_snr(data, n)
-                if not self.P['isRestingState']:
-                    self.windowRTQA.calculate_cnr(data, n)
-                self.windowRTQA.plot_rtQA(init, n)
-                if n > 0:
-                    data = np.array(self.eng.evalin('base','mainLoopData.glmProcTimeSeries(:,end)'), ndmin=2)
-                    posSpike = np.array(self.eng.evalin('base','rtQA_matlab.kalmanSpikesPos(:,mainLoopData.indVolNorm)'), ndmin=2)
-                    negSpike = np.array(self.eng.evalin('base','rtQA_matlab.kalmanSpikesNeg(:,mainLoopData.indVolNorm)'), ndmin=2)
-                    self.windowRTQA.plot_stepsAndSpikes(data, posSpike, negSpike)
-                    self.windowRTQA.plot_mcmd(dataMC[n, :])
+        # rtQA calculation for time-series
+        if bool(self.outputSamples):
+            dataRealRaw = np.array(self.outputSamples['rawTimeSeries'], ndmin=2)
+            dataMC = np.array(self.outputSamples['motCorrParam'], ndmin=2)
+            n = len(dataRealRaw[0, :])-1
+            data = dataRealRaw[:, n]
+            self.windowRTQA.calculate_snr(data, n)
+            if not self.P['isRestingState']:
+                self.windowRTQA.calculate_cnr(data, n)
+            self.windowRTQA.plot_rtQA(init, n)
+            if n > 0:
+                data = np.array(self.eng.evalin('base','mainLoopData.glmProcTimeSeries(:,end)'), ndmin=2)
+                posSpike = np.array(self.eng.evalin('base','rtQA_matlab.kalmanSpikesPos(:,mainLoopData.indVolNorm)'), ndmin=2)
+                negSpike = np.array(self.eng.evalin('base','rtQA_matlab.kalmanSpikesNeg(:,mainLoopData.indVolNorm)'), ndmin=2)
+                self.windowRTQA.plot_stepsAndSpikes(data, posSpike, negSpike)
+                self.windowRTQA.plot_mcmd(dataMC[n, :])
 
-            with utils.timeit('Display mosaic image:'):
-                self.displayMosaicImage()
+        with utils.timeit('Display mosaic image:'):
+            self.displayMosaicImage()
 
-            with utils.timeit('  Drawings:'):
-                self.drawRoiPlots(init)
-                self.drawMcPlots(init)
+        with utils.timeit('  Drawings:'):
+            self.drawRoiPlots(init)
+            self.drawMcPlots(init)
 
-            # Stop Elapsed time and record
-            # self.recorder.recordEvent(config.TIMEVECTOR_LENGTH, self.iteration, time.time() - t)
-            self.recorder.recordEventDuration(erd.Times.d0, self.iteration, time.time() - t)
-            self.leElapsedTime.setText('{:.4f}'.format(time.time() - t))
-            self.leCurrentVolume.setText('%d' % self.iteration)
+        # Stop Elapsed time and record
+        # self.recorder.recordEvent(config.TIMEVECTOR_LENGTH, self.iteration, time.time() - t)
+        self.recorder.recordEventDuration(erd.Times.d0, self.iteration, time.time() - t)
+        self.leElapsedTime.setText('{:.4f}'.format(time.time() - t))
+        self.leCurrentVolume.setText('%d' % self.iteration)
 
-            logger.info('Elapsed time: {:.4f} s', time.time() - t)
+        logger.info('Elapsed time: {:.4f} s', time.time() - t)
 
-            QApplication.processEvents()
+        QApplication.processEvents()
 
-            if self.iteration == self.P['NrOfVolumes']:
-                logger.info('Last iteration reached...')
-                self.stop()
+        if self.iteration == self.P['NrOfVolumes']:
+            logger.info('Last iteration reached...')
+            self.stop()
 
-            self.iteration += 1
-            self.isMainLoopEntered = False
+        self.iteration += 1
+        self.isMainLoopEntered = False
 
     # --------------------------------------------------------------------------
     def getFileSearchString(self, file_name_template, path, ext):
