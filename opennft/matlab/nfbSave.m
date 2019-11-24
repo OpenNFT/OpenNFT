@@ -37,7 +37,8 @@ if mainLoopData.statMapCreated
     tn = mainLoopData.tn;
     indVolNorm = mainLoopData.indVolNorm;
     indVolNorm = double(indVolNorm);
-    idxActVoxIGLM.pos = mainLoopData.idxActVoxIGLM.pos{indVolNorm};
+    indVolIglmIndx = length(mainLoopData.idxActVoxIGLM.pos);
+    idxActVoxIGLM.pos = mainLoopData.idxActVoxIGLM.pos{indVolIglmIndx};
     statMap3D_pos = mainLoopData.statMap3D_pos;
     statMap3D_neg = mainLoopData.statMap3D_neg;
 
