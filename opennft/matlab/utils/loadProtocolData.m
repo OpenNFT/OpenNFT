@@ -134,7 +134,7 @@ if strcmp(P.Prot, 'Cont') && isSVM
 end
 
 % -- remove dcmdef field -- %
-if isDCM 
+if isDCM
     prt = rmfield(prt, 'dcmdef');
 end
     

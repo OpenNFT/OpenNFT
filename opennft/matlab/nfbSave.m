@@ -35,8 +35,6 @@ if mainLoopData.statMapCreated
     img2DdimY = mainLoopData.img2DdimY;
     dimVol = mainLoopData.dimVol;
     tn = mainLoopData.tn;
-    indVolNorm = mainLoopData.indVolNorm;
-    indVolNorm = double(indVolNorm);
     indVolIglmIndx = length(mainLoopData.idxActVoxIGLM.pos);
     idxActVoxIGLM.pos = mainLoopData.idxActVoxIGLM.pos{indVolIglmIndx};
     statMap3D_pos = mainLoopData.statMap3D_pos;
@@ -53,7 +51,7 @@ if mainLoopData.statMapCreated
     statMap2D_pos = vol3Dimg2D(statMap3D_pos, slNrImg2DdimX, slNrImg2DdimY, img2DdimX, img2DdimY, dimVol) / maxTval;
     statMap2D_pos = statMap2D_pos * 255;
 
-    idxActVoxIGLM.neg = mainLoopData.idxActVoxIGLM.neg{indVolNorm};
+    idxActVoxIGLM.neg = mainLoopData.idxActVoxIGLM.neg{indVolIglmIndx};
     maskedStatMapVect = tn.neg(idxActVoxIGLM.neg);
     maxTval = max(maskedStatMapVect);
     if isempty(maxTval)
