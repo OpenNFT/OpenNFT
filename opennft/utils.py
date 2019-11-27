@@ -92,3 +92,17 @@ def get_app_settings_file() -> pathlib.Path:
     """
     app_name = QtWidgets.QApplication.applicationName()
     return get_app_config_dir() / (app_name + '.ini')
+
+
+def get_ui_file(name: str) -> str:
+    """Returns absolute path to UI file
+
+    :param name: name of file
+    :return: absolute path to UI file
+    """
+    ui_file = pathlib.Path(config.UI_PATH) / name
+
+    if not ui_file.is_file():
+        raise ValueError('UI file {} does not exist'.format(name))
+
+    return str(ui_file)

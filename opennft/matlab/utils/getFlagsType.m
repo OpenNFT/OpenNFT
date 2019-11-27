@@ -25,5 +25,7 @@ elseif strcmp(P.Type, 'PSC')
 elseif strcmp(P.Type, 'SVM')
     isSVM = true;
     isIGLM = true;
+elseif strcmp(P.Type, 'None')
+    isIGLM = true;
 end
 
