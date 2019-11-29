@@ -16,6 +16,10 @@ disp('Save...')
 
 P = evalin('base', 'P');
 mainLoopData = evalin('base', 'mainLoopData');
+rtQA_matlab = evalin('base', 'rtQA_matlab');
+rtQA_python = evalin('base', 'rtQA_python');
+rtQAMode = evalin('base', 'rtQAMode');
+
 evalin('base', 'clear mmImgViewTempl;');
 evalin('base', 'clear mmStatVol;');
 evalin('base', 'clear mmOrthView;');
@@ -29,10 +33,81 @@ end
 
 folder = P.nfbDataFolder;
 
+% save rtqa data
+save([folder '\rtQA_matlab.mat'], '-struct', 'rtQA_matlab');
+save([folder '\rtQA_python.mat'], '-struct', 'rtQA_python');
+
+% % save last volume stat data for offline access
+if mainLoopData.statMapCreated
+    slNrImg2DdimX = mainLoopData.slNrImg2DdimX;
+    slNrImg2DdimY = mainLoopData.slNrImg2DdimY;
+    img2DdimX = mainLoopData.img2DdimX;
+    img2DdimY = mainLoopData.img2DdimY;
+    dimVol = mainLoopData.dimVol;
+    tn = mainLoopData.tn;
+    indVolIglmIndx = length(mainLoopData.idxActVoxIGLM.pos);
+    idxActVoxIGLM.pos = mainLoopData.idxActVoxIGLM.pos{indVolIglmIndx};
+    statMap3D_pos = mainLoopData.statMap3D_pos;
+    statMap3D_neg = mainLoopData.statMap3D_neg;
+
+    maskedStatMapVect = tn.pos(idxActVoxIGLM.pos);
+    maxTval = max(maskedStatMapVect);
+    if isempty(maxTval)
+        maxTval = 1;
+    end
+    statMapVect = maskedStatMapVect;
+    statMap3D_pos(idxActVoxIGLM.pos) = statMapVect;
+
+    statMap2D_pos = vol3Dimg2D(statMap3D_pos, slNrImg2DdimX, slNrImg2DdimY, img2DdimX, img2DdimY, dimVol) / maxTval;
+    statMap2D_pos = statMap2D_pos * 255;
+
+    idxActVoxIGLM.neg = mainLoopData.idxActVoxIGLM.neg{indVolIglmIndx};
+    maskedStatMapVect = tn.neg(idxActVoxIGLM.neg);
+    maxTval = max(maskedStatMapVect);
+    if isempty(maxTval)
+        maxTval = 1;
+    end
+    statMapVect = maskedStatMapVect;
+    statMap3D_neg(idxActVoxIGLM.neg) = statMapVect;
+
+    statMap2D_neg = vol3Dimg2D(statMap3D_neg, slNrImg2DdimX, slNrImg2DdimY, img2DdimX, img2DdimY, dimVol) / maxTval;
+    statMap2D_neg = statMap2D_neg * 255;
+
+    mainLoopData.statMap2D_pos = statMap2D_pos;
+    mainLoopData.statMap2D_neg = statMap2D_neg;
+
+    m = evalin('base', 'mmStatVol');
+    m.Data.posStatVol = statMap3D_pos;   
+    assignin('base', 'mainLoopData', mainLoopData);
+    
+    m_out =  evalin('base', 'mmStatMap');
+    m_out.Data.statMap = uint8(statMap2D_pos);
+    
+    m_out =  evalin('base', 'mmStatMap_neg');
+    m_out.Data.statMap_neg = uint8(statMap2D_neg);
+    assignin('base', 'statMap_neg', statMap2D_neg);
+    
+    n = mainLoopData.indVolNorm;
+    var = rtQA_matlab.snrData.m2Smoothed ./ double(n-1);
+    rtQA_matlab.snrData.snrVol = rtQA_matlab.snrData.meanSmoothed ./ (var.^.5);
+    if ~P.isRestingState
+        meanBas = rtQA_matlab.cnrData.basData.meanSmoothed;
+        meanCond = rtQA_matlab.cnrData.condData.meanSmoothed;
+        varianceBas = rtQA_matlab.cnrData.basData.m2Smoothed / (rtQA_matlab.cnrData.basData.iteration - 1);
+        varianceCond = rtQA_matlab.cnrData.condData.m2Smoothed / (rtQA_matlab.cnrData.condData.iteration - 1);
+        rtQA_matlab.cnrData.cnrVol = (meanCond - meanBas) ./ ((varianceBas + varianceCond).^.5);
+    end;
+    
+    assignin('base', 'rtQA_matlab', rtQA_matlab);
+    
+end
+
 % save feedback values
-save([folder filesep P.SubjectID '_' ...
-    num2str(P.NFRunNr) '_NFBs' '.mat'], ...
-    '-struct', 'mainLoopData', 'vectNFBs');
+if ~P.isRestingState
+    save([folder filesep P.SubjectID '_' ...
+        num2str(P.NFRunNr) '_NFBs' '.mat'], ...
+        '-struct', 'mainLoopData', 'vectNFBs');
+end
 
 % save time-series
 if P.NrROIs >0
@@ -90,8 +165,10 @@ if isDCM
     roiData.ROIsGlmAnat = evalin('base', 'ROIsGlmAnat');
     roiData.ROIoptimGlmAnat = evalin('base', 'ROIoptimGlmAnat');
 end
-save([folder filesep P.SubjectID '_' ...
-    num2str(P.NFRunNr) '_roiData' '.mat'], 'roiData');
+if ~P.isRestingState
+    save([folder filesep P.SubjectID '_' ...
+        num2str(P.NFRunNr) '_roiData' '.mat'], 'roiData');
+end
 
 % concatenate two TimeVector event files
 fileTimeVectors_display = [folder filesep 'TimeVectors_display_' ...

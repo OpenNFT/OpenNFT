@@ -34,7 +34,7 @@ end
 P.DynROI = false;
 
 %% ROIs in a single folder
-if isPSC
+if isPSC || P.isRestingState
     roiDir = pathName;
     roiNames = {};
     roiNames = cellstr([spm_select('FPList', roiDir, '^.*.img$'); ...
