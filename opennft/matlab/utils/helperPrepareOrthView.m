@@ -13,6 +13,9 @@ function helperPrepareOrthView(P, bgType)
 % Adopted by Yury Koush based on SPM (see spm_orthviews.m)
 
 P.bgType = bgType;
+P.tRoiBoundaries = {};
+P.cRoiBoundaries = {};
+P.sRoiBoundaries = {};
 
 %% Background: EPI template or Anatomy
 %% default values
@@ -20,17 +23,17 @@ fAnatomyBacgkr = false;
 fEpiBackgr = true;
 
 if strcmp(bgType, 'bgMosaic')
-	fAnatomyBacgkr = false;
+    fAnatomyBacgkr = false;
     fEpiBackgr = true;
-end;
+end
 if strcmp(bgType, 'bgEPI')
     fAnatomyBacgkr = false;
-	fEpiBackgr = true;
-end;
+    fEpiBackgr = true;
+end
 if strcmp(bgType, 'bgAnat')
     fAnatomyBacgkr = true;
-	fEpiBackgr = false;
-end;
+    fEpiBackgr = false;
+end
 
 dirAnatBackgr = P.AnatBgFolder;
 dirEpiBackgr = P.MCTempl;
@@ -75,7 +78,7 @@ if isDCM
     ROIsAnat = evalin('base', 'ROIsAnat');
     ROIsOverlay = ROIsAnat;
 end
-if isPSC || isSVM
+if isPSC || isSVM || P.isRestingState
     ROIs = evalin('base', 'ROIs');
     ROIsOverlay = ROIs;
 end
@@ -100,25 +103,27 @@ strParam.centre    = mmcentre(1:3);
 strParam.modeDispl = [0 0 1]; 
 displStat = [];
 if isDCM
-    [imgt,imgs,imgc] = redrawall(displBackgr.vol, displBackgr.mat, ...
-                         ROIsAnat, displStat); % ?imgs/imgc names under spm
+    [imgt, imgc, imgs] = redrawall(displBackgr.vol, displBackgr.mat, ...
+        ROIsAnat, displStat); % ?imgs/imgc names under spm
 else
-    [imgt,imgs,imgc] = redrawall(displBackgr.vol,displBackgr.mat, ...
-                             ROIs, displStat); % ?imgs/imgc names under spm
+    [imgt, imgc, imgs] = redrawall(displBackgr.vol,displBackgr.mat, ...
+        ROIs, displStat); % ?imgs/imgc names under spm
 end
 disp('prepareOrthView() in helper matlab');
 
-format = {'uint8', size(imgt), 'imgt';...
-'uint8', size(imgs), 'imgs';...
-'uint8', size(imgc), 'imgc'};
+format = {'uint8', size(imgt), 'imgt'; ...
+          'uint8', size(imgc), 'imgc'; ...
+          'uint8', size(imgs), 'imgs'};
 
-imgt = uint8(imgt / max(max(max(imgt))) * 255);
-imgs = uint8(double(imgs) / max(max(max(imgs))) * 255);
-imgc = uint8(double(imgc) / max(max(max(imgc))) * 255);
-data = [imgt(:); imgs(:); imgc(:)];
+imgt = uint8(double(imgt) / max(imgt(:)) * 255);
+imgc = uint8(double(imgc) / max(imgc(:)) * 255);
+imgs = uint8(double(imgs) / max(imgs(:)) * 255);
+
+data = [imgt(:); imgc(:); imgs(:)];
+
 assignin('base', 'imgt', imgt);
+assignin('base', 'imgc', imgc);
 assignin('base', 'imgs', imgs);
-assignin('base', 'imgc', imgc);   
 
 assignin('base', 'displBackgr', displBackgr);   
 assignin('base', 'displayBgAnat', displayBgAnat);   
@@ -126,13 +131,15 @@ assignin('base', 'displayBgEpi', displayBgEpi);
 
 assignin('base', 'ROIsOverlay', ROIsOverlay);   
 
+[slNrImg2DdimX, slNrImg2DdimY, img2DdimX, img2DdimY] = getMosaicDim(displayBgEpi.dim);
+mosaicDim = img2DdimX*img2DdimY;
+data2 = uint8(zeros(mosaicDim,1));
+
 %% images for OrthView in GUI from helper matlab
 initMemmap(P.memMapFile, 'OrthView', data, 'uint8', 'mmOrthView', format);
-
-% figure('Name', 'Bounding box center')
-% subplot(2,2,1),imshow(imgs,[]),title('Saggital') % 256x256
-% subplot(2,2,3),imshow(imgt,[]),title('Transversal') % 192x256
-% subplot(2,2,2),imshow(imgc,[]),title('Coronal') % 256x192
+initMemmap(P.memMapFile, 'OrthView_neg', data, 'uint8', 'mmOrthView', format);
+initMemmap(P.memMapFile, 'BackgOrthView', data, 'uint8', 'mmOrthView', format);
+initMemmap(P.memMapFile, 'RTQAVol', data2(:), 'double', 'rtQAVol', {'double', prod(displayBgEpi.dim), 'rtQAVol'});
 
 assignin('base', 'helperP', P);
 
@@ -140,7 +147,7 @@ assignin('base', 'helperP', P);
 
 %% functions for redrawall()
 
-function [drawimgt,drawimgc,drawimgs] = redrawall(Vol,mat,ROIs,Stat)
+function [drawimgt, drawimgc, drawimgs] = redrawall(Vol,mat,ROIs,Stat)
 global strParam
 
 %% Calculate Background
@@ -178,7 +185,7 @@ else
             0  0 0     1     ];
     SM = inv(SM0 * M);
     SD = Dims([2 3]);
-end;
+end
 
 try
     imgt  = spm_slice_vol(Vol, TM, TD, strParam.hld)';
@@ -205,18 +212,18 @@ if ok
         tmp = imgt(isfinite(imgt));
         mx = max([mx max(max(tmp))]);
         mn = min([mn min(min(tmp))]);
-    end;
+    end
     if ~isempty(imgc)
         tmp = imgc(isfinite(imgc));
         mx = max([mx max(max(tmp))]);
         mn = min([mn min(min(tmp))]);
-    end;
+    end
     if ~isempty(imgs)
         tmp = imgs(isfinite(imgs));
         mx = max([mx max(max(tmp))]);
         mn = min([mn min(min(tmp))]);
-    end;
-    if mx == mn, mx = mn + eps; end;
+    end
+    if mx == mn, mx = mn + eps; end
 else
     imgt = [];
     imgc = [];
@@ -393,7 +400,7 @@ for j=1:length(ROIs)
     %cdata=permute(shiftdim((1/64:1/64:1)'* ...
     %    colour(j,:),-1),[2 1 3]);
     %redraw_colourbar(i,j,[mn mx],cdata);
-end;
+end
 
 drawimgt = repmat(1-wt,[1 1 3]).*imgt+cimgt;
 drawimgc = repmat(1-wc,[1 1 3]).*imgc+cimgc;
@@ -412,10 +419,10 @@ if isstruct(vol)
         tmp = spm_slice_vol(vol, spm_matrix([0 0 i]), vol.dim(1:2), 0);
         imx = max(tmp(isfinite(tmp)));
         if ~isempty(imx),mx = max(mx,imx);end
-    end;
+    end
 else
     mx = max(vol(isfinite(vol)));
-end;
+end
 
 function img = scaletocmap(inpimg, mn, mx, cmap, miscol)
 if nargin < 5, miscol=1;end
@@ -447,4 +454,3 @@ Mat      = diag([res res res 1]);
 strParam.Space = strParam.Space * Mat;
 strParam.bb    = strParam.bb / res;
 return;
-

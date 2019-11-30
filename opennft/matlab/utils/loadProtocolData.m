@@ -19,7 +19,7 @@ P = evalin('base', 'P');
 jsonFile = P.ProtocolFile;
 NrOfVolumes = P.NrOfVolumes;
 nrSkipVol = P.nrSkipVol;
-
+   
 prt = loadjson(jsonFile);
 
 P.BaselineName = prt.BaselineName;
@@ -134,7 +134,7 @@ if strcmp(P.Prot, 'Cont') && isSVM
 end
 
 % -- remove dcmdef field -- %
-if isDCM 
+if isDCM
     prt = rmfield(prt, 'dcmdef');
 end
     

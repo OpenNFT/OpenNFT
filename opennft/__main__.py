@@ -10,8 +10,9 @@ Copyright (C) 2016-2019 OpenNFT.org
 import sys
 from PyQt5.QtWidgets import QApplication
 
-from opennft import excepthook
-from opennft.opennft import OpenNFT
+from opennft import excepthook, utils
+from opennft import config
+from opennft import opennft
 
 
 def main():
@@ -24,7 +25,9 @@ def main():
     app.setOrganizationName('OpenNFT')
     app.setApplicationVersion('1.0')
 
-    nft = OpenNFT()
+    config.MATLAB_NAME_SUFFIX = '_{}'.format(utils.generate_random_number_string())
+
+    nft = opennft.OpenNFT()
     nft.show()
 
     return app.exec()
