@@ -20,10 +20,6 @@ rtQA_matlab = evalin('base', 'rtQA_matlab');
 rtQA_python = evalin('base', 'rtQA_python');
 rtQAMode = evalin('base', 'rtQAMode');
 
-evalin('base', 'clear mmImgViewTempl;');
-evalin('base', 'clear mmStatVol;');
-evalin('base', 'clear mmOrthView;');
-
 if P.UseTCPData
     tcp = evalin('base', 'tcp');
     tcp.CloseConnection;
@@ -189,5 +185,10 @@ if ~isSVM && exist(fileTimeVectors_display, 'file')
 end
 
 disp('Saving done')
+
+% Clear workspace
+evalin('base', 'clear mmImgViewTempl;');
+evalin('base', 'clear mmStatVol;');
+evalin('base', 'clear mmOrthView;');
 
 
