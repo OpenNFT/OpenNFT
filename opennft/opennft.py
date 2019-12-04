@@ -624,23 +624,20 @@ class OpenNFT(QWidget):
             # t6, display instruction prior to data acquisition for current iteration
             self.recorder.recordEvent(erd.Times.t6, self.iteration)
 
-            if self.P['Prot'] == 'Inter' or self.P['Prot'] == 'InterBlock':
+            # display instruction prior to data acquisition for current iteration
+            if self.P['Type'] == 'PSC':
+                if config.USE_PTB:
+                    logger.info('instruction + {}', self.iteration)
+                    self.displayScreen()
 
-                if self.P['Type'] == 'PSC':
-                    if config.USE_PTB:
-                        logger.info('instruction + {}', self.iteration)
-                        self.displayScreen()
+                if self.iteration > self.P['nrSkipVol'] and config.UDP_SEND_CONDITION:
+                    self.udpSender.send_data(self.P['CondNames'][int(self.eng.evalin('base', 'mainLoopData.condition'))-1])
 
-                    if self.iteration > self.P['nrSkipVol'] and config.UDP_SEND_CONDITION:
-                        self.udpSender.send_data(
-                            self.P['CondNames'][int(self.eng.evalin('base', 'mainLoopData.condition')) - 1])
+            elif self.P['Type'] == 'DCM':
+                if not self.isCalculateDcm and config.USE_PTB:
+                    self.displayScreen()
 
-                    elif self.P['Type'] == 'DCM':
-                        if not self.isCalculateDcm and config.USE_PTB:
-                            self.displayScreen()
-            else:
-
-                if self.P['Type'] == 'SVM':
+            elif self.P['Type'] == 'SVM':
                     if self.displayData and config.USE_UDP_FEEDBACK:
                         logger.info('Sending by UDP - instrValue = ')  # + str(self.displayData['instrValue'])
                         # self.udpSender.send_data(self.displayData['instrValue'])
