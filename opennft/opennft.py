@@ -124,14 +124,6 @@ class OpenNFT(QWidget):
         self.udpSender.close()
 
     # --------------------------------------------------------------------------
-    def initTcpReceiver(self):
-        self.TcpReceiver = 0
-
-    # --------------------------------------------------------------------------
-    def finalizeTcpReceiver(self):
-        self.TcpReceiver
-
-    # --------------------------------------------------------------------------
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -413,6 +405,9 @@ class OpenNFT(QWidget):
         self.call_timer.timeout.connect(self.callMainLoopIteration)
         self.orthViewUpdateCheckTimer.timeout.connect(self.onCheckOrthViewUpdated)
 
+        self.cbDataType.currentTextChanged.connect(self.onChangeDataType)
+        self.onChangeDataType()
+
         self.cbUsePTB.stateChanged.connect(self.onChangePTB)
         self.onChangePTB()
 
@@ -462,6 +457,16 @@ class OpenNFT(QWidget):
         else:
             neg_map_state = getattr(self, '__neg_map_state', self.negMapCheckBox.isChecked())
             self.negMapCheckBox.setChecked(neg_map_state)
+
+    # --------------------------------------------------------------------------
+    def onChangeDataType(self):
+        self.cbgetMAT.setChecked(self.cbgetMAT.isChecked() and self.cbDataType.currentText() == 'DICOM')
+        self.cbgetMAT.setEnabled(self.cbDataType.currentText() == 'DICOM')
+
+    # --------------------------------------------------------------------------
+    def onChangeDataType(self):
+        self.cbgetMAT.setChecked(self.cbgetMAT.isChecked() and self.cbDataType.currentText() == 'DICOM')
+        self.cbgetMAT.setEnabled(self.cbDataType.currentText() == 'DICOM')
 
     # --------------------------------------------------------------------------
     def onChangePTB(self):
@@ -642,19 +647,22 @@ class OpenNFT(QWidget):
                         logger.info('Sending by UDP - instrValue = ')  # + str(self.displayData['instrValue'])
                         # self.udpSender.send_data(self.displayData['instrValue'])
 
-        try:
-            fname = self.files_queue.get_nowait()
-        except queue.Empty:
-            if (self.previousIterStartTime > 0) and (self.preiteration < self.iteration):
-                if (time.time() - self.previousIterStartTime) > (self.P['TR'] / 1000):
-                    logger.info('Scanner is too slow...')
-            self.isMainLoopEntered = False
-            self.preiteration = self.iteration
-            return
+        if self.cbUseTCPData.isChecked() and self.eng.evalin('base','tcp.BytesAvailable'):
+            fname = os.path.join(self.P['WatchFolder'], self.P['FirstFileName']) # first file is required for initialization
+        else:
+            try:
+                fname = self.files_queue.get_nowait()
+            except queue.Empty:
+                if (self.previousIterStartTime > 0) and (self.preiteration < self.iteration):
+                    if (time.time() - self.previousIterStartTime) > (self.P['TR'] / 1000):
+                        logger.info('Scanner is too slow...')
+                self.isMainLoopEntered = False
+                self.preiteration = self.iteration
+                return
 
-        if not self.cbOfflineMode.isChecked() and self.files_queue.qsize() > 0:
-            logger.info("Toolbox is too slow, on file {}", fname)
-            logger.info("{} files in queue", self.files_queue.qsize())
+            if not self.cbOfflineMode.isChecked() and self.files_queue.qsize() > 0:
+                logger.info("Toolbox is too slow, on file {}", fname)
+                logger.info("{} files in queue", self.files_queue.qsize())
 
         self.preiteration = self.iteration
 
@@ -670,7 +678,7 @@ class OpenNFT(QWidget):
         #        return
 
         # data acquisition
-        if not self.cbOfflineMode.isChecked():
+        if (not(self.cbUseTCPData.isChecked()) or not(self.reachedFirstFile)) and not(self.cbOfflineMode.isChecked()):
             if not self.checkFileIsReady(path, fname):
                 self.isMainLoopEntered = False
                 return
@@ -1185,7 +1193,6 @@ class OpenNFT(QWidget):
             self.eng.nfbInitReward(nargout=0)
 
             self.initUdpSender()
-            self.initTcpReceiver()
 
             self.btnStart.setEnabled(True)
             self.btnRTQA.setEnabled(True)
@@ -1293,8 +1300,6 @@ class OpenNFT(QWidget):
 
         if self.fFinNFB:
             self.finalizeUdpSender()
-            if self.cbUseTCPData.isChecked():
-                self.finalizeTcpReceiver()
             self.eng.workspace['rtQA_python'] = self.windowRTQA.data_packing()
             self.nfbFinStarted = self.eng.nfbSave(self.iteration, nargout=0, async=True)
             self.fFinNFB = False
@@ -1606,6 +1611,7 @@ class OpenNFT(QWidget):
         idx = self.cbDataType.findText(self.settings.value('DataType', 'DICOM'))
         if idx >= 0:
             self.cbDataType.setCurrentIndex(idx)
+        self.cbgetMAT.setChecked(str(self.settings.value('GetMAT')).lower() == 'true')
         idx = self.cbProt.findText(self.settings.value('Prot', 'Inter'))
         if idx >= 0:
             self.cbProt.setCurrentIndex(idx)
@@ -1687,10 +1693,15 @@ class OpenNFT(QWidget):
         self.P['MatrixSizeX'] = self.sbMatrixSize.value()
 
         # --- bottom left ---
+        self.P['UseTCPData'] = self.cbUseTCPData.isChecked()
+        if self.P['UseTCPData']:
+            self.P['TCPDataIP'] = self.leTCPDataIP.text()
+            self.P['TCPDataPort'] = int(self.leTCPDataPort.text())
         self.P['DisplayFeedbackFullscreen'] = self.cbDisplayFeedbackFullscreen.isChecked()
 
         # --- bottom right ---
         self.P['DataType'] = str(self.cbDataType.currentText())
+        self.P['getMAT'] = self.cbgetMAT.isChecked()
         self.P['Prot'] = str(self.cbProt.currentText())
         self.P['Type'] = str(self.cbType.currentText())
         self.P['isRestingState'] = bool(self.cbProt.currentText() == "Rest")
@@ -1803,6 +1814,7 @@ class OpenNFT(QWidget):
 
         # --- bottom right ---
         self.settings.setValue('DataType', self.P['DataType'])
+        self.settings.setValue('GetMAT', self.P['getMAT'])
         self.settings.setValue('Prot', self.P['Prot'])
         self.settings.setValue('Type', self.P['Type'])
 

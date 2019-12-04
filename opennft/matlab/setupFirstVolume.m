@@ -30,7 +30,7 @@ end
 disp(inpFileName)
 % check first Vol
 if fDICOM
-    dicomInfoVol = dicominfo(inpFileName);
+    dicomInfoVol = spm_dicom_headers(inpFileName); dicomInfoVol = dicomInfoVol{1};
     mxAct      = double(dicomInfoVol.AcquisitionMatrix(1));
     if (mxAct == 0)
         mxAct = double(dicomInfoVol.AcquisitionMatrix(3));
@@ -39,14 +39,15 @@ if fDICOM
     dimVol = [MatrixSizeX_Act, MatrixSizeX_Act, double(P.NrOfSlices)];
     [slNrImg2DdimX, slNrImg2DdimY, img2DdimX, img2DdimY] = ...
         getMosaicDim(dimVol);
-    % Optional. It is possible to use mat structure changes to adopt the
-    % desired spatial orientation
-    %matVol = getMAT(dicomInfoVol, dimVol);
-    %dicomInfoVox   = [dicomInfoVol.PixelSpacing; ...
-    %                  dicomInfoVol.SpacingBetweenSlices]';
     matTemplMotCorr = mainLoopData.matTemplMotCorr;
-    matVol = matTemplMotCorr;
-    dicomInfoVox   = sqrt(sum(matTemplMotCorr(1:3,1:3).^2));
+    if P.getMAT
+        matVol = getMAT(dicomInfoVol, dimVol);
+        dicomInfoVox   = [dicomInfoVol.PixelSpacing; ...
+                         dicomInfoVol.SpacingBetweenSlices]';
+    else
+        matVol = matTemplMotCorr;
+        dicomInfoVox   = sqrt(sum(matTemplMotCorr(1:3,1:3).^2));
+    end
 end
 
 if fIMAPH

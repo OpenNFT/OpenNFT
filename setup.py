@@ -12,6 +12,7 @@ from distutils.core import DistutilsOptionError
 from setuptools import setup, find_packages
 from setuptools.command.install import install
 from setuptools.command.develop import develop
+from subprocess import run
 
 
 NAME = 'OpenNFT'
@@ -147,8 +148,12 @@ class InstallMatlabEngineMixin:
         else:
             print('"Matlab Engine for Python" is successfully installed')
 
+class InstallGitSubmodulesMixin:
+    def _install_git_submodules(self):
+        if os.path.exists('.git'):
+            run(['git', 'submodule', 'update', '--init', '--recursive'])
 
-class InstallCommand(install, InstallMatlabEngineMixin):
+class InstallCommand(install, InstallMatlabEngineMixin, InstallGitSubmodulesMixin):
     user_options = install.user_options + InstallMatlabEngineMixin.cmd_options
 
     def initialize_options(self):
@@ -161,10 +166,11 @@ class InstallCommand(install, InstallMatlabEngineMixin):
 
     def run(self):
         self._install_matlab_engine()
+        self._install_git_submodules()
         install.run(self)
 
 
-class DevelopCommand(develop, InstallMatlabEngineMixin):
+class DevelopCommand(develop, InstallMatlabEngineMixin, InstallGitSubmodulesMixin):
     user_options = develop.user_options + InstallMatlabEngineMixin.cmd_options
 
     def initialize_options(self):
@@ -177,6 +183,7 @@ class DevelopCommand(develop, InstallMatlabEngineMixin):
 
     def run(self):
         self._install_matlab_engine()
+        self._install_git_submodules()
         develop.run(self)
 
 
