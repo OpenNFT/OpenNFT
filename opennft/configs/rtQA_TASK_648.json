@@ -1,0 +1,22 @@
+{
+	"BaselineName": "BAS",
+	"CondName": "TASK",
+	"Cond": [
+		{
+			"ConditionName": "BAS",
+			"OnOffsets": [
+				[1,108],
+				[217,324],
+				[433,540],
+			]
+		},
+		{
+			"ConditionName": "TASK",
+			"OnOffsets": [
+				[109,216],
+				[325,432],
+				[541,648],
+			]
+		}
+	]
+}
