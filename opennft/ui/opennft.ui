@@ -1281,158 +1281,163 @@
               </item>
               <item>
                <layout class="QGridLayout" name="gridLayout_8">
-                <item row="0" column="0">
-                 <layout class="QHBoxLayout" name="horizontalLayout_Offline">
-                  <property name="spacing">
-                   <number>6</number>
-                  </property>
-                  <property name="leftMargin">
-                   <number>0</number>
-                  </property>
-                  <item>
-                   <widget class="QCheckBox" name="cbOfflineMode">
-                    <property name="text">
-                     <string>Offline mode</string>
-                    </property>
-                    <property name="checked">
-                     <bool>true</bool>
-                    </property>
-                   </widget>
-                  </item>
-                  <item>
-                   <spacer name="horizontalSpacer">
-                    <property name="orientation">
-                     <enum>Qt::Horizontal</enum>
-                    </property>
-                    <property name="sizeType">
-                     <enum>QSizePolicy::Expanding</enum>
-                    </property>
-                    <property name="sizeHint" stdset="0">
-                     <size>
-                      <width>40</width>
-                      <height>20</height>
-                     </size>
-                    </property>
-                   </spacer>
-                  </item>
-                 </layout>
-                </item>
-                <item row="1" column="0">
-                 <layout class="QHBoxLayout" name="horizontalLayout_TCP">
-                  <property name="spacing">
-                   <number>6</number>
-                  </property>
-                  <property name="leftMargin">
-                   <number>0</number>
-                  </property>
-                  <item>
-                   <widget class="QCheckBox" name="cbUseTCPData">
-                    <property name="text">
-                     <string>Receive data via TCP</string>
-                    </property>
-                    <property name="checked">
-                     <bool>false</bool>
-                    </property>
-                   </widget>
-                  </item>
-                  <item>
-                   <widget class="QLabel" name="label_40_2">
-                    <property name="text">
-                     <string>IP Address</string>
-                    </property>
-                   </widget>
-                  </item>
-                  <item>
-                   <widget class="QLineEdit" name="leTCPDataIP">
-                    <property name="maximumSize">
-                     <size>
-                      <width>100</width>
-                      <height>20</height>
-                     </size>
-                    </property>
-                    <property name="text">
-                     <string/>
-                    </property>
-                    <property name="readOnly">
-                     <bool>false</bool>
-                    </property>
-                   </widget>
-                  </item>
-                  <item>
-                   <widget class="QLabel" name="label_40_3">
-                    <property name="text">
-                     <string>Port</string>
-                    </property>
-                   </widget>
-                  </item>
-                  <item>
-                   <widget class="QLineEdit" name="leTCPDataPort">
-                    <property name="maximumSize">
-                     <size>
-                      <width>50</width>
-                      <height>20</height>
-                     </size>
-                    </property>
-                    <property name="text">
-                     <string/>
-                    </property>
-                    <property name="readOnly">
-                     <bool>false</bool>
-                    </property>
-                   </widget>
-                  </item>
-                  <item>
-                   <spacer name="horizontalSpacer_4">
-                    <property name="orientation">
-                     <enum>Qt::Horizontal</enum>
-                    </property>
-                    <property name="sizeType">
-                     <enum>QSizePolicy::Expanding</enum>
-                    </property>
-                    <property name="sizeHint" stdset="0">
-                     <size>
-                      <width>40</width>
-                      <height>20</height>
-                     </size>
-                    </property>
-                   </spacer>
-                  </item>
-                 </layout>
-                </item>
-                <item row="0" column="1">
-                 <widget class="QLabel" name="label_38">
-                  <property name="text">
-                   <string>MRI Data Type</string>
-                  </property>
-                  <property name="alignment">
-                   <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-                  </property>
-                 </widget>
-                </item>
-                <item row="0" column="2">
-                 <widget class="QComboBox" name="cbDataType">
-                  <item>
-                   <property name="text">
-                    <string>DICOM</string>
-                   </property>
-                  </item>
-                  <item>
-                   <property name="text">
-                    <string>IMAPH</string>
-                   </property>
-                  </item>
-                  <item>
-                   <property name="text">
-                    <string>NII</string>
-                   </property>
-                  </item>
-                  <item>
-                   <property name="text">
-                    <string>TCP</string>
-                   </property>
-                  </item>
-                 </widget>
-                </item>
+                    <item row="0" column="0">
+                         <layout class="QHBoxLayout" name="horizontalLayout_Offline">
+                              <property name="spacing">
+                                   <number>6</number>
+                              </property>
+                              <property name="leftMargin">
+                                   <number>0</number>
+                              </property>
+                              <item>
+                                   <widget class="QCheckBox" name="cbOfflineMode">
+                                        <property name="text">
+                                             <string>Offline mode</string>
+                                        </property>
+                                        <property name="checked">
+                                             <bool>true</bool>
+                                        </property>
+                                   </widget>
+                              </item>
+                              <item>
+                                   <spacer name="horizontalSpacer">
+                                        <property name="orientation">
+                                             <enum>Qt::Horizontal</enum>
+                                        </property>
+                                        <property name="sizeType">
+                                             <enum>QSizePolicy::Expanding</enum>
+                                        </property>
+                                        <property name="sizeHint" stdset="0">
+                                             <size>
+                                                  <width>40</width>
+                                                  <height>20</height>
+                                             </size>
+                                        </property>
+                                   </spacer>
+                              </item>
+                         </layout>
+                    </item>
+                    <item row="0" column="1">
+                         <widget class="QLabel" name="label_38">
+                              <property name="text">
+                                   <string>MRI Data Type</string>
+                              </property>
+                              <property name="alignment">
+                                   <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                              </property>
+                         </widget>
+                    </item>
+                    <item row="0" column="2">
+                         <widget class="QComboBox" name="cbDataType">
+                              <item>
+                                   <property name="text">
+                                        <string>DICOM</string>
+                                   </property>
+                              </item>
+                              <item>
+                                   <property name="text">
+                                        <string>IMAPH</string>
+                                   </property>
+                              </item>
+                              <item>
+                                   <property name="text">
+                                        <string>NII</string>
+                                   </property>
+                              </item>
+                         </widget>
+                    </item>
+                    <item row="1" column="0">
+                         <layout class="QHBoxLayout" name="horizontalLayout_TCP">
+                              <property name="spacing">
+                                   <number>6</number>
+                              </property>
+                              <property name="leftMargin">
+                                   <number>0</number>
+                              </property>
+                              <item>
+                                   <widget class="QCheckBox" name="cbUseTCPData">
+                                        <property name="text">
+                                             <string>Receive data via TCP</string>
+                                        </property>
+                                        <property name="checked">
+                                             <bool>false</bool>
+                                        </property>
+                                   </widget>
+                              </item>
+                              <item>
+                                   <widget class="QLabel" name="label_40_1">
+                                        <property name="text">
+                                             <string>IP Address</string>
+                                        </property>
+                                   </widget>
+                              </item>
+                              <item>
+                                   <widget class="QLineEdit" name="leTCPDataIP">
+                                        <property name="maximumSize">
+                                             <size>
+                                                  <width>100</width>
+                                                  <height>20</height>
+                                             </size>
+                                        </property>
+                                        <property name="text">
+                                             <string/>
+                                        </property>
+                                        <property name="readOnly">
+                                             <bool>false</bool>
+                                        </property>
+                                   </widget>
+                              </item>
+                              <item>
+                                   <widget class="QLabel" name="label_40_2">
+                                        <property name="text">
+                                             <string>Port</string>
+                                        </property>
+                                   </widget>
+                              </item>
+                              <item>
+                                   <widget class="QLineEdit" name="leTCPDataPort">
+                                        <property name="maximumSize">
+                                             <size>
+                                                  <width>50</width>
+                                                  <height>20</height>
+                                             </size>
+                                        </property>
+                                        <property name="text">
+                                             <string/>
+                                        </property>
+                                        <property name="readOnly">
+                                             <bool>false</bool>
+                                        </property>
+                                   </widget>
+                              </item>
+                              <item>
+                                   <spacer name="horizontalSpacer">
+                                        <property name="orientation">
+                                             <enum>Qt::Horizontal</enum>
+                                        </property>
+                                        <property name="sizeType">
+                                             <enum>QSizePolicy::Expanding</enum>
+                                        </property>
+                                        <property name="sizeHint" stdset="0">
+                                             <size>
+                                                  <width>40</width>
+                                                  <height>20</height>
+                                             </size>
+                                        </property>
+                                   </spacer>
+                              </item>
+                         </layout>
+                    </item>
+                    <item row="1" column="2">
+                         <widget class="QCheckBox" name="cbgetMAT">
+                              <property name="text">
+                                   <string>Calculate MAT</string>
+                              </property>
+                              <property name="checked">
+                                   <bool>false</bool>
+                              </property>
+                         </widget>
+                    </item>
                </layout>
               </item>
               <item>
@@ -1452,400 +1457,400 @@
                </spacer>
               </item>
               <item>
-               <layout class="QGridLayout" name="gridLayout_9">
-                <item row="3" column="0">
-                 <layout class="QHBoxLayout" name="horizontalLayout_UDP">
-                  <property name="spacing">
-                   <number>6</number>
-                  </property>
-                  <property name="leftMargin">
-                   <number>0</number>
-                  </property>
-                  <item>
-                   <widget class="QCheckBox" name="cbUseUDPFeedback">
-                    <property name="text">
-                     <string>Send via UDP</string>
-                    </property>
-                    <property name="checked">
-                     <bool>false</bool>
-                    </property>
-                   </widget>
-                  </item>
-                  <item>
-                   <widget class="QLabel" name="label_39_1">
-                    <property name="text">
-                     <string>IP Address</string>
-                    </property>
-                   </widget>
-                  </item>
-                  <item>
-                   <widget class="QLineEdit" name="leUDPFeedbackIP">
-                    <property name="maximumSize">
-                     <size>
-                      <width>100</width>
-                      <height>20</height>
-                     </size>
-                    </property>
-                    <property name="text">
-                     <string/>
-                    </property>
-                    <property name="readOnly">
-                     <bool>false</bool>
-                    </property>
-                   </widget>
-                  </item>
-                  <item>
-                   <widget class="QLabel" name="label_39_2">
-                    <property name="text">
-                     <string>Port</string>
-                    </property>
-                   </widget>
-                  </item>
-                  <item>
-                   <widget class="QLineEdit" name="leUDPFeedbackPort">
-                    <property name="maximumSize">
-                     <size>
-                      <width>50</width>
-                      <height>20</height>
-                     </size>
-                    </property>
-                    <property name="text">
-                     <string/>
-                    </property>
-                    <property name="readOnly">
-                     <bool>false</bool>
-                    </property>
-                   </widget>
-                  </item>
-                  <item>
-                   <widget class="QLabel" name="label_39_3">
-                    <property name="text">
-                     <string>Control Character</string>
-                    </property>
-                   </widget>
-                  </item>
-                  <item>
-                   <widget class="QLineEdit" name="leUDPFeedbackControlChar">
-                    <property name="maximumSize">
-                     <size>
-                      <width>50</width>
-                      <height>20</height>
-                     </size>
-                    </property>
-                    <property name="text">
-                     <string/>
-                    </property>
-                    <property name="readOnly">
-                     <bool>false</bool>
-                    </property>
-                   </widget>
-                  </item>
-                  <item>
-                   <widget class="QCheckBox" name="cbUDPSendCondition">
-                    <property name="text">
-                     <string>Send condition</string>
-                    </property>
-                    <property name="checked">
-                     <bool>false</bool>
-                    </property>
-                   </widget>
-                  </item>
-                  <item>
-                   <spacer name="horizontalSpacer_5">
-                    <property name="orientation">
-                     <enum>Qt::Horizontal</enum>
-                    </property>
-                    <property name="sizeHint" stdset="0">
-                     <size>
-                      <width>40</width>
-                      <height>20</height>
-                     </size>
-                    </property>
-                   </spacer>
-                  </item>
-                 </layout>
-                </item>
-                <item row="2" column="0">
-                 <layout class="QHBoxLayout" name="horizontalLayout_PTB">
-                  <property name="spacing">
-                   <number>6</number>
-                  </property>
-                  <property name="leftMargin">
-                   <number>0</number>
-                  </property>
-                  <item>
-                   <widget class="QCheckBox" name="cbUsePTB">
-                    <property name="text">
-                     <string>Use PTB MAIN for feedback display on</string>
-                    </property>
-                    <property name="checked">
-                     <bool>true</bool>
-                    </property>
-                   </widget>
-                  </item>
-                  <item>
-                   <widget class="QComboBox" name="cbScreenId">
-                    <property name="maximumSize">
-                     <size>
-                      <width>110</width>
-                      <height>16777215</height>
-                     </size>
-                    </property>
-                    <property name="currentIndex">
-                     <number>0</number>
-                    </property>
-                    <item>
-                     <property name="text">
-                      <string>Screen 1</string>
-                     </property>
+               <layout class="QGridLayout" name="gridLayout_8">
+                    <item row="0" column="0">
+                         <layout class="QHBoxLayout" name="horizontalLayout_FB">
+                              <property name="spacing">
+                                   <number>6</number>
+                              </property>
+                              <property name="leftMargin">
+                                   <number>0</number>
+                              </property>
+                              <item>
+                                   <widget class="QLabel" name="label_37_1">
+                                        <property name="text">
+                                             <string>NF Feedback Type</string>
+                                        </property>
+                                        <property name="alignment">
+                                             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                                        </property>
+                                   </widget>
+                              </item>
+                              <item>
+                                   <widget class="QComboBox" name="cbType">
+                                        <item>
+                                             <property name="text">
+                                                  <string>PSC</string>
+                                             </property>
+                                        </item>
+                                        <item>
+                                             <property name="text">
+                                                  <string>DCM</string>
+                                             </property>
+                                        </item>
+                                        <item>
+                                             <property name="text">
+                                                  <string>SVM</string>
+                                             </property>
+                                        </item>
+                                        <item>
+                                             <property name="text">
+                                                  <string>None</string>
+                                             </property>
+                                        </item>
+                                   </widget>
+                              </item>
+                              <item>
+                                   <widget class="QLabel" name="label_41_1">
+                                        <property name="text">
+                                             <string>Maximum Feedback Value</string>
+                                        </property>
+                                   </widget>
+                              </item>
+                              <item>
+                                   <widget class="QLineEdit" name="leMaxFeedbackVal">
+                                        <property name="maximumSize">
+                                             <size>
+                                                  <width>50</width>
+                                                  <height>20</height>
+                                             </size>
+                                        </property>
+                                        <property name="text">
+                                             <string>100</string>
+                                        </property>
+                                        <property name="readOnly">
+                                             <bool>false</bool>
+                                        </property>
+                                   </widget>
+                              </item>
+                              <item>
+                                   <widget class="QLabel" name="label_41_3">
+                                        <property name="text">
+                                             <string>Minimum Feedback Value</string>
+                                        </property>
+                                   </widget>
+                              </item>
+                              <item>
+                                   <widget class="QLineEdit" name="leMinFeedbackVal">
+                                        <property name="maximumSize">
+                                             <size>
+                                                  <width>50</width>
+                                                  <height>20</height>
+                                             </size>
+                                        </property>
+                                        <property name="text">
+                                             <string>-100</string>
+                                        </property>
+                                        <property name="readOnly">
+                                             <bool>false</bool>
+                                        </property>
+                                   </widget>
+                              </item>
+                              <item>
+                                   <widget class="QLabel" name="label_41_2">
+                                        <property name="text">
+                                             <string>Number of Decimals</string>
+                                        </property>
+                                   </widget>
+                              </item>
+                              <item>
+                                   <widget class="QDoubleSpinBox" name="sbFeedbackValDec">
+                                        <property name="decimals">
+                                             <number>0</number>
+                                        </property>
+                                        <property name="minimum">
+                                             <double>0.000000000000000</double>
+                                        </property>
+                                        <property name="maximum">
+                                             <double>6.000000000000000</double>
+                                        </property>
+                                        <property name="value">
+                                             <double>2.000000000000000</double>
+                                        </property>
+                                   </widget>
+                              </item>
+                              <item>
+                                   <widget class="QCheckBox" name="cbNegFeedback">
+                                        <property name="text">
+                                             <string>Allow negative PSC</string>
+                                        </property>
+                                        <property name="checked">
+                                             <bool>false</bool>
+                                        </property>
+                                   </widget>
+                              </item>
+                              <item>
+                                   <spacer name="horizontalSpacer">
+                                        <property name="orientation">
+                                             <enum>Qt::Horizontal</enum>
+                                        </property>
+                                        <property name="sizeHint" stdset="0">
+                                             <size>
+                                                  <width>40</width>
+                                                  <height>20</height>
+                                             </size>
+                                        </property>
+                                   </spacer>
+                              </item>
+                         </layout>
                     </item>
-                    <item>
-                     <property name="text">
-                      <string>Screen 2</string>
-                     </property>
+                    <item row="0" column="1">
+                         <widget class="QLabel" name="label_37_2">
+                              <property name="text">
+                                   <string>NF Protocol Type</string>
+                              </property>
+                              <property name="alignment">
+                                   <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                              </property>
+                         </widget>
                     </item>
-                   </widget>
-                  </item>
-                  <item>
-                   <widget class="QCheckBox" name="cbDisplayFeedbackFullscreen">
-                    <property name="text">
-                     <string>Fullscreen</string>
-                    </property>
-                    <property name="checked">
-                     <bool>true</bool>
-                    </property>
-                   </widget>
-                  </item>
-                  <item>
-                   <widget class="QLabel" name="label_33">
-                    <property name="text">
-                     <string>Angle</string>
-                    </property>
-                   </widget>
-                  </item>
-                  <item>
-                   <widget class="QDoubleSpinBox" name="sbTargANG">
-                    <property name="minimum">
-                     <double>-99.989999999999995</double>
-                    </property>
-                   </widget>
-                  </item>
-                  <item>
-                   <widget class="QLabel" name="label_34">
-                    <property name="text">
-                     <string>Radius</string>
-                    </property>
-                   </widget>
-                  </item>
-                  <item>
-                   <widget class="QDoubleSpinBox" name="sbTargRAD">
-                    <property name="minimum">
-                     <double>-99.989999999999995</double>
-                    </property>
-                   </widget>
-                  </item>
-                  <item>
-                   <widget class="QLabel" name="label_35">
-                    <property name="text">
-                     <string>Diameter</string>
-                    </property>
-                   </widget>
-                  </item>
-                  <item>
-                   <widget class="QDoubleSpinBox" name="sbTargDIAM">
-                    <property name="minimum">
-                     <double>-99.989999999999995</double>
-                    </property>
-                    <property name="value">
-                     <double>10.000000000000000</double>
-                    </property>
-                   </widget>
-                  </item>
-                  <item>
-                   <spacer name="horizontalSpacer_6">
-                    <property name="orientation">
-                     <enum>Qt::Horizontal</enum>
-                    </property>
-                    <property name="sizeHint" stdset="0">
-                     <size>
-                      <width>40</width>
-                      <height>20</height>
-                     </size>
-                    </property>
-                   </spacer>
-                  </item>
-                 </layout>
-                </item>
-                <item row="0" column="0">
-                 <layout class="QHBoxLayout" name="horizontalLayout_FB">
-                  <property name="spacing">
-                   <number>6</number>
-                  </property>
-                  <property name="leftMargin">
-                   <number>0</number>
-                  </property>
-                  <item>
-                   <widget class="QLabel" name="label_37_1">
-                    <property name="text">
-                     <string>NF Feedback Type</string>
-                    </property>
-                    <property name="alignment">
-                     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-                    </property>
-                   </widget>
-                  </item>
-                  <item>
-                   <widget class="QComboBox" name="cbType">
-                    <item>
-                     <property name="text">
-                      <string>PSC</string>
-                     </property>
+                    <item row="0" column="2">
+                         <widget class="QComboBox" name="cbProt">
+                              <item>
+                                   <property name="text">
+                                        <string>Cont</string>
+                                   </property>
+                              </item>
+                              <item>
+                                   <property name="text">
+                                        <string>ContTask</string>
+                                   </property>
+                              </item>
+                              <item>
+                                   <property name="text">
+                                        <string>Inter</string>
+                                   </property>
+                              </item>
+                              <item>
+                                   <property name="text">
+                                        <string>InterBlock</string>
+                                   </property>
+                              </item>
+                         </widget>
                     </item>
-                    <item>
-                     <property name="text">
-                      <string>DCM</string>
-                     </property>
+                    <item row="1" column="0">
+                         <layout class="QHBoxLayout" name="horizontalLayout_PTB">
+                              <property name="spacing">
+                                   <number>6</number>
+                              </property>
+                              <property name="leftMargin">
+                                   <number>0</number>
+                              </property>
+                              <item>
+                                   <widget class="QCheckBox" name="cbUsePTB">
+                                        <property name="text">
+                                             <string>Use PTB MAIN for feedback display on</string>
+                                        </property>
+                                        <property name="checked">
+                                             <bool>true</bool>
+                                        </property>
+                                   </widget>
+                              </item>
+                              <item>
+                                   <widget class="QComboBox" name="cbScreenId">
+                                        <property name="maximumSize">
+                                             <size>
+                                                  <width>110</width>
+                                                  <height>16777215</height>
+                                             </size>
+                                        </property>
+                                        <property name="currentIndex">
+                                             <number>0</number>
+                                        </property>
+                                        <item>
+                                             <property name="text">
+                                                  <string>Screen 1</string>
+                                             </property>
+                                        </item>
+                                        <item>
+                                             <property name="text">
+                                                  <string>Screen 2</string>
+                                             </property>
+                                        </item>
+                                   </widget>
+                              </item>
+                              <item>
+                                   <widget class="QCheckBox" name="cbDisplayFeedbackFullscreen">
+                                        <property name="text">
+                                             <string>Fullscreen</string>
+                                        </property>
+                                        <property name="checked">
+                                             <bool>true</bool>
+                                        </property>
+                                   </widget>
+                              </item>
+                              <item>
+                                   <widget class="QLabel" name="label_33">
+                                        <property name="text">
+                                             <string>Angle</string>
+                                        </property>
+                                   </widget>
+                              </item>
+                              <item>
+                                   <widget class="QDoubleSpinBox" name="sbTargANG">
+                                        <property name="minimum">
+                                             <double>-99.989999999999995</double>
+                                        </property>
+                                   </widget>
+                              </item>
+                              <item>
+                                   <widget class="QLabel" name="label_34">
+                                        <property name="text">
+                                             <string>Radius</string>
+                                        </property>
+                                   </widget>
+                              </item>
+                              <item>
+                                   <widget class="QDoubleSpinBox" name="sbTargRAD">
+                                        <property name="minimum">
+                                             <double>-99.989999999999995</double>
+                                        </property>
+                                   </widget>
+                              </item>
+                              <item>
+                                   <widget class="QLabel" name="label_35">
+                                        <property name="text">
+                                             <string>Diameter</string>
+                                        </property>
+                                   </widget>
+                              </item>
+                              <item>
+                                   <widget class="QDoubleSpinBox" name="sbTargDIAM">
+                                        <property name="minimum">
+                                             <double>-99.989999999999995</double>
+                                        </property>
+                                        <property name="value">
+                                             <double>10.000000000000000</double>
+                                        </property>
+                                   </widget>
+                              </item>
+                              <item>
+                                   <spacer name="horizontalSpacer">
+                                        <property name="orientation">
+                                             <enum>Qt::Horizontal</enum>
+                                        </property>
+                                        <property name="sizeHint" stdset="0">
+                                             <size>
+                                                  <width>40</width>
+                                                  <height>20</height>
+                                             </size>
+                                        </property>
+                                   </spacer>
+                              </item>
+                         </layout>
                     </item>
-                    <item>
-                     <property name="text">
-                      <string>SVM</string>
-                     </property>
+                    <item row="2" column="0">
+                         <layout class="QHBoxLayout" name="horizontalLayout_UDP">
+                              <property name="spacing">
+                                   <number>6</number>
+                              </property>
+                              <property name="leftMargin">
+                                   <number>0</number>
+                              </property>
+                              <item>
+                                   <widget class="QCheckBox" name="cbUseUDPFeedback">
+                                        <property name="text">
+                                             <string>Send via UDP</string>
+                                        </property>
+                                        <property name="checked">
+                                             <bool>false</bool>
+                                        </property>
+                                   </widget>
+                              </item>
+                              <item>
+                                   <widget class="QLabel" name="label_39_1">
+                                        <property name="text">
+                                             <string>IP Address</string>
+                                        </property>
+                                   </widget>
+                              </item>
+                              <item>
+                                   <widget class="QLineEdit" name="leUDPFeedbackIP">
+                                        <property name="maximumSize">
+                                             <size>
+                                                  <width>100</width>
+                                                  <height>20</height>
+                                             </size>
+                                        </property>
+                                        <property name="text">
+                                             <string/>
+                                        </property>
+                                        <property name="readOnly">
+                                             <bool>false</bool>
+                                        </property>
+                                   </widget>
+                              </item>
+                              <item>
+                                   <widget class="QLabel" name="label_39_2">
+                                        <property name="text">
+                                             <string>Port</string>
+                                        </property>
+                                   </widget>
+                              </item>
+                              <item>
+                                   <widget class="QLineEdit" name="leUDPFeedbackPort">
+                                        <property name="maximumSize">
+                                             <size>
+                                                  <width>50</width>
+                                                  <height>20</height>
+                                             </size>
+                                        </property>
+                                        <property name="text">
+                                             <string/>
+                                        </property>
+                                        <property name="readOnly">
+                                             <bool>false</bool>
+                                        </property>
+                                   </widget>
+                              </item>
+                              <item>
+                                   <widget class="QLabel" name="label_39_3">
+                                        <property name="text">
+                                             <string>Control Character</string>
+                                        </property>
+                                   </widget>
+                              </item>
+                              <item>
+                                   <widget class="QLineEdit" name="leUDPFeedbackControlChar">
+                                        <property name="maximumSize">
+                                             <size>
+                                                  <width>50</width>
+                                                  <height>20</height>
+                                             </size>
+                                        </property>
+                                        <property name="text">
+                                             <string/>
+                                        </property>
+                                        <property name="readOnly">
+                                             <bool>false</bool>
+                                        </property>
+                                   </widget>
+                              </item>
+                              <item>
+                                   <widget class="QCheckBox" name="cbUDPSendCondition">
+                                        <property name="text">
+                                             <string>Send condition</string>
+                                        </property>
+                                        <property name="checked">
+                                             <bool>false</bool>
+                                        </property>
+                                   </widget>
+                              </item>
+                              <item>
+                                   <spacer name="horizontalSpacer">
+                                        <property name="orientation">
+                                             <enum>Qt::Horizontal</enum>
+                                        </property>
+                                        <property name="sizeHint" stdset="0">
+                                             <size>
+                                                  <width>40</width>
+                                                  <height>20</height>
+                                             </size>
+                                        </property>
+                                   </spacer>
+                              </item>
+                         </layout>
                     </item>
-                    <item>
-                     <property name="text">
-                      <string>None</string>
-                     </property>
-                    </item>
-                   </widget>
-                  </item>
-                  <item>
-                   <widget class="QLabel" name="label_41_1">
-                    <property name="text">
-                     <string>Maximum Feedback Value</string>
-                    </property>
-                   </widget>
-                  </item>
-                  <item>
-                   <widget class="QLineEdit" name="leMaxFeedbackVal">
-                    <property name="maximumSize">
-                     <size>
-                      <width>50</width>
-                      <height>20</height>
-                     </size>
-                    </property>
-                    <property name="text">
-                     <string>100</string>
-                    </property>
-                    <property name="readOnly">
-                     <bool>false</bool>
-                    </property>
-                   </widget>
-                  </item>
-                  <item>
-                   <widget class="QLabel" name="label_41_3">
-                    <property name="text">
-                     <string>Minimum Feedback Value</string>
-                    </property>
-                   </widget>
-                  </item>
-                  <item>
-                   <widget class="QLineEdit" name="leMinFeedbackVal">
-                    <property name="maximumSize">
-                     <size>
-                      <width>50</width>
-                      <height>20</height>
-                     </size>
-                    </property>
-                    <property name="text">
-                     <string>-100</string>
-                    </property>
-                    <property name="readOnly">
-                     <bool>false</bool>
-                    </property>
-                   </widget>
-                  </item>
-                  <item>
-                   <widget class="QLabel" name="label_41_2">
-                    <property name="text">
-                     <string>Number of Decimals</string>
-                    </property>
-                   </widget>
-                  </item>
-                  <item>
-                   <widget class="QDoubleSpinBox" name="sbFeedbackValDec">
-                    <property name="decimals">
-                     <number>0</number>
-                    </property>
-                    <property name="minimum">
-                     <double>0.000000000000000</double>
-                    </property>
-                    <property name="maximum">
-                     <double>6.000000000000000</double>
-                    </property>
-                    <property name="value">
-                     <double>2.000000000000000</double>
-                    </property>
-                   </widget>
-                  </item>
-                  <item>
-                   <widget class="QCheckBox" name="cbNegFeedback">
-                    <property name="text">
-                     <string>Allow negative PSC</string>
-                    </property>
-                    <property name="checked">
-                     <bool>false</bool>
-                    </property>
-                   </widget>
-                  </item>
-                  <item>
-                   <spacer name="horizontalSpacer_7">
-                    <property name="orientation">
-                     <enum>Qt::Horizontal</enum>
-                    </property>
-                    <property name="sizeHint" stdset="0">
-                     <size>
-                      <width>40</width>
-                      <height>20</height>
-                     </size>
-                    </property>
-                   </spacer>
-                  </item>
-                 </layout>
-                </item>
-                <item row="0" column="2">
-                 <widget class="QComboBox" name="cbProt">
-                  <item>
-                   <property name="text">
-                    <string>Cont</string>
-                   </property>
-                  </item>
-                  <item>
-                   <property name="text">
-                    <string>Rest</string>
-                   </property>
-                  </item>
-                  <item>
-                   <property name="text">
-                    <string>Inter</string>
-                   </property>
-                  </item>
-                  <item>
-                   <property name="text">
-                    <string>InterBlock</string>
-                   </property>
-                  </item>
-                 </widget>
-                </item>
-                <item row="0" column="1">
-                 <widget class="QLabel" name="label_37_2">
-                  <property name="text">
-                   <string>NF Protocol Type</string>
-                  </property>
-                  <property name="alignment">
-                   <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-                  </property>
-                 </widget>
-                </item>
                </layout>
               </item>
               <item>

@@ -92,6 +92,19 @@ If you want to run the program from PyCharm run/debug configuration, you should 
 
 If you don't see "Module name:" caption in the config dialog, you need to update your pyCharm.
 
+## Running and debuging OpenNFT from VSCode
+
+If you want to run the program from VSCode run/debug configuration, you should add the followings to launch.json configuration: 
+
+```json
+{
+    "name": "Python: Module",
+    "type": "python",
+    "request": "launch",
+    "module": "opennft"
+}
+```
+
 ## Demo dataset
 https://github.com/OpenNFT/OpenNFT_Demo/releases 
  
