@@ -30,7 +30,7 @@ end
 disp(inpFileName)
 % check first Vol
 if fDICOM
-    dicomInfoVol = spm_dicom_headers(inpFileName); dicomInfoVol = dicomInfoVol{1};
+    dicomInfoVol = dicominfo(inpFileName); %spm_dicom_headers(inpFileName); dicomInfoVol = dicomInfoVol{1};
     mxAct      = double(dicomInfoVol.AcquisitionMatrix(1));
     if (mxAct == 0)
         mxAct = double(dicomInfoVol.AcquisitionMatrix(3));
