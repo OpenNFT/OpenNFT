@@ -100,9 +100,12 @@ end
 
 % save feedback values
 if ~P.isRestingState
-    save([folder filesep P.SubjectID '_' ...
-        num2str(P.NFRunNr) '_NFBs' '.mat'], ...
-        '-struct', 'mainLoopData', 'vectNFBs');
+    % check if vectNFBs exists
+    if sum(strcmp(fieldnames(mainLoopData), 'vectNFBs')) == 1
+        save([folder filesep P.SubjectID '_' ...
+            num2str(P.NFRunNr) '_NFBs' '.mat'], ...
+            '-struct', 'mainLoopData', 'vectNFBs');
+    end
 end
 
 % save time-series
