@@ -704,9 +704,9 @@ class OpenNFT(QWidget):
         logger.info('Call iteration for file "{}"', os.path.basename(fname))
 
         # Start elapsed time
-        t = time.time()
+        startingTime = time.time()
 
-        self.previousIterStartTime = t
+        self.previousIterStartTime = startingTime
 
         if self.iteration == 1:
             with utils.timeit('  setup after first volume:'):
@@ -870,12 +870,12 @@ class OpenNFT(QWidget):
             self.drawMcPlots(init)
 
         # Stop Elapsed time and record
-        # self.recorder.recordEvent(config.TIMEVECTOR_LENGTH, self.iteration, time.time() - t)
-        self.recorder.recordEventDuration(erd.Times.d0, self.iteration, time.time() - t)
-        self.leElapsedTime.setText('{:.4f}'.format(time.time() - t))
+        elapsedTime = time.time() - startingTime
+        self.recorder.recordEventDuration(erd.Times.d0, self.iteration, elapsedTime)
+        self.leElapsedTime.setText('{:.4f}'.format(elapsedTime))
         self.leCurrentVolume.setText('%d' % self.iteration)
 
-        logger.info('Elapsed time: {:.4f} s', time.time() - t)
+        logger.info('Elapsed time: {:.4f} s', elapsedTime)
 
         QApplication.processEvents()
 
@@ -1303,6 +1303,9 @@ class OpenNFT(QWidget):
             self.eng.workspace['rtQA_python'] = self.windowRTQA.data_packing()
             self.nfbFinStarted = self.eng.nfbSave(self.iteration, nargout=0, async=True)
             self.fFinNFB = False
+
+        logger.info("Average elapsed time: {:.4f} s".format(
+            np.sum(self.recorder.records[1:, erd.Times.d0])/self.recorder.records[0, erd.Times.d0]))
 
         logger.info('Finished.')
 
