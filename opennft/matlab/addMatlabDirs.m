@@ -6,7 +6,7 @@ function addMatlabDirs()
 % Written by Artem Nikonorov, Yury Koush
 
 addpath(pathdef);
-folders = {'utils', 'nfbDCM', 'nfbPreprSig', 'nfbPreprVol', 'nfbDispl', 'mlniexp'};
+folders = {'utils', 'nfbDCM', 'nfbPreprSig', 'nfbPreprVol', 'nfbDispl', 'rtqa', 'mlniexp'};
 for i = 1:length(folders)
     folder = [pwd filesep folders{i}];
     if exist(folder)
