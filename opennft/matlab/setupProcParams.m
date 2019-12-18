@@ -22,6 +22,13 @@ function setupProcParams()
 
 P = evalin('base', 'P');
 mainLoopData = evalin('base', 'mainLoopData');
+rtQA_matlab = evalin('base', 'rtQA_matlab');
+
+evalin('base', 'clear mmImgViewTempl;');
+evalin('base', 'clear mmStatVol;');
+evalin('base', 'clear mmStatMap;');
+evalin('base', 'clear mmStatMap_neg;');
+evalin('base', 'clear mmOrthView;');
 
 [isPSC, isDCM, isSVM, isIGLM] = getFlagsType(P);
 
@@ -85,10 +92,10 @@ fNegatDerivSpike = 0;
 S(1:P.NrROIs) = S;
 fPositDerivSpike(1:P.NrROIs) = fPositDerivSpike;
 fNegatDerivSpike(1:P.NrROIs) = fNegatDerivSpike;
-
 mainLoopData.S = S;
 mainLoopData.fPositDerivSpike(1:P.NrROIs) = fPositDerivSpike;
 mainLoopData.fNegatDerivSpike(1:P.NrROIs) = fNegatDerivSpike;
+
 
 % Scaling Init
 tmp_posMin(1:P.NrROIs) = 0;
@@ -111,6 +118,44 @@ mainLoopData.mposMin = [];
 
 mainLoopData.blockNF = 0;
 mainLoopData.firstNF = 0;
+
+rtQA_python.meanSNR = [];
+rtQA_python.m2SNR = [];
+rtQA_python.rSNR = [];
+rtQA_python.meanBas = [];
+rtQA_python.varBas = [];
+rtQA_python.meanCond = [];
+rtQA_python.varCond = [];
+rtQA_python.rCNR = [];
+rtQA_python.excFDIndexes_1 = [];
+rtQA_python.excFDIndexes_2 = [];
+rtQA_python.excMDIndexes = [];
+
+rtQA_matlab.kalmanSpikesPos = zeros(P.NrROIs,P.VolumesNumber);
+rtQA_matlab.kalmanSpikesNeg = zeros(P.NrROIs,P.VolumesNumber);
+
+rtQA_matlab.snrData.snrVol = [];
+rtQA_matlab.snrData.meanSmoothed = [];
+rtQA_matlab.snrData.m2Smoothed = [];
+rtQA_matlab.snrData.meanNonSmoothed = [];
+rtQA_matlab.snrData.m2NonSmoothed = [];
+rtQA_matlab.snrMapCreated = 0; 
+
+if ~P.isRestingState
+    rtQA_matlab.cnrData.cnrVol = []
+    
+    rtQA_matlab.cnrData.basData.mean = [];
+    rtQA_matlab.cnrData.basData.m2 = [];
+    rtQA_matlab.cnrData.basData.meanSmoothed = [];
+    rtQA_matlab.cnrData.basData.m2Smoothed = [];
+    rtQA_matlab.cnrData.basData.iteration = 1;
+
+    rtQA_matlab.cnrData.condData.mean = [];
+    rtQA_matlab.cnrData.condData.m2 = [];
+    rtQA_matlab.cnrData.condData.meanSmoothed = [];
+    rtQA_matlab.cnrData.condData.m2Smoothed = [];
+    rtQA_matlab.cnrData.condData.iteration = 1;
+end
 
 %% DCM Settings
 if isDCM
@@ -174,71 +219,106 @@ P.isLinRegr = true;
 P.linRegr = zscore((1:double(P.NrOfVolumes-P.nrSkipVol))');
 
 SPM = setupSPM(P);
+% TODO: To check
+% High-pass filter
+mainLoopData.K.X0 = SPM.xX.K.X0;
 
-if ~P.iglmAR1
-    % exclude constant regressor
-    mainLoopData.basFct = SPM.xX.X(:,1:end-1);
+if ~P.isRestingState
+    tmpindexesCond = find(SPM.xX.X(:,2)>0.6);
+    tmpindexesBas = find(SPM.xX.X(:,2)<0.1);
+    indexesBas = tmpindexesBas(1:end-1)+1;
+    indexesCond = tmpindexesCond-1;
+    P.inds = { indexesBas, indexesCond }
+    rtQA_matlab.cnrData.basData.indexesBas = indexesBas;
+    rtQA_matlab.cnrData.condData.indexesCond = indexesCond;
+end
+    
+if ~P.isRestingState
+    
+    if ~P.iglmAR1
+        % exclude constant regressor
+        mainLoopData.basFct = SPM.xX.X(:,1:end-1);
+    else
+        % exclude constant regressor
+        mainLoopData.basFct = arRegr(P.aAR1, SPM.xX.X(:,1:end-1));
+    end
+    [mainLoopData.numscan, mainLoopData.nrBasFct] = size(mainLoopData.basFct);
+    % see notes above definition of spmMaskTh value
+    mainLoopData.spmMaskTh = mean(SPM.xM.TH)*ones(size(SPM.xM.TH)); % SPM.xM.TH;
+    mainLoopData.pVal = .01;
+    mainLoopData.statMap3D_iGLM = [];
+
+    % PSC
+    if isPSC && strcmp(P.Prot, 'Cont') && ~fIMAPH
+        tmpSpmDesign = SPM.xX.X(1:P.NrOfVolumes-P.nrSkipVol, 2);
+        % this contrast does not count constant term
+        mainLoopData.tContr.pos =  [-1 1]';
+        mainLoopData.tContr.neg =  [1 -1]';
+    end
+
+    if isPSC && strcmp(P.Prot, 'Inter') && ~fIMAPH
+        tmpSpmDesign = SPM.xX.X(1:P.NrOfVolumes-P.nrSkipVol, 2);
+        % this contrast does not count constant term
+        mainLoopData.tContr.pos =  [-1 1 -1]';
+        mainLoopData.tContr.neg =  [1 -1 1]';
+    end
+
+    % PSC (Phillips)
+    if isPSC && strcmp(P.Prot, 'Cont') && fIMAPH
+        tmpSpmDesign = SPM.xX.X(1:P.NrOfVolumes-P.nrSkipVol,1);
+        % this contrast does not count constant term
+        mainLoopData.tContr.pos = [1];
+        mainLoopData.tContr.neg = [-1];
+    end
+
+    % DCM
+    if isDCM && strcmp(P.Prot, 'InterBlock')
+        % this contrast does not count constant term
+        tmpSpmDesign = SPM.xX.X(1:P.lengthDCMTrial,2);
+        mainLoopData.tContr.pos = [-1; 1];
+        mainLoopData.tContr.neg = [1; -1];
+        [mainLoopData.DCM_EN, mainLoopData.dcmParTag, ...
+            mainLoopData.dcmParOpp] = dcmPrep(SPM);
+    end
+
+    % SVM
+    if isSVM && strcmp(P.Prot, 'Cont')
+        mainLoopData.basFct = mainLoopData.basFct(:,2);
+        mainLoopData.nrBasFct = 1;
+        % this contrast does not count constant term
+        tmpSpmDesign = SPM.xX.X(1:P.NrOfVolumes-P.nrSkipVol,strcmp(P.CondNames,P.CondName));
+        mainLoopData.tContr.pos = [1];
+        mainLoopData.tContr.neg = [-1];
+    end
+
+    %% Explicit contrasts (optional)
+    if isfield(P,'Contrast')
+        mainLoopData.tContr.pos = P.Contrast; 
+        mainLoopData.tContr.neg = -P.Contrast; 
+    end
+
+    %% High-pass filter for iGLM given by SPM
+    mainLoopData.K = SPM.xX.K;
+
+    clear SPM
+
+    %% AR(1) for cGLM in signal preproessing
+    if ~P.iglmAR1
+        P.spmDesign = tmpSpmDesign;
+    else
+        P.spmDesign = arRegr(P.aAR1, tmpSpmDesign);
+    end
 else
-    % exclude constant regressor
-    mainLoopData.basFct = arRegr(P.aAR1, SPM.xX.X(:,1:end-1));
-end
-[mainLoopData.numscan, mainLoopData.nrBasFct] = size(mainLoopData.basFct);
-% see notes above definition of spmMaskTh value
-mainLoopData.spmMaskTh = mean(SPM.xM.TH)*ones(size(SPM.xM.TH)); % SPM.xM.TH;
-mainLoopData.pVal = .01;
-mainLoopData.statMap3D_iGLM = [];
-
-% PSC
-if isPSC && (strcmp(P.Prot, 'Cont') || strcmp(P.Prot, 'ContTask')) && ~fIMAPH
-    tmpSpmDesign = SPM.xX.X(1:P.NrOfVolumes-P.nrSkipVol, 2);
-    % this contrast does not count constant term
-    mainLoopData.tContr = strcmp(P.CondNames,P.CondName)';
-end
-
-if isPSC && strcmp(P.Prot, 'Inter') && ~fIMAPH
-    tmpSpmDesign = SPM.xX.X(1:P.NrOfVolumes-P.nrSkipVol, 2);
-    % this contrast does not count constant term
-    mainLoopData.tContr = strcmp(P.CondNames,P.CondName)';
-end
-
-% PSC (Phillips)
-if isPSC && (strcmp(P.Prot, 'Cont') || strcmp(P.Prot, 'ContTask')) && fIMAPH
-    tmpSpmDesign = SPM.xX.X(1:P.NrOfVolumes-P.nrSkipVol,1);
-    % this contrast does not count constant term
-    mainLoopData.tContr = [1];
-end
-
-% DCM
-if isDCM && strcmp(P.Prot, 'InterBlock')
-    % this contrast does not count constant term
-    tmpSpmDesign = SPM.xX.X(1:P.lengthDCMTrial,2);
-    mainLoopData.tContr = [-1; 1];
-    [mainLoopData.DCM_EN, mainLoopData.dcmParTag, ...
-        mainLoopData.dcmParOpp] = dcmPrep(SPM);
-end
-
-% SVM
-if isSVM && strcmp(P.Prot, 'Cont')
-    mainLoopData.basFct = mainLoopData.basFct(:,2);
-    mainLoopData.nrBasFct = 1;
-    % this contrast does not count constant term
-    tmpSpmDesign = SPM.xX.X(1:P.NrOfVolumes-P.nrSkipVol,strcmp(P.CondNames,P.CondName));
-    mainLoopData.tContr = [1];
-end
-
-%% Explicit contrasts (optional)
-if isfield(P,'Contrast'), mainLoopData.tContr = P.Contrast; end
-
-%% High-pass filter for iGLM given by SPM
-mainLoopData.K = SPM.xX.K;
-
-clear SPM
-
-%% AR(1) for cGLM in signal preproessing
-if ~P.iglmAR1
-    P.spmDesign = tmpSpmDesign;
-else
-    P.spmDesign = arRegr(P.aAR1, tmpSpmDesign);
+    mainLoopData.basFct = [];
+    mainLoopData.nrBasFct = 0;
+    mainLoopData.numscan = 0;
+    [mainLoopData.numscan, mainLoopData.nrHighPassFct] = size(mainLoopData.K.X0);
+    P.spmDesign = [];
+    mainLoopData.tContr.pos = ones(6,1);
+    mainLoopData.tContr.neg = -ones(6,1);
+    mainLoopData.spmMaskTh = mean(SPM.xM.TH)*ones(size(SPM.xM.TH));
+    mainLoopData.pVal = .1;
+    mainLoopData.statMap3D_iGLM = [];
 end
 
 mainLoopData.mf = [];
@@ -277,6 +357,8 @@ if ~exist(P.nfbDataFolder, 'dir')
     mkdir(P.nfbDataFolder);
 end
 
+assignin('base', 'rtQA_matlab', rtQA_matlab);
+assignin('base', 'rtQA_python', rtQA_python);
 assignin('base', 'mainLoopData', mainLoopData);
 assignin('base', 'P', P);
 if P.UseTCPData, assignin('base', 'tcp', tcp); end

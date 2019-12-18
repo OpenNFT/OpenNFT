@@ -1,6 +1,6 @@
 function [outData, tmp_posMin, tmp_posMax] = ...
-    scaleTimeSeries(inTimeSeries, indVol, lengthSlWind, blockLength, ...
-    initLim, vectEncCond, tmp_posMin, tmp_posMax)
+    scaleTimeSeries(inTimeSeries, indVol, lengthSlWind, ...
+    initLim, tmp_posMin, tmp_posMax, P)
 % Function to scale time-series.
 %
 % input:
@@ -52,9 +52,44 @@ else
     tmp_max = median(sKalmanProcTimeSeries(end-nrElem:end));
     tmp_min = median(sKalmanProcTimeSeries(1:nrElem+1));
 end
-if (indVol<=blockLength) || (indVol < lengthSlWind)
-    % First period or user defined time scaleTimeSeries
-    % max
+if ~P.isRestingState
+    if (indVol<=P.basBlockLength) || (indVol < lengthSlWind)
+        % First period or user defined time scaleTimeSeries
+        % max
+        if (tmp_max > initLim)
+            tmp_posMax = tmp_max;
+        else
+            tmp_posMax = initLim;
+        end
+        if (tmp_min < -initLim)
+            tmp_posMin = tmp_min;
+        else
+            tmp_posMin = -initLim;
+        end
+    else
+        chk_max = max(inTimeSeries(indVol - lengthSlWind + 1:indVol));
+        chk_min = min(inTimeSeries(indVol - lengthSlWind + 1:indVol));
+        if (indVol>P.basBlockLength) && ~(P.vectEncCond(indVol)==P.vectEncCond(indVol-1))
+            if (tmp_max > chk_max)
+                tmp_posMax = chk_max;
+            else
+                tmp_posMax = tmp_max;
+            end
+            if (tmp_min < chk_min)
+                tmp_posMin = chk_min;
+            else
+                tmp_posMin = tmp_min;
+            end
+        else
+            if (inTimeSeries(indVol) > tmp_posMax)
+                tmp_posMax = inTimeSeries(indVol);
+            end
+            if (inTimeSeries(indVol) < tmp_posMin)
+                tmp_posMin = inTimeSeries(indVol);
+            end
+        end
+    end
+else
     if (tmp_max > initLim)
         tmp_posMax = tmp_max;
     else
@@ -64,28 +99,6 @@ if (indVol<=blockLength) || (indVol < lengthSlWind)
         tmp_posMin = tmp_min;
     else
         tmp_posMin = -initLim;
-    end
-else
-    chk_max = max(inTimeSeries(indVol - lengthSlWind + 1:indVol));
-    chk_min = min(inTimeSeries(indVol - lengthSlWind + 1:indVol));
-    if (indVol>blockLength) && ~(vectEncCond(indVol)==vectEncCond(indVol-1))
-        if (tmp_max > chk_max)
-            tmp_posMax = chk_max;
-        else
-            tmp_posMax = tmp_max;
-        end
-        if (tmp_min < chk_min)
-            tmp_posMin = chk_min;
-        else
-            tmp_posMin = tmp_min;
-        end
-    else
-        if (inTimeSeries(indVol) > tmp_posMax)
-            tmp_posMax = inTimeSeries(indVol);
-        end
-        if (inTimeSeries(indVol) < tmp_posMin)
-            tmp_posMin = inTimeSeries(indVol);
-        end
     end
 end
 outData = (inTimeSeries(indVol) - tmp_posMin) / (tmp_posMax - tmp_posMin);
