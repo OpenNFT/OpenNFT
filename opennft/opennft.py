@@ -1304,8 +1304,9 @@ class OpenNFT(QWidget):
             self.nfbFinStarted = self.eng.nfbSave(self.iteration, nargout=0, async=True)
             self.fFinNFB = False
 
-        logger.info("Average elapsed time: {:.4f} s".format(
-            np.sum(self.recorder.records[1:, erd.Times.d0])/self.recorder.records[0, erd.Times.d0]))
+        if self.recorder.records:
+            logger.info("Average elapsed time: {:.4f} s".format(
+                np.sum(self.recorder.records[1:, erd.Times.d0])/self.recorder.records[0, erd.Times.d0]))
 
         logger.info('Finished.')
 
