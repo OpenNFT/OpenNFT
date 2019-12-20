@@ -872,9 +872,12 @@ class OpenNFT(QWidget):
         # Stop Elapsed time and record
         elapsedTime = time.time() - startingTime
         self.recorder.recordEventDuration(erd.Times.d0, self.iteration, elapsedTime)
+        self.recorder.files.append(fname)
+
         self.leElapsedTime.setText('{:.4f}'.format(elapsedTime))
         self.leCurrentVolume.setText('%d' % self.iteration)
 
+        # logger.info('**********  {}', self.recorder.files[-1])
         logger.info('Elapsed time: {:.4f} s', elapsedTime)
 
         QApplication.processEvents()
