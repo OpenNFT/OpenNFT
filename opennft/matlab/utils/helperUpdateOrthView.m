@@ -219,7 +219,7 @@ end
 % Calculate Stat
 [stat_imgt, stat_imgc, stat_imgs] = getOrthVol(coordParam, Image.vol, Image.mat);
 
-if strParam.modeDispl(1)
+if strParam.modeDispl(1) && P.isROI
     % Calculate ROIs
     roiCount = length(ROIs);
 
@@ -233,15 +233,7 @@ if strParam.modeDispl(1)
         P.tRoiBoundaries{j} = roiBoundaries(tRoiImg);
         P.cRoiBoundaries{j} = roiBoundaries(cRoiImg);
         P.sRoiBoundaries{j} = roiBoundaries(sRoiImg);
-        
-%         close all;
-%         figure(j);
-%         subplot(2,2,1)
-%         imshow(cRoiImg)
-%         subplot(2,2,2)
-%         imshow(sRoiImg)
-%         subplot(2,2,3)
-%         imshow(tRoiImg)
+
     end
 else
     P.tRoiBoundaries = {};

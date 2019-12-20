@@ -154,7 +154,7 @@ spm_smooth(reslVol, smReslVol, gKernel);
 
 statMap2D_pos = zeros(img2DdimY, img2DdimX);
 
-if indVolNorm > FIRST_SNR_VOLUME
+if P.isRTQA && indVolNorm > FIRST_SNR_VOLUME
     
     [ rtQA_matlab.snrData ] = snr_calc(indVolNorm, reslVol, smReslVol, rtQA_matlab.snrData, isSmoothed);
     
@@ -240,6 +240,7 @@ if P.iglmAR1
 end
 
 tStopSm = toc(tStartMotCorr);
+indIglm = 1;
 
 %% iGLM 
 if isDCM

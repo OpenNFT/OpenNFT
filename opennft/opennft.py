@@ -548,6 +548,8 @@ class OpenNFT(QWidget):
             'cRoiBoundaries': [],
             'sRoiBoundaries': [],
             'isRestingState': self.P['isRestingState'],
+            'isIGLM': self.P['isIGLM'],
+            'isROI': config.USE_ROI,
         }
 
         self.engSPM.helperPrepareOrthView(self.spmHelperP, 'bgEPI', nargout=0)
@@ -870,7 +872,7 @@ class OpenNFT(QWidget):
         init = self.iteration == (self.P['nrSkipVol'] + 1)
 
         # rtQA calculation for time-series
-        if bool(self.outputSamples):
+        if bool(self.outputSamples) and self.P['isRTQA']:
             dataRealRaw = np.array(self.outputSamples['rawTimeSeries'], ndmin=2)
             dataMC = np.array(self.outputSamples['motCorrParam'], ndmin=2)
             n = len(dataRealRaw[0, :])-1
@@ -1225,7 +1227,8 @@ class OpenNFT(QWidget):
             self.initUdpSender()
 
             self.btnStart.setEnabled(True)
-            self.btnRTQA.setEnabled(True)
+            if self.P['isRTQA']:
+                self.btnRTQA.setEnabled(True)
 
             if self.P['isRestingState']:
                 xrange = (self.P['NrOfVolumes'] - self.P['nrSkipVol'])
@@ -1744,6 +1747,8 @@ class OpenNFT(QWidget):
         self.P['Prot'] = str(self.cbProt.currentText())
         self.P['Type'] = str(self.cbType.currentText())
         self.P['isRestingState'] = bool(self.cbProt.currentText() == "Rest")
+        self.P['isRTQA'] = config.USE_RTQA;
+        self.P['isIGLM'] = config.USE_IGLM;
 
         if self.P['Prot'] == 'ContTask':
             self.P['TaskFolder'] = self.leTaskFolder.text()
