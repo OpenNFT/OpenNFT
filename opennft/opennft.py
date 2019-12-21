@@ -191,6 +191,7 @@ class OpenNFT(QWidget):
         self.call_timer = QTimer(self)
         self.files_queue = queue.Queue()
         self.fs_observer = Observer()
+        self.isOffline = None
         self.files_processed = []
         self.files_exported = []
 
@@ -658,14 +659,14 @@ class OpenNFT(QWidget):
                 if (self.previousIterStartTime > 0) and (self.preiteration < self.iteration):
                     if (time.time() - self.previousIterStartTime) > (self.P['TR'] / 1000):
                         logger.info('Scanner is too slow...')
-                if not self.cbOfflineMode.isChecked() and len(self.files_exported) > 0:
+                if not self.isOffline and len(self.files_exported) > 0:
                     fname = None
                 else:
                     self.preiteration = self.iteration
                     self.isMainLoopEntered = False
                     return
 
-            if not self.cbOfflineMode.isChecked() and self.files_queue.qsize() > 0:
+            if not self.isOffline and self.files_queue.qsize() > 0:
                 logger.info("Toolbox is too slow, on file {}", fname)
                 logger.info("{} files in queue", self.files_queue.qsize())
 
@@ -674,7 +675,7 @@ class OpenNFT(QWidget):
         # data acquisition
         if fname is not None:
             path = os.path.join(self.P['WatchFolder'], fname)
-            if (not(self.cbUseTCPData.isChecked()) or not(self.reachedFirstFile)) and not(self.cbOfflineMode.isChecked()):
+            if (not(self.cbUseTCPData.isChecked()) or not(self.reachedFirstFile)) and not self.isOffline:
                 if not self.checkFileIsReady(path, fname):
                     self.isMainLoopEntered = False
                     return
@@ -682,7 +683,7 @@ class OpenNFT(QWidget):
             self.files_exported.append(fname)
 
         # check file sequence
-        if not self.cbOfflineMode.isChecked() and len(self.files_processed) > 0:
+        if (not self.isOffline) and (len(self.files_processed) > 0):
 
             last_fname = self.files_processed[-1]
             r = re.findall(r'\D(\d+).\w+$', last_fname)
@@ -1154,6 +1155,7 @@ class OpenNFT(QWidget):
             # -self.chooseSetFile(self.leSetFile.text())
 
             self.actualize()
+            self.isOffline = self.cbOfflineMode.isChecked()
 
             memMapFile = self.getFreeMemmapFilename()
             memMapFile = memMapFile.replace('OrthView', 'shared')
@@ -1272,7 +1274,7 @@ class OpenNFT(QWidget):
         self.preiteration = 0
         self.fFinNFB = True
 
-        if self.cbOfflineMode.isChecked():
+        if self.isOffline:
             if not config.USE_FAST_OFFLINE_LOOP:
                 config.MAIN_LOOP_CALL_PERIOD = self.P['TR']
             self.startInOfflineMode()
