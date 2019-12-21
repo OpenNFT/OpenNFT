@@ -191,6 +191,8 @@ class OpenNFT(QWidget):
         self.call_timer = QTimer(self)
         self.files_queue = queue.Queue()
         self.fs_observer = Observer()
+        self.files_processed = []
+        self.files_exported = []
 
         self.eng = None
         self.engSPM = None
@@ -656,9 +658,12 @@ class OpenNFT(QWidget):
                 if (self.previousIterStartTime > 0) and (self.preiteration < self.iteration):
                     if (time.time() - self.previousIterStartTime) > (self.P['TR'] / 1000):
                         logger.info('Scanner is too slow...')
-                self.isMainLoopEntered = False
-                self.preiteration = self.iteration
-                return
+                if not self.cbOfflineMode.isChecked() and len(self.files_exported) > 0:
+                    fname = None
+                else:
+                    self.preiteration = self.iteration
+                    self.isMainLoopEntered = False
+                    return
 
             if not self.cbOfflineMode.isChecked() and self.files_queue.qsize() > 0:
                 logger.info("Toolbox is too slow, on file {}", fname)
@@ -666,22 +671,38 @@ class OpenNFT(QWidget):
 
         self.preiteration = self.iteration
 
-        path = os.path.join(self.P['WatchFolder'], fname)
-        # if False: # this unfortunately doesn't work
-        #    try:
-        #        f = open(path, 'a')
-        #        f.close()
-        #    except IOError as e:
-        #        logger.info('Acquisition in progress - "{}"', fname)
-        #        self.files_queue.put_nowait(fname)
-        #        self.isMainLoopEntered = False
-        #        return
-
         # data acquisition
-        if (not(self.cbUseTCPData.isChecked()) or not(self.reachedFirstFile)) and not(self.cbOfflineMode.isChecked()):
-            if not self.checkFileIsReady(path, fname):
+        if fname is not None:
+            path = os.path.join(self.P['WatchFolder'], fname)
+            if (not(self.cbUseTCPData.isChecked()) or not(self.reachedFirstFile)) and not(self.cbOfflineMode.isChecked()):
+                if not self.checkFileIsReady(path, fname):
+                    self.isMainLoopEntered = False
+                    return
+
+            self.files_exported.append(fname)
+
+        # check file sequence
+        if not self.cbOfflineMode.isChecked() and len(self.files_processed) > 0:
+
+            last_fname = self.files_processed[-1]
+            r = re.findall(r'\D(\d+).\w+$', last_fname)
+            last_num = int(r[-1])
+            new_fname = fname
+            fname = None
+            for cur_fname in self.files_exported:
+                r = re.findall(r'\D(\d+).\w+$', cur_fname)
+                cur_num = int(r[-1])
+                if cur_num - last_num == 1:
+                    fname = cur_fname
+                    break
+
+            if fname is None:
+                if new_fname is not None:
+                    logger.warning('Non-sequental export: ' + new_fname)
                 self.isMainLoopEntered = False
                 return
+            else:
+                self.files_exported.remove(fname)
 
         # t2
         self.recorder.recordEvent(erd.Times.t2, self.iteration)
@@ -872,7 +893,7 @@ class OpenNFT(QWidget):
         # Stop Elapsed time and record
         elapsedTime = time.time() - startingTime
         self.recorder.recordEventDuration(erd.Times.d0, self.iteration, elapsedTime)
-        self.recorder.files.append(fname)
+        self.files_processed.append(fname)
 
         self.leElapsedTime.setText('{:.4f}'.format(elapsedTime))
         self.leCurrentVolume.setText('%d' % self.iteration)
@@ -1307,7 +1328,7 @@ class OpenNFT(QWidget):
             self.nfbFinStarted = self.eng.nfbSave(self.iteration, nargout=0, async=True)
             self.fFinNFB = False
 
-        if self.recorder.records is None:
+        if self.recorder.records is not None:
             logger.info("Average elapsed time: {:.4f} s".format(
                 np.sum(self.recorder.records[1:, erd.Times.d0])/self.recorder.records[0, erd.Times.d0]))
 

@@ -51,7 +51,6 @@ class EventRecorder(object):
     def __init__(self):
         # TODO: change to dataframe
         self.records = None
-        self.files = []
 
     # --------------------------------------------------------------------------
     def initialize(self, NrOfVolumes):
