@@ -207,11 +207,13 @@ class OpenNFT(QWidget):
         matlab_helpers = runmatlab.get_matlab_helpers()
 
         self.mlMainHelper = matlab_helpers[config.MAIN_MATLAB_NAME]
-        self.mlPtbDcmHelper = matlab_helpers[config.PTB_MATLAB_NAME]
+        if not config.DISABLE_PTB:
+            self.mlPtbDcmHelper = matlab_helpers[config.PTB_MATLAB_NAME]
         self.mlSpmHelper = matlab_helpers[config.SPM_MATLAB_NAME]
         self.mlModelHelper = matlab_helpers.get(config.MODEL_HELPER_MATLAB_NAME)
 
-        self.ptbScreen = ptbscreen.PtbScreen(self.mlPtbDcmHelper, self.recorder, self.endDisplayEvent)
+        if not config.DISABLE_PTB:
+            self.ptbScreen = ptbscreen.PtbScreen(self.mlPtbDcmHelper, self.recorder, self.endDisplayEvent)
 
         self.P = {}
         self.mainLoopData = {}
@@ -1067,14 +1069,16 @@ class OpenNFT(QWidget):
             return
 
         logger.info('Using Matlab session "{}" as MAIN', self.mlMainHelper.name)
-        logger.info('Using Matlab session "{}" for PTB', self.mlPtbDcmHelper.name)
+        if not config.DISABLE_PTB:
+            logger.info('Using Matlab session "{}" for PTB', self.mlPtbDcmHelper.name)
         logger.info('Using Matlab session "{}" for SPM', self.mlSpmHelper.name)
 
         if config.USE_MATLAB_MODEL_HELPER:
             logger.info('Using Matlab session "{}" for Model Helper', self.mlModelHelper.name)
 
         self.mlMainHelper.prepare()
-        self.mlPtbDcmHelper.prepare()
+        if not config.DISABLE_PTB:
+            self.mlPtbDcmHelper.prepare()
         self.mlSpmHelper.prepare()
         if config.USE_MATLAB_MODEL_HELPER:
             self.mlModelHelper.prepare()
@@ -1330,9 +1334,10 @@ class OpenNFT(QWidget):
             self.nfbFinStarted = self.eng.nfbSave(self.iteration, nargout=0, async=True)
             self.fFinNFB = False
 
-        if self.recorder.records is not None:
-            logger.info("Average elapsed time: {:.4f} s".format(
-                np.sum(self.recorder.records[1:, erd.Times.d0])/self.recorder.records[0, erd.Times.d0]))
+        if self.recorder.records.shape[0] > 2:
+            if self.recorder.records[0, erd.Times.d0] > 0:
+                logger.info("Average elapsed time: {:.4f} s".format(
+                    np.sum(self.recorder.records[1:, erd.Times.d0])/self.recorder.records[0, erd.Times.d0]))
 
         logger.info('Finished.')
 
@@ -1627,6 +1632,10 @@ class OpenNFT(QWidget):
         self.cbNegFeedback.setChecked(str(self.settings.value('NegFeedback', 'false')).lower() == 'true')
 
         self.cbUsePTB.setChecked(str(self.settings.value('UsePTB', 'false')).lower() == 'true')
+        if config.DISABLE_PTB:
+            self.cbUsePTB.setChecked(False)
+            self.cbUsePTB.setEnabled(False)
+
         self.cbScreenId.setCurrentIndex(int(self.settings.value('DisplayFeedbackScreenID', 0)))
         self.cbDisplayFeedbackFullscreen.setChecked(
             str(self.settings.value('DisplayFeedbackFullscreen')).lower() == 'true')

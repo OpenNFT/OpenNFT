@@ -36,19 +36,20 @@ def get_matlab_helpers() -> typing.Dict[str, mlproc.MatlabSharedEngineHelper]:
                 startup_options=config.MAIN_MATLAB_STARTUP_OPTIONS,
             )),
 
-            # Matlab helper processs for display using Psychtoolbox (aka Ptb)
-            # with possible reusing for first model computation
-            (config.PTB_MATLAB_NAME, create_matlab_helper(
-                engine_name=config.PTB_MATLAB_NAME,
-                startup_options=config.PTB_MATLAB_STARTUP_OPTIONS,
-            )),
-
             # Matlab helper processs for GUI data estimation
             (config.SPM_MATLAB_NAME, create_matlab_helper(
                 engine_name=config.SPM_MATLAB_NAME,
                 startup_options=config.SPM_MATLAB_STARTUP_OPTIONS,
             )),
         ]
+
+        # Matlab helper processs for display using Psychtoolbox (aka Ptb)
+        # with possible reusing for first model computation
+        if not config.DISABLE_PTB:
+            helpers.append((config.PTB_MATLAB_NAME, create_matlab_helper(
+                engine_name=config.PTB_MATLAB_NAME,
+                startup_options=config.PTB_MATLAB_STARTUP_OPTIONS,
+            )))
 
         if config.USE_MATLAB_MODEL_HELPER:
             # Matlab helper processs for second model computation
