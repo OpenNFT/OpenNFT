@@ -15,11 +15,17 @@ import shutil
 from time import sleep
 import glob
 
+delete_files = True
+
+mask = "001_000007_000"
+fns = [1, 2, 3, 4, 6, 5, 7, 8]
+#fns = None
+
 testCase = 'PSC'
 
 if testCase == 'PSC':
-    srcpath = 'C:/_RT/rtData/NF_PSC/NF_Run_1_src'
-    dstpath = 'C:/_RT/rtData/NF_PSC/NF_Run_1'
+    srcpath = 'C:/_RT/rtData/NF_PSC/NF_Run_1'
+    dstpath = 'C:/_RT/rtData/NF_PSC/NF_Run_RT'
     pause_in_sec = 1
 
 elif testCase == 'SVM':
@@ -32,17 +38,23 @@ elif testCase == 'DCM':
     dstpath = 'C:/_RT/rtData/NF_DCM/NF_Run_1'
     pause_in_sec = 1
 
-delete_files = True
-
 if delete_files:
     files = glob.glob(dstpath+'/*')
     for f in files:
         os.remove(f)
 
-for filename in os.listdir(srcpath):
+if fns is None:
+    filelist = os.listdir(srcpath)
+else:
+    filelist = []
+    for fn in fns:
+        fname = "{0}{1:03d}.dcm".format(mask, fn)
+        filelist.append(fname)
+
+for filename in filelist:
     src = os.path.join(srcpath, filename)
     if os.path.isfile(src):
-    	dst = os.path.join(dstpath, filename)
-    	shutil.copy(src, dst)
-    	print(filename)
-    	sleep(pause_in_sec) # seconds
+        dst = os.path.join(dstpath, filename)
+        shutil.copy(src, dst)
+        print(filename)
+        sleep(pause_in_sec) # seconds

@@ -49,7 +49,9 @@ class EventRecorder(object):
 
     # --------------------------------------------------------------------------
     def __init__(self):
-        self.records = None
+        # TODO: change to dataframe
+        timeVectorLength = len(list(Times))
+        self.records = np.zeros((1, timeVectorLength), dtype=np.dtype('Float64'))
 
     # --------------------------------------------------------------------------
     def initialize(self, NrOfVolumes):

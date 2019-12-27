@@ -221,6 +221,9 @@ class OpenNFT(QWidget):
         self.call_timer = QTimer(self)
         self.files_queue = queue.Queue()
         self.fs_observer = Observer()
+        self.isOffline = None
+        self.files_processed = []
+        self.files_exported = []
 
         self.eng = None
         self.engSPM = None
@@ -236,11 +239,13 @@ class OpenNFT(QWidget):
         matlab_helpers = runmatlab.get_matlab_helpers()
 
         self.mlMainHelper = matlab_helpers[config.MAIN_MATLAB_NAME]
-        self.mlPtbDcmHelper = matlab_helpers[config.PTB_MATLAB_NAME]
+        if not config.DISABLE_PTB:
+            self.mlPtbDcmHelper = matlab_helpers[config.PTB_MATLAB_NAME]
         self.mlSpmHelper = matlab_helpers[config.SPM_MATLAB_NAME]
         self.mlModelHelper = matlab_helpers.get(config.MODEL_HELPER_MATLAB_NAME)
 
-        self.ptbScreen = ptbscreen.PtbScreen(self.mlPtbDcmHelper, self.recorder, self.endDisplayEvent)
+        if not config.DISABLE_PTB:
+            self.ptbScreen = ptbscreen.PtbScreen(self.mlPtbDcmHelper, self.recorder, self.endDisplayEvent)
 
         self.P = {}
         self.mainLoopData = {}
@@ -715,32 +720,51 @@ class OpenNFT(QWidget):
                 if (self.previousIterStartTime > 0) and (self.preiteration < self.iteration):
                     if (time.time() - self.previousIterStartTime) > (self.P['TR'] / 1000):
                         logger.info('Scanner is too slow...')
-                self.isMainLoopEntered = False
-                self.preiteration = self.iteration
-                return
+                if not self.isOffline and len(self.files_exported) > 0:
+                    fname = None
+                else:
+                    self.preiteration = self.iteration
+                    self.isMainLoopEntered = False
+                    return
 
-            if not self.cbOfflineMode.isChecked() and self.files_queue.qsize() > 0:
+            if not self.isOffline and self.files_queue.qsize() > 0:
                 logger.info("Toolbox is too slow, on file {}", fname)
                 logger.info("{} files in queue", self.files_queue.qsize())
 
         self.preiteration = self.iteration
 
-        path = os.path.join(self.P['WatchFolder'], fname)
-        # if False: # this unfortunately doesn't work
-        #    try:
-        #        f = open(path, 'a')
-        #        f.close()
-        #    except IOError as e:
-        #        logger.info('Acquisition in progress - "{}"', fname)
-        #        self.files_queue.put_nowait(fname)
-        #        self.isMainLoopEntered = False
-        #        return
-
         # data acquisition
-        if (not(self.cbUseTCPData.isChecked()) or not(self.reachedFirstFile)) and not(self.cbOfflineMode.isChecked()):
-            if not self.checkFileIsReady(path, fname):
+        if fname is not None:
+            path = os.path.join(self.P['WatchFolder'], fname)
+            if (not(self.cbUseTCPData.isChecked()) or not(self.reachedFirstFile)) and not self.isOffline:
+                if not self.checkFileIsReady(path, fname):
+                    self.isMainLoopEntered = False
+                    return
+
+            self.files_exported.append(fname)
+
+        # check file sequence
+        if (not self.isOffline) and (len(self.files_processed) > 0):
+
+            last_fname = self.files_processed[-1]
+            r = re.findall(r'\D(\d+).\w+$', last_fname)
+            last_num = int(r[-1])
+            new_fname = fname
+            fname = None
+            for cur_fname in self.files_exported:
+                r = re.findall(r'\D(\d+).\w+$', cur_fname)
+                cur_num = int(r[-1])
+                if cur_num - last_num == 1:
+                    fname = cur_fname
+                    break
+
+            if fname is None:
+                if new_fname is not None:
+                    logger.warning('Non-sequental export: ' + new_fname)
                 self.isMainLoopEntered = False
                 return
+            else:
+                self.files_exported.remove(fname)
 
         # t2
         self.recorder.recordEvent(erd.Times.t2, self.iteration)
@@ -932,9 +956,12 @@ class OpenNFT(QWidget):
         # Stop Elapsed time and record
         elapsedTime = time.time() - startingTime
         self.recorder.recordEventDuration(erd.Times.d0, self.iteration, elapsedTime)
+        self.files_processed.append(fname)
+
         self.leElapsedTime.setText('{:.4f}'.format(elapsedTime))
         self.leCurrentVolume.setText('%d' % self.iteration)
 
+        # logger.info('**********  {}', self.recorder.files[-1])
         logger.info('Elapsed time: {:.4f} s', elapsedTime)
 
         QApplication.processEvents()
@@ -1102,14 +1129,16 @@ class OpenNFT(QWidget):
             return
 
         logger.info('Using Matlab session "{}" as MAIN', self.mlMainHelper.name)
-        logger.info('Using Matlab session "{}" for PTB', self.mlPtbDcmHelper.name)
+        if not config.DISABLE_PTB:
+            logger.info('Using Matlab session "{}" for PTB', self.mlPtbDcmHelper.name)
         logger.info('Using Matlab session "{}" for SPM', self.mlSpmHelper.name)
 
         if config.USE_MATLAB_MODEL_HELPER:
             logger.info('Using Matlab session "{}" for Model Helper', self.mlModelHelper.name)
 
         self.mlMainHelper.prepare()
-        self.mlPtbDcmHelper.prepare()
+        if not config.DISABLE_PTB:
+            self.mlPtbDcmHelper.prepare()
         self.mlSpmHelper.prepare()
         if config.USE_MATLAB_MODEL_HELPER:
             self.mlModelHelper.prepare()
@@ -1190,6 +1219,7 @@ class OpenNFT(QWidget):
             # -self.chooseSetFile(self.leSetFile.text())
 
             self.actualize()
+            self.isOffline = self.cbOfflineMode.isChecked()
 
             memMapFile = self.getFreeMemmapFilename()
             memMapFile = memMapFile.replace('OrthView', 'shared')
@@ -1311,7 +1341,7 @@ class OpenNFT(QWidget):
         self.preiteration = 0
         self.fFinNFB = True
 
-        if self.cbOfflineMode.isChecked():
+        if self.isOffline:
             if not config.USE_FAST_OFFLINE_LOOP:
                 config.MAIN_LOOP_CALL_PERIOD = self.P['TR']
             self.startInOfflineMode()
@@ -1368,8 +1398,10 @@ class OpenNFT(QWidget):
             self.nfbFinStarted = self.eng.nfbSave(self.iteration, nargout=0, async=True)
             self.fFinNFB = False
 
-        logger.info("Average elapsed time: {:.4f} s".format(
-            np.sum(self.recorder.records[1:, erd.Times.d0])/self.recorder.records[0, erd.Times.d0]))
+        if self.recorder.records.shape[0] > 2:
+            if self.recorder.records[0, erd.Times.d0] > 0:
+                logger.info("Average elapsed time: {:.4f} s".format(
+                    np.sum(self.recorder.records[1:, erd.Times.d0])/self.recorder.records[0, erd.Times.d0]))
 
         logger.info('Finished.')
 
@@ -1665,6 +1697,10 @@ class OpenNFT(QWidget):
         self.cbNegFeedback.setChecked(str(self.settings.value('NegFeedback', 'false')).lower() == 'true')
 
         self.cbUsePTB.setChecked(str(self.settings.value('UsePTB', 'false')).lower() == 'true')
+        if config.DISABLE_PTB:
+            self.cbUsePTB.setChecked(False)
+            self.cbUsePTB.setEnabled(False)
+
         self.cbScreenId.setCurrentIndex(int(self.settings.value('DisplayFeedbackScreenID', 0)))
         self.cbDisplayFeedbackFullscreen.setChecked(
             str(self.settings.value('DisplayFeedbackFullscreen')).lower() == 'true')
