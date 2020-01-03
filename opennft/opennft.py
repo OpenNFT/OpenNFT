@@ -513,7 +513,8 @@ class OpenNFT(QWidget):
     # --------------------------------------------------------------------------
     def initializePlugins(self):
         for i in range(len(self.plugins)):
-            self.plugins[i]['object'] = eval("self.plugins[i]['module']." + self.plugins[i]['module'].META['plugin_init'].format(**self.P))
+            if len(self.plugins[i]['module'].META['plugin_init']):
+                self.plugins[i]['object'] = eval("self.plugins[i]['module']." + self.plugins[i]['module'].META['plugin_init'].format(**self.P))
     
     # --------------------------------------------------------------------------
     def finalizePlugins(self):
@@ -1230,9 +1231,6 @@ class OpenNFT(QWidget):
             self.engSPM.workspace['P'] = self.P
             self.previousIterStartTime = 0
 
-            with utils.timeit("  Initialize plugins:"):
-                self.initializePlugins()
-            
             if not self.P['isRestingState']:
                 with utils.timeit("  Load protocol data:"):
                     self.loadProtocolData()
@@ -1241,6 +1239,9 @@ class OpenNFT(QWidget):
                 self.selectRoi()
 
             self.P.update(self.eng.workspace['P'])
+
+            with utils.timeit("  Initialize plugins:"):
+                self.initializePlugins()
 
             logger.info("  Setup plots...")
             if not self.P['isRestingState']:
