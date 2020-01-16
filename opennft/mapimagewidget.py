@@ -129,6 +129,7 @@ class MapImageThresholdsWidget(QtWidgets.QWidget):
 
         size_policy = self._colorbar_layout.sizePolicy()
         size_policy.setVerticalPolicy(QtWidgets.QSizePolicy.Fixed)
+        size_policy.setHorizontalPolicy(QtWidgets.QSizePolicy.Ignored)
         self._colorbar_layout.setSizePolicy(size_policy)
 
         self._colorbar_layout.ci.layout.setContentsMargins(0, 0, 0, 0)
@@ -140,6 +141,7 @@ class MapImageThresholdsWidget(QtWidgets.QWidget):
         layout.addWidget(self._lower_threshold_spinbox)
         layout.addWidget(self._colorbar_layout)
         layout.addWidget(self._upper_threshold_spinbox)
+        layout.setStretch(1, 1)
 
         self.setLayout(layout)
         self.setMaximumWidth(400)
