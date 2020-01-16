@@ -30,7 +30,7 @@ class RTQAWindow(QtWidgets.QWidget):
 
         self.musterInfo = musterInfo
 
-        self.comboBox.currentTextChanged.connect(self.onComboboxChanged)
+        # self.comboBox.currentTextChanged.connect(self.onComboboxChanged)
         self.mcrRadioButton.toggled.connect(self.onRadioButtonStateChanged)
 
         self.snrplot = pg.PlotWidget(self)
@@ -195,6 +195,8 @@ class RTQAWindow(QtWidgets.QWidget):
         self.posSpikes = dict.fromkeys(['{:d}'.format(x) for x in range(sz)], np.array(0))
         self.negSpikes = dict.fromkeys(['{:d}'.format(x) for x in range(sz)], np.array(0))
 
+        self.currentMode = 0;
+
     def onComboboxChanged(self):
 
         state = self.comboBox.currentIndex()
@@ -209,6 +211,8 @@ class RTQAWindow(QtWidgets.QWidget):
                 pens.append(pg.mkPen(color=config.ROI_PLOT_COLORS[i], width=1.2))
 
             self.makeTextValueLabel(self.valuesLabel, names, pens)
+
+            self.currentMode = 0;
 
             return
         if state == 1:
@@ -225,6 +229,9 @@ class RTQAWindow(QtWidgets.QWidget):
 
             self.makeTextValueLabel(self.valuesLabel, names, pens)
 
+            self.currentMode = 2;
+
+            return
         if state == 3:
             return
         if state == 4:

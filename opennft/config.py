@@ -114,7 +114,7 @@ HIDE_TEST_BTN = True
 
 USE_RTQA = True
 USE_IGLM = True
-USE_ROI = False
+USE_ROI = True
 FIRST_SNR_VOLUME = 2
 
 # FD defaults

@@ -72,6 +72,8 @@ from opennft import (
     eventrecorder as erd,
 )
 
+import matlab
+
 if config.USE_MRPULSE:
     from opennft import mrpulse
 
@@ -236,6 +238,8 @@ class OpenNFT(QWidget):
 
         self.windowRTQA = None
         self.isStopped = False
+
+        self.times = [0];
 
     # --------------------------------------------------------------------------
     def closeEvent(self, e):
@@ -897,6 +901,7 @@ class OpenNFT(QWidget):
 
         # Stop Elapsed time and record
         elapsedTime = time.time() - startingTime
+        self.times = np.append(self.times,elapsedTime)
         self.recorder.recordEventDuration(erd.Times.d0, self.iteration, elapsedTime)
         self.files_processed.append(fname)
 
@@ -1260,7 +1265,7 @@ class OpenNFT(QWidget):
 
             self.onChangeNegMapPolicy()
 
-            self.eng.assignin('base', 'rtQAMode', self.windowRTQA.comboBox.currentIndex(), nargout=0)
+            self.eng.assignin('base', 'rtQAMode', self.windowRTQA.currentMode, nargout=0)
             self.eng.assignin('base', 'isShowRtqaVol', self.windowRTQA.volumeCheckBox.isChecked(), nargout=0)
             self.eng.assignin('base', 'isSmoothed', self.windowRTQA.smoothedCheckBox.isChecked(), nargout=0)
             self.eng.assignin('base', 'imageViewMode', int(self.imageViewMode), nargout=0)
@@ -1295,7 +1300,8 @@ class OpenNFT(QWidget):
     def stop(self):
 
         self.isStopped = True
-
+        self.eng.workspace['times'] = matlab.double(self.times.tolist())
+        self.times = [0]
         self.btnStop.setEnabled(False)
         self.btnStart.setEnabled(False)
 
@@ -1363,7 +1369,9 @@ class OpenNFT(QWidget):
     # --------------------------------------------------------------------------
 
     def onModeChanged(self):
-        self.eng.assignin('base', 'rtQAMode', self.windowRTQA.comboBox.currentIndex(), nargout=0)
+
+        self.windowRTQA.onComboboxChanged()
+        self.eng.assignin('base', 'rtQAMode', self.windowRTQA.currentMode, nargout=0)
 
         self.onShowRtqaVol()
         self.updateOrthViewAsync()

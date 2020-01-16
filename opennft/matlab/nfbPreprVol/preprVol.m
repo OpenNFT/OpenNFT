@@ -152,7 +152,7 @@ mainLoopData.gKernel = gKernel;
 smReslVol = zeros(dimVol);
 spm_smooth(reslVol, smReslVol, gKernel);
 
-statMap2D_pos = zeros(img2DdimY, img2DdimX);
+% statMap2D_pos = zeros(img2DdimY, img2DdimX);
 
 if P.isRTQA && indVolNorm > FIRST_SNR_VOLUME
     
@@ -176,8 +176,8 @@ if P.isRTQA && indVolNorm > FIRST_SNR_VOLUME
         if imageViewMode == 1 || imageViewMode == 2
             % orthviewAnat (1) || orthviewEPI (2)
             fname = strrep(P.memMapFile, 'shared', 'RTQAVol');
-            m_out = memmapfile(fname, 'Writable', true, 'Format',  {'double', prod(dimVol), 'rtQAVol'});
-            m_out.Data.rtQAVol = double(outputVol(:));
+            m_out = evalin('base', 'mmrtQAVol');
+            m_out.Data.rtQAVol = outputVol;
 
         else
             % mosaic (0)
