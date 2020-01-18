@@ -239,8 +239,6 @@ class OpenNFT(QWidget):
         self.windowRTQA = None
         self.isStopped = False
 
-        self.times = [0];
-
     # --------------------------------------------------------------------------
     def closeEvent(self, e):
 
@@ -901,7 +899,6 @@ class OpenNFT(QWidget):
 
         # Stop Elapsed time and record
         elapsedTime = time.time() - startingTime
-        self.times = np.append(self.times,elapsedTime)
         self.recorder.recordEventDuration(erd.Times.d0, self.iteration, elapsedTime)
         self.files_processed.append(fname)
 
@@ -1300,8 +1297,6 @@ class OpenNFT(QWidget):
     def stop(self):
 
         self.isStopped = True
-        self.eng.workspace['times'] = matlab.double(self.times.tolist())
-        self.times = [0]
         self.btnStop.setEnabled(False)
         self.btnStart.setEnabled(False)
 

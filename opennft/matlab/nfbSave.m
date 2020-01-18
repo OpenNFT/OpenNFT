@@ -29,9 +29,6 @@ end
 
 folder = P.nfbDataFolder;
 
-times = evalin('base', 'times');
-save('C:\time_tests\times.mat', 'times');
-
 % save rtqa data
 save([folder '\rtQA_matlab.mat'], '-struct', 'rtQA_matlab');
 save([folder '\rtQA_python.mat'], '-struct', 'rtQA_python');
