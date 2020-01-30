@@ -1351,6 +1351,8 @@ class OpenNFT(QWidget):
 
         self.orthViewUpdateCheckTimer.stop()
         self.orthViewUpdateCheckTimer.start(50)
+        self.files_exported = []
+        self.files_processed = []
 
     # --------------------------------------------------------------------------
     def stop(self):
