@@ -53,6 +53,7 @@ from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 
 from pyniexp.connection import Udp
+from scipy.io import loadmat
 
 from PyQt5.QtWidgets import QApplication, QWidget, QDialog, QFileDialog
 from PyQt5.QtGui import QIcon, QPalette, QStandardItemModel, QStandardItem
@@ -249,6 +250,7 @@ class OpenNFT(QWidget):
 
         self.P = {}
         self.mainLoopData = {}
+        self.shamData = None
         self.rtQA_matlab = {}
         self.reultFromHelper = None
 
@@ -445,6 +447,8 @@ class OpenNFT(QWidget):
 
         self.cbDataType.currentTextChanged.connect(self.onChangeDataType)
         self.onChangeDataType()
+
+        self.btnChooseShamFile.clicked.connect(lambda: self.onChooseFile('ShamFile', self.leShamFile))
 
         self.cbUsePTB.stateChanged.connect(self.onChangePTB)
         self.onChangePTB()
@@ -888,18 +892,12 @@ class OpenNFT(QWidget):
 
             # t5
             self.recorder.recordEvent(erd.Times.t5, self.iteration)
-            if self.displayData and config.USE_UDP_FEEDBACK:
-                logger.info('Sending by UDP - dispValue = {}', self.displayData['dispValue'])
-                self.udpSender.send_data(self.displayData['dispValue'])
 
         elif self.P['Type'] == 'PSC':
             self.displayData = self.eng.nfbCalc(self.iteration, self.displayData, nargout=1)
 
             # t5
             self.recorder.recordEvent(erd.Times.t5, self.iteration)
-            if self.displayData and config.USE_UDP_FEEDBACK:  # for UDP, configure here if required
-                logger.info('Sending by UDP - dispValue = {}', self.displayData['dispValue'])
-                self.udpSender.send_data(self.displayData['dispValue'])
 
             if self.P['Prot'] != 'Inter':
                 if config.USE_PTB:
@@ -925,6 +923,14 @@ class OpenNFT(QWidget):
                             self.displayData['taskseq'] = 0
                             self.displayData['displayStage'] = 'feedback'
                             self.displayScreen()
+
+        if self.displayData:
+            if config.USE_SHAM:
+                self.displayData['dispValue'] = self.shamData[self.iteration-1]
+
+            if config.USE_UDP_FEEDBACK:
+                logger.info('Sending by UDP - dispValue = {}', self.displayData['dispValue'])
+                self.udpSender.send_data(self.displayData['dispValue'])
 
         # main logic end
 
@@ -1005,7 +1011,7 @@ class OpenNFT(QWidget):
         searchString = self.getFileSearchString(self.P['FirstFileNameTxt'], path, ext)
         path = os.path.join(os.path.dirname(path), searchString)
 
-        files = glob.glob(path)
+        files = sorted(glob.glob(path))
 
         if not files:
             logger.info("No files found in offline mode. Check WatchFolder settings!")
@@ -1251,6 +1257,21 @@ class OpenNFT(QWidget):
 
             with utils.timeit('  initMainLoopData:'):
                 self.initMainLoopData()
+
+            if config.USE_SHAM:
+                logger.warning("Sham feedback has been selected")
+                fext = os.path.splitext(self.P['ShamFile'])[1]
+                if fext == '.txt': # expect a textfile with float numbers in a single  column or row
+                    NFBdata = np.loadtxt(self.P['ShamFile'], unpack=False)
+                elif fext == '.mat': # expect "mainLoopData" 
+                    NFBdata = loadmat(self.P['ShamFile'])['dispValues']
+                
+                dispValues = list(NFBdata.flatten())
+                if len(dispValues) != self.P['NrOfVolumes']:
+                    logger.error("Number of display values ({:d}) in {} does not correspond to number of volumes ({:d}).\n SELECT ANOTHER SHAM FILE".format(len(dispValues), self.P['ShamFile'], self.P['NrOfVolumes']))
+                    return
+                self.shamData = [float(v) for v in dispValues]
+                logger.info("Sham data has been loaded")
 
             if config.USE_PTB:
                 self.stopDisplayThread = False
@@ -1534,6 +1555,21 @@ class OpenNFT(QWidget):
             self.P[name] = dname
 
     # --------------------------------------------------------------------------
+    def onChooseFile(self, name, le):
+        if config.DONOT_USE_QFILE_NATIVE_DIALOG:
+            fname = QFileDialog.getOpenFileName(
+                self, "Select '{}' directory".format(name), config.ROOT_PATH, 'Any file (*.*)',
+                options=QFileDialog.DontUseNativeDialog)[0]
+        else:
+            fname = QFileDialog.getOpenFileName(
+                self, "Select '{}' directory".format(name), config.ROOT_PATH, 'Any file (*.*)')[0]
+
+        fname = fname.replace('/', os.path.sep)
+        if fname:
+            le.setText(fname)
+            self.P[name] = fname
+
+    # --------------------------------------------------------------------------
     def onChangeImageViewMode(self, index):
         if index == 0:
             stack_index = 0
@@ -1699,6 +1735,8 @@ class OpenNFT(QWidget):
         self.sbFeedbackValDec.setValue(int(self.settings.value('FeedbackValDec', '0')))  # FixMe
         self.cbNegFeedback.setChecked(str(self.settings.value('NegFeedback', 'false')).lower() == 'true')
 
+        self.leShamFile.setText(self.settings.value('ShamFile', ''))
+
         self.cbUsePTB.setChecked(str(self.settings.value('UsePTB', 'false')).lower() == 'true')
         if config.DISABLE_PTB:
             self.cbUsePTB.setChecked(False)
@@ -1822,6 +1860,8 @@ class OpenNFT(QWidget):
         self.P['FeedbackValDec'] = self.sbFeedbackValDec.value()
         self.P['NegFeedback'] = self.cbNegFeedback.isChecked()
 
+        self.P['ShamFile'] = self.leShamFile.text()
+
         # --- main viewer ---
         self.P['TargANG'] = self.sbTargANG.value()
         self.P['TargRAD'] = self.sbTargRAD.value()
@@ -1908,6 +1948,8 @@ class OpenNFT(QWidget):
         self.settings.setValue('FeedbackValDec', self.P['FeedbackValDec'])
         self.settings.setValue('NegFeedback', self.P['NegFeedback'])
 
+        self.settings.setValue('ShamFile', self.P['ShamFile'])
+
         self.settings.setValue('UsePTB', self.cbUsePTB.isChecked())
         self.settings.setValue('DisplayFeedbackScreenID', self.cbScreenId.currentIndex())
         self.settings.setValue('DisplayFeedbackFullscreen', self.cbDisplayFeedbackFullscreen.isChecked())
@@ -1935,6 +1977,8 @@ class OpenNFT(QWidget):
             # TCP receiver settings
             config.TCP_DATA_IP = self.leTCPDataIP.text()
             config.TCP_DATA_PORT = int(self.leTCPDataPort.text())
+
+        config.USE_SHAM = bool(len(self.P['ShamFile']))
 
         config.USE_PTB = self.cbUsePTB.isChecked()
 
