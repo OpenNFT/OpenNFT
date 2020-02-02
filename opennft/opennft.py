@@ -404,6 +404,7 @@ class OpenNFT(QWidget):
 
         self.btnInit.clicked.connect(lambda: self.initialize(start=True))
         self.btnPlugins.clicked.connect(self.showPluginDlg)
+        self.btnPlugins.setEnabled(False)
         self.btnSetup.clicked.connect(self.setup)
         self.btnStart.clicked.connect(self.start)
         self.btnStop.clicked.connect(self.stop)
@@ -507,6 +508,8 @@ class OpenNFT(QWidget):
 
     # --------------------------------------------------------------------------
     def showPluginDlg(self):
+        self.btnStart.setEnabled(False) # force rerunning Setup
+
         if self.pluginWindow.exec_():
             self.plugins = []
             for p in range(len(self.pluginWindow.plugins)):
@@ -518,6 +521,7 @@ class OpenNFT(QWidget):
         for i in range(len(self.plugins)):
             if len(self.plugins[i]['module'].META['plugin_init']):
                 self.plugins[i]['object'] = eval("self.plugins[i]['module']." + self.plugins[i]['module'].META['plugin_init'].format(**self.P))
+            logger.info('Plugin "' + self.plugins[i]['module'].META['plugin_name'] + '" has been initialized')
     
     # --------------------------------------------------------------------------
     def finalizePlugins(self):
@@ -1165,6 +1169,7 @@ class OpenNFT(QWidget):
         self.isInitialized = True
 
         self.pluginWindow = PluginWindow()
+        self.btnPlugins.setEnabled(True)
 
         logger.info("Initialization finished ({:.2f} s)", time.time() - ts)
 
