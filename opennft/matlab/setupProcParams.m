@@ -30,6 +30,8 @@ evalin('base', 'clear mmStatMap;');
 evalin('base', 'clear mmStatMap_neg;');
 evalin('base', 'clear mmOrthView;');
 
+if ~exist(fullfile(P.WorkFolder,'Settings')), mkdir(fullfile(P.WorkFolder,'Settings')); end
+
 [isPSC, isDCM, isSVM, isIGLM] = getFlagsType(P);
 
 if strcmp(P.DataType, 'DICOM')
