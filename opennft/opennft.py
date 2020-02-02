@@ -507,12 +507,11 @@ class OpenNFT(QWidget):
 
     # --------------------------------------------------------------------------
     def showPluginDlg(self):
-        self.plw = PluginWindow()
-        if self.plw.exec_():
+        if self.pluginWindow.exec_():
             self.plugins = []
-            for p in range(len(self.plw.plugins)):
-                if self.plw.lvPlugins.model().item(p).checkState():
-                    self.plugins += [{'module': self.plw.plugins[p]}]
+            for p in range(len(self.pluginWindow.plugins)):
+                if self.pluginWindow.lvPlugins.model().item(p).checkState():
+                    self.plugins += [{'module': self.pluginWindow.plugins[p]}]
 
     # --------------------------------------------------------------------------
     def initializePlugins(self):
@@ -1165,6 +1164,7 @@ class OpenNFT(QWidget):
         self.resetDone = True
         self.isInitialized = True
 
+        self.pluginWindow = PluginWindow()
 
         logger.info("Initialization finished ({:.2f} s)", time.time() - ts)
 
