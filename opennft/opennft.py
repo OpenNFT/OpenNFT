@@ -1360,6 +1360,8 @@ class OpenNFT(QWidget):
         logger.info("*** Started ***")
 
         self.cbImageViewMode.setEnabled(True)
+        self.btnPlugins.setEnabled(False)
+        self.btnSetup.setEnabled(False)
         self.btnStart.setEnabled(False)
         self.btnStop.setEnabled(True)
         self.pbMoreParameters.setChecked(False)
@@ -1387,6 +1389,8 @@ class OpenNFT(QWidget):
 
         self.btnStop.setEnabled(False)
         self.btnStart.setEnabled(False)
+        self.btnSetup.setEnabled(True)
+        self.btnPlugins.setEnabled(True)
 
         self.fs_observer.stop()
         self.call_timer.stop()
