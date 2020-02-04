@@ -49,13 +49,12 @@ end
 strParam.centre = findcent(newCoord, flagsPlanes);
 % TODO GUI: Display modes: [Background + Stat + ROIs, 
 %                                     Background + Stat, Background + ROIs]
-strParam.modeDispl = [1 0 0]; 
-displImg_neg = [];
+strParam.modeDispl = [1 0 0];
 
 if isShowRTQA
    fname = strrep(P.memMapFile, 'shared', 'RTQAVol');
-   snr = memmapfile(fname, 'Writable', false, 'Format',  {'double', prod(displayBgEpi.dim), 'rtQAVol'});
-   rtqaVolTRaw = reshape(snr.Data.rtQAVol,displayBgEpi.dim);
+   snr = memmapfile(fname, 'Writable', false, 'Format',  {'double', displayBgEpi.dim, 'rtQAVol'});
+   rtqaVolTRaw = snr.Data.rtQAVol;
    displImg.vol = rtqaVolTRaw;
    displImg.mat = matTemplMotCorr;
 else
@@ -68,7 +67,7 @@ else
 end
 
 [backg_imgt,backg_imgc,backg_imgs, stat_imgt, stat_imgc, stat_imgs, P] = redrawall(displBackgr.vol, displBackgr.mat, ROIsOverlay, displImg, P);
-if ~isempty(displImg_neg)
+if exist('displImg_neg')
     [backg_imgt,backg_imgc,backg_imgs, stat_imgt_neg, stat_imgc_neg, stat_imgs_neg, P] = redrawall(displBackgr.vol, displBackgr.mat, ROIsOverlay, displImg_neg, P);
     
     stat_imgt_neg = uint8(stat_imgt_neg / max(stat_imgt_neg(:)) * 255);
@@ -219,7 +218,7 @@ end
 % Calculate Stat
 [stat_imgt, stat_imgc, stat_imgs] = getOrthVol(coordParam, Image.vol, Image.mat);
 
-if strParam.modeDispl(1)
+if strParam.modeDispl(1) && P.isROI
     % Calculate ROIs
     roiCount = length(ROIs);
 
@@ -233,15 +232,7 @@ if strParam.modeDispl(1)
         P.tRoiBoundaries{j} = roiBoundaries(tRoiImg);
         P.cRoiBoundaries{j} = roiBoundaries(cRoiImg);
         P.sRoiBoundaries{j} = roiBoundaries(sRoiImg);
-        
-%         close all;
-%         figure(j);
-%         subplot(2,2,1)
-%         imshow(cRoiImg)
-%         subplot(2,2,2)
-%         imshow(sRoiImg)
-%         subplot(2,2,3)
-%         imshow(tRoiImg)
+
     end
 else
     P.tRoiBoundaries = {};

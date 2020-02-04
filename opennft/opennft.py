@@ -72,6 +72,8 @@ from opennft import (
     eventrecorder as erd,
 )
 
+import matlab
+
 if config.USE_MRPULSE:
     from opennft import mrpulse
 
@@ -548,6 +550,8 @@ class OpenNFT(QWidget):
             'cRoiBoundaries': [],
             'sRoiBoundaries': [],
             'isRestingState': self.P['isRestingState'],
+            'isIGLM': self.P['isIGLM'],
+            'isROI': config.USE_ROI,
         }
 
         self.engSPM.helperPrepareOrthView(self.spmHelperP, 'bgEPI', nargout=0)
@@ -870,7 +874,7 @@ class OpenNFT(QWidget):
         init = self.iteration == (self.P['nrSkipVol'] + 1)
 
         # rtQA calculation for time-series
-        if bool(self.outputSamples):
+        if bool(self.outputSamples) and self.P['isRTQA']:
             dataRealRaw = np.array(self.outputSamples['rawTimeSeries'], ndmin=2)
             dataMC = np.array(self.outputSamples['motCorrParam'], ndmin=2)
             n = len(dataRealRaw[0, :])-1
@@ -1225,7 +1229,8 @@ class OpenNFT(QWidget):
             self.initUdpSender()
 
             self.btnStart.setEnabled(True)
-            self.btnRTQA.setEnabled(True)
+            if self.P['isRTQA']:
+                self.btnRTQA.setEnabled(True)
 
             if self.P['isRestingState']:
                 xrange = (self.P['NrOfVolumes'] - self.P['nrSkipVol'])
@@ -1257,7 +1262,7 @@ class OpenNFT(QWidget):
 
             self.onChangeNegMapPolicy()
 
-            self.eng.assignin('base', 'rtQAMode', self.windowRTQA.comboBox.currentIndex(), nargout=0)
+            self.eng.assignin('base', 'rtQAMode', self.windowRTQA.currentMode, nargout=0)
             self.eng.assignin('base', 'isShowRtqaVol', self.windowRTQA.volumeCheckBox.isChecked(), nargout=0)
             self.eng.assignin('base', 'isSmoothed', self.windowRTQA.smoothedCheckBox.isChecked(), nargout=0)
             self.eng.assignin('base', 'imageViewMode', int(self.imageViewMode), nargout=0)
@@ -1292,7 +1297,6 @@ class OpenNFT(QWidget):
     def stop(self):
 
         self.isStopped = True
-
         self.btnStop.setEnabled(False)
         self.btnStart.setEnabled(False)
 
@@ -1360,7 +1364,9 @@ class OpenNFT(QWidget):
     # --------------------------------------------------------------------------
 
     def onModeChanged(self):
-        self.eng.assignin('base', 'rtQAMode', self.windowRTQA.comboBox.currentIndex(), nargout=0)
+
+        self.windowRTQA.onComboboxChanged()
+        self.eng.assignin('base', 'rtQAMode', self.windowRTQA.currentMode, nargout=0)
 
         self.onShowRtqaVol()
         self.updateOrthViewAsync()
@@ -1744,6 +1750,8 @@ class OpenNFT(QWidget):
         self.P['Prot'] = str(self.cbProt.currentText())
         self.P['Type'] = str(self.cbType.currentText())
         self.P['isRestingState'] = bool(self.cbProt.currentText() == "Rest")
+        self.P['isRTQA'] = config.USE_RTQA;
+        self.P['isIGLM'] = config.USE_IGLM;
 
         if self.P['Prot'] == 'ContTask':
             self.P['TaskFolder'] = self.leTaskFolder.text()
