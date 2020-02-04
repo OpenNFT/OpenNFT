@@ -291,6 +291,9 @@ if ~P.isRestingState
         mainLoopData.tContr.neg = [-1];
     end
 
+    %% Explicit contrasts (optional)
+    if isfield(P,'Contrast'), mainLoopData.tContr = P.Contrast; end
+
     %% High-pass filter for iGLM given by SPM
     mainLoopData.K = SPM.xX.K;
 

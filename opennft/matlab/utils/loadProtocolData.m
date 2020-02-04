@@ -137,8 +137,19 @@ end
 if isDCM
     prt = rmfield(prt, 'dcmdef');
 end
-    
+
+%% Contrast
+if isfield(prt,'Contrast')
+    condNames = cellfun(@(x) x.ConditionName, prt.Cond, 'UniformOutput',false);
+    con = textscan(prt.Contrast,'%d*%s','Delimiter',';');
+    conVect = [];
+    for ci = cellfun(@(x) find(strcmp(x,con{2})),condNames,'UniformOutput',false)
+        if ~isempty(ci{1}), conVect(end+1) = con{1}(ci{1}); else conVect(end+1) = 0; end
+    end
+    P.Contrast = conVect';
+end
+
+%% Save
 P.Protocol = prt;
 assignin('base', 'P', P);
 end
-
