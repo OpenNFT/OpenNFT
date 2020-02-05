@@ -242,12 +242,12 @@ class OpenNFT(QWidget):
         matlab_helpers = runmatlab.get_matlab_helpers()
 
         self.mlMainHelper = matlab_helpers[config.MAIN_MATLAB_NAME]
-        if not config.DISABLE_PTB:
+        if config.USE_PTB_HELPER:
             self.mlPtbDcmHelper = matlab_helpers[config.PTB_MATLAB_NAME]
         self.mlSpmHelper = matlab_helpers[config.SPM_MATLAB_NAME]
         self.mlModelHelper = matlab_helpers.get(config.MODEL_HELPER_MATLAB_NAME)
 
-        if not config.DISABLE_PTB:
+        if config.USE_PTB_HELPER:
             self.ptbScreen = ptbscreen.PtbScreen(self.mlPtbDcmHelper, self.recorder, self.endDisplayEvent)
 
         self.P = {}
@@ -1143,7 +1143,7 @@ class OpenNFT(QWidget):
             return
 
         logger.info('Using Matlab session "{}" as MAIN', self.mlMainHelper.name)
-        if not config.DISABLE_PTB:
+        if config.USE_PTB_HELPER:
             logger.info('Using Matlab session "{}" for PTB', self.mlPtbDcmHelper.name)
         logger.info('Using Matlab session "{}" for SPM', self.mlSpmHelper.name)
 
@@ -1151,7 +1151,7 @@ class OpenNFT(QWidget):
             logger.info('Using Matlab session "{}" for Model Helper', self.mlModelHelper.name)
 
         self.mlMainHelper.prepare()
-        if not config.DISABLE_PTB:
+        if config.USE_PTB_HELPER:
             self.mlPtbDcmHelper.prepare()
         self.mlSpmHelper.prepare()
         if config.USE_MATLAB_MODEL_HELPER:
@@ -1753,7 +1753,7 @@ class OpenNFT(QWidget):
         self.leShamFile.setText(self.settings.value('ShamFile', ''))
 
         self.cbUsePTB.setChecked(str(self.settings.value('UsePTB', 'false')).lower() == 'true')
-        if config.DISABLE_PTB:
+        if not config.USE_PTB_HELPER:
             self.cbUsePTB.setChecked(False)
             self.cbUsePTB.setEnabled(False)
 
