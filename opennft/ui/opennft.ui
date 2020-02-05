@@ -6,7 +6,7 @@
                <rect>
                     <x>0</x>
                     <y>0</y>
-                    <width>1393</width>
+                    <width>1558</width>
                     <height>846</height>
                </rect>
           </property>
@@ -498,22 +498,22 @@
                                                                  </widget>
                                                             </item>
                                                             <item>
-                                                                 <layout class="QHBoxLayout" name="horizontalLayout_6" stretch="0,0,0,0,1,0,0,1,0,0,1,0">
-                                                                      <item>
+                                                                 <layout class="QGridLayout" name="gridLayout" columnstretch="0,0,0,0,0,1,0">
+                                                                      <item row="0" column="0">
                                                                            <widget class="QLabel" name="label_12">
                                                                                 <property name="text">
                                                                                      <string>View Mode</string>
                                                                                 </property>
                                                                            </widget>
                                                                       </item>
-                                                                      <item>
+                                                                      <item row="0" column="1">
                                                                            <widget class="QComboBox" name="cbImageViewMode">
                                                                                 <property name="enabled">
                                                                                      <bool>false</bool>
                                                                                 </property>
                                                                                 <property name="maximumSize">
                                                                                      <size>
-                                                                                          <width>150</width>
+                                                                                          <width>200</width>
                                                                                           <height>16777215</height>
                                                                                      </size>
                                                                                 </property>
@@ -534,14 +534,7 @@
                                                                                 </item>
                                                                            </widget>
                                                                       </item>
-                                                                      <item>
-                                                                           <widget class="Line" name="line_8">
-                                                                                <property name="orientation">
-                                                                                     <enum>Qt::Vertical</enum>
-                                                                                </property>
-                                                                           </widget>
-                                                                      </item>
-                                                                      <item>
+                                                                      <item row="0" column="4">
                                                                            <widget class="QCheckBox" name="posMapCheckBox">
                                                                                 <property name="text">
                                                                                      <string>Positive</string>
@@ -550,45 +543,38 @@
                                                                                      <bool>true</bool>
                                                                                 </property>
                                                                            </widget>
+                                                                           <item row="0" column="2">
+                                                                                <widget class="Line" name="line_7">
+                                                                                     <property name="orientation">
+                                                                                          <enum>Qt::Vertical</enum>
+                                                                                     </property>
+                                                                                </widget>
+                                                                           </item>
                                                                       </item>
-                                                                      <item>
+                                                                      <item row="0" column="5">
                                                                            <layout class="QHBoxLayout" name="layoutHotMapThresholds"/>
                                                                       </item>
-                                                                      <item>
-                                                                           <widget class="Line" name="line_9">
+                                                                      <item row="0" column="6">
+                                                                           <spacer name="horizontalSpacer_4">
                                                                                 <property name="orientation">
-                                                                                     <enum>Qt::Vertical</enum>
+                                                                                     <enum>Qt::Horizontal</enum>
                                                                                 </property>
-                                                                           </widget>
-                                                                      </item>
-                                                                      <item>
-                                                                           <widget class="QCheckBox" name="negMapCheckBox">
-                                                                                <property name="text">
-                                                                                     <string>Negative</string>
+                                                                                <property name="sizeHint" stdset="0">
+                                                                                     <size>
+                                                                                          <width>0</width>
+                                                                                          <height>20</height>
+                                                                                     </size>
                                                                                 </property>
-                                                                                <property name="checked">
-                                                                                     <bool>false</bool>
-                                                                                </property>
-                                                                           </widget>
+                                                                           </spacer>
                                                                       </item>
-                                                                      <item>
-                                                                           <layout class="QHBoxLayout" name="layoutNegMapThresholds"/>
-                                                                      </item>
-                                                                      <item>
-                                                                           <widget class="Line" name="line_7">
-                                                                                <property name="orientation">
-                                                                                     <enum>Qt::Vertical</enum>
-                                                                                </property>
-                                                                           </widget>
-                                                                      </item>
-                                                                      <item>
+                                                                      <item row="1" column="0">
                                                                            <widget class="QLabel" name="label_3">
                                                                                 <property name="text">
                                                                                      <string>Opacity</string>
                                                                                 </property>
                                                                            </widget>
                                                                       </item>
-                                                                      <item>
+                                                                      <item row="1" column="1">
                                                                            <widget class="QSlider" name="sliderMapsAlpha">
                                                                                 <property name="sizePolicy">
                                                                                      <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
@@ -596,15 +582,9 @@
                                                                                           <verstretch>0</verstretch>
                                                                                      </sizepolicy>
                                                                                 </property>
-                                                                                <property name="minimumSize">
-                                                                                     <size>
-                                                                                          <width>80</width>
-                                                                                          <height>0</height>
-                                                                                     </size>
-                                                                                </property>
                                                                                 <property name="maximumSize">
                                                                                      <size>
-                                                                                          <width>150</width>
+                                                                                          <width>200</width>
                                                                                           <height>16777215</height>
                                                                                      </size>
                                                                                 </property>
@@ -622,20 +602,27 @@
                                                                                 </property>
                                                                            </widget>
                                                                       </item>
-                                                                      <item>
-                                                                           <spacer name="horizontalSpacer_8">
+                                                                      <item row="1" column="2">
+                                                                           <widget class="Line" name="line_8">
                                                                                 <property name="orientation">
-                                                                                     <enum>Qt::Horizontal</enum>
+                                                                                     <enum>Qt::Vertical</enum>
                                                                                 </property>
-                                                                                <property name="sizeHint" stdset="0">
-                                                                                     <size>
-                                                                                          <width>40</width>
-                                                                                          <height>20</height>
-                                                                                     </size>
-                                                                                </property>
-                                                                           </spacer>
+                                                                           </widget>
                                                                       </item>
-                                                                 </layout>
+                                                                      <item row="1" column="4">
+                                                                           <widget class="QCheckBox" name="negMapCheckBox">
+                                                                                <property name="text">
+                                                                                     <string>Negative</string>
+                                                                                </property>
+                                                                                <property name="checked">
+                                                                                     <bool>false</bool>
+                                                                                </property>
+                                                                           </widget>
+                                                                      </item>
+                                                                      <item row="1" column="5">
+                                                                           <layout class="QHBoxLayout" name="layoutNegMapThresholds"/>
+                                                                      </item>
+                                                                 </layout>     
                                                             </item>
                                                        </layout>
                                                   </widget>
