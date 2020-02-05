@@ -18,14 +18,11 @@ isDCM = false;
 
 if strcmp(P.Type, 'DCM')
     isDCM = true;
-    isIGLM = true;
 elseif strcmp(P.Type, 'PSC')
     isPSC = true;
-    isIGLM = true;
 elseif strcmp(P.Type, 'SVM')
     isSVM = true;
-    isIGLM = true;
-elseif strcmp(P.Type, 'None')
-    isIGLM = true;
 end
+
+isIGLM = P.isIGLM;
 

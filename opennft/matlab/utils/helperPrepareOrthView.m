@@ -131,15 +131,10 @@ assignin('base', 'displayBgEpi', displayBgEpi);
 
 assignin('base', 'ROIsOverlay', ROIsOverlay);   
 
-[slNrImg2DdimX, slNrImg2DdimY, img2DdimX, img2DdimY] = getMosaicDim(displayBgEpi.dim);
-mosaicDim = img2DdimX*img2DdimY;
-data2 = uint8(zeros(mosaicDim,1));
-
 %% images for OrthView in GUI from helper matlab
 initMemmap(P.memMapFile, 'OrthView', data, 'uint8', 'mmOrthView', format);
 initMemmap(P.memMapFile, 'OrthView_neg', data, 'uint8', 'mmOrthView', format);
 initMemmap(P.memMapFile, 'BackgOrthView', data, 'uint8', 'mmOrthView', format);
-initMemmap(P.memMapFile, 'RTQAVol', data2(:), 'double', 'rtQAVol', {'double', prod(displayBgEpi.dim), 'rtQAVol'});
 
 assignin('base', 'helperP', P);
 
