@@ -32,6 +32,7 @@ Written by Tibor Auer
 from pyniexp.mlplugins import imageProcess
 import matplotlib.pyplot as plt
 import numpy as np
+from functools import reduce
 
 META = {
     "plugin_name": "Stat Map",
@@ -61,11 +62,16 @@ class myImageProcess(imageProcess):
     def process(self,image):
         # Convert 3D to 2D mosaic
         (vx,vy,vz) = self._image_dimension
-        mxy = int(np.ceil(np.sqrt(vz)))
-        tiles = image.reshape(vx,vy,mxy,mxy)
-        tiles = np.moveaxis(np.rot90(tiles),[0,1,2,3],[1,3,0,2]).reshape(vx*mxy,vy*mxy)
+        [mxy, mxx] = getFactorPair(vz)
+        tiles = image.reshape(vx,vy,mxx,mxy)
+        tiles = np.moveaxis(np.rot90(tiles),[0,1,2,3],[1,3,0,2]).reshape(vx*mxx,vy*mxy)
 
         if self.toDraw:
             self.axes.imshow(tiles,cmap='jet')
             self.figure.canvas.draw()
             plt.pause(0.01)
+    
+def getFactorPair(n): # retrieve the pair of factors with the smalles difference   
+    factorPairs = [[i, n//i] for i in range(1, int(n**0.5) + 1) if n % i == 0]
+    factorPairDiff = [int(np.diff(p)) for p in factorPairs]
+    return sorted(factorPairs[factorPairDiff.index(min(factorPairDiff))])
