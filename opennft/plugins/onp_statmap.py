@@ -7,7 +7,7 @@ META = {
     "plugin_time": "t3", # according to opennft.eventrecorder.Times
     "plugin_init": "myImageProcess(({MatrixSizeX}, {MatrixSizeY}, {NrOfSlices}),toDraw=False)", # Setting toDraw to True significantly slows down plugin update
     "plugin_signal": "self.eng.evalin('base','isfield(mainLoopData,\\\'tn\\\')')",
-    "plugin_exec": "load_image(self.eng.evalin('base','mainLoopData.tn.pos')._data.tolist())"
+    "plugin_exec": "load_data(self.eng.evalin('base','mainLoopData.tn.pos')._data.tolist())"
 }
 
 class myImageProcess(imageProcess):
