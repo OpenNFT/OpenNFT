@@ -1333,8 +1333,8 @@ class OpenNFT(QWidget):
                 indBas = np.array(self.P['inds'][0])-1
                 indCond = np.array(self.P['inds'][1])-1
 
-            self.cbImageViewMode.setCurrentIndex(0)
             self.cbImageViewMode.setEnabled(False)
+            self.cbImageViewMode.setCurrentIndex(0)
 
             if self.windowRTQA:
                 self.windowRTQA.deleteLater()
@@ -1602,8 +1602,9 @@ class OpenNFT(QWidget):
         if self.eng:
             self.eng.assignin('base', 'imageViewMode', int(mode), nargout=0)
 
-        self.updateOrthViewAsync()
-        self.onInteractWithMapImage()
+        if self.cbImageViewMode.isEnabled():
+            self.updateOrthViewAsync()
+            self.onInteractWithMapImage()
 
     def updateOrthViewAsync(self):
         if not self.engSPM:
