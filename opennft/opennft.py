@@ -42,7 +42,6 @@ import re
 import fnmatch
 import threading
 import multiprocessing
-import importlib
 
 from loguru import logger
 
@@ -55,9 +54,9 @@ from watchdog.events import FileSystemEventHandler
 from pyniexp.connection import Udp
 from scipy.io import loadmat
 
-from PyQt5.QtWidgets import QApplication, QWidget, QDialog, QFileDialog
-from PyQt5.QtGui import QIcon, QPalette, QStandardItemModel, QStandardItem
-from PyQt5.QtCore import QSettings, QTimer, QEvent, QRegExp, Qt
+from PyQt5.QtWidgets import QApplication, QWidget, QFileDialog
+from PyQt5.QtGui import QIcon, QPalette
+from PyQt5.QtCore import QSettings, QTimer, QEvent, QRegExp
 from PyQt5.uic import loadUi
 from PyQt5.QtGui import QRegExpValidator
 
@@ -69,6 +68,7 @@ from opennft import (
     mosaicview,
     projview,
     mapimagewidget,
+    plugin,
     utils,
     rtqa,
     eventrecorder as erd,
@@ -101,34 +101,6 @@ class CreateFileEventHandler(FileSystemEventHandler):
             # t1
             self.recorder.recordEvent(erd.Times.t1, 0)
             self.fq.put(event.src_path)
-
-
-class ViewBoxWithoutPadding(pg.ViewBox):
-    def suggestPadding(self, axis):
-        return 0.0
-
-
-class PluginWindow(QDialog):
-    def __init__(self, parent=None):
-        self.plugins = []
-
-        super().__init__(parent=parent, flags=Qt.Dialog)
-        loadUi(utils.get_ui_file('plugins.ui'), self)
-
-        self.setWindowTitle("Plugins")
-        self.setWindowModality(Qt.ApplicationModal)
-
-        model = QStandardItemModel(self.lvPlugins)
-        for p in os.listdir(config.PLUGIN_PATH):
-            if p[0] == '_': continue
-            plMod = 'opennft.' + os.path.basename(config.PLUGIN_PATH).lower() + '.' + p[:-3]
-            self.plugins += [importlib.import_module(plMod)]
-            plName = self.plugins[-1].META['plugin_name']
-            item = QStandardItem(plName)
-            item.setEditable(False)
-            item.setCheckable(True)
-            model.appendRow(item)
-        self.lvPlugins.setModel(model)
 
 
 # --------------------------------------------------------------------------
@@ -1172,7 +1144,7 @@ class OpenNFT(QWidget):
         self.resetDone = True
         self.isInitialized = True
 
-        self.pluginWindow = PluginWindow()
+        self.pluginWindow = plugin.PluginWindow()
         self.btnPlugins.setEnabled(True)
 
         logger.info("Initialization finished ({:.2f} s)", time.time() - ts)
