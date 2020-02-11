@@ -45,7 +45,7 @@ def get_matlab_helpers() -> typing.Dict[str, mlproc.MatlabSharedEngineHelper]:
 
         # Matlab helper processs for display using Psychtoolbox (aka Ptb)
         # with possible reusing for first model computation
-        if not config.DISABLE_PTB:
+        if config.USE_PTB_HELPER:
             helpers.append((config.PTB_MATLAB_NAME, create_matlab_helper(
                 engine_name=config.PTB_MATLAB_NAME,
                 startup_options=config.PTB_MATLAB_STARTUP_OPTIONS,

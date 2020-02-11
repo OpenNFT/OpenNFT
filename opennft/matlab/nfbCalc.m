@@ -204,8 +204,10 @@ if isPSC && strcmp(P.Prot, 'Inter')
     end
 
     if mainLoopData.flagEndPSC 
+        mainLoopData.dispValues(indVolNorm) = dispValue;
         mainLoopData.dispValue = dispValue;
     else
+        mainLoopData.dispValues(indVolNorm) = 0;
         mainLoopData.dispValue = 0;                                    
     end
 

@@ -52,6 +52,7 @@ from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 
 from pyniexp.connection import Udp
+from scipy.io import loadmat
 
 from PyQt5.QtWidgets import QApplication, QWidget, QFileDialog
 from PyQt5.QtGui import QIcon, QPalette
@@ -67,6 +68,7 @@ from opennft import (
     mosaicview,
     projview,
     mapimagewidget,
+    plugin,
     utils,
     rtqa,
     eventrecorder as erd,
@@ -101,6 +103,7 @@ class CreateFileEventHandler(FileSystemEventHandler):
             self.fq.put(event.src_path)
 
 
+# --------------------------------------------------------------------------
 class OpenNFT(QWidget):
     """Open Neurofeedback GUI application class
     """
@@ -200,6 +203,8 @@ class OpenNFT(QWidget):
         self.eng = None
         self.engSPM = None
 
+        self.plugins = []
+
         self.fFinNFB = False
         self.orthViewUpdateInProgress = False
         self.outputSamples = {}
@@ -209,16 +214,17 @@ class OpenNFT(QWidget):
         matlab_helpers = runmatlab.get_matlab_helpers()
 
         self.mlMainHelper = matlab_helpers[config.MAIN_MATLAB_NAME]
-        if not config.DISABLE_PTB:
+        if config.USE_PTB_HELPER:
             self.mlPtbDcmHelper = matlab_helpers[config.PTB_MATLAB_NAME]
         self.mlSpmHelper = matlab_helpers[config.SPM_MATLAB_NAME]
         self.mlModelHelper = matlab_helpers.get(config.MODEL_HELPER_MATLAB_NAME)
 
-        if not config.DISABLE_PTB:
+        if config.USE_PTB_HELPER:
             self.ptbScreen = ptbscreen.PtbScreen(self.mlPtbDcmHelper, self.recorder, self.endDisplayEvent)
 
         self.P = {}
         self.mainLoopData = {}
+        self.shamData = None
         self.rtQA_matlab = {}
         self.reultFromHelper = None
 
@@ -371,6 +377,8 @@ class OpenNFT(QWidget):
         self.pbMoreParameters.toggled.connect(self.onShowMoreParameters)
 
         self.btnInit.clicked.connect(lambda: self.initialize(start=True))
+        self.btnPlugins.clicked.connect(self.showPluginDlg)
+        self.btnPlugins.setEnabled(False)
         self.btnSetup.clicked.connect(self.setup)
         self.btnStart.clicked.connect(self.start)
         self.btnStop.clicked.connect(self.stop)
@@ -414,6 +422,8 @@ class OpenNFT(QWidget):
 
         self.cbDataType.currentTextChanged.connect(self.onChangeDataType)
         self.onChangeDataType()
+
+        self.btnChooseShamFile.clicked.connect(lambda: self.onChooseFile('ShamFile', self.leShamFile))
 
         self.cbUsePTB.stateChanged.connect(self.onChangePTB)
         self.onChangePTB()
@@ -470,6 +480,35 @@ class OpenNFT(QWidget):
         self.cbgetMAT.setChecked(self.cbgetMAT.isChecked() and self.cbDataType.currentText() == 'DICOM')
         self.cbgetMAT.setEnabled(self.cbDataType.currentText() == 'DICOM')
 
+    # --------------------------------------------------------------------------
+    def showPluginDlg(self):
+        self.btnStart.setEnabled(False) # force rerunning Setup
+
+        if self.pluginWindow.exec_():
+            self.plugins = []
+            for p in range(len(self.pluginWindow.plugins)):
+                if self.pluginWindow.lvPlugins.model().item(p).checkState():
+                    self.plugins += [{'module': self.pluginWindow.plugins[p]}]
+
+    # --------------------------------------------------------------------------
+    def initializePlugins(self):
+        for i in range(len(self.plugins)):
+            if len(self.plugins[i]['module'].META['plugin_init']):
+                self.plugins[i]['object'] = eval("self.plugins[i]['module']." + self.plugins[i]['module'].META['plugin_init'].format(**self.P))
+            logger.info('Plugin "' + self.plugins[i]['module'].META['plugin_name'] + '" has been initialized')
+    
+    # --------------------------------------------------------------------------
+    def finalizePlugins(self):
+        for i in range(len(self.plugins)):
+            self.plugins[i]['object'] = None
+    
+    # --------------------------------------------------------------------------
+    def updatePlugins(self):
+        for i in range(len(self.plugins)):
+            m = self.plugins[i]['module'].META
+            if (self.recorder.getLastEvent() == eval("erd.Times." + m['plugin_time'])) and eval(m['plugin_signal']):
+                exec("self.plugins[i]['object']." + m['plugin_exec'])
+    
     # --------------------------------------------------------------------------
     def onChangeDataType(self):
         self.cbgetMAT.setChecked(self.cbgetMAT.isChecked() and self.cbDataType.currentText() == 'DICOM')
@@ -753,6 +792,7 @@ class OpenNFT(QWidget):
 
         # t3
         self.recorder.recordEvent(erd.Times.t3, self.iteration)
+        self.updatePlugins()
 
         if self.windowRTQA.volumeCheckBox.isChecked() and config.FIRST_SNR_VOLUME < self.iteration:
             self.updateOrthViewAsync()
@@ -831,18 +871,12 @@ class OpenNFT(QWidget):
 
             # t5
             self.recorder.recordEvent(erd.Times.t5, self.iteration)
-            if self.displayData and config.USE_UDP_FEEDBACK:
-                logger.info('Sending by UDP - dispValue = {}', self.displayData['dispValue'])
-                self.udpSender.send_data(self.displayData['dispValue'])
 
         elif self.P['Type'] == 'PSC':
             self.displayData = self.eng.nfbCalc(self.iteration, self.displayData, nargout=1)
 
             # t5
             self.recorder.recordEvent(erd.Times.t5, self.iteration)
-            if self.displayData and config.USE_UDP_FEEDBACK:  # for UDP, configure here if required
-                logger.info('Sending by UDP - dispValue = {}', self.displayData['dispValue'])
-                self.udpSender.send_data(self.displayData['dispValue'])
 
             if self.P['Prot'] != 'Inter':
                 if config.USE_PTB:
@@ -868,6 +902,14 @@ class OpenNFT(QWidget):
                             self.displayData['taskseq'] = 0
                             self.displayData['displayStage'] = 'feedback'
                             self.displayScreen()
+
+        if self.displayData:
+            if config.USE_SHAM:
+                self.displayData['dispValue'] = self.shamData[self.iteration-1]
+
+            if config.USE_UDP_FEEDBACK:
+                logger.info('Sending by UDP - dispValue = {}', self.displayData['dispValue'])
+                self.udpSender.send_data(self.displayData['dispValue'])
 
         # main logic end
 
@@ -948,7 +990,7 @@ class OpenNFT(QWidget):
         searchString = self.getFileSearchString(self.P['FirstFileNameTxt'], path, ext)
         path = os.path.join(os.path.dirname(path), searchString)
 
-        files = glob.glob(path)
+        files = sorted(glob.glob(path))
 
         if not files:
             logger.info("No files found in offline mode. Check WatchFolder settings!")
@@ -1073,7 +1115,7 @@ class OpenNFT(QWidget):
             return
 
         logger.info('Using Matlab session "{}" as MAIN', self.mlMainHelper.name)
-        if not config.DISABLE_PTB:
+        if config.USE_PTB_HELPER:
             logger.info('Using Matlab session "{}" for PTB', self.mlPtbDcmHelper.name)
         logger.info('Using Matlab session "{}" for SPM', self.mlSpmHelper.name)
 
@@ -1081,7 +1123,7 @@ class OpenNFT(QWidget):
             logger.info('Using Matlab session "{}" for Model Helper', self.mlModelHelper.name)
 
         self.mlMainHelper.prepare()
-        if not config.DISABLE_PTB:
+        if config.USE_PTB_HELPER:
             self.mlPtbDcmHelper.prepare()
         self.mlSpmHelper.prepare()
         if config.USE_MATLAB_MODEL_HELPER:
@@ -1102,6 +1144,8 @@ class OpenNFT(QWidget):
         self.resetDone = True
         self.isInitialized = True
 
+        self.pluginWindow = plugin.PluginWindow()
+        self.btnPlugins.setEnabled(True)
 
         logger.info("Initialization finished ({:.2f} s)", time.time() - ts)
 
@@ -1183,6 +1227,9 @@ class OpenNFT(QWidget):
 
             self.P.update(self.eng.workspace['P'])
 
+            with utils.timeit("  Initialize plugins:"):
+                self.initializePlugins()
+
             logger.info("  Setup plots...")
             if not self.P['isRestingState']:
                 self.createMusterInfo()
@@ -1191,6 +1238,21 @@ class OpenNFT(QWidget):
 
             with utils.timeit('  initMainLoopData:'):
                 self.initMainLoopData()
+
+            if config.USE_SHAM:
+                logger.warning("Sham feedback has been selected")
+                fext = os.path.splitext(self.P['ShamFile'])[1]
+                if fext == '.txt': # expect a textfile with float numbers in a single  column or row
+                    NFBdata = np.loadtxt(self.P['ShamFile'], unpack=False)
+                elif fext == '.mat': # expect "mainLoopData" 
+                    NFBdata = loadmat(self.P['ShamFile'])['dispValues']
+                
+                dispValues = list(NFBdata.flatten())
+                if len(dispValues) != self.P['NrOfVolumes']:
+                    logger.error("Number of display values ({:d}) in {} does not correspond to number of volumes ({:d}).\n SELECT ANOTHER SHAM FILE".format(len(dispValues), self.P['ShamFile'], self.P['NrOfVolumes']))
+                    return
+                self.shamData = [float(v) for v in dispValues]
+                logger.info("Sham data has been loaded")
 
             if config.USE_PTB:
                 self.stopDisplayThread = False
@@ -1275,6 +1337,8 @@ class OpenNFT(QWidget):
         logger.info("*** Started ***")
 
         self.cbImageViewMode.setEnabled(True)
+        self.btnPlugins.setEnabled(False)
+        self.btnSetup.setEnabled(False)
         self.btnStart.setEnabled(False)
         self.btnStop.setEnabled(True)
         self.pbMoreParameters.setChecked(False)
@@ -1292,6 +1356,8 @@ class OpenNFT(QWidget):
 
         self.orthViewUpdateCheckTimer.stop()
         self.orthViewUpdateCheckTimer.start(50)
+        self.files_exported = []
+        self.files_processed = []
 
     # --------------------------------------------------------------------------
     def stop(self):
@@ -1299,6 +1365,8 @@ class OpenNFT(QWidget):
         self.isStopped = True
         self.btnStop.setEnabled(False)
         self.btnStart.setEnabled(False)
+        self.btnSetup.setEnabled(True)
+        self.btnPlugins.setEnabled(True)
 
         self.fs_observer.stop()
         self.call_timer.stop()
@@ -1326,13 +1394,14 @@ class OpenNFT(QWidget):
         if config.USE_MRPULSE and hasattr(self, 'mrPulses'):
             np_arr = mrpulse.toNpData(self.mrPulses)
             self.pulseProc.terminate()
-
-        if self.P.get('nfbDataFolder'):
+        
+        if self.iteration > 1 and self.P.get('nfbDataFolder'):
             path = os.path.normpath(self.P['nfbDataFolder'])
             fname = os.path.join(path, 'TimeVectors_' + str(self.P['NFRunNr']).zfill(2) + '.txt')
             self.recorder.savetxt(fname)
 
         if self.fFinNFB:
+            self.finalizePlugins()
             self.finalizeUdpSender()
             self.eng.workspace['rtQA_python'] = self.windowRTQA.data_packing()
             self.nfbFinStarted = self.eng.nfbSave(self.iteration, nargout=0, async=True)
@@ -1471,6 +1540,21 @@ class OpenNFT(QWidget):
         if dname:
             le.setText(dname)
             self.P[name] = dname
+
+    # --------------------------------------------------------------------------
+    def onChooseFile(self, name, le):
+        if config.DONOT_USE_QFILE_NATIVE_DIALOG:
+            fname = QFileDialog.getOpenFileName(
+                self, "Select '{}' directory".format(name), config.ROOT_PATH, 'Any file (*.*)',
+                options=QFileDialog.DontUseNativeDialog)[0]
+        else:
+            fname = QFileDialog.getOpenFileName(
+                self, "Select '{}' directory".format(name), config.ROOT_PATH, 'Any file (*.*)')[0]
+
+        fname = fname.replace('/', os.path.sep)
+        if fname:
+            le.setText(fname)
+            self.P[name] = fname
 
     # --------------------------------------------------------------------------
     def onChangeImageViewMode(self, index):
@@ -1619,7 +1703,8 @@ class OpenNFT(QWidget):
         self.sbSlicesNr.setValue(int(self.settings.value('NrOfSlices')))
         self.sbTR.setValue(int(self.settings.value('TR')))
         self.sbSkipVol.setValue(int(self.settings.value('nrSkipVol')))
-        self.sbMatrixSize.setValue(int(self.settings.value('MatrixSizeX')))
+        self.sbMatrixSizeX.setValue(int(self.settings.value('MatrixSizeX')))
+        self.sbMatrixSizeY.setValue(int(self.settings.value('MatrixSizeY')))
 
         # --- bottom left ---
         self.cbOfflineMode.setChecked(str(self.settings.value('OfflineMode', 'true')).lower() == 'true')
@@ -1637,8 +1722,10 @@ class OpenNFT(QWidget):
         self.sbFeedbackValDec.setValue(int(self.settings.value('FeedbackValDec', '0')))  # FixMe
         self.cbNegFeedback.setChecked(str(self.settings.value('NegFeedback', 'false')).lower() == 'true')
 
+        self.leShamFile.setText(self.settings.value('ShamFile', ''))
+
         self.cbUsePTB.setChecked(str(self.settings.value('UsePTB', 'false')).lower() == 'true')
-        if config.DISABLE_PTB:
+        if not config.USE_PTB_HELPER:
             self.cbUsePTB.setChecked(False)
             self.cbUsePTB.setEnabled(False)
 
@@ -1735,7 +1822,8 @@ class OpenNFT(QWidget):
         self.P['NrOfSlices'] = self.sbSlicesNr.value()
         self.P['TR'] = self.sbTR.value()
         self.P['nrSkipVol'] = self.sbSkipVol.value()
-        self.P['MatrixSizeX'] = self.sbMatrixSize.value()
+        self.P['MatrixSizeX'] = self.sbMatrixSizeX.value()
+        self.P['MatrixSizeY'] = self.sbMatrixSizeY.value()
 
         # --- bottom left ---
         self.P['UseTCPData'] = self.cbUseTCPData.isChecked()
@@ -1760,6 +1848,8 @@ class OpenNFT(QWidget):
         self.P['MinFeedbackVal'] = float(self.leMinFeedbackVal.text())
         self.P['FeedbackValDec'] = self.sbFeedbackValDec.value()
         self.P['NegFeedback'] = self.cbNegFeedback.isChecked()
+
+        self.P['ShamFile'] = self.leShamFile.text()
 
         # --- main viewer ---
         self.P['TargANG'] = self.sbTargANG.value()
@@ -1833,6 +1923,7 @@ class OpenNFT(QWidget):
         self.settings.setValue('TR', self.P['TR'])
         self.settings.setValue('nrSkipVol', self.P['nrSkipVol'])
         self.settings.setValue('MatrixSizeX', self.P['MatrixSizeX'])
+        self.settings.setValue('MatrixSizeY', self.P['MatrixSizeY'])
 
         # --- bottom left ---
         self.settings.setValue('OfflineMode', self.cbOfflineMode.isChecked())
@@ -1845,6 +1936,8 @@ class OpenNFT(QWidget):
         self.settings.setValue('MinFeedbackVal', self.P['MinFeedbackVal'])
         self.settings.setValue('FeedbackValDec', self.P['FeedbackValDec'])
         self.settings.setValue('NegFeedback', self.P['NegFeedback'])
+
+        self.settings.setValue('ShamFile', self.P['ShamFile'])
 
         self.settings.setValue('UsePTB', self.cbUsePTB.isChecked())
         self.settings.setValue('DisplayFeedbackScreenID', self.cbScreenId.currentIndex())
@@ -1873,6 +1966,8 @@ class OpenNFT(QWidget):
             # TCP receiver settings
             config.TCP_DATA_IP = self.leTCPDataIP.text()
             config.TCP_DATA_PORT = int(self.leTCPDataPort.text())
+
+        config.USE_SHAM = bool(len(self.P['ShamFile']))
 
         config.USE_PTB = self.cbUsePTB.isChecked()
 

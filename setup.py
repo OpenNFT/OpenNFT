@@ -71,6 +71,7 @@ def specify_requirements():
         'pyniexp @ https://github.com/tiborauer/pyniexp/tarball/master',
         'watchdog >= 0.9.0',
         'loguru >= 0.2.5',
+        'scipy>=1.3.1',
         'pywin32 >= 224 ; platform_system == "Windows"',
         'pyHook @ {} ; platform_system == "Windows"'.format(pyhook_whl),
     ]

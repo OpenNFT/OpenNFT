@@ -30,6 +30,8 @@ evalin('base', 'clear mmStatMap;');
 evalin('base', 'clear mmStatMap_neg;');
 evalin('base', 'clear mmOrthView;');
 
+if ~exist(fullfile(P.WorkFolder,'Settings')), mkdir(fullfile(P.WorkFolder,'Settings')); end
+
 [isPSC, isDCM, isSVM, isIGLM] = getFlagsType(P);
 
 if strcmp(P.DataType, 'DICOM')
@@ -292,7 +294,10 @@ if ~P.isRestingState
     end
 
     %% Explicit contrasts (optional)
-    if isfield(P,'Contrast'), mainLoopData.tContr = P.Contrast; end
+    if isfield(P,'Contrast')
+        mainLoopData.tContr.pos = P.Contrast; 
+        mainLoopData.tContr.neg = -P.Contrast; 
+    end
 
     %% High-pass filter for iGLM given by SPM
     mainLoopData.K = SPM.xX.K;

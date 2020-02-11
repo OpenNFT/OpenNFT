@@ -86,9 +86,12 @@ iglmActVox.neg = find(tn.neg > tTh(n));
 % statistical image masking, as set by SPM structure, see
 % setupProcParams.m
 recTh = recTh + spmMaskTh(n) * spmMaskTh(n); % cumulative sum of squares
-spmActVox = find(sigma2n > recTh);
+spmActVox = sigma2n > recTh;
+idxSPMAct = find(spmActVox);
 
 % intersect of iGLM and SPM indexes
-idxActVox.pos = intersect(iglmActVox.pos, spmActVox);
-idxActVox.neg = intersect(iglmActVox.neg, spmActVox);
+tn.pos = tn.pos .* spmActVox; 
+tn.neg = tn.neg .* spmActVox; 
+idxActVox.pos = intersect(iglmActVox.pos, idxSPMAct);
+idxActVox.neg = intersect(iglmActVox.neg, idxSPMAct);
 clear iglmActVox spmActVox

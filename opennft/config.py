@@ -15,6 +15,8 @@ LOG_LEVEL = 'DEBUG'
 
 ROOT_PATH = os.path.abspath(os.path.dirname(__file__))
 UI_PATH = os.path.join(ROOT_PATH, 'UI')
+PLUGIN_PATH = os.path.join(ROOT_PATH, 'PLUGINS')
+OpenNFT_UI = os.path.join(ROOT_PATH, 'ui', 'opennft.ui')
 OpenNFT_ICON = os.path.join(ROOT_PATH, 'ui', 'images', 'appicon.png')
 MATLAB_FUNCTIONS_PATH = os.path.join(ROOT_PATH, 'matlab')
 
@@ -46,8 +48,8 @@ USE_FAST_OFFLINE_LOOP = True
 # currently used only for DCM feedabck
 USE_MATLAB_MODEL_HELPER = True
 
-# disable PTB helper and PTB option in parameters
-DISABLE_PTB = False
+# use PTB helper and include PTB option in parameters
+USE_PTB_HELPER = True
 
 # use only when FFileDialog.by crashes when opening the dialog windows
 DONOT_USE_QFILE_NATIVE_DIALOG = False

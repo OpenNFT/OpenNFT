@@ -83,5 +83,11 @@ class EventRecorder(object):
         self.records[0, position] = eventNumber
 
     # --------------------------------------------------------------------------
+    def getLastEvent(self, iteration=None):
+        if iteration is None:
+            iteration = [iteration for iteration, item in enumerate(self.records) if any(item != 0)][-1]
+        return [index for index, item in enumerate(self.records[iteration]) if item == max(self.records[iteration])][-1]
+
+    # --------------------------------------------------------------------------
     def savetxt(self, filename):
         np.savetxt(filename, self.records)
