@@ -3,7 +3,7 @@
 "CondName": "NF",
 "TaskName": "Task",
 "Cond": [
-        	{
+        		{
             			"ConditionName": "Bas",
             			"OnOffsets": [
                 			[1,10],
@@ -34,6 +34,7 @@
                 			[111,120],
                 			[141,150]
              			]
-        	}
-]
+        		}
+	     ],
+"Contrast": "+1*NF;-1*Bas;-1*Task"
 }

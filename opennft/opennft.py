@@ -1246,9 +1246,8 @@ class OpenNFT(QWidget):
             self.engSPM.workspace['P'] = self.P
             self.previousIterStartTime = 0
 
-            if not self.P['isRestingState']:
-                with utils.timeit("  Load protocol data:"):
-                    self.loadProtocolData()
+            with utils.timeit("  Load protocol data:"):
+                self.loadProtocolData()
 
             with utils.timeit("  Selecting ROI:"):
                 self.selectRoi()
