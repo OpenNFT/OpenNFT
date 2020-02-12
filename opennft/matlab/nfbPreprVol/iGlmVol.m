@@ -87,10 +87,11 @@ iglmActVox.neg = find(tn.neg > tTh(n));
 % setupProcParams.m
 recTh = recTh + spmMaskTh(n) * spmMaskTh(n); % cumulative sum of squares
 spmActVox = sigma2n > recTh;
+idxSPMAct = find(spmActVox);
 
 % intersect of iGLM and SPM indexes
 tn.pos = tn.pos .* spmActVox; 
 tn.neg = tn.neg .* spmActVox; 
-idxActVox.pos = intersect(iglmActVox.pos, find(spmActVox));
-idxActVox.neg = intersect(iglmActVox.neg, find(spmActVox));
+idxActVox.pos = intersect(iglmActVox.pos, idxSPMAct);
+idxActVox.neg = intersect(iglmActVox.neg, idxSPMAct);
 clear iglmActVox spmActVox
