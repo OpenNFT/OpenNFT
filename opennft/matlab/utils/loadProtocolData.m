@@ -147,6 +147,9 @@ if isfield(prt,'Contrast')
     if ~P.isRestingState
         condNames = cellfun(@(x) x.ConditionName, prt.Cond, 'UniformOutput',false);
         con = textscan(prt.Contrast,'%d*%s','Delimiter',';');
+        if length(condNames)>length(con{1})
+            condNames = condNames(1,1:end-length(con{1}));
+        end
         conVect = [];
         for ci = cellfun(@(x) find(strcmp(x,con{2})),condNames,'UniformOutput',false)
             if ~isempty(ci{1}), conVect(end+1) = con{1}(ci{1}); else conVect(end+1) = 0; end
