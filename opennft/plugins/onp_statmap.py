@@ -38,8 +38,8 @@ META = {
     "plugin_name": "Stat Map",
     "plugin_time": "t3",
     "plugin_init": "myImageProcess(({MatrixSizeX}, {MatrixSizeY}, {NrOfSlices}),toDraw=False)",
-    "plugin_signal": "self.eng.evalin('base','isfield(mainLoopData,\\\'tn\\\')')",
-    "plugin_exec": "load_data(self.eng.evalin('base','mainLoopData.tn.pos')._data.tolist())"
+    "plugin_signal": "self.parent.eng.evalin('base','isfield(mainLoopData,\\\'tn\\\')')",
+    "plugin_exec": "load_data(self.parent.eng.evalin('base','mainLoopData.tn.pos')._data.tolist())"
 }
 
 class myImageProcess(imageProcess):

@@ -476,11 +476,6 @@ class OpenNFT(QWidget):
             self.negMapCheckBox.setChecked(neg_map_state)
 
     # --------------------------------------------------------------------------
-    def onChangeDataType(self):
-        self.cbgetMAT.setChecked(self.cbgetMAT.isChecked() and self.cbDataType.currentText() == 'DICOM')
-        self.cbgetMAT.setEnabled(self.cbDataType.currentText() == 'DICOM')
-
-    # --------------------------------------------------------------------------
     def showPluginDlg(self):
         self.btnStart.setEnabled(False) # force rerunning Setup
 
@@ -488,26 +483,11 @@ class OpenNFT(QWidget):
             self.plugins = []
             for p in range(len(self.pluginWindow.plugins)):
                 if self.pluginWindow.lvPlugins.model().item(p).checkState():
-                    self.plugins += [{'module': self.pluginWindow.plugins[p]}]
+                    self.plugins += [plugin.Plugin(self,self.pluginWindow.plugins[p])]
 
     # --------------------------------------------------------------------------
-    def initializePlugins(self):
-        for i in range(len(self.plugins)):
-            if len(self.plugins[i]['module'].META['plugin_init']):
-                self.plugins[i]['object'] = eval("self.plugins[i]['module']." + self.plugins[i]['module'].META['plugin_init'].format(**self.P))
-            logger.info('Plugin "' + self.plugins[i]['module'].META['plugin_name'] + '" has been initialized')
-    
-    # --------------------------------------------------------------------------
-    def finalizePlugins(self):
-        for i in range(len(self.plugins)):
-            self.plugins[i]['object'] = None
-    
-    # --------------------------------------------------------------------------
     def updatePlugins(self):
-        for i in range(len(self.plugins)):
-            m = self.plugins[i]['module'].META
-            if (self.recorder.getLastEvent() == eval("erd.Times." + m['plugin_time'])) and eval(m['plugin_signal']):
-                exec("self.plugins[i]['object']." + m['plugin_exec'])
+        for i in range(len(self.plugins)): self.plugins[i].update()
     
     # --------------------------------------------------------------------------
     def onChangeDataType(self):
@@ -1228,7 +1208,7 @@ class OpenNFT(QWidget):
             self.P.update(self.eng.workspace['P'])
 
             with utils.timeit("  Initialize plugins:"):
-                self.initializePlugins()
+                for i in range(len(self.plugins)): self.plugins[i].initialize()
 
             logger.info("  Setup plots...")
             if not self.P['isRestingState']:
@@ -1401,7 +1381,7 @@ class OpenNFT(QWidget):
             self.recorder.savetxt(fname)
 
         if self.fFinNFB:
-            self.finalizePlugins()
+            for i in range(len(self.plugins)): self.plugins[i].finalize()
             self.finalizeUdpSender()
             self.eng.workspace['rtQA_python'] = self.windowRTQA.data_packing()
             self.nfbFinStarted = self.eng.nfbSave(self.iteration, nargout=0, async=True)

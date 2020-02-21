@@ -16,7 +16,6 @@ LOG_LEVEL = 'DEBUG'
 ROOT_PATH = os.path.abspath(os.path.dirname(__file__))
 UI_PATH = os.path.join(ROOT_PATH, 'UI')
 PLUGIN_PATH = os.path.join(ROOT_PATH, 'PLUGINS')
-OpenNFT_UI = os.path.join(ROOT_PATH, 'ui', 'opennft.ui')
 OpenNFT_ICON = os.path.join(ROOT_PATH, 'ui', 'images', 'appicon.png')
 MATLAB_FUNCTIONS_PATH = os.path.join(ROOT_PATH, 'matlab')
 

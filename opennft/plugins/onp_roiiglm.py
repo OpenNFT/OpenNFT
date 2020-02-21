@@ -16,10 +16,8 @@ Each plugin has to be a subclass of *Process class specified in pyniexp.mlplugin
 - the input to the process method of dataProcess (called data) is a one-dimensional numpy array
 - the input to the process method of imageProcess (called image) is a multi-dimensional (usually 3D) numpy array as specified during initialization
 
-# Bayesian Optimisation
-This plugin is part of a project using real-time fMRI to inform non-invasive brain stimulation as outlined by Violante, Leech, and Lorenz (2019), IEEE Brain.
-
-N.B.:The plugin is under active development.
+# ROI iGLM
+This plugin demonstrates how volume-wise iGLM infomration for the ROIs can be extracted.
 
 __________________________________________________________________________
 Copyright (C) 2016-2019 OpenNFT.org
@@ -30,19 +28,38 @@ Written by Tibor Auer
 
 from pyniexp.mlplugins import dataProcess, SIG_NOTSTARTED, SIG_RUNNING, SIG_STOPPED, SIG_NEWIMAGE
 from loguru import logger
-
+from multiprocessing import Value, RawArray
+from numpy import array
+import matplotlib.pyplot as plt
 
 META = {
-    "plugin_name": "Bayesian Optimisation",
+    "plugin_name": "ROI iGLM",
     "plugin_time": "t3", # according to opennft.eventrecorder.Times
-    "plugin_init": "BOengine(int({NrROIs}))",
-    "plugin_signal": "self.eng.evalin('base','isfield(mainLoopData,\\\'tn\\\')')",
-    "plugin_exec": "load_data(self.eng.evalin('base','onp_extract_rois')._data.tolist())"
+    "plugin_init": "ROIiGLM(int({NrROIs}),int({NrOfVolumes}),int({nrSkipVol}))",
+    "plugin_signal": "self.parent.eng.evalin('base','isfield(mainLoopData,\\\'tn\\\')')",
+    "plugin_exec": "load_data(self.parent.eng.evalin('base','onp_extract_rois')._data.tolist())"
 }
 
-class BOengine(dataProcess):
-    def __init__(self,nROIs):
-        super().__init__(nROIs)
+class ROIiGLM(dataProcess):
+    def __init__(self,nROIs,nVols, nSkipVols):
+        super().__init__(nROIs,autostart=False)
+
+        self.nROIs = nROIs
+        self.nVols = nVols
+
+        self.rtdata = RawArray('d',[0]*self.nROIs*self.nVols)
+        self.nData = Value('i',self.nROIs*nSkipVols)
+
+        self.start_process()
+
+    def __del__(self):
+        super().__del__()
+        plt.plot(array(self.rtdata).reshape(self.nVols,self.nROIs))
+        plt.show()
 
     def process(self,data):
+        for r in data:
+            self.rtdata[self.nData.value] = r
+            self.nData.value += 1
         logger.info(('ROIs: [ ' + '{:.3f} '*len(data) + ']').format(*data))
+
