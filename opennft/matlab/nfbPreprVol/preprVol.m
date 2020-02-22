@@ -33,17 +33,6 @@ if isDCM
     ROIsAnat = evalin('base', 'ROIsAnat');
 end
 
-if strcmp(P.DataType, 'DICOM')
-    fDICOM = true;
-    fIMAPH = false;
-elseif strcmp(P.DataType, 'IMAPH')
-    fDICOM = false;
-    fIMAPH = true;
-else
-    fDICOM = false;
-    fIMAPH = false;
-end
-
 % realign and reslice init
 R = mainLoopData.R;
 A0 = mainLoopData.A0;
@@ -83,35 +72,33 @@ if isDCM
 end
 
 %% EPI Data Preprocessing
-% Read Data in real-time
-if fDICOM
-    if P.UseTCPData, [~, dcmData] = tcp.ReceiveScan;
-    else, dcmData = double(dicomread(inpFileName)); 
-    end
-end
-if fIMAPH
-    % Note, possibly corrupted Phillips rt data export
-    infoVol = spm_vol(inpFileName);
-    imgVol  = spm_read_vols(infoVol);
-    % If necessary, flip rt time-series so that it matches the template
-    % set in setupFirstVolume.m, setupProcParams.m, selectROI.m
-    imgVol  = fliplr(imgVol);
-end
+% Read Data in real-time and update paremeters
+switch P.DataType
+    case 'DICOM'
+        if P.UseTCPData, [~, dcmData] = tcp.ReceiveScan;
+        else, dcmData = double(dicomread(inpFileName)); 
+        end
 
-% update parameters
-if fDICOM
-    R(2,1).mat = matVol;
-    R(2,1).dim = dimVol;
-    if P.UseTCPData, R(2,1).Vol = dcmData;
-    else, R(2,1).Vol = img2Dvol3D(dcmData, slNrImg2DdimX, slNrImg2DdimY, dimVol);
-    end
-end
-if fIMAPH
-    R(2,1).mat = matTemplMotCorr;
-    R(2,1).dim = dimTemplMotCorr;
-    R(2,1).Vol = imgVol;
-end
+        R(2,1).mat = matVol;
+        R(2,1).dim = dimVol;
+        if P.UseTCPData, R(2,1).Vol = dcmData;
+        else, R(2,1).Vol = img2Dvol3D(dcmData, slNrImg2DdimX, slNrImg2DdimY, dimVol);
+        end
+    case 'IMAPH'
+        % Note, possibly corrupted Phillips rt data export
+        imgVol  = spm_read_vols(spm_vol(inpFileName));
+        % If necessary, flip rt time-series so that it matches the template
+        % set in setupFirstVolume.m, setupProcParams.m, selectROI.m
+        imgVol  = fliplr(imgVol);
 
+        R(2,1).mat = matTemplMotCorr;
+        R(2,1).dim = dimTemplMotCorr;
+        R(2,1).Vol = imgVol;
+    case 'NII'  
+        R(2,1).Vol  = spm_read_vols(spm_vol(inpFileName));
+        R(2,1).mat = matVol;
+        R(2,1).dim = dimVol;
+end
 tStartMotCorr = tic;
 
 %% realign

@@ -15,54 +15,44 @@ function setupFirstVolume(inpFileName)
 P = evalin('base', 'P');
 mainLoopData = evalin('base', 'mainLoopData');
 
-if strcmp(P.DataType, 'DICOM')
-    fDICOM = true;
-    fIMAPH = false;
-elseif strcmp(P.DataType, 'IMAPH')
-    fDICOM = false;
-    fIMAPH = true;
-else
-    fDICOM = false;
-    fIMAPH = false;
-end
-
+matTemplMotCorr = mainLoopData.matTemplMotCorr;
+        
 %% Read first Exported Volume, set Dimensions
 disp(inpFileName)
 % check first Vol
-if fDICOM
-    dicomInfoVol = dicominfo(inpFileName); %spm_dicom_headers(inpFileName); dicomInfoVol = dicomInfoVol{1};
-    mxAct      = double(dicomInfoVol.AcquisitionMatrix(1));
-    if (mxAct == 0)
-        mxAct = double(dicomInfoVol.AcquisitionMatrix(3));
-    end
-    MatrixSizeX_Act = mxAct;
-    dimVol = [MatrixSizeX_Act, MatrixSizeX_Act, double(P.NrOfSlices)];
-    [slNrImg2DdimX, slNrImg2DdimY, img2DdimX, img2DdimY] = ...
-        getMosaicDim(dimVol);
-    matTemplMotCorr = mainLoopData.matTemplMotCorr;
-    if P.getMAT
-        matVol = getMAT(dicomInfoVol, dimVol);
-        dicomInfoVox   = [dicomInfoVol.PixelSpacing; ...
-                         dicomInfoVol.SpacingBetweenSlices]';
-    else
-        matVol = matTemplMotCorr;
+switch P.DataType
+    case 'DICOM'
+        dicomInfoVol = dicominfo(inpFileName); %spm_dicom_headers(inpFileName); dicomInfoVol = dicomInfoVol{1};
+        mxAct      = double(dicomInfoVol.AcquisitionMatrix(1));
+        if (mxAct == 0)
+            mxAct = double(dicomInfoVol.AcquisitionMatrix(3));
+        end
+        MatrixSizeX_Act = mxAct;
+        dimVol = [MatrixSizeX_Act, MatrixSizeX_Act, double(P.NrOfSlices)];
+        if P.getMAT
+            matVol = getMAT(dicomInfoVol, dimVol);
+            dicomInfoVox   = [dicomInfoVol.PixelSpacing; ...
+                dicomInfoVol.SpacingBetweenSlices]';
+        else
+            matVol = matTemplMotCorr;
+            dicomInfoVox   = sqrt(sum(matTemplMotCorr(1:3,1:3).^2));
+        end
+    case 'IMAPH'
+        % get MC tempalte settings for Phillips in case of no proper header
+        % of the rt export files
+        dimTemplMotCorr = mainLoopData.dimTemplMotCorr;
         dicomInfoVox   = sqrt(sum(matTemplMotCorr(1:3,1:3).^2));
-    end
+        
+        dimVol = dimTemplMotCorr;
+        matVol = matTemplMotCorr;
+    case 'NII'
+        V = spm_vol(inpFileName);
+        dimVol = V.dim;
+        matVol = V.mat;
+        dicomInfoVox = sqrt(sum(matVol(1:3,1:3).^2));
 end
 
-if fIMAPH
-    % get MC tempalte settings for Phillips in case of no proper header
-    % of the rt export files
-    dimTemplMotCorr = mainLoopData.dimTemplMotCorr;
-    matTemplMotCorr = mainLoopData.matTemplMotCorr;
-    dicomInfoVox   = sqrt(sum(matTemplMotCorr(1:3,1:3).^2));
-    
-    dimVol = dimTemplMotCorr;
-    [slNrImg2DdimX, slNrImg2DdimY, img2DdimX, img2DdimY] = ...
-        getMosaicDim(dimVol);
-    matVol = matTemplMotCorr;
-end
-
+[slNrImg2DdimX, slNrImg2DdimY, img2DdimX, img2DdimY] = getMosaicDim(dimVol);
 nrVoxInVol = prod(dimVol);
 
 %% Init memmapfile transport
