@@ -65,7 +65,7 @@ class FD:
               self.excFD[1] += 1
 
               if self.excFDIndexes_2[-1] == -1:
-                  self.excFDIndexes_2 = [i - 1]
+                  self.excFDIndexes_2 = np.array([i - 1])
               else:
                   self.excFDIndexes_2 = np.append(self.excFDIndexes_2, i - 1)
 
