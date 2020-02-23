@@ -1207,9 +1207,6 @@ class OpenNFT(QWidget):
 
             self.P.update(self.eng.workspace['P'])
 
-            with utils.timeit("  Initialize plugins:"):
-                for i in range(len(self.plugins)): self.plugins[i].initialize()
-
             logger.info("  Setup plots...")
             if not self.P['isRestingState']:
                 self.createMusterInfo()
@@ -1269,6 +1266,9 @@ class OpenNFT(QWidget):
             self.eng.nfbInitReward(nargout=0)
 
             self.initUdpSender()
+
+            with utils.timeit("  Initialize plugins:"):
+                for i in range(len(self.plugins)): self.plugins[i].initialize()
 
             self.btnStart.setEnabled(True)
             if self.P['isRTQA']:
