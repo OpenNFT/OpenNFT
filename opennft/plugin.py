@@ -2,11 +2,12 @@ from PyQt5.QtWidgets import QDialog
 from PyQt5.QtGui import QStandardItemModel, QStandardItem
 from PyQt5.QtCore import Qt
 from PyQt5.uic import loadUi
+from loguru import logger
 
 import importlib
 import os
 
-from opennft import config, utils
+from opennft import config, utils, eventrecorder
 
 class PluginWindow(QDialog):
     def __init__(self, parent=None):
@@ -29,3 +30,22 @@ class PluginWindow(QDialog):
             item.setCheckable(True)
             model.appendRow(item)
         self.lvPlugins.setModel(model)
+
+class Plugin:
+
+    def __init__(self,parentApplication,module):
+        self.parent = parentApplication
+        self.module = module
+        self.object = None
+
+    def initialize(self):
+        self.object = eval("self.module." + self.module.META['plugin_init'].format(**self.parent.P))
+        logger.info('Plugin "' + self.module.META['plugin_name'] + '" has been initialized')
+
+    def update(self):
+        m = self.module.META
+        if (self.parent.recorder.getLastEvent() == eval("eventrecorder.Times." + m['plugin_time'])) and eval(m['plugin_signal']):
+            exec("self.object." + m['plugin_exec'])
+    
+    def finalize(self):
+        self.object = None
