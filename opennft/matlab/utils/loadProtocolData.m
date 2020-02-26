@@ -25,7 +25,7 @@ prt = loadjson(jsonFile);
 if ~P.isRestingState  
     
     P.BaselineName = prt.BaselineName;
-    P.CondName = prt.CondName;
+    P.CondName = prt.RegulationName;
 
     P.vectEncCond = [];
     P.ProtBAS = {};
@@ -62,13 +62,13 @@ if ~P.isRestingState
         for x = 1:lCond
             for k = 1:length(prt.Cond{x}.OnOffsets(:,1)) 
                 unitBlock = prt.Cond{x}.OnOffsets(k,1) : prt.Cond{x}.OnOffsets(k,2); 
-                if strcmpi(prt.Cond{x}.ConditionName, 'Bas') 
+                if strcmpi(prt.Cond{x}.ConditionName, 'BAS') 
                     P.vectEncCond(unitBlock) = 1;
                     P.ProtBAS(k,:) = {unitBlock}; 
-                elseif strcmpi(prt.Cond{x}.ConditionName, 'NF') 
+                elseif strcmpi(prt.Cond{x}.ConditionName, 'NFBREG') 
                     P.vectEncCond(unitBlock) = 2;
                     P.ProtNF(k,:) = {unitBlock};  
-                elseif strcmpi(prt.Cond{x}.ConditionName, 'Task') 
+                elseif strcmpi(prt.Cond{x}.ConditionName, 'TASK') 
                     P.vectEncCond(unitBlock) = 3;
                     P.ProtTask(k,:) = {unitBlock};  
                 end
@@ -78,7 +78,7 @@ if ~P.isRestingState
 
     if strcmp(P.Prot, 'Inter') && isPSC
         P.vectEncCond = ones(1,NrOfVolumes-nrSkipVol);
-        P.DispName = prt.DispName;
+        P.DispName = prt.nfbDisplayName;
         P.CondNames = {P.BaselineName, P.CondName, P.DispName}; 
         for x = 1:lCond
             for k = 1:length(prt.Cond{x}.OnOffsets(:,1))
@@ -98,7 +98,7 @@ if ~P.isRestingState
 
     %% DCM
     if strcmp(P.Prot, 'InterBlock') && isDCM
-        P.DispName = prt.DispName;
+        P.DispName = prt.nfbDisplayName;
         P.RestName = prt.RestName;
         P.CondNames = {P.BaselineName, P.CondName, P.RestName, P.DispName}; 
         for x = 1:lCond

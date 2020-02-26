@@ -443,10 +443,10 @@ class OpenNFT(QWidget):
         self.posMapCheckBox.toggled.connect(self.onChangePosMapVisible)
         self.negMapCheckBox.toggled.connect(self.onChangeNegMapVisible)
 
-        self.sliderMapsAlpha.valueChanged.connect(lambda v: self.mosaicImageView.set_pos_map_opacity(v/100.0))
-        self.sliderMapsAlpha.valueChanged.connect(lambda v: self.mosaicImageView.set_neg_map_opacity(v/100.0))
-        self.sliderMapsAlpha.valueChanged.connect(lambda v: self.orthView.set_pos_map_opacity(v/100.0))
-        self.sliderMapsAlpha.valueChanged.connect(lambda v: self.orthView.set_neg_map_opacity(v/100.0))
+        self.sliderMapsAlpha.valueChanged.connect(lambda v: self.mosaicImageView.set_pos_map_opacity(v / 100.0))
+        self.sliderMapsAlpha.valueChanged.connect(lambda v: self.mosaicImageView.set_neg_map_opacity(v / 100.0))
+        self.sliderMapsAlpha.valueChanged.connect(lambda v: self.orthView.set_pos_map_opacity(v / 100.0))
+        self.sliderMapsAlpha.valueChanged.connect(lambda v: self.orthView.set_neg_map_opacity(v / 100.0))
 
         self.onChangePosMapVisible()
         self.onChangeNegMapVisible()
@@ -482,7 +482,7 @@ class OpenNFT(QWidget):
 
     # --------------------------------------------------------------------------
     def showPluginDlg(self):
-        self.btnStart.setEnabled(False) # force rerunning Setup
+        self.btnStart.setEnabled(False)  # force rerunning Setup
 
         if self.pluginWindow.exec_():
             self.plugins = []
@@ -494,21 +494,22 @@ class OpenNFT(QWidget):
     def initializePlugins(self):
         for i in range(len(self.plugins)):
             if len(self.plugins[i]['module'].META['plugin_init']):
-                self.plugins[i]['object'] = eval("self.plugins[i]['module']." + self.plugins[i]['module'].META['plugin_init'].format(**self.P))
+                self.plugins[i]['object'] = eval(
+                    "self.plugins[i]['module']." + self.plugins[i]['module'].META['plugin_init'].format(**self.P))
             logger.info('Plugin "' + self.plugins[i]['module'].META['plugin_name'] + '" has been initialized')
-    
+
     # --------------------------------------------------------------------------
     def finalizePlugins(self):
         for i in range(len(self.plugins)):
             self.plugins[i]['object'] = None
-    
+
     # --------------------------------------------------------------------------
     def updatePlugins(self):
         for i in range(len(self.plugins)):
             m = self.plugins[i]['module'].META
             if (self.recorder.getLastEvent() == eval("erd.Times." + m['plugin_time'])) and eval(m['plugin_signal']):
                 exec("self.plugins[i]['object']." + m['plugin_exec'])
-    
+
     # --------------------------------------------------------------------------
     def onChangeDataType(self):
         self.cbgetMAT.setChecked(self.cbgetMAT.isChecked() and self.cbDataType.currentText() == 'DICOM')
@@ -684,19 +685,21 @@ class OpenNFT(QWidget):
                     self.displayScreen()
 
                 if self.iteration > self.P['nrSkipVol'] and config.UDP_SEND_CONDITION:
-                    self.udpSender.send_data(self.P['CondNames'][int(self.eng.evalin('base', 'mainLoopData.condition'))-1])
+                    self.udpSender.send_data(
+                        self.P['CondNames'][int(self.eng.evalin('base', 'mainLoopData.condition')) - 1])
 
             elif self.P['Type'] == 'DCM':
                 if not self.isCalculateDcm and config.USE_PTB:
                     self.displayScreen()
 
             elif self.P['Type'] == 'SVM':
-                    if self.displayData and config.USE_UDP_FEEDBACK:
-                        logger.info('Sending by UDP - instrValue = ')  # + str(self.displayData['instrValue'])
-                        # self.udpSender.send_data(self.displayData['instrValue'])
+                if self.displayData and config.USE_UDP_FEEDBACK:
+                    logger.info('Sending by UDP - instrValue = ')  # + str(self.displayData['instrValue'])
+                    # self.udpSender.send_data(self.displayData['instrValue'])
 
-        if self.cbUseTCPData.isChecked() and self.eng.evalin('base','tcp.BytesAvailable'):
-            fname = os.path.join(self.P['WatchFolder'], self.P['FirstFileName']) # first file is required for initialization
+        if self.cbUseTCPData.isChecked() and self.eng.evalin('base', 'tcp.BytesAvailable'):
+            fname = os.path.join(self.P['WatchFolder'],
+                                 self.P['FirstFileName'])  # first file is required for initialization
         else:
             try:
                 fname = self.files_queue.get_nowait()
@@ -720,7 +723,7 @@ class OpenNFT(QWidget):
         # data acquisition
         if fname is not None:
             path = os.path.join(self.P['WatchFolder'], fname)
-            if (not(self.cbUseTCPData.isChecked()) or not(self.reachedFirstFile)) and not self.isOffline:
+            if (not (self.cbUseTCPData.isChecked()) or not (self.reachedFirstFile)) and not self.isOffline:
                 if not self.checkFileIsReady(path, fname):
                     self.isMainLoopEntered = False
                     return
@@ -905,7 +908,7 @@ class OpenNFT(QWidget):
 
         if self.displayData:
             if config.USE_SHAM:
-                self.displayData['dispValue'] = self.shamData[self.iteration-1]
+                self.displayData['dispValue'] = self.shamData[self.iteration - 1]
 
             if config.USE_UDP_FEEDBACK:
                 logger.info('Sending by UDP - dispValue = {}', self.displayData['dispValue'])
@@ -919,16 +922,18 @@ class OpenNFT(QWidget):
         if bool(self.outputSamples) and self.P['isRTQA']:
             dataRealRaw = np.array(self.outputSamples['rawTimeSeries'], ndmin=2)
             dataMC = np.array(self.outputSamples['motCorrParam'], ndmin=2)
-            n = len(dataRealRaw[0, :])-1
+            n = len(dataRealRaw[0, :]) - 1
             data = dataRealRaw[:, n]
             self.windowRTQA.calculate_snr(data, n)
             if not self.P['isRestingState']:
                 self.windowRTQA.calculate_cnr(data, n)
             self.windowRTQA.plot_rtQA(init, n)
             if n > 0:
-                data = np.array(self.eng.evalin('base','mainLoopData.glmProcTimeSeries(:,end)'), ndmin=2)
-                posSpike = np.array(self.eng.evalin('base','rtQA_matlab.kalmanSpikesPos(:,mainLoopData.indVolNorm)'), ndmin=2)
-                negSpike = np.array(self.eng.evalin('base','rtQA_matlab.kalmanSpikesNeg(:,mainLoopData.indVolNorm)'), ndmin=2)
+                data = np.array(self.eng.evalin('base', 'mainLoopData.glmProcTimeSeries(:,end)'), ndmin=2)
+                posSpike = np.array(self.eng.evalin('base', 'rtQA_matlab.kalmanSpikesPos(:,mainLoopData.indVolNorm)'),
+                                    ndmin=2)
+                negSpike = np.array(self.eng.evalin('base', 'rtQA_matlab.kalmanSpikesNeg(:,mainLoopData.indVolNorm)'),
+                                    ndmin=2)
                 self.windowRTQA.plot_stepsAndSpikes(data, posSpike, negSpike)
                 self.windowRTQA.plot_mcmd(dataMC[n, :])
 
@@ -1136,7 +1141,6 @@ class OpenNFT(QWidget):
         self.eng.workspace['mainLoopData'] = self.mainLoopData
         self.eng.workspace['rtQA_matlab'] = self.rtQA_matlab
 
-
         self.frameParams.setEnabled(True)
         self.frameShortParams.setEnabled(True)
         self.btnSetup.setEnabled(self.isSetFileChosen)
@@ -1241,14 +1245,16 @@ class OpenNFT(QWidget):
             if config.USE_SHAM:
                 logger.warning("Sham feedback has been selected")
                 fext = os.path.splitext(self.P['ShamFile'])[1]
-                if fext == '.txt': # expect a textfile with float numbers in a single  column or row
+                if fext == '.txt':  # expect a textfile with float numbers in a single  column or row
                     NFBdata = np.loadtxt(self.P['ShamFile'], unpack=False)
-                elif fext == '.mat': # expect "mainLoopData" 
+                elif fext == '.mat':  # expect "mainLoopData"
                     NFBdata = loadmat(self.P['ShamFile'])['dispValues']
-                
+
                 dispValues = list(NFBdata.flatten())
                 if len(dispValues) != self.P['NrOfVolumes']:
-                    logger.error("Number of display values ({:d}) in {} does not correspond to number of volumes ({:d}).\n SELECT ANOTHER SHAM FILE".format(len(dispValues), self.P['ShamFile'], self.P['NrOfVolumes']))
+                    logger.error(
+                        "Number of display values ({:d}) in {} does not correspond to number of volumes ({:d}).\n SELECT ANOTHER SHAM FILE".format(
+                            len(dispValues), self.P['ShamFile'], self.P['NrOfVolumes']))
                     return
                 self.shamData = [float(v) for v in dispValues]
                 logger.info("Sham data has been loaded")
@@ -1301,8 +1307,8 @@ class OpenNFT(QWidget):
                 self.computeMusterPlotData(config.MUSTER_Y_LIMITS)
                 xrange = max(self.musterInfo['tmpCond1'][-1][1],
                              self.musterInfo['tmpCond2'][-1][1])
-                indBas = np.array(self.P['inds'][0])-1
-                indCond = np.array(self.P['inds'][1])-1
+                indBas = np.array(self.P['inds'][0]) - 1
+                indCond = np.array(self.P['inds'][1]) - 1
 
             self.cbImageViewMode.setEnabled(False)
             self.cbImageViewMode.setCurrentIndex(0)
@@ -1310,16 +1316,15 @@ class OpenNFT(QWidget):
             if self.windowRTQA:
                 self.windowRTQA.deleteLater()
 
-            self.windowRTQA = rtqa.RTQAWindow(int(self.P['NrROIs']),xrange, indBas, indCond, self.musterInfo, parent=self)
+            self.windowRTQA = rtqa.RTQAWindow(int(self.P['NrROIs']), xrange, indBas, indCond, self.musterInfo, self)
+            if self.P['isRestingState']:
+                self.windowRTQA.comboBox.model().item(2).setEnabled(False)
             self.windowRTQA.volumeCheckBox.stateChanged.connect(self.onShowRtqaVol)
             self.windowRTQA.volumeCheckBox.stateChanged.connect(self.onChangeNegMapPolicy)
             self.windowRTQA.volumeCheckBox.stateChanged.connect(self.onInteractWithMapImage)
             self.windowRTQA.volumeCheckBox.toggled.connect(self.updateOrthViewAsync)
             self.windowRTQA.smoothedCheckBox.stateChanged.connect(self.onSmoothedChecked)
             self.windowRTQA.comboBox.currentIndexChanged.connect(self.onModeChanged)
-
-            if self.P['isRestingState']:
-                self.windowRTQA.comboBox.model().item(2).setEnabled(False)
 
             self.onChangeNegMapPolicy()
 
@@ -1393,7 +1398,7 @@ class OpenNFT(QWidget):
         if config.USE_MRPULSE and hasattr(self, 'mrPulses'):
             np_arr = mrpulse.toNpData(self.mrPulses)
             self.pulseProc.terminate()
-        
+
         if self.iteration > 1 and self.P.get('nfbDataFolder'):
             path = os.path.normpath(self.P['nfbDataFolder'])
             fname = os.path.join(path, 'TimeVectors_' + str(self.P['NFRunNr']).zfill(2) + '.txt')
@@ -1409,7 +1414,7 @@ class OpenNFT(QWidget):
         if self.recorder.records.shape[0] > 2:
             if self.recorder.records[0, erd.Times.d0] > 0:
                 logger.info("Average elapsed time: {:.4f} s".format(
-                    np.sum(self.recorder.records[1:, erd.Times.d0])/self.recorder.records[0, erd.Times.d0]))
+                    np.sum(self.recorder.records[1:, erd.Times.d0]) / self.recorder.records[0, erd.Times.d0]))
 
         logger.info('Finished.')
 
@@ -1840,6 +1845,8 @@ class OpenNFT(QWidget):
         self.P['isRestingState'] = bool(self.cbProt.currentText() == "Rest")
         self.P['isRTQA'] = config.USE_RTQA;
         self.P['isIGLM'] = config.USE_IGLM;
+        self.P['isZeroPadding'] = config.zeroPaddingFlag;
+        self.P['nrZeroPadVol'] = config.nrZeroPadVol;
 
         if self.P['Prot'] == 'ContTask':
             self.P['TaskFolder'] = self.leTaskFolder.text()
@@ -2008,7 +2015,6 @@ class OpenNFT(QWidget):
         if (background_image is not None
                 and (is_stat_map_created and not is_rtqa_volume_checked
                      or is_snr_map_created and is_rtqa_volume_checked)):
-
             with utils.timeit("Receiving mosaic maps from Matlab:"):
                 filename_pat = self.eng.evalin('base', 'P.memMapFile')
                 filename_pos = filename_pat.replace('shared', 'statMap')
@@ -2065,9 +2071,9 @@ class OpenNFT(QWidget):
         else:
             # FIXME: tmpCond4 (?)
             blockLength = (
-                tmpCond1[0][1] - tmpCond1[0][0] +
-                tmpCond2[0][1] - tmpCond2[0][0] +
-                tmpCond3[0][1] - tmpCond3[0][0] + 3
+                    tmpCond1[0][1] - tmpCond1[0][0] +
+                    tmpCond2[0][1] - tmpCond2[0][0] +
+                    tmpCond3[0][1] - tmpCond3[0][0] + 3
             )
 
         # ----------------------------------------------------------------------

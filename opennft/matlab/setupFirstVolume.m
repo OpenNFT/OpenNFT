@@ -75,9 +75,11 @@ statVol = zeros(dimVol);
 initMemmap(P.memMapFile, 'statVol', zeros(nrVoxInVol,2), 'double', ...
     'mmStatVol', {'double', size(statVol), 'posStatVol'; 'double', size(statVol), 'negStatVol'});
 
-rtqaVol = zeros(dimVol);
-initMemmap(P.memMapFile, 'RTQAVol', zeros(nrVoxInVol,1), 'double', ...
-    'mmrtQAVol', {'double', size(rtqaVol), 'rtQAVol'});
+if P.isRTQA
+    rtqaVol = zeros(dimVol);
+    initMemmap(P.memMapFile, 'RTQAVol', zeros(nrVoxInVol,1), 'double', ...
+        'mmrtQAVol', {'double', size(rtqaVol), 'rtQAVol'});
+end
 
 % mosaic stat map to python GUI
 initMemmap(P.memMapFile, 'statMap', uint8(zeros(img2DdimX*img2DdimY, 1)), 'uint8', ...

@@ -14,12 +14,14 @@ function preprVol(inpFileName, indVol)
 
 P = evalin('base', 'P');
 mainLoopData = evalin('base', 'mainLoopData');
-rtQAMode = evalin('base', 'rtQAMode');
-isShowRtqaVol = evalin('base', 'isShowRtqaVol');
-isSmoothed = evalin('base', 'isSmoothed');
 imageViewMode = evalin('base', 'imageViewMode');
-FIRST_SNR_VOLUME = evalin('base', 'FIRST_SNR_VOLUME');
-rtQA_matlab = evalin('base', 'rtQA_matlab');
+isShowRtqaVol = evalin('base', 'isShowRtqaVol');
+if P.isRTQA
+    rtQAMode = evalin('base', 'rtQAMode');
+    isSmoothed = evalin('base', 'isSmoothed');
+    rtQA_matlab = evalin('base', 'rtQA_matlab');
+    FIRST_SNR_VOLUME = evalin('base', 'FIRST_SNR_VOLUME');
+end
 
 if P.UseTCPData, tcp = evalin('base', 'tcp'); end
 
@@ -101,15 +103,38 @@ end
 % update parameters
 if fDICOM
     R(2,1).mat = matVol;
+    if P.UseTCPData
+%         R(2,1).Vol = dcmData;
+        if P.isZeroPadding
+            zeroPadVol = zeros(dimVol(1),dimVol(2),P.nrZeroPadVol);
+            dimVol(3) = dimVol(3)+P.nrZeroPadVol*2;
+            R(2,1).Vol = cat(3, cat(3, zeroPadVol, dcmData), zeroPadVol);
+        else 
+            R(2,1).Vol = dcmData;
+        end
+    else
+        tmpVol = img2Dvol3D(dcmData, slNrImg2DdimX, slNrImg2DdimY, dimVol);
+        R(2,1).Vol = tmpVol;
+        if P.isZeroPadding
+            zeroPadVol = zeros(dimVol(1),dimVol(2),P.nrZeroPadVol);
+            dimVol(3) = dimVol(3)+P.nrZeroPadVol*2;
+            R(2,1).Vol = cat(3, cat(3, zeroPadVol, tmpVol), zeroPadVol);
+        else 
+            R(2,1).Vol = tmpVol;
+        end
+    end    
     R(2,1).dim = dimVol;
-    if P.UseTCPData, R(2,1).Vol = dcmData;
-    else, R(2,1).Vol = img2Dvol3D(dcmData, slNrImg2DdimX, slNrImg2DdimY, dimVol);
-    end
 end
 if fIMAPH
     R(2,1).mat = matTemplMotCorr;
+    if P.isZeroPadding
+        zeroPadVol = zeros(dimTemplMotCorr(1),dimTemplMotCorr(2),P.nrZeroPadVol);
+        dimTemplMotCorr(3) = dimTemplMotCorr(3)+P.nrZeroPadVol*2;
+        R(2,1).Vol = cat(3, cat(3, zeroPadVol, imgVol), zeroPadVol);
+    else 
+        R(2,1).Vol = imgVol;
+    end
     R(2,1).dim = dimTemplMotCorr;
-    R(2,1).Vol = imgVol;
 end
 
 tStartMotCorr = tic;
@@ -137,8 +162,15 @@ P.motCorrParam(indVolNorm,:) = tmpMCParam(1:6)-P.offsetMCParam;
 %P.motCorrParam(indVolNorm,:) = tmpMCParam(1:6);
 
 %% reslice
-reslVol = spm_reslice_rt(R, flagsSpmReslice);
+if P.isZeroPadding
+    tmp_reslVol = spm_reslice_rt(R, flagsSpmReslice);
+    reslVol = tmp_reslVol(:,:,P.nrZeroPadVol+1:end-P.nrZeroPadVol);
+    dimVol(3) = dimVol(3) - P.nrZeroPadVol*2;
+else
+    reslVol = spm_reslice_rt(R, flagsSpmReslice);
+end
 tStopMC = toc(tStartMotCorr);
+
 
 %% Smoothing
 if isPSC || isSVM || P.isRestingState
@@ -400,8 +432,8 @@ if isIGLM
     end
     
     % estimate iGLM
-    [idxActVoxIGLM, dyntTh, tTh, Cn, Dn, s2n, tn, neg_e2n] = ...
-        iGlmVol(Cn, Dn, s2n, tn, smReslVol(:), indIglm, ...
+    [idxActVoxIGLM, dyntTh, tTh, Cn, Dn, s2n, tn, neg_e2n, Bn, e2n] = ...
+        iGlmVol( Cn, Dn, s2n, tn, smReslVol(:), indIglm, ...
         (nrBasFct+nrBasFctRegr), tContr, basFctRegr, pVal, ...
         dyntTh, tTh, spmMaskTh);
     
@@ -411,6 +443,19 @@ if isIGLM
         disp('HERE THE NEGATIVE e2n!!!')
     end
     
+    if P.isRTQA
+        if isDCM
+            ROIs = evalin('base', 'ROIsAnat');
+        else
+            ROIs = evalin('base', 'ROIs');
+        end
+        for i=1:P.NrROIs
+            rtQA_matlab.Bn{i}(indIglm,:) = mean(Bn(ROIs(i).voxelIndex,:));
+            rtQA_matlab.tn.pos{i}(indIglm,:) = geomean(tn.pos(intersect(tn.pos>0, ROIs(i).voxelIndex)));
+            rtQA_matlab.tn.neg{i}(indIglm,:) =  geomean(tn.neg(intersect(tn.neg>0, ROIs(i).voxelIndex)));
+            rtQA_matlab.var{i}(indIglm,:) =  geomean(e2n(ROIs(i).voxelIndex,:));
+        end
+    end
     mainLoopData.nrBasFctRegr = nrBasFctRegr;
     mainLoopData.Cn = Cn;
     mainLoopData.Dn = Dn;

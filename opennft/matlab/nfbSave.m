@@ -16,9 +16,7 @@ disp('Save...')
 
 P = evalin('base', 'P');
 mainLoopData = evalin('base', 'mainLoopData');
-rtQA_matlab = evalin('base', 'rtQA_matlab');
-rtQA_python = evalin('base', 'rtQA_python');
-rtQAMode = evalin('base', 'rtQAMode');
+
 
 if P.UseTCPData
     tcp = evalin('base', 'tcp');
@@ -30,8 +28,13 @@ end
 folder = P.nfbDataFolder;
 
 % save rtqa data
-save([folder '\rtQA_matlab.mat'], '-struct', 'rtQA_matlab');
-save([folder '\rtQA_python.mat'], '-struct', 'rtQA_python');
+if P.isRTQA
+    rtQA_matlab = evalin('base', 'rtQA_matlab');
+    rtQA_python = evalin('base', 'rtQA_python');
+    rtQAMode = evalin('base', 'rtQAMode');
+    save([folder '\rtQA_matlab.mat'], '-struct', 'rtQA_matlab');
+    save([folder '\rtQA_python.mat'], '-struct', 'rtQA_python');
+end
 
 % % save last volume stat data for offline access
 if mainLoopData.statMapCreated
@@ -83,18 +86,20 @@ if mainLoopData.statMapCreated
     m_out.Data.statMap_neg = uint8(statMap2D_neg);
     assignin('base', 'statMap_neg', statMap2D_neg);
     
-    n = mainLoopData.indVolNorm;
-    var = rtQA_matlab.snrData.m2Smoothed ./ double(n-1);
-    rtQA_matlab.snrData.snrVol = rtQA_matlab.snrData.meanSmoothed ./ (var.^.5);
-    if ~P.isRestingState
-        meanBas = rtQA_matlab.cnrData.basData.meanSmoothed;
-        meanCond = rtQA_matlab.cnrData.condData.meanSmoothed;
-        varianceBas = rtQA_matlab.cnrData.basData.m2Smoothed / (rtQA_matlab.cnrData.basData.iteration - 1);
-        varianceCond = rtQA_matlab.cnrData.condData.m2Smoothed / (rtQA_matlab.cnrData.condData.iteration - 1);
-        rtQA_matlab.cnrData.cnrVol = (meanCond - meanBas) ./ ((varianceBas + varianceCond).^.5);
-    end;
-    
-    assignin('base', 'rtQA_matlab', rtQA_matlab);
+    if P.isRTQA
+        n = mainLoopData.indVolNorm;
+        var = rtQA_matlab.snrData.m2Smoothed ./ double(n-1);
+        rtQA_matlab.snrData.snrVol = rtQA_matlab.snrData.meanSmoothed ./ (var.^.5);
+        if ~P.isRestingState
+            meanBas = rtQA_matlab.cnrData.basData.meanSmoothed;
+            meanCond = rtQA_matlab.cnrData.condData.meanSmoothed;
+            varianceBas = rtQA_matlab.cnrData.basData.m2Smoothed / (rtQA_matlab.cnrData.basData.iteration - 1);
+            varianceCond = rtQA_matlab.cnrData.condData.m2Smoothed / (rtQA_matlab.cnrData.condData.iteration - 1);
+            rtQA_matlab.cnrData.cnrVol = (meanCond - meanBas) ./ ((varianceBas + varianceCond).^.5);
+        end;
+
+        assignin('base', 'rtQA_matlab', rtQA_matlab);
+     end
     
 end
 

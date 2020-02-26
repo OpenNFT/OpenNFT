@@ -22,7 +22,9 @@ function setupProcParams()
 
 P = evalin('base', 'P');
 mainLoopData = evalin('base', 'mainLoopData');
-rtQA_matlab = evalin('base', 'rtQA_matlab');
+if P.isRTQA
+    rtQA_matlab = evalin('base', 'rtQA_matlab');
+end
 
 evalin('base', 'clear mmImgViewTempl;');
 evalin('base', 'clear mmStatVol;');
@@ -121,42 +123,54 @@ mainLoopData.mposMin = [];
 mainLoopData.blockNF = 0;
 mainLoopData.firstNF = 0;
 
-rtQA_python.meanSNR = [];
-rtQA_python.m2SNR = [];
-rtQA_python.rSNR = [];
-rtQA_python.meanBas = [];
-rtQA_python.varBas = [];
-rtQA_python.meanCond = [];
-rtQA_python.varCond = [];
-rtQA_python.rCNR = [];
-rtQA_python.excFDIndexes_1 = [];
-rtQA_python.excFDIndexes_2 = [];
-rtQA_python.excMDIndexes = [];
-
-rtQA_matlab.kalmanSpikesPos = zeros(P.NrROIs,P.VolumesNumber);
-rtQA_matlab.kalmanSpikesNeg = zeros(P.NrROIs,P.VolumesNumber);
-
-rtQA_matlab.snrData.snrVol = [];
-rtQA_matlab.snrData.meanSmoothed = [];
-rtQA_matlab.snrData.m2Smoothed = [];
-rtQA_matlab.snrData.meanNonSmoothed = [];
-rtQA_matlab.snrData.m2NonSmoothed = [];
 rtQA_matlab.snrMapCreated = 0; 
+if P.isRTQA
+    rtQA_python.meanSNR = [];
+    rtQA_python.m2SNR = [];
+    rtQA_python.rSNR = [];
+    rtQA_python.meanBas = [];
+    rtQA_python.varBas = [];
+    rtQA_python.meanCond = [];
+    rtQA_python.varCond = [];
+    rtQA_python.rCNR = [];
+    rtQA_python.excFDIndexes_1 = [];
+    rtQA_python.excFDIndexes_2 = [];
+    rtQA_python.excMDIndexes = [];
 
-if ~P.isRestingState
-    rtQA_matlab.cnrData.cnrVol = []
+    rtQA_matlab.kalmanSpikesPos = zeros(P.NrROIs,P.VolumesNumber);
+    rtQA_matlab.kalmanSpikesNeg = zeros(P.NrROIs,P.VolumesNumber);
+
+    rtQA_matlab.snrData.snrVol = [];
+    rtQA_matlab.snrData.meanSmoothed = [];
+    rtQA_matlab.snrData.m2Smoothed = [];
+    rtQA_matlab.snrData.meanNonSmoothed = [];
+    rtQA_matlab.snrData.m2NonSmoothed = [];
+
+    rtQA_matlab.betRegr = cell(P.NrROIs,1);
+    rtQA_matlab.varErGlmProcTimeSeries = zeros(P.NrROIs,P.VolumesNumber);
+    rtQA_matlab.tGlmProcTimeSeries.pos = zeros(P.NrROIs,P.VolumesNumber);
+    rtQA_matlab.tGlmProcTimeSeries.neg = zeros(P.NrROIs,P.VolumesNumber);
     
-    rtQA_matlab.cnrData.basData.mean = [];
-    rtQA_matlab.cnrData.basData.m2 = [];
-    rtQA_matlab.cnrData.basData.meanSmoothed = [];
-    rtQA_matlab.cnrData.basData.m2Smoothed = [];
-    rtQA_matlab.cnrData.basData.iteration = 1;
+    rtQA_matlab.Bn = cell(P.NrROIs,1);
+    rtQA_matlab.var = cell(P.NrROIs,1);
+    rtQA_matlab.tn.pos = cell(P.NrROIs,1);
+    rtQA_matlab.tn.neg = cell(P.NrROIs,1);
 
-    rtQA_matlab.cnrData.condData.mean = [];
-    rtQA_matlab.cnrData.condData.m2 = [];
-    rtQA_matlab.cnrData.condData.meanSmoothed = [];
-    rtQA_matlab.cnrData.condData.m2Smoothed = [];
-    rtQA_matlab.cnrData.condData.iteration = 1;
+    if ~P.isRestingState
+        rtQA_matlab.cnrData.cnrVol = []
+
+        rtQA_matlab.cnrData.basData.mean = [];
+        rtQA_matlab.cnrData.basData.m2 = [];
+        rtQA_matlab.cnrData.basData.meanSmoothed = [];
+        rtQA_matlab.cnrData.basData.m2Smoothed = [];
+        rtQA_matlab.cnrData.basData.iteration = 1;
+
+        rtQA_matlab.cnrData.condData.mean = [];
+        rtQA_matlab.cnrData.condData.m2 = [];
+        rtQA_matlab.cnrData.condData.meanSmoothed = [];
+        rtQA_matlab.cnrData.condData.m2Smoothed = [];
+        rtQA_matlab.cnrData.condData.iteration = 1;
+    end
 end
 
 %% DCM Settings
@@ -231,8 +245,10 @@ if ~P.isRestingState
     indexesBas = tmpindexesBas(1:end-1)+1;
     indexesCond = tmpindexesCond-1;
     P.inds = { indexesBas, indexesCond }
-    rtQA_matlab.cnrData.basData.indexesBas = indexesBas;
-    rtQA_matlab.cnrData.condData.indexesCond = indexesCond;
+    if P.isRTQA
+        rtQA_matlab.cnrData.basData.indexesBas = indexesBas;
+        rtQA_matlab.cnrData.condData.indexesCond = indexesCond;
+    end
 end
 
 %% Explicit contrasts (optional)
@@ -257,34 +273,21 @@ if ~P.isRestingState
     mainLoopData.statMap3D_iGLM = [];
 
     % PSC
-    if isPSC && strcmp(P.Prot, 'Cont') && ~fIMAPH
-        tmpSpmDesign = SPM.xX.X(1:P.NrOfVolumes-P.nrSkipVol, 2);
+    if isPSC && (strcmp(P.Prot, 'Cont') || strcmp(P.Prot, 'Inter')) && ~fIMAPH
         % this contrast does not count constant term
-%         mainLoopData.tContr.pos =  [-1 1]';
-%         mainLoopData.tContr.neg =  [1 -1]';
-    end
-
-    if isPSC && strcmp(P.Prot, 'Inter') && ~fIMAPH
         tmpSpmDesign = SPM.xX.X(1:P.NrOfVolumes-P.nrSkipVol, 2);
-        % this contrast does not count constant term
-%         mainLoopData.tContr.pos =  [-1 1 -1]';
-%         mainLoopData.tContr.neg =  [1 -1 1]';
     end
 
     % PSC (Phillips)
-    if isPSC && strcmp(P.Prot, 'Cont') && fIMAPH
-        tmpSpmDesign = SPM.xX.X(1:P.NrOfVolumes-P.nrSkipVol,1);
+    if isPSC && strcmp(P.Prot, 'Cont') && fIMAPH        
         % this contrast does not count constant term
-%         mainLoopData.tContr.pos = [1];
-%         mainLoopData.tContr.neg = [-1];
+        tmpSpmDesign = SPM.xX.X(1:P.NrOfVolumes-P.nrSkipVol,1);
     end
 
     % DCM
     if isDCM && strcmp(P.Prot, 'InterBlock')
         % this contrast does not count constant term
         tmpSpmDesign = SPM.xX.X(1:P.lengthDCMTrial,2);
-%         mainLoopData.tContr.pos = [-1; 1];
-%         mainLoopData.tContr.neg = [1; -1];
         [mainLoopData.DCM_EN, mainLoopData.dcmParTag, ...
             mainLoopData.dcmParOpp] = dcmPrep(SPM);
     end
@@ -295,8 +298,6 @@ if ~P.isRestingState
         mainLoopData.nrBasFct = 1;
         % this contrast does not count constant term
         tmpSpmDesign = SPM.xX.X(1:P.NrOfVolumes-P.nrSkipVol,strcmp(P.CondNames,P.CondName));
-%         mainLoopData.tContr.pos = [1];
-%         mainLoopData.tContr.neg = [-1];
     end
 
     %% High-pass filter for iGLM given by SPM
@@ -316,11 +317,15 @@ else
     mainLoopData.numscan = 0;
     [mainLoopData.numscan, mainLoopData.nrHighPassFct] = size(mainLoopData.K.X0);
     P.spmDesign = [];
-%     mainLoopData.tContr.pos = ones(6,1);
-%     mainLoopData.tContr.neg = -ones(6,1);
     mainLoopData.spmMaskTh = mean(SPM.xM.TH)*ones(size(SPM.xM.TH));
     mainLoopData.pVal = .1;
     mainLoopData.statMap3D_iGLM = [];
+end
+
+if P.isRTQA
+    for i=1:P.NrROIs
+        rtQA_matlab.betRegr{i} = zeros(P.NrOfVolumes, 2+6+size(P.spmDesign,2));
+    end
 end
 
 mainLoopData.mf = [];
@@ -330,9 +335,18 @@ mainLoopData.statMapCreated = 0;
 %% Get motion realignment template data and volume
 infoVolTempl = spm_vol(P.MCTempl);
 mainLoopData.infoVolTempl = infoVolTempl;
-imgVolTempl  = spm_read_vols(infoVolTempl);
+tmp_imgVolTempl  = spm_read_vols(infoVolTempl);
 dimTemplMotCorr     = infoVolTempl.dim;
 matTemplMotCorr     = infoVolTempl.mat;
+
+isZeroPadVol = 1;
+if isZeroPadVol
+    nrZeroPadVol = 3;
+    zeroPadVol = zeros(dimTemplMotCorr(1),dimTemplMotCorr(2),nrZeroPadVol);
+    dimTemplMotCorr(3) = dimTemplMotCorr(3)+nrZeroPadVol*2;
+    imgVolTempl = cat(3, cat(3, zeroPadVol, tmp_imgVolTempl), zeroPadVol);
+%     clear tmp_imgVolTempl
+end
 
 mainLoopData.dimTemplMotCorr = dimTemplMotCorr;
 mainLoopData.matTemplMotCorr = matTemplMotCorr;
@@ -360,7 +374,9 @@ if ~exist(P.nfbDataFolder, 'dir')
 end
 
 assignin('base', 'rtQA_matlab', rtQA_matlab);
-assignin('base', 'rtQA_python', rtQA_python);
+if P.isRTQA
+    assignin('base', 'rtQA_python', rtQA_python);
+end
 assignin('base', 'mainLoopData', mainLoopData);
 assignin('base', 'P', P);
 if P.UseTCPData, assignin('base', 'tcp', tcp); end
