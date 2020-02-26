@@ -234,7 +234,13 @@ if ~P.isRestingState
     rtQA_matlab.cnrData.basData.indexesBas = indexesBas;
     rtQA_matlab.cnrData.condData.indexesCond = indexesCond;
 end
-    
+
+%% Explicit contrasts (optional)
+if isfield(P,'Contrast')
+    mainLoopData.tContr.pos = P.Contrast; 
+    mainLoopData.tContr.neg = -P.Contrast; 
+end
+
 if ~P.isRestingState
     
     if ~P.iglmAR1
@@ -254,31 +260,31 @@ if ~P.isRestingState
     if isPSC && strcmp(P.Prot, 'Cont') && ~fIMAPH
         tmpSpmDesign = SPM.xX.X(1:P.NrOfVolumes-P.nrSkipVol, 2);
         % this contrast does not count constant term
-        mainLoopData.tContr.pos =  [-1 1]';
-        mainLoopData.tContr.neg =  [1 -1]';
+%         mainLoopData.tContr.pos =  [-1 1]';
+%         mainLoopData.tContr.neg =  [1 -1]';
     end
 
     if isPSC && strcmp(P.Prot, 'Inter') && ~fIMAPH
         tmpSpmDesign = SPM.xX.X(1:P.NrOfVolumes-P.nrSkipVol, 2);
         % this contrast does not count constant term
-        mainLoopData.tContr.pos =  [-1 1 -1]';
-        mainLoopData.tContr.neg =  [1 -1 1]';
+%         mainLoopData.tContr.pos =  [-1 1 -1]';
+%         mainLoopData.tContr.neg =  [1 -1 1]';
     end
 
     % PSC (Phillips)
     if isPSC && strcmp(P.Prot, 'Cont') && fIMAPH
         tmpSpmDesign = SPM.xX.X(1:P.NrOfVolumes-P.nrSkipVol,1);
         % this contrast does not count constant term
-        mainLoopData.tContr.pos = [1];
-        mainLoopData.tContr.neg = [-1];
+%         mainLoopData.tContr.pos = [1];
+%         mainLoopData.tContr.neg = [-1];
     end
 
     % DCM
     if isDCM && strcmp(P.Prot, 'InterBlock')
         % this contrast does not count constant term
         tmpSpmDesign = SPM.xX.X(1:P.lengthDCMTrial,2);
-        mainLoopData.tContr.pos = [-1; 1];
-        mainLoopData.tContr.neg = [1; -1];
+%         mainLoopData.tContr.pos = [-1; 1];
+%         mainLoopData.tContr.neg = [1; -1];
         [mainLoopData.DCM_EN, mainLoopData.dcmParTag, ...
             mainLoopData.dcmParOpp] = dcmPrep(SPM);
     end
@@ -289,14 +295,8 @@ if ~P.isRestingState
         mainLoopData.nrBasFct = 1;
         % this contrast does not count constant term
         tmpSpmDesign = SPM.xX.X(1:P.NrOfVolumes-P.nrSkipVol,strcmp(P.CondNames,P.CondName));
-        mainLoopData.tContr.pos = [1];
-        mainLoopData.tContr.neg = [-1];
-    end
-
-    %% Explicit contrasts (optional)
-    if isfield(P,'Contrast')
-        mainLoopData.tContr.pos = P.Contrast; 
-        mainLoopData.tContr.neg = -P.Contrast; 
+%         mainLoopData.tContr.pos = [1];
+%         mainLoopData.tContr.neg = [-1];
     end
 
     %% High-pass filter for iGLM given by SPM
@@ -316,8 +316,8 @@ else
     mainLoopData.numscan = 0;
     [mainLoopData.numscan, mainLoopData.nrHighPassFct] = size(mainLoopData.K.X0);
     P.spmDesign = [];
-    mainLoopData.tContr.pos = ones(6,1);
-    mainLoopData.tContr.neg = -ones(6,1);
+%     mainLoopData.tContr.pos = ones(6,1);
+%     mainLoopData.tContr.neg = -ones(6,1);
     mainLoopData.spmMaskTh = mean(SPM.xM.TH)*ones(size(SPM.xM.TH));
     mainLoopData.pVal = .1;
     mainLoopData.statMap3D_iGLM = [];

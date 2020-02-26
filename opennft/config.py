@@ -59,30 +59,59 @@ DONOT_USE_QFILE_NATIVE_DIALOG = False
 # plotting initialization
 PLOT_GRID_ALPHA = 0.7
 ROI_PLOT_WIDTH = 2.0
-ROI_PLOT_COLORS = [
-    pg.mkColor(0, 0, 255, 255),
-    pg.mkColor(255, 0, 0, 255),
-    pg.mkColor(0, 255, 0, 255)
-]
-STAT_PLOT_COLORS = [
-    pg.mkColor(0, 0, 0, 255),
-    pg.mkColor(255, 0, 0, 255),
-    pg.mkColor(0, 255, 0, 255)
-]
-ROI_BAS_COLORS = [
-    pg.mkColor(75, 75, 75, 255),
-    pg.mkColor(255, 125, 0, 255),
-    pg.mkColor(125, 255, 0, 255)
-]
-ROI_COND_COLORS = [
-    pg.mkColor(125, 125, 125, 255),
-    pg.mkColor(255, 0, 125, 255),
-    pg.mkColor(0, 255, 125, 255)
-]
 MUSTER_Y_LIMITS = (-32767, 32768)
 # transparency of design template overlay
 MUSTER_PLOT_ALPHA = 50
 MAX_ROI_NAME_LENGTH = 6
+
+ROI_PLOT_COLORS = [
+    pg.mkColor(0, 255, 0, 255),
+    pg.mkColor(0, 255, 255, 255),
+    pg.mkColor(0, 0, 255, 255),
+    pg.mkColor(255, 0, 255, 255),
+    pg.mkColor(255, 0, 0, 255),
+    pg.mkColor(255, 255, 0, 255),
+    pg.mkColor(240, 240, 240, 255),
+    pg.mkColor(208, 208, 147, 255),
+    pg.mkColor(147, 0, 0, 255),
+    pg.mkColor(0, 0, 0, 255)
+]
+STAT_PLOT_COLORS = [
+    pg.mkColor(0, 255, 0, 255),
+    pg.mkColor(0, 255, 255, 255),
+    pg.mkColor(0, 0, 255, 255),
+    pg.mkColor(255, 0, 255, 255),
+    pg.mkColor(255, 0, 0, 255),
+    pg.mkColor(255, 255, 0, 255),
+    pg.mkColor(240, 240, 240, 255),
+    pg.mkColor(208, 208, 147, 255),
+    pg.mkColor(147, 0, 0, 255),
+    pg.mkColor(0, 0, 0, 255)
+]
+ROI_BAS_COLORS = [
+    pg.mkColor(0, 255, 0, 255),
+    pg.mkColor(0, 255, 255, 255),
+    pg.mkColor(0, 0, 255, 255),
+    pg.mkColor(255, 0, 255, 255),
+    pg.mkColor(255, 0, 0, 255),
+    pg.mkColor(255, 255, 0, 255),
+    pg.mkColor(240, 240, 240, 255),
+    pg.mkColor(208, 208, 147, 255),
+    pg.mkColor(147, 0, 0, 255),
+    pg.mkColor(0, 0, 0, 255)
+]
+ROI_COND_COLORS = [
+    pg.mkColor(0, 255, 0, 255),
+    pg.mkColor(0, 255, 255, 255),
+    pg.mkColor(0, 0, 255, 255),
+    pg.mkColor(255, 0, 255, 255),
+    pg.mkColor(255, 0, 0, 255),
+    pg.mkColor(255, 255, 0, 255),
+    pg.mkColor(240, 240, 240, 255),
+    pg.mkColor(208, 208, 147, 255),
+    pg.mkColor(147, 0, 0, 255),
+    pg.mkColor(0, 0, 0, 255)
+]
 
 MUSTER_PEN_COLORS = [
     (73, 137, 255, 255),
@@ -90,14 +119,12 @@ MUSTER_PEN_COLORS = [
     (22, 255, 104, 255),
     (255, 255, 255, 255)
 ]
-
 MUSTER_BRUSH_COLORS = [
     (124, 196, 255, MUSTER_PLOT_ALPHA),
     (255, 156, 117, MUSTER_PLOT_ALPHA),
     (127, 255, 157, MUSTER_PLOT_ALPHA),
     (255, 255, 255, MUSTER_PLOT_ALPHA)
 ]
-
 MC_PLOT_COLORS = [
     (255, 123, 0),
     (255, 56, 109),
