@@ -53,13 +53,14 @@
 	},
 
 
-	"BaselineName": "N",
-	"CondName": "P",
+	"BaselineName": "BAS",
+	"RegulationName": "NFBREG",
 	"RestName": "REST",
-	"DispName": "FB",
+	"nfbDisplayName": "NFBDISP",
+	"Contrast": "+1*NFBREG;-1*BAS",
 	"Cond": [
 		{
-			"ConditionName": "N",
+			"ConditionName": "BAS",
 			"OnOffsets": [
 				[1,4],
 				[5,8],
@@ -169,7 +170,7 @@
 			]
 		},
 		{
-			"ConditionName": "P",
+			"ConditionName": "NFBREG",
 			"OnOffsets": [
 				[13,16],
 				[17,20],
@@ -270,7 +271,7 @@
 			]
 		},
 		{
-			"ConditionName": "FB",
+			"ConditionName": "NFBDISP",
 			"OnOffsets": [
 				[147,150],
 				[297,300],
@@ -281,6 +282,5 @@
 				[1047,1050]
 			]
 		}
-	],
-"Contrast": "+1*N;-1*P"
+	]
 }

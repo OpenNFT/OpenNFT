@@ -71,7 +71,7 @@ ROI_PLOT_COLORS = [
     pg.mkColor(255, 0, 255, 255),
     pg.mkColor(255, 0, 0, 255),
     pg.mkColor(255, 255, 0, 255),
-    pg.mkColor(240, 240, 240, 255),
+    pg.mkColor(140, 200, 240, 255),
     pg.mkColor(208, 208, 147, 255),
     pg.mkColor(147, 0, 0, 255),
     pg.mkColor(0, 0, 0, 255)
@@ -83,7 +83,7 @@ STAT_PLOT_COLORS = [
     pg.mkColor(255, 0, 255, 255),
     pg.mkColor(255, 0, 0, 255),
     pg.mkColor(255, 255, 0, 255),
-    pg.mkColor(240, 240, 240, 255),
+    pg.mkColor(140, 200, 240, 255),
     pg.mkColor(208, 208, 147, 255),
     pg.mkColor(147, 0, 0, 255),
     pg.mkColor(0, 0, 0, 255)
@@ -95,7 +95,7 @@ ROI_BAS_COLORS = [
     pg.mkColor(255, 0, 255, 255),
     pg.mkColor(255, 0, 0, 255),
     pg.mkColor(255, 255, 0, 255),
-    pg.mkColor(240, 240, 240, 255),
+    pg.mkColor(140, 200, 240, 255),
     pg.mkColor(208, 208, 147, 255),
     pg.mkColor(147, 0, 0, 255),
     pg.mkColor(0, 0, 0, 255)
@@ -107,7 +107,7 @@ ROI_COND_COLORS = [
     pg.mkColor(255, 0, 255, 255),
     pg.mkColor(255, 0, 0, 255),
     pg.mkColor(255, 255, 0, 255),
-    pg.mkColor(240, 240, 240, 255),
+    pg.mkColor(140, 200, 240, 255),
     pg.mkColor(208, 208, 147, 255),
     pg.mkColor(147, 0, 0, 255),
     pg.mkColor(0, 0, 0, 255)
@@ -140,10 +140,16 @@ PROJ_ROI_COLORS = ['g', 'c', 'b', 'm', 'y']
 USE_SLEEP_IN_STOP = False
 HIDE_TEST_BTN = True
 
+# rtQA may cause lear performance loss on the big data
+# due to saving process of iGLM quality paramaters
 USE_RTQA = True
 USE_IGLM = True
 USE_ROI = True
 FIRST_SNR_VOLUME = 2
+
+# zero padding settings
+zeroPaddingFlag = True
+nrZeroPadVol = 3
 
 # FD defaults
 DEFAULT_FD_RADIUS = 50  # radius multiplying angular displacement in FD compution

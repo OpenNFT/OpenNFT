@@ -1,9 +1,10 @@
 {
-	"BaselineName": "Bas",
-	"CondName": "NF",
+	"BaselineName": "BAS",
+	"RegulationName": "NFBREG",
+	"Contrast": "+1*BAS",
 	"Cond": [
 		{
-			"ConditionName": "Bas",
+			"ConditionName": "BAS",
 			"OnOffsets": [
 				[1,10],
 				[21,30],
@@ -19,7 +20,7 @@
 			]
 		},
 		{
-			"ConditionName": "NF",
+			"ConditionName": "NFBREG",
 			"OnOffsets": [
 				[11,20],
 				[31,40],
@@ -33,6 +34,5 @@
 				[191,200]
 			]
 		}
-	],
-"Contrast": "+1*Bas"
+	]
 }

@@ -1218,14 +1218,16 @@ class OpenNFT(QWidget):
             if config.USE_SHAM:
                 logger.warning("Sham feedback has been selected")
                 fext = os.path.splitext(self.P['ShamFile'])[1]
-                if fext == '.txt': # expect a textfile with float numbers in a single  column or row
+                if fext == '.txt':  # expect a textfile with float numbers in a single  column or row
                     NFBdata = np.loadtxt(self.P['ShamFile'], unpack=False)
-                elif fext == '.mat': # expect "mainLoopData" 
+                elif fext == '.mat':  # expect "mainLoopData"
                     NFBdata = loadmat(self.P['ShamFile'])['dispValues']
-                
+
                 dispValues = list(NFBdata.flatten())
                 if len(dispValues) != self.P['NrOfVolumes']:
-                    logger.error("Number of display values ({:d}) in {} does not correspond to number of volumes ({:d}).\n SELECT ANOTHER SHAM FILE".format(len(dispValues), self.P['ShamFile'], self.P['NrOfVolumes']))
+                    logger.error(
+                        "Number of display values ({:d}) in {} does not correspond to number of volumes ({:d}).\n SELECT ANOTHER SHAM FILE".format(
+                            len(dispValues), self.P['ShamFile'], self.P['NrOfVolumes']))
                     return
                 self.shamData = [float(v) for v in dispValues]
                 logger.info("Sham data has been loaded")
@@ -1373,7 +1375,7 @@ class OpenNFT(QWidget):
         if config.USE_MRPULSE and hasattr(self, 'mrPulses'):
             np_arr = mrpulse.toNpData(self.mrPulses)
             self.pulseProc.terminate()
-        
+
         if self.iteration > 1 and self.P.get('nfbDataFolder'):
             path = os.path.normpath(self.P['nfbDataFolder'])
             fname = os.path.join(path, 'TimeVectors_' + str(self.P['NFRunNr']).zfill(2) + '.txt')
@@ -1820,6 +1822,8 @@ class OpenNFT(QWidget):
         self.P['isRestingState'] = bool(self.cbProt.currentText() == "Rest")
         self.P['isRTQA'] = config.USE_RTQA;
         self.P['isIGLM'] = config.USE_IGLM;
+        self.P['isZeroPadding'] = config.zeroPaddingFlag;
+        self.P['nrZeroPadVol'] = config.nrZeroPadVol;
 
         if self.P['Prot'] == 'ContTask':
             self.P['TaskFolder'] = self.leTaskFolder.text()
@@ -1988,7 +1992,6 @@ class OpenNFT(QWidget):
         if (background_image is not None
                 and (is_stat_map_created and not is_rtqa_volume_checked
                      or is_snr_map_created and is_rtqa_volume_checked)):
-
             with utils.timeit("Receiving mosaic maps from Matlab:"):
                 filename_pat = self.eng.evalin('base', 'P.memMapFile')
                 filename_pos = filename_pat.replace('shared', 'statMap')
@@ -2045,9 +2048,9 @@ class OpenNFT(QWidget):
         else:
             # FIXME: tmpCond4 (?)
             blockLength = (
-                tmpCond1[0][1] - tmpCond1[0][0] +
-                tmpCond2[0][1] - tmpCond2[0][0] +
-                tmpCond3[0][1] - tmpCond3[0][0] + 3
+                    tmpCond1[0][1] - tmpCond1[0][0] +
+                    tmpCond2[0][1] - tmpCond2[0][0] +
+                    tmpCond3[0][1] - tmpCond3[0][0] + 3
             )
 
         # ----------------------------------------------------------------------
