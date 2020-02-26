@@ -83,7 +83,6 @@ switch P.DataType
             dcmData = double(dicomread(inpFileName));
         end
         R(2,1).mat = matVol;
-        R(2,1).dim = dimVol;
         if P.UseTCPData
             if P.isZeroPadding
                 zeroPadVol = zeros(dimVol(1),dimVol(2),P.nrZeroPadVol);
@@ -102,6 +101,7 @@ switch P.DataType
                 R(2,1).Vol = tmpVol;
             end
         end
+        R(2,1).dim = dimVol;
     case 'IMAPH'
         % Note, possibly corrupted Phillips rt data export
         imgVol  = spm_read_vols(spm_vol(inpFileName));
@@ -110,11 +110,25 @@ switch P.DataType
         imgVol  = fliplr(imgVol);
 
         R(2,1).mat = matTemplMotCorr;
+        if P.isZeroPadding
+            zeroPadVol = zeros(dimTemplMotCorr(1),dimTemplMotCorr(2),P.nrZeroPadVol);
+            dimTemplMotCorr(3) = dimTemplMotCorr(3)+P.nrZeroPadVol*2;
+            R(2,1).Vol = cat(3, cat(3, zeroPadVol, imgVol), zeroPadVol);
+        else
+            R(2,1).Vol = imgVol;
+        end        
         R(2,1).dim = dimTemplMotCorr;
-        R(2,1).Vol = imgVol;
+        
     case 'NII'
-        R(2,1).Vol  = spm_read_vols(spm_vol(inpFileName));
         R(2,1).mat = matVol;
+        tmpVol = spm_read_vols(spm_vol(inpFileName));
+        if P.isZeroPadding
+            zeroPadVol = zeros(dimVol(1),dimVol(2),P.nrZeroPadVol);
+            dimVol(3) = dimVol(3)+P.nrZeroPadVol*2;
+            R(2,1).Vol = cat(3, cat(3, zeroPadVol, tmpVol), zeroPadVol);
+        else
+            R(2,1).Vol = tmpVol;
+        end        
         R(2,1).dim = dimVol;
 end
 tStartMotCorr = tic;
