@@ -14,8 +14,8 @@ import pyqtgraph as pg
 LOG_LEVEL = 'DEBUG'
 
 ROOT_PATH = os.path.abspath(os.path.dirname(__file__))
-UI_PATH = os.path.join(ROOT_PATH, 'UI')
-PLUGIN_PATH = os.path.join(ROOT_PATH, 'PLUGINS')
+UI_PATH = os.path.join(ROOT_PATH, 'ui')
+PLUGIN_PATH = os.path.join(ROOT_PATH, 'plugins')
 OpenNFT_ICON = os.path.join(ROOT_PATH, 'ui', 'images', 'appicon.png')
 MATLAB_FUNCTIONS_PATH = os.path.join(ROOT_PATH, 'matlab')
 
