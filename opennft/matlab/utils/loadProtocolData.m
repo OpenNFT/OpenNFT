@@ -24,27 +24,22 @@ prt = loadjson(jsonFile);
 
 if ~P.isRestingState  
     
-    P.BaselineName = prt.BaselineName;
     P.CondName = prt.RegulationName;
 
-    P.vectEncCond = [];
-    P.ProtBAS = {};
+    P.vectEncCond = ones(1,NrOfVolumes-nrSkipVol);
     P.ProtNF = {};
+    P.ProtTask = {};
 
     P.basBlockLength = prt.Cond{1}.OnOffsets(1,2);
     lCond = length(prt.Cond);
 
     %% PSC
     if strcmp(P.Prot, 'Cont') && isPSC
-        P.vectEncCond = ones(1,P.NrOfVolumes-P.nrSkipVol);
-        P.CondNames = {P.BaselineName, P.CondName};
+        P.CondNames = {P.CondName};
         for x = 1:lCond
             for k = 1:length(prt.Cond{x}.OnOffsets(:,1)) 
                 unitBlock = prt.Cond{x}.OnOffsets(k,1) : prt.Cond{x}.OnOffsets(k,2); 
-                if strcmpi(prt.Cond{x}.ConditionName, P.BaselineName) 
-                    P.vectEncCond(unitBlock) = 1;
-                    P.ProtBAS(k,:) = {unitBlock}; 
-                elseif strcmpi(prt.Cond{x}.ConditionName, P.CondName) 
+                if strcmpi(prt.Cond{x}.ConditionName, P.CondName) 
                     P.vectEncCond(unitBlock) = 2;
                     P.ProtNF(k,:) = {unitBlock};                
                 end
@@ -54,18 +49,14 @@ if ~P.isRestingState
 
     if strcmp(P.Prot, 'ContTask') && isPSC
         P.TaskName = prt.TaskName;
-        P.vectEncCond = ones(1,P.NrOfVolumes-P.nrSkipVol);
         P.TaskFirstVol = zeros(1,P.NrOfVolumes+P.nrSkipVol);
 
         P.TaskFirstVol(1,(prt.Cond{end}.OnOffsets(:,1)+double(P.nrSkipVol))')=1;
-        P.CondNames = {P.BaselineName, P.CondName, P.TaskName};
+        P.CondNames = {P.CondName, P.TaskName};
         for x = 1:lCond
             for k = 1:length(prt.Cond{x}.OnOffsets(:,1)) 
                 unitBlock = prt.Cond{x}.OnOffsets(k,1) : prt.Cond{x}.OnOffsets(k,2); 
-                if strcmpi(prt.Cond{x}.ConditionName, 'BAS') 
-                    P.vectEncCond(unitBlock) = 1;
-                    P.ProtBAS(k,:) = {unitBlock}; 
-                elseif strcmpi(prt.Cond{x}.ConditionName, 'NFBREG') 
+                if strcmpi(prt.Cond{x}.ConditionName, 'NFBREG') 
                     P.vectEncCond(unitBlock) = 2;
                     P.ProtNF(k,:) = {unitBlock};  
                 elseif strcmpi(prt.Cond{x}.ConditionName, 'TASK') 
@@ -77,16 +68,12 @@ if ~P.isRestingState
     end
 
     if strcmp(P.Prot, 'Inter') && isPSC
-        P.vectEncCond = ones(1,NrOfVolumes-nrSkipVol);
         P.DispName = prt.nfbDisplayName;
-        P.CondNames = {P.BaselineName, P.CondName, P.DispName}; 
+        P.CondNames = {P.CondName, P.DispName}; 
         for x = 1:lCond
             for k = 1:length(prt.Cond{x}.OnOffsets(:,1))
                 unitBlock = prt.Cond{x}.OnOffsets(k,1) : prt.Cond{x}.OnOffsets(k,2);
-                if strcmpi(prt.Cond{x}.ConditionName, P.BaselineName)
-                    P.vectEncCond(unitBlock) = 1;
-                    P.ProtBAS(k,:) = {unitBlock};
-                elseif strcmpi(prt.Cond{x}.ConditionName, P.CondName)
+                if strcmpi(prt.Cond{x}.ConditionName, P.CondName)
                     P.ProtNF(k,:) = {unitBlock};
                     P.vectEncCond(unitBlock) = 2;
                 elseif strcmpi(prt.Cond{x}.ConditionName, P.DispName)
@@ -100,13 +87,11 @@ if ~P.isRestingState
     if strcmp(P.Prot, 'InterBlock') && isDCM
         P.DispName = prt.nfbDisplayName;
         P.RestName = prt.RestName;
-        P.CondNames = {P.BaselineName, P.CondName, P.RestName, P.DispName}; 
+        P.CondNames = {prt.BaselineName, P.CondName}; 
         for x = 1:lCond
             for k = 1:length(prt.Cond{x}.OnOffsets(:,1))
                 unitBlock = prt.Cond{x}.OnOffsets(k,1) : prt.Cond{x}.OnOffsets(k,2);
-                if strcmpi(prt.Cond{x}.ConditionName, P.BaselineName)
-                    P.vectEncCond(unitBlock) = 1;
-                elseif strcmpi(prt.Cond{x}.ConditionName, P.CondName)
+                if strcmpi(prt.Cond{x}.ConditionName, P.CondName)
                     P.vectEncCond(unitBlock) = 2;
                 elseif strcmpi(prt.Cond{x}.ConditionName, P.RestName)
                     P.vectEncCond(unitBlock) = 3;
@@ -119,15 +104,11 @@ if ~P.isRestingState
 
     %% SVM
     if strcmp(P.Prot, 'Cont') && isSVM
-        P.vectEncCond = ones(1,P.NrOfVolumes-P.nrSkipVol);
-        P.CondNames = {P.BaselineName, P.CondName};
+        P.CondNames = {prt.BaselineName, P.CondName};
         for x = 1:lCond
             for k = 1:length(prt.Cond{x}.OnOffsets(:,1)) 
                 unitBlock = prt.Cond{x}.OnOffsets(k,1) : prt.Cond{x}.OnOffsets(k,2); 
-                if strcmpi(prt.Cond{x}.ConditionName, P.BaselineName) 
-                    P.vectEncCond(unitBlock) = 1;
-                    P.ProtBAS(k,:) = {unitBlock}; 
-                elseif strcmpi(prt.Cond{x}.ConditionName, P.CondName) 
+                if strcmpi(prt.Cond{x}.ConditionName, P.CondName) 
                     P.vectEncCond(unitBlock) = 2;
                     P.ProtNF(k,:) = {unitBlock};                
                 end
@@ -139,8 +120,11 @@ if ~P.isRestingState
     if isDCM
         prt = rmfield(prt, 'dcmdef');
     end
+    
+    %% Implicit baseline
+    BasInd = find(P.vectEncCond == 1);
+    P.ProtBAS = accumarray( cumsum([1, diff(BasInd) ~= 1]).', BasInd, [], @(x){x'} )';
 end
-
 
 %% Contrast
 if isfield(prt,'Contrast')
