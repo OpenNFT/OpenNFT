@@ -1,6 +1,7 @@
 {
 	"BaselineName": "BAS",
-	"CondName": "TASK",
+	"RegulationName": "TASK",
+	"Contrast": "+1*TASK;-1*BAS",
 	"Cond": [
 		{
 			"ConditionName": "BAS",
