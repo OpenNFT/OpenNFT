@@ -29,21 +29,23 @@ Written by Tibor Auer
 from pyniexp.mlplugins import dataProcess, SIG_NOTSTARTED, SIG_RUNNING, SIG_STOPPED, SIG_NEWIMAGE
 from loguru import logger
 from multiprocessing import Value, RawArray
-from numpy import array
+from numpy import array, savetxt
 import matplotlib.pyplot as plt
+from os import path
 
 META = {
     "plugin_name": "ROI iGLM",
     "plugin_time": "t3", # according to opennft.eventrecorder.Times
-    "plugin_init": "ROIiGLM(int({NrROIs}),int({NrOfVolumes}),int({nrSkipVol}))",
+    "plugin_init": "ROIiGLM(int({NrROIs}),int({NrOfVolumes}),int({nrSkipVol}),r'{nfbDataFolder}')",
     "plugin_signal": "self.parent.eng.evalin('base','isfield(mainLoopData,\\\'tn\\\')')",
     "plugin_exec": "load_data(self.parent.eng.evalin('base','onp_extract_rois')._data.tolist())"
 }
 
 class ROIiGLM(dataProcess):
-    def __init__(self,nROIs,nVols, nSkipVols):
+    def __init__(self,nROIs,nVols, nSkipVols, nfbDataFolder):
         super().__init__(nROIs,autostart=False)
 
+        self.nfbDataFolder = nfbDataFolder
         self.nROIs = nROIs
         self.nVols = nVols
 
@@ -54,7 +56,12 @@ class ROIiGLM(dataProcess):
 
     def __del__(self):
         super().__del__()
-        plt.plot(array(self.rtdata).reshape(self.nVols,self.nROIs))
+        dat = array(self.rtdata).reshape(self.nVols,self.nROIs)
+
+        fname = path.join(path.normpath(self.nfbDataFolder), 'ROIiGLM.csv')
+        savetxt(fname=fname, X=dat, fmt='%.3f', delimiter=',')
+
+        plt.plot(dat)
         plt.show()
 
     def process(self,data):
