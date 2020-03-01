@@ -185,7 +185,7 @@ if P.isRTQA && indVolNorm > FIRST_SNR_VOLUME
     
     if ~P.isRestingState
         [ rtQA_matlab.cnrData ] = cnr_calc(indVolNorm, reslVol, smReslVol, rtQA_matlab.cnrData, isSmoothed);
-    end;
+    end
         
     rtQA_matlab.snrMapCreated = 1; 
     
@@ -196,7 +196,7 @@ if P.isRTQA && indVolNorm > FIRST_SNR_VOLUME
             outputVol = rtQA_matlab.snrData.snrVol;
         else
             outputVol = rtQA_matlab.cnrData.cnrVol;
-        end;
+        end
    
         if imageViewMode == 1 || imageViewMode == 2
             % orthviewAnat (1) || orthviewEPI (2)

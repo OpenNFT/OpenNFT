@@ -1,22 +1,13 @@
 {
-	"BaselineName": "BAS",
 	"RegulationName": "TASK",
-	"Contrast": "+1*TASK;-1*BAS",
+	"Contrast": "+1*TASK",
 	"Cond": [
-		{
-			"ConditionName": "BAS",
-			"OnOffsets": [
-				[1,108],
-				[217,324],
-				[433,540],
-			]
-		},
 		{
 			"ConditionName": "TASK",
 			"OnOffsets": [
 				[109,216],
 				[325,432],
-				[541,648],
+				[541,648]
 			]
 		}
 	]

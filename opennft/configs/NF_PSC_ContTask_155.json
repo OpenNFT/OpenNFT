@@ -1,19 +1,8 @@
 {
-"BaselineName": "BAS",
 "RegulationName": "NFBREG",
 "TaskName": "TASK",
-"Contrast": "+1*NFBREG;-1*BAS;-1*TASK",
+"Contrast": "+1*NFBREG;-1*TASK",
 "Cond": [
-	{
-		"ConditionName": "BAS",
-		"OnOffsets": [
-			[1,10],
-			[31,40],
-			[61,70],
-			[91,100],
-			[121,130]
-		]
-	},
 	{
 
 		"ConditionName": "NFBREG",
@@ -32,8 +21,7 @@
 			[21,30],
 			[51,60],
 			[81,90],
-			[111,120],
-			[141,150]
+			[111,120]
 		]
 	}
  ]

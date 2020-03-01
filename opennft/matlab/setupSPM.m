@@ -36,23 +36,17 @@ SPM.xBF.dt = SPM.xY.RT/SPM.xBF.T;
 SPM.xX.K.HParam = 128;
     
 % protocol
-if isDCM && strcmp(P.Prot, 'InterBlock')
-    if ~P.isRestingState
-        regrInd = [...
-            find(strcmp(P.CondNames,P.BaselineName)),...
-            find(strcmp(P.CondNames,P.CondName)) ...
-            ];
-    else
-        regrInd = [];
-    end
-    SPM.nscan = P.lengthDCMTrial;
+if ~P.isRestingState
+    % make sure that the order of regressor matches the order of CondNames
+    [junk,regrInd] = ismember(P.CondNames,cellfun(@(x) x.ConditionName, P.Protocol.Cond, 'UniformOutput', false));
 else
-    if ~P.isRestingState
-        regrInd = 1:numel(P.Protocol.Cond);
-    else
-        regrInd = [];
-    end
+    regrInd = [];
 end
+
+if isDCM && strcmp(P.Prot, 'InterBlock')
+    SPM.nscan = P.lengthDCMTrial;
+end
+
 if ~isempty(regrInd)
     for e = 1:numel(regrInd)
         SPM.Sess.U(e) = struct(...

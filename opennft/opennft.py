@@ -122,6 +122,9 @@ class OpenNFT(QWidget):
         self.udpSender.connect_for_sending()
         self.udpSender.sending_time_stamp = True
 
+        self.udpCondNames = self.P['CondNames']
+        if not('BaselineName' in self.P['Protocol']): self.udpCondNames.insert(0,'BAS')
+
     # --------------------------------------------------------------------------
     def finalizeUdpSender(self):
         if not config.USE_UDP_FEEDBACK:
@@ -664,7 +667,7 @@ class OpenNFT(QWidget):
                     self.displayScreen()
 
                 if self.iteration > self.P['nrSkipVol'] and config.UDP_SEND_CONDITION:
-                    self.udpSender.send_data(self.P['CondNames'][int(self.eng.evalin('base', 'mainLoopData.condition'))-1])
+                    self.udpSender.send_data(self.udpCondNames[int(self.eng.evalin('base', 'mainLoopData.condition'))-1])
 
             elif self.P['Type'] == 'DCM':
                 if not self.isCalculateDcm and config.USE_PTB:
@@ -2024,33 +2027,27 @@ class OpenNFT(QWidget):
     # --------------------------------------------------------------------------
     def createMusterInfo(self):
         # TODO: More general way to use any protocol
-        tmpCond1 = np.array(self.P['Protocol']['Cond'][0]['OnOffsets']).astype(np.int32)
-        nrCond1 = tmpCond1.shape[0]
-        tmpCond2 = np.array(self.P['Protocol']['Cond'][1]['OnOffsets']).astype(np.int32)
-        nrCond2 = tmpCond2.shape[0]
+        tmpCond = list(); nrCond = list()
+        for c in self.P['Protocol']['Cond']:
+            tmpCond.append(np.array(c['OnOffsets']).astype(np.int32))
+            nrCond.append(tmpCond[-1].shape[0])
 
-        if len(self.P['Protocol']['Cond']) > 2:
-            tmpCond3 = np.array(self.P['Protocol']['Cond'][2]['OnOffsets']).astype(np.int32)
-        else:
-            tmpCond3 = np.array([(0, 0), (0, 0)])
+        if not('BaselineName' in self.P['Protocol']): # implicit baseline
+            tmpCond.insert(0, np.array([np.array(t).astype(np.int32)[0,[0,-1]] for t in self.P['ProtBAS']]))
+            nrCond.insert(0,tmpCond[0].shape[0])
 
-        if len(self.P['Protocol']['Cond']) > 3:
-            tmpCond4 = np.array(
-                self.P['Protocol']['Cond'][3]['OnOffsets']).astype(np.int32)
-        else:
-            tmpCond4 = np.array([(0, 0), (0, 0)])
-
-        nrCond3 = tmpCond3.shape[0]
-        nrCond4 = tmpCond4.shape[0]
+        for c in range(len(tmpCond),4): # placeholders
+            tmpCond.append(np.array([(0, 0), (0, 0)]))
+            nrCond.append(tmpCond[-1].shape[0])
 
         if self.P['Prot'] == 'InterBlock':
-            blockLength = tmpCond1[0][1] - tmpCond1[0][0] + 1
+            blockLength = tmpCond[0][0][1] - tmpCond[0][0][0] + 1
         else:
             # FIXME: tmpCond4 (?)
             blockLength = (
-                    tmpCond1[0][1] - tmpCond1[0][0] +
-                    tmpCond2[0][1] - tmpCond2[0][0] +
-                    tmpCond3[0][1] - tmpCond3[0][0] + 3
+                    tmpCond[0][0][1] - tmpCond[0][0][0] +
+                    tmpCond[1][0][1] - tmpCond[1][0][0] +
+                    tmpCond[2][0][1] - tmpCond[2][0][0] + 3
             )
 
         # ----------------------------------------------------------------------
@@ -2079,20 +2076,20 @@ class OpenNFT(QWidget):
         if self.P['Prot'] == 'InterBlock':
             remCond = []
 
-            for a, b in zip(tmpCond3, tmpCond4):
+            for a, b in zip(tmpCond[2], tmpCond[3]):
                 remCond.append((a[0], b[1]))
 
-            removeIntervals(tmpCond1, remCond)
-            removeIntervals(tmpCond2, remCond)
+            removeIntervals(tmpCond[0], remCond)
+            removeIntervals(tmpCond[1], remCond)
 
-        self.musterInfo['tmpCond1'] = tmpCond1
-        self.musterInfo['nrCond1'] = nrCond1
-        self.musterInfo['tmpCond2'] = tmpCond2
-        self.musterInfo['nrCond2'] = nrCond2
-        self.musterInfo['tmpCond3'] = tmpCond3
-        self.musterInfo['nrCond3'] = nrCond3
-        self.musterInfo['tmpCond4'] = tmpCond4
-        self.musterInfo['nrCond4'] = nrCond4
+        self.musterInfo['tmpCond1'] = tmpCond[0]
+        self.musterInfo['nrCond1'] = nrCond[0]
+        self.musterInfo['tmpCond2'] = tmpCond[1]
+        self.musterInfo['nrCond2'] = nrCond[1]
+        self.musterInfo['tmpCond3'] = tmpCond[2]
+        self.musterInfo['nrCond3'] = nrCond[2]
+        self.musterInfo['tmpCond4'] = tmpCond[3]
+        self.musterInfo['nrCond4'] = nrCond[3]
         self.musterInfo['blockLength'] = blockLength
 
     # --------------------------------------------------------------------------
