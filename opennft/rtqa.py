@@ -30,7 +30,6 @@ class RTQAWindow(QtWidgets.QWidget):
 
         self.musterInfo = musterInfo
 
-        # self.comboBox.currentTextChanged.connect(self.onComboboxChanged)
         self.mcrRadioButton.toggled.connect(self.onRadioButtonStateChanged)
 
         self.snrplot = pg.PlotWidget(self)
@@ -46,63 +45,65 @@ class RTQAWindow(QtWidgets.QWidget):
         p.disableAutoRange(axis=pg.ViewBox.XAxis)
         p.setXRange(1, xrange, padding=0.0)
 
-        self.cnrplot = pg.PlotWidget(self)
-        self.cnrplot.setBackground((255, 255, 255))
-        self.cnrPlot.addWidget(self.cnrplot)
+        if not parent.P['isRestingState']:
 
-        p = self.cnrplot.getPlotItem()
-        p.setLabel('left', "CNR [a.u.]")
-        p.setMenuEnabled(enableMenu=False)
-        p.setMouseEnabled(x=False, y=False)
-        p.showGrid(x=True, y=True, alpha=1)
-        p.installEventFilter(self)
-        p.disableAutoRange(axis=pg.ViewBox.XAxis)
-        p.setXRange(1, xrange, padding=0.0)
+            self.cnrplot = pg.PlotWidget(self)
+            self.cnrplot.setBackground((255, 255, 255))
+            self.cnrPlot.addWidget(self.cnrplot)
 
-        self.meanplot = pg.PlotWidget(self)
-        self.meanplot.setBackground((255, 255, 255))
-        self.meanPlot.addWidget(self.meanplot)
+            p = self.cnrplot.getPlotItem()
+            p.setLabel('left', "CNR [a.u.]")
+            p.setMenuEnabled(enableMenu=False)
+            p.setMouseEnabled(x=False, y=False)
+            p.showGrid(x=True, y=True, alpha=1)
+            p.installEventFilter(self)
+            p.disableAutoRange(axis=pg.ViewBox.XAxis)
+            p.setXRange(1, xrange, padding=0.0)
 
-        p = self.meanplot.getPlotItem()
-        p.setLabel('left', "Mean [a.u.]")
-        p.setMenuEnabled(enableMenu=False)
-        p.setMouseEnabled(x=False, y=False)
-        p.showGrid(x=True, y=True, alpha=1)
-        p.installEventFilter(self)
-        p.disableAutoRange(axis=pg.ViewBox.XAxis)
-        p.setXRange(1, xrange, padding=0.0)
+            self.meanplot = pg.PlotWidget(self)
+            self.meanplot.setBackground((255, 255, 255))
+            self.meanPlot.addWidget(self.meanplot)
 
-        names = ['ROI_1 rMean', 'ROI_1 basMean', 'ROI_1 condMean']
-        color = [config.STAT_PLOT_COLORS[0], config.ROI_BAS_COLORS[0], config.ROI_COND_COLORS[0]]
-        for i in range(sz-1):
-            names.append('ROI_' + str(i + 2) + ' rMean')
-            names.append('ROI_' + str(i + 2) + ' basMean')
-            names.append('ROI_' + str(i + 2) + ' condMean')
-            color = color + [config.STAT_PLOT_COLORS[i + 1]] + [config.ROI_BAS_COLORS[i + 1]] + [config.ROI_COND_COLORS[i + 1]]
-        pens = []
-        for i in range(sz*3):
-            pens = pens + [pg.mkPen(color[i], width=1.2)]
-        self.makeRoiPlotLegend(self.labelMean, names, pens)
+            p = self.meanplot.getPlotItem()
+            p.setLabel('left', "Mean [a.u.]")
+            p.setMenuEnabled(enableMenu=False)
+            p.setMouseEnabled(x=False, y=False)
+            p.showGrid(x=True, y=True, alpha=1)
+            p.installEventFilter(self)
+            p.disableAutoRange(axis=pg.ViewBox.XAxis)
+            p.setXRange(1, xrange, padding=0.0)
 
-        self.varplot = pg.PlotWidget(self)
-        self.varplot.setBackground((255, 255, 255))
-        self.varPlot.addWidget(self.varplot)
+            names = ['ROI_1 rMean', ' bas', ' cond']
+            color = [config.STAT_PLOT_COLORS[0], config.ROI_BAS_COLORS[0], config.ROI_COND_COLORS[0]]
+            for i in range(sz-1):
+                names.append('ROI_' + str(i + 2) + ' rMean')
+                names.append(' bas')
+                names.append(' cond')
+                color = color + [config.STAT_PLOT_COLORS[i + 1]] + [config.ROI_BAS_COLORS[i + 1]] + [config.ROI_COND_COLORS[i + 1]]
+            pens = []
+            for i in range(sz*3):
+                pens = pens + [pg.mkPen(color[i], width=1.2)]
+            self.makeRoiPlotLegend(self.labelMean, names, pens)
 
-        p = self.varplot.getPlotItem()
-        p.setLabel('left', "Variance [a.u.]")
-        p.setMenuEnabled(enableMenu=False)
-        p.setMouseEnabled(x=False, y=False)
-        p.showGrid(x=True, y=True, alpha=1)
-        p.installEventFilter(self)
-        p.disableAutoRange(axis=pg.ViewBox.XAxis)
-        p.setXRange(1, xrange, padding=0.0)
+            self.varplot = pg.PlotWidget(self)
+            self.varplot.setBackground((255, 255, 255))
+            self.varPlot.addWidget(self.varplot)
 
-        names = ['ROI_1 rVariance', 'ROI_1 basVariance', 'ROI_1 condVariance']
-        for i in range(sz - 1):
-            names.append('ROI_' + str(i + 2) + ' rVariance')
-            names.append('ROI_' + str(i + 2) + ' basVariance')
-            names.append('ROI_' + str(i + 2) + ' condVariance')
-        self.makeRoiPlotLegend(self.labelVar, names, pens)
+            p = self.varplot.getPlotItem()
+            p.setLabel('left', "Variance [a.u.]")
+            p.setMenuEnabled(enableMenu=False)
+            p.setMouseEnabled(x=False, y=False)
+            p.showGrid(x=True, y=True, alpha=1)
+            p.installEventFilter(self)
+            p.disableAutoRange(axis=pg.ViewBox.XAxis)
+            p.setXRange(1, xrange, padding=0.0)
+
+            names = ['ROI_1 rVariance', ' bas', ' cond']
+            for i in range(sz - 1):
+                names.append('ROI_' + str(i + 2) + ' rVariance')
+                names.append(' bas')
+                names.append(' cond')
+            self.makeRoiPlotLegend(self.labelVar, names, pens)
 
         self.spikes_plot = pg.PlotWidget(self)
         self.spikes_plot.setBackground((255, 255, 255))
@@ -326,22 +327,23 @@ class RTQAWindow(QtWidgets.QWidget):
         data = self.rSNR[:, 0:n]
         self.plot_ts(init, plotitem, data)
 
-        plotitem = self.cnrplot.getPlotItem()
-        data = self.rCNR[:, 0:n]
-        self.plot_ts(init, plotitem, data)
+        if self.comboBox.model().item(2).isEnabled():
+            plotitem = self.cnrplot.getPlotItem()
+            data = self.rCNR[:, 0:n]
+            self.plot_ts(init, plotitem, data)
 
-        plotitem = self.meanplot.getPlotItem()
-        data = np.append(self.rMean[:, 0:n], self.meanBas[:, 0:n], axis=0)
-        data = np.append(data, self.meanCond[:, 0:n], axis=0)
-        m = len(self.rSNR[:, 1])
-        color = config.STAT_PLOT_COLORS[0:m] + config.ROI_BAS_COLORS[0:m] + config.ROI_COND_COLORS[0:m]
-        style = [QtCore.Qt.SolidLine, QtCore.Qt.DashLine, QtCore.Qt.DashLine]
-        self.plot_rStatValues(init, plotitem, data, color, style)
+            plotitem = self.meanplot.getPlotItem()
+            data = np.append(self.rMean[:, 0:n], self.meanBas[:, 0:n], axis=0)
+            data = np.append(data, self.meanCond[:, 0:n], axis=0)
+            m = len(self.rSNR[:, 1])
+            color = config.STAT_PLOT_COLORS[0:m] + config.ROI_BAS_COLORS[0:m] + config.ROI_COND_COLORS[0:m]
+            style = [QtCore.Qt.SolidLine, QtCore.Qt.DashLine, QtCore.Qt.DashLine]
+            self.plot_rStatValues(init, plotitem, data, color, style)
 
-        plotitem = self.varplot.getPlotItem()
-        data = np.append(self.rVar[:, 0:n], self.varBas[:, 0:n], axis=0)
-        data = np.append(data, self.varCond[:, 0:n], axis=0)
-        self.plot_rStatValues(init, plotitem, data, color, style)
+            plotitem = self.varplot.getPlotItem()
+            data = np.append(self.rVar[:, 0:n], self.varBas[:, 0:n], axis=0)
+            data = np.append(data, self.varCond[:, 0:n], axis=0)
+            self.plot_rStatValues(init, plotitem, data, color, style)
 
     def plot_rStatValues(self, init, plotitem, data, color, style):
 
@@ -630,7 +632,7 @@ class RTQAWindow(QtWidgets.QWidget):
         for i in range(sz):
             cnt = cnt + np.count_nonzero(self.negSpikes[str(i)])
         names.append('<br>( Diamonds )<br>Negative spikes: ' + str(int(cnt)))
-        pens = [pg.mkPen(color=config.STAT_PLOT_COLORS[0], width=1.2), pg.mkPen(color=config.STAT_PLOT_COLORS[0], width=1.2)]
+        pens = [pg.mkPen(color=config.STAT_PLOT_COLORS[9], width=1.2), pg.mkPen(color=config.STAT_PLOT_COLORS[9], width=1.2)]
         self.makeTextValueLabel(self.spikesLabel, names, pens)
 
         items = plotitem.listDataItems()

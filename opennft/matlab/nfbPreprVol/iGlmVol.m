@@ -1,4 +1,4 @@
-function [idxActVox, recTh, tTh, Cn, Dn, sigma2n, tn, neg_e2n] = ...
+function [idxActVox, recTh, tTh, Cn, Dn, sigma2n, tn, neg_e2n, Bn, e2n] = ...
     iGlmVol(Cn, Dn, sigma2n, tn, Yn, n, nrBasFct, contr, basFct, ...
     pVal, recTh, tTh, spmMaskTh)
 % Core function to compute incemental GLM.
@@ -51,6 +51,8 @@ Ft = basFct(n,:)'; % basis function vector at time n
 Dn = Dn + Yn * Ft'; % Eq. (17)
 Cn = (n - 1) / n * Cn  + Ft * Ft' / n; % Eq. (18)
 sigma2n = sigma2n + Yn .* Yn; % Eq. (9), without factor 1/n, see bellow
+Bn = zeros(size(Dn));
+e2n = zeros(size(sigma2n));
 
 [Nn,p] = chol(Cn); % normalization matrix
 if p == 0 && n > nrBasFct+2
