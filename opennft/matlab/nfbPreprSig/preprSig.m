@@ -369,7 +369,7 @@ for indRoi = 1:P.NrROIs
         zcoredVal = ...
             zscore(mainLoopData.scalProcTimeSeries(indRoi, 1:indVolNorm));
         mainLoopData.scalProcTimeSeries(indRoi, indVolNorm) = ...
-            logsig(zcoredVal(end)); % or 1-logsig()
+            1 ./ (1 + exp(-zcoredVal(end))); % or 1-logsig()
     end
     
 end
