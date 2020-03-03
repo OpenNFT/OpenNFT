@@ -37,13 +37,13 @@ dimTemplMotCorr = evalin('base', 'dimTemplMotCorr');
 matTemplMotCorr = evalin('base', 'matTemplMotCorr');
 displBackgr = evalin('base', 'displBackgr');
 
-displayBgAnat = evalin('base', 'displayBgAnat');   
+displayBgStruct = evalin('base', 'displayBgStruct');
 displayBgEpi = evalin('base', 'displayBgEpi');   
 
 if strcmpi(bgType, 'bgEPI')
     displBackgr = displayBgEpi;
 else
-    displBackgr = displayBgAnat;
+    displBackgr = displayBgStruct;
 end
 
 strParam.centre = findcent(newCoord, flagsPlanes);
