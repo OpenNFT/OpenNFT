@@ -74,6 +74,16 @@ OpenNFT               1.0.0rc0   c:\workspace\projects\opennft
 ...
 ```
 
+## Updating OpenNFT dependencies
+
+Update pip:
+
+`python -m pip install -U pip setuptools`
+
+Update dependencies:
+
+`pip install -U -r requirements.txt`
+
 ## Running OpenNFT application
 
 Just run the following command:
