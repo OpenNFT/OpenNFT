@@ -135,10 +135,12 @@ class InstallMatlabEngineMixin:
         else:
             print('"Matlab Engine for Python" is successfully installed')
 
+
 class InstallGitSubmodulesMixin:
     def _install_git_submodules(self):
         if os.path.exists('.git'):
             run(['git', 'submodule', 'update', '--init', '--recursive'])
+
 
 class InstallCommand(install, InstallMatlabEngineMixin, InstallGitSubmodulesMixin):
     user_options = install.user_options + InstallMatlabEngineMixin.cmd_options
