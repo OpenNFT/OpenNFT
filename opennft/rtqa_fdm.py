@@ -85,7 +85,7 @@ class FD:
         if self.md[n] >= self.threshold[0]:
             self.excVD += 1
             if self.excMDIndexes[-1] == -1:
-                self.excMDIndexes = [ n-1 ]
+                self.excMDIndexes = np.array([ n-1 ])
             else:
                 self.excMDIndexes = np.append(self.excMDIndexes, n-1)
 
