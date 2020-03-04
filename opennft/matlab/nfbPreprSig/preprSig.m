@@ -205,7 +205,7 @@ for indRoi = 1:P.NrROIs
                 tContr = mainLoopData.tContr;
                 erGlmProcTimeSeries = tmp_rawTimeSeries - cX0*betaReg;
                 rtQA_matlab.varErGlmProcTimeSeries(indRoi,tmp_ind_end) = erGlmProcTimeSeries'*erGlmProcTimeSeries/(tmp_ind_end - length(tContr.pos));
-                rtQA_matlab.betRegr{indRoi}(tmp_ind_end,:) = [ betaReg; zeros(length(rtQA_matlab.betRegr{indRoi}(tmp_ind_end,:))-length(betaReg),1) ]; 
+                rtQA_matlab.betRegr{indRoi}(tmp_ind_end,:) = [ betaReg; zeros(length(rtQA_matlab.betRegr{indRoi}(tmp_ind_end,:))-length(betaReg),1) ];
             end
             
         elseif (tmp_ind_end >= regrStep) && (tmp_ind_end < 2*regrStep)
@@ -221,7 +221,7 @@ for indRoi = 1:P.NrROIs
                 tContr = mainLoopData.tContr;
                 erGlmProcTimeSeries = tmp_rawTimeSeries - cX0*betaReg;
                 rtQA_matlab.varErGlmProcTimeSeries(indRoi,tmp_ind_end) = erGlmProcTimeSeries'*erGlmProcTimeSeries/(tmp_ind_end - length(tContr.pos));
-                rtQA_matlab.betRegr{indRoi}(tmp_ind_end,:) = [ betaReg; zeros(length(rtQA_matlab.betRegr{indRoi}(tmp_ind_end,:))-length(betaReg),1) ]; 
+                rtQA_matlab.betRegr{indRoi}(tmp_ind_end,:) = [ betaReg; zeros(length(rtQA_matlab.betRegr{indRoi}(tmp_ind_end,:))-length(betaReg),1) ];
             end
             
         elseif (tmp_ind_end >= 2*regrStep) && (tmp_ind_end < 3*regrStep)
@@ -238,7 +238,7 @@ for indRoi = 1:P.NrROIs
                 tContr = mainLoopData.tContr;
                 erGlmProcTimeSeries = tmp_rawTimeSeries - cX0*betaReg;
                 rtQA_matlab.varErGlmProcTimeSeries(indRoi,tmp_ind_end) = erGlmProcTimeSeries'*erGlmProcTimeSeries/(tmp_ind_end - length(tContr.pos));
-                rtQA_matlab.betRegr{indRoi}(tmp_ind_end,:) = [ betaReg; zeros(length(rtQA_matlab.betRegr{indRoi}(tmp_ind_end,:))-length(betaReg),1) ]; 
+                rtQA_matlab.betRegr{indRoi}(tmp_ind_end,:) = [ betaReg; zeros(length(rtQA_matlab.betRegr{indRoi}(tmp_ind_end,:))-length(betaReg),1) ];
             end
             
         else

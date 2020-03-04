@@ -45,7 +45,7 @@ MAIN_LOOP_CALL_PERIOD = 30  # ms
 USE_FAST_OFFLINE_LOOP = True
 
 # currently used only for DCM feedabck
-USE_MATLAB_MODEL_HELPER = True
+USE_MATLAB_MODEL_HELPER = False
 
 # use PTB helper and include PTB option in parameters
 USE_PTB_HELPER = True

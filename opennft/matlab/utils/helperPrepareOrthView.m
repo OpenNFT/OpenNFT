@@ -17,61 +17,25 @@ P.tRoiBoundaries = {};
 P.cRoiBoundaries = {};
 P.sRoiBoundaries = {};
 
-%% Background: EPI template or Anatomy
-%% default values
-fAnatomyBacgkr = false;
-fEpiBackgr = true;
-
-if strcmp(bgType, 'bgMosaic')
-    fAnatomyBacgkr = false;
-    fEpiBackgr = true;
-end
-if strcmp(bgType, 'bgEPI')
-    fAnatomyBacgkr = false;
-    fEpiBackgr = true;
-end
-if strcmp(bgType, 'bgAnat')
-    fAnatomyBacgkr = true;
-    fEpiBackgr = false;
-end
-
-dirAnatBackgr = P.AnatBgFolder;
-dirEpiBackgr = P.MCTempl;
-
 [isPSC, isDCM, isSVM, isIGLM] = getFlagsType(P);
 
-%% Background
-if fAnatomyBacgkr
-    displBackgrDir = dirAnatBackgr;
-elseif fEpiBackgr
-    displBackgrDir = dirEpiBackgr;
-end
+%% Background: EPI template or Anatomy
+displayBgStructName = P.StructBgFile;
+displayBgEpiName = P.MCTempl;
 
-displBackgrDir = dirEpiBackgr;
+[displayBgEpi.voxelCoord, displayBgEpi.voxelIntens, displayBgEpi.voxelIndex, ...
+    displayBgEpi.mat, displayBgEpi.dim, displayBgEpi.vol] = ...
+    readVol(displayBgEpiName);
 
-displBackgrName = {};
-%displBackgrDir = strrep(displBackgrDir, '/', '\');
-displBackgrName = cellstr([spm_select('FPList',displBackgrDir,'^.*.img$'); ...
-    spm_select('FPList',displBackgrDir,'^.*.nii$')]);
+[displayBgStruct.voxelCoord, displayBgStruct.voxelIntens, displayBgStruct.voxelIndex, ...
+    displayBgStruct.mat, displayBgStruct.dim, displayBgStruct.vol] = ...
+    readVol(displayBgStructName);
 
-[displBackgr.voxelCoord, displBackgr.voxelIntens, displBackgr.voxelIndex, ...
-    displBackgr.mat, displBackgr.dim, displBackgr.vol] = ...
-                                               readVol(displBackgrName{1});
-
-displayBgEpi= displBackgr;
-
-displBackgrDir = dirAnatBackgr;
-
-displBackgrName = {};
-%displBackgrDir = strrep(displBackgrDir, '/', '\');
-displBackgrName = cellstr([spm_select('FPList',displBackgrDir,'^.*.img$'); ...
-    spm_select('FPList',displBackgrDir,'^.*.nii$')]);
-
-[displBackgr.voxelCoord, displBackgr.voxelIntens, displBackgr.voxelIndex, ...
-    displBackgr.mat, displBackgr.dim, displBackgr.vol] = ...
-                                               readVol(displBackgrName{1});
-
-displayBgAnat = displBackgr;
+if ~strcmp(bgType, 'BgStruct')
+    displBackgr = displayBgEpi;
+else
+    displBackgr = displayBgStruct;
+end    
 
 %% ROIs
 if isDCM
@@ -91,7 +55,7 @@ strParam.Space = spm_matrix([0 0 0  0 pi -pi/2])*strParam.Space;
 
 %% get bounding box and resolution
 if isempty(strParam.bb), 
-     strParam.maxBB = maxbb(displBackgrName{1}); 
+     strParam.maxBB = maxbb(displayBgEpiName); 
      strParam.bb = strParam.maxBB;    
 end
 resolution(displBackgr.mat);
@@ -126,7 +90,7 @@ assignin('base', 'imgc', imgc);
 assignin('base', 'imgs', imgs);
 
 assignin('base', 'displBackgr', displBackgr);   
-assignin('base', 'displayBgAnat', displayBgAnat);   
+assignin('base', 'displayBgStruct', displayBgStruct);
 assignin('base', 'displayBgEpi', displayBgEpi);   
 
 assignin('base', 'ROIsOverlay', ROIsOverlay);   

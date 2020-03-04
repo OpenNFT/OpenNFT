@@ -978,21 +978,21 @@
                                                                                      </widget>
                                                                                 </item>
                                                                                 <item row="11" column="0">
-                                                                                     <widget class="QLabel" name="label_11">
+                                                                                     <widget class="QLabel" name="label_10">
                                                                                           <property name="text">
-                                                                                               <string>Underlay Folder</string>
+                                                                                               <string>Underlay Structural File</string>
                                                                                           </property>
                                                                                      </widget>
                                                                                 </item>
                                                                                 <item row="11" column="2">
-                                                                                     <widget class="QLineEdit" name="leAnatBgFolder">
+                                                                                     <widget class="QLineEdit" name="leStructBgFile">
                                                                                           <property name="readOnly">
                                                                                                <bool>false</bool>
                                                                                           </property>
                                                                                      </widget>
                                                                                 </item>
                                                                                 <item row="11" column="3">
-                                                                                     <widget class="QPushButton" name="btnChooseAnatBgFolder">
+                                                                                     <widget class="QPushButton" name="btnChooseStructBgFile">
                                                                                           <property name="maximumSize">
                                                                                                <size>
                                                                                                     <width>32</width>

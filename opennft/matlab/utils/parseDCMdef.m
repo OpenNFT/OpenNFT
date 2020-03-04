@@ -233,7 +233,7 @@ end
 end
 
 function options = makeDefaultOptions()
-% Consult DCM or SPM documentation for an explanation of those fields. 
+% Consult DCM or SPM documentation for an explBgStruction of those fields.
 options.two_state  = 0;
 options.stochastic = 0;
 options.nograph    = 1;
