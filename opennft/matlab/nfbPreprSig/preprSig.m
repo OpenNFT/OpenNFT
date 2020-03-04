@@ -338,12 +338,10 @@ for indRoi = 1:P.NrROIs
         mainLoopData.glmProcTimeSeries(indRoi,indVolNorm), ...
         mainLoopData.S(indRoi), mainLoopData.fPositDerivSpike(indRoi), ...
         mainLoopData.fNegatDerivSpike(indRoi));
-    if P.isRTQA
-        rtQA_matlab.kalmanSpikesPos(indRoi,indVolNorm) = mainLoopData.fPositDerivSpike(indRoi);
-        mainLoopData.fPositDerivSpike(indRoi) = 0;
-        rtQA_matlab.kalmanSpikesNeg(indRoi,indVolNorm) = mainLoopData.fNegatDerivSpike(indRoi);
-        mainLoopData.fNegatDerivSpike(indRoi) = 0;
-    end
+    rtQA_matlab.kalmanSpikesPos(indRoi,indVolNorm) = mainLoopData.fPositDerivSpike(indRoi);
+    mainLoopData.fPositDerivSpike(indRoi) = 0;
+    rtQA_matlab.kalmanSpikesNeg(indRoi,indVolNorm) = mainLoopData.fNegatDerivSpike(indRoi);
+    mainLoopData.fNegatDerivSpike(indRoi) = 0;
 
     %4. Scaling
     if ~P.isRestingState
