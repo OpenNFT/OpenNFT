@@ -38,7 +38,7 @@ META = {
     "plugin_time": "t3", # according to opennft.eventrecorder.Times
     "plugin_init": "ROIiGLM(int({NrROIs}),int({NrOfVolumes}),int({nrSkipVol}),r'{nfbDataFolder}')",
     "plugin_signal": "self.parent.eng.evalin('base','isfield(mainLoopData,\\\'tn\\\')')",
-    "plugin_exec": "load_data(self.parent.eng.evalin('base','onp_extract_rois')._data.tolist())"
+    "plugin_exec": "load_data(self.parent.eng.evalin('base','onp_extract_rois'))"
 }
 
 class ROIiGLM(dataProcess):
