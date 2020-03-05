@@ -1596,8 +1596,12 @@ class OpenNFT(QWidget):
         self.updateOrthViewAsync()
 
     def onInteractWithMapImage(self):
-        if self.sender() is self.pos_map_thresholds_widget:
+        sender = self.sender()
+
+        if sender is self.pos_map_thresholds_widget:
             self.pos_map_thresholds_widget.auto_thresholds = False
+        if sender is self.neg_map_thresholds_widget:
+            self.neg_map_thresholds_widget.auto_thresholds = False
 
         if self.imageViewMode == ImageViewMode.mosaic:
             self.displayMosaicImage()
