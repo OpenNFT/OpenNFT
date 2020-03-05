@@ -1152,6 +1152,7 @@ class OpenNFT(QWidget):
         self.normRoiPlot.getPlotItem().clear()
 
         self.pos_map_thresholds_widget.reset()
+        self.neg_map_thresholds_widget.reset()
 
         self.mosaic_background_image_reader.clear()
         self.mosaic_pos_map_image_reader.clear()
