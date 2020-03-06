@@ -3,6 +3,7 @@ from PyQt5.QtGui import QStandardItemModel, QStandardItem
 from PyQt5.QtCore import Qt
 from PyQt5.uic import loadUi
 from loguru import logger
+import matlab
 
 import importlib
 import os
@@ -20,8 +21,7 @@ class PluginWindow(QDialog):
         self.setWindowModality(Qt.ApplicationModal)
 
         model = QStandardItemModel(self.lvPlugins)
-        for p in os.listdir(config.PLUGIN_PATH):
-            if p[0] == '_': continue
+        for p in [f for f in os.listdir(config.PLUGIN_PATH) if f.endswith('.py')]:
             plMod = 'opennft.' + os.path.basename(config.PLUGIN_PATH).lower() + '.' + p[:-3]
             self.plugins += [importlib.import_module(plMod)]
             plName = self.plugins[-1].META['plugin_name']
@@ -39,7 +39,15 @@ class Plugin:
         self.object = None
 
     def initialize(self):
-        self.object = eval("self.module." + self.module.META['plugin_init'].format(**self.parent.P))
+        if type(self.module.META['plugin_init']) == list: # post-initialization
+            initcmd = self.module.META['plugin_init'][0]
+            postinitcdm = self.module.META['plugin_init'][1:]
+        else: 
+            initcmd = self.module.META['plugin_init'] # no post-initialization
+            postinitcdm = []
+        self.object = eval("self.module." + initcmd.format(**self.parent.P))
+        for cmd in postinitcdm:
+            exec(cmd.format(**self.parent.P))
         logger.info('Plugin "' + self.module.META['plugin_name'] + '" has been initialized')
 
     def update(self):
