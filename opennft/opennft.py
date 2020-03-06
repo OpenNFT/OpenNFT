@@ -793,6 +793,7 @@ class OpenNFT(QWidget):
 
         # t4
         self.recorder.recordEvent(erd.Times.t4, self.iteration)
+        self.updatePlugins()
 
         if self.P['Type'] == 'DCM':
             if self.isCalculateDcm:
