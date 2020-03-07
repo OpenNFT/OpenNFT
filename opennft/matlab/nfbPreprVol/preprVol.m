@@ -444,8 +444,8 @@ if isIGLM
         end
         for i=1:P.NrROIs
             rtQA_matlab.Bn{i}(indIglm,:) = mean(Bn(ROIs(i).voxelIndex,:));
-            rtQA_matlab.tn.pos{i}(indIglm,:) = geomean(tn.pos(intersect(tn.pos>0, ROIs(i).voxelIndex)));
-            rtQA_matlab.tn.neg{i}(indIglm,:) =  geomean(tn.neg(intersect(tn.neg>0, ROIs(i).voxelIndex)));
+            rtQA_matlab.tn.pos{i}(indIglm,:) = geomean(tn.pos(intersect(ROIs(i).voxelIndex,find(tn.pos>0))));
+            rtQA_matlab.tn.neg{i}(indIglm,:) =  geomean(tn.neg(intersect(ROIs(i).voxelIndex,find(tn.neg>0))));
             rtQA_matlab.var{i}(indIglm,:) =  geomean(e2n(ROIs(i).voxelIndex,:));
         end
     end
