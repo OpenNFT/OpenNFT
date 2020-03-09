@@ -293,7 +293,7 @@ function [drawimgt, drawimgc, drawimgs, cimgt, cimgc, cimgs] = ...
                             getOrthROIs(imgt, imgc, imgs, ROIs, coordParam)
 global strParam
 % 6 colors, extend if >6  ROIs
-colour=[0 1 0;0 1 1;0 0 1;1 0 1;1 0 0;1 1 0; flipud(pink(3)); 0 0 0];%pink(3); %flipud(pink(3));
+colour=[0 0 1; 0 1 1; 0 1 0; 1 0 1; 1 0 0; 1 1 0; flipud(pink(3)); 0 0 0];%pink(3); %flipud(pink(3));
 mx = coordParam.mx;
 mn = coordParam.mn;
 eps = coordParam.eps;

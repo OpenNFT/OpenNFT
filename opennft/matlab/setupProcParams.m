@@ -136,6 +136,8 @@ if P.isRTQA
     rtQA_python.excFDIndexes_1 = [];
     rtQA_python.excFDIndexes_2 = [];
     rtQA_python.excMDIndexes = [];
+    rtQA_python.FD = [];
+    rtQA_python.MD = [];
 
     rtQA_matlab.kalmanSpikesPos = zeros(P.NrROIs,P.VolumesNumber);
     rtQA_matlab.kalmanSpikesNeg = zeros(P.NrROIs,P.VolumesNumber);
