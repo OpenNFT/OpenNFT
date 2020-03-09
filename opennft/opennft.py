@@ -401,8 +401,7 @@ class OpenNFT(QWidget):
         self.btnChooseRoiGroupFolder.clicked.connect(
             lambda: self.onChooseFolder('RoiGroupFolder', self.leRoiGroupFolder))
 
-        self.btnChooseAnatBgFolder.clicked.connect(
-            lambda: self.onChooseFolder('AnatBgFolder', self.leAnatBgFolder))
+        self.btnChooseStructBgFile.clicked.connect(self.onChooseStructBgFile)
 
         self.btnMCTempl.clicked.connect(self.onChooseMCTemplFile)
         # self.btnTest.clicked.connect(self.onTest)
@@ -565,8 +564,8 @@ class OpenNFT(QWidget):
         # init OrthoView in helper
         self.spmHelperP = {
             'Type': self.P['Type'],
-            'AnatBgFolder': os.path.normpath(self.P['AnatBgFolder']),
-            'MCTempl': os.path.dirname(self.P['MCTempl']),
+            'StructBgFile': os.path.normpath(self.P['StructBgFile']),
+            'MCTempl': os.path.normpath(self.P['MCTempl']),
             'memMapFile': self.eng.evalin('base', 'P.memMapFile'),
             'tRoiBoundaries': [],
             'cRoiBoundaries': [],
@@ -1503,6 +1502,21 @@ class OpenNFT(QWidget):
             self.P['ProtocolFile'] = fname
 
     # --------------------------------------------------------------------------
+    def onChooseStructBgFile(self):
+        if config.DONOT_USE_QFILE_NATIVE_DIALOG:
+            fname = QFileDialog.getOpenFileName(
+                self, "Select Structural File", config.ROOT_PATH, 'Template files (*.nii)',
+                options=QFileDialog.DontUseNativeDialog)[0]
+        else:
+            fname = QFileDialog.getOpenFileName(
+                self, "Select Structural File", config.ROOT_PATH, 'Template files (*.nii)')[0]
+
+        fname = fname.replace('/', os.path.sep)
+        if fname:
+            self.leStructBgFile.setText(fname)
+            self.P['StructBgFile'] = fname
+
+    # --------------------------------------------------------------------------
     def onChooseMCTemplFile(self):
         if config.DONOT_USE_QFILE_NATIVE_DIALOG:
             fname = QFileDialog.getOpenFileName(
@@ -1570,7 +1584,7 @@ class OpenNFT(QWidget):
         if self.imageViewMode == ImageViewMode.orthviewEPI:
             bgType = 'bgEPI'
         else:
-            bgType = 'bgAnat'
+            bgType = 'BgStruct'
 
         rtqa = self.windowRTQA.volumeCheckBox.isChecked() if self.windowRTQA else False
 
@@ -1674,7 +1688,7 @@ class OpenNFT(QWidget):
             self.leRoiAnatFolder.setText(self.settings.value('RoiFilesFolder', ''))
         self.leRoiAnatOperation.setText(self.settings.value('RoiAnatOperation', 'mean(norm_percValues)'))
         self.leRoiGroupFolder.setText(self.settings.value('RoiGroupFolder', ''))
-        self.leAnatBgFolder.setText(self.settings.value('AnatBgFolder', ''))
+        self.leStructBgFile.setText(self.settings.value('StructBgFile', ''))
         self.leMCTempl.setText(self.settings.value('MCTempl', ''))
         if (self.settings.value('Prot', '')) == 'ContTask':
             self.leTaskFolder.setText(self.settings.value('TaskFolder', ''))
@@ -1794,7 +1808,7 @@ class OpenNFT(QWidget):
             self.P['RoiFilesFolder'] = self.leRoiAnatFolder.text()
         self.P['RoiAnatOperation'] = self.leRoiAnatOperation.text()
         self.P['RoiGroupFolder'] = self.leRoiGroupFolder.text()
-        self.P['AnatBgFolder'] = self.leAnatBgFolder.text()
+        self.P['StructBgFile'] = self.leStructBgFile.text()
         self.P['MCTempl'] = self.leMCTempl.text()
 
         # --- middle ---
@@ -1891,7 +1905,7 @@ class OpenNFT(QWidget):
             self.settings.setValue('RoiFilesFolder', self.P['RoiFilesFolder'])
         self.settings.setValue('RoiAnatOperation', self.P['RoiAnatOperation'])
         self.settings.setValue('RoiGroupFolder', self.P['RoiGroupFolder'])
-        self.settings.setValue('AnatBgFolder', self.P['AnatBgFolder'])
+        self.settings.setValue('StructBgFile', self.P['StructBgFile'])
         self.settings.setValue('MCTempl', self.P['MCTempl'])
 
         if self.P['Prot'] == 'ContTask':

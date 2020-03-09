@@ -205,9 +205,7 @@ for indRoi = 1:P.NrROIs
                 tContr = mainLoopData.tContr;
                 erGlmProcTimeSeries = tmp_rawTimeSeries - cX0*betaReg;
                 rtQA_matlab.varErGlmProcTimeSeries(indRoi,tmp_ind_end) = erGlmProcTimeSeries'*erGlmProcTimeSeries/(tmp_ind_end - length(tContr.pos));
-                rtQA_matlab.betRegr{indRoi}(tmp_ind_end,:) = [ betaReg; zeros(length(rtQA_matlab.betRegr{indRoi}(tmp_ind_end,:))-length(betaReg),1) ]; 
-%                 rtQA_matlab.tGlmProcTimeSeries.pos(indRoi,tmp_ind_end) = tContr.pos'*betaReg /sqrt(rtQA_matlab.varErGlmProcTimeSeries(indRoi,tmp_ind_end)*tContr.pos'*inv(cX0'*cX0)*tContr.pos);
-%                 rtQA_matlab.tGlmProcTimeSeries.neg(indRoi,tmp_ind_end) = tContr.neg'*betaReg /sqrt(rtQA_matlab.varErGlmProcTimeSeries(indRoi,tmp_ind_end)*tContr.neg'*inv(cX0'*cX0)*tContr.neg);
+                rtQA_matlab.betRegr{indRoi}(tmp_ind_end,:) = [ betaReg; zeros(length(rtQA_matlab.betRegr{indRoi}(tmp_ind_end,:))-length(betaReg),1) ];
             end
             
         elseif (tmp_ind_end >= regrStep) && (tmp_ind_end < 2*regrStep)
@@ -223,9 +221,7 @@ for indRoi = 1:P.NrROIs
                 tContr = mainLoopData.tContr;
                 erGlmProcTimeSeries = tmp_rawTimeSeries - cX0*betaReg;
                 rtQA_matlab.varErGlmProcTimeSeries(indRoi,tmp_ind_end) = erGlmProcTimeSeries'*erGlmProcTimeSeries/(tmp_ind_end - length(tContr.pos));
-                rtQA_matlab.betRegr{indRoi}(tmp_ind_end,:) = [ betaReg; zeros(length(rtQA_matlab.betRegr{indRoi}(tmp_ind_end,:))-length(betaReg),1) ]; 
-%                 rtQA_matlab.tGlmProcTimeSeries.pos(indRoi,tmp_ind_end) = tContr.pos'*betaReg /sqrt(rtQA_matlab.varErGlmProcTimeSeries(indRoi,tmp_ind_end)*tContr.pos'*inv(cX0'*cX0)*tContr.pos);
-%                 rtQA_matlab.tGlmProcTimeSeries.neg(indRoi,tmp_ind_end) = tContr.neg'*betaReg /sqrt(rtQA_matlab.varErGlmProcTimeSeries(indRoi,tmp_ind_end)*tContr.neg'*inv(cX0'*cX0)*tContr.neg);
+                rtQA_matlab.betRegr{indRoi}(tmp_ind_end,:) = [ betaReg; zeros(length(rtQA_matlab.betRegr{indRoi}(tmp_ind_end,:))-length(betaReg),1) ];
             end
             
         elseif (tmp_ind_end >= 2*regrStep) && (tmp_ind_end < 3*regrStep)
@@ -242,9 +238,7 @@ for indRoi = 1:P.NrROIs
                 tContr = mainLoopData.tContr;
                 erGlmProcTimeSeries = tmp_rawTimeSeries - cX0*betaReg;
                 rtQA_matlab.varErGlmProcTimeSeries(indRoi,tmp_ind_end) = erGlmProcTimeSeries'*erGlmProcTimeSeries/(tmp_ind_end - length(tContr.pos));
-                rtQA_matlab.betRegr{indRoi}(tmp_ind_end,:) = [ betaReg; zeros(length(rtQA_matlab.betRegr{indRoi}(tmp_ind_end,:))-length(betaReg),1) ]; 
-%                 rtQA_matlab.tGlmProcTimeSeries.pos(indRoi,tmp_ind_end) = tContr.pos'*betaReg /sqrt(rtQA_matlab.varErGlmProcTimeSeries(indRoi,tmp_ind_end)*tContr.pos'*inv(cX0'*cX0)*tContr.pos);
-%                 rtQA_matlab.tGlmProcTimeSeries.neg(indRoi,tmp_ind_end) = tContr.neg'*betaReg /sqrt(rtQA_matlab.varErGlmProcTimeSeries(indRoi,tmp_ind_end)*tContr.neg'*inv(cX0'*cX0)*tContr.neg);
+                rtQA_matlab.betRegr{indRoi}(tmp_ind_end,:) = [ betaReg; zeros(length(rtQA_matlab.betRegr{indRoi}(tmp_ind_end,:))-length(betaReg),1) ];
             end
             
         else
@@ -344,10 +338,10 @@ for indRoi = 1:P.NrROIs
         mainLoopData.glmProcTimeSeries(indRoi,indVolNorm), ...
         mainLoopData.S(indRoi), mainLoopData.fPositDerivSpike(indRoi), ...
         mainLoopData.fNegatDerivSpike(indRoi));
-    if P.isRTQA
-        rtQA_matlab.kalmanSpikesPos(indRoi,indVolNorm) = mainLoopData.fPositDerivSpike(indRoi);    
-        rtQA_matlab.kalmanSpikesNeg(indRoi,indVolNorm) = mainLoopData.fNegatDerivSpike(indRoi);
-    end
+    rtQA_matlab.kalmanSpikesPos(indRoi,indVolNorm) = mainLoopData.fPositDerivSpike(indRoi);
+    mainLoopData.fPositDerivSpike(indRoi) = 0;
+    rtQA_matlab.kalmanSpikesNeg(indRoi,indVolNorm) = mainLoopData.fNegatDerivSpike(indRoi);
+    mainLoopData.fNegatDerivSpike(indRoi) = 0;
 
     %4. Scaling
     if ~P.isRestingState

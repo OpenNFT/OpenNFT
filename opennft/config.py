@@ -45,7 +45,7 @@ MAIN_LOOP_CALL_PERIOD = 30  # ms
 USE_FAST_OFFLINE_LOOP = True
 
 # currently used only for DCM feedabck
-USE_MATLAB_MODEL_HELPER = True
+USE_MATLAB_MODEL_HELPER = False
 
 # use PTB helper and include PTB option in parameters
 USE_PTB_HELPER = True
@@ -65,9 +65,9 @@ MUSTER_PLOT_ALPHA = 50
 MAX_ROI_NAME_LENGTH = 6
 
 ROI_PLOT_COLORS = [
-    pg.mkColor(0, 255, 0, 255),
-    pg.mkColor(0, 255, 255, 255),
     pg.mkColor(0, 0, 255, 255),
+    pg.mkColor(0, 255, 255, 255),
+    pg.mkColor(0, 255, 0, 255),
     pg.mkColor(255, 0, 255, 255),
     pg.mkColor(255, 0, 0, 255),
     pg.mkColor(255, 255, 0, 255),
@@ -77,9 +77,9 @@ ROI_PLOT_COLORS = [
     pg.mkColor(0, 0, 0, 255)
 ]
 STAT_PLOT_COLORS = [
-    pg.mkColor(0, 255, 0, 255),
-    pg.mkColor(0, 255, 255, 255),
     pg.mkColor(0, 0, 255, 255),
+    pg.mkColor(0, 255, 255, 255),
+    pg.mkColor(0, 255, 0, 255),
     pg.mkColor(255, 0, 255, 255),
     pg.mkColor(255, 0, 0, 255),
     pg.mkColor(255, 255, 0, 255),
@@ -89,9 +89,9 @@ STAT_PLOT_COLORS = [
     pg.mkColor(0, 0, 0, 255)
 ]
 ROI_BAS_COLORS = [
-    pg.mkColor(0, 255, 0, 255),
-    pg.mkColor(0, 255, 255, 255),
     pg.mkColor(0, 0, 255, 255),
+    pg.mkColor(0, 255, 255, 255),
+    pg.mkColor(0, 255, 0, 255),
     pg.mkColor(255, 0, 255, 255),
     pg.mkColor(255, 0, 0, 255),
     pg.mkColor(255, 255, 0, 255),
@@ -101,9 +101,9 @@ ROI_BAS_COLORS = [
     pg.mkColor(0, 0, 0, 255)
 ]
 ROI_COND_COLORS = [
-    pg.mkColor(0, 255, 0, 255),
-    pg.mkColor(0, 255, 255, 255),
     pg.mkColor(0, 0, 255, 255),
+    pg.mkColor(0, 255, 255, 255),
+    pg.mkColor(0, 255, 0, 255),
     pg.mkColor(255, 0, 255, 255),
     pg.mkColor(255, 0, 0, 255),
     pg.mkColor(255, 255, 0, 255),
@@ -134,7 +134,18 @@ MC_PLOT_COLORS = [
     (145, 130, 43),
 ]
 
-PROJ_ROI_COLORS = ['g', 'c', 'b', 'm', 'y']
+PROJ_ROI_COLORS = [
+    pg.mkColor(0, 0, 255, 255),
+    pg.mkColor(0, 255, 255, 255),
+    pg.mkColor(0, 255, 0, 255),
+    pg.mkColor(255, 0, 255, 255),
+    pg.mkColor(255, 0, 0, 255),
+    pg.mkColor(255, 255, 0, 255),
+    pg.mkColor(140, 200, 240, 255),
+    pg.mkColor(208, 208, 147, 255),
+    pg.mkColor(147, 0, 0, 255),
+    pg.mkColor(0, 0, 0, 255)
+]
 
 # debuging use only
 USE_SLEEP_IN_STOP = False

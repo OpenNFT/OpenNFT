@@ -647,7 +647,7 @@ class RTQAWindow(QtWidgets.QWidget):
 
         tsRTQA = dict.fromkeys(['rMean', 'rVar', 'rSNR',
                                 'meanBas', 'varBas', 'meanCond', 'varCond', 'rCNR',
-                                'excFDIndexes_1', 'excFDIndexes_2', 'excMDIndexes'])
+                                'excFDIndexes_1', 'excFDIndexes_2', 'excMDIndexes', 'FD', 'MD'])
 
         tsRTQA['rMean'] = matlab.double(self.rMean.tolist())
         tsRTQA['rVar'] = matlab.double(self.rVar.tolist())
@@ -660,5 +660,7 @@ class RTQAWindow(QtWidgets.QWidget):
         tsRTQA['excFDIndexes_1'] = matlab.double(self._fd.excFDIndexes_1.tolist())
         tsRTQA['excFDIndexes_2'] = matlab.double(self._fd.excFDIndexes_2.tolist())
         tsRTQA['excMDIndexes'] = matlab.double(self._fd.excMDIndexes.tolist())
+        tsRTQA['FD'] = matlab.double(np.array(self._fd.fd).tolist())
+        tsRTQA['MD'] = matlab.double(np.array(self._fd.md).tolist())
 
         return tsRTQA
