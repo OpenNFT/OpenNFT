@@ -1144,6 +1144,8 @@ class OpenNFT(QWidget):
         self.musterInfo = {}
         self.iteration = 1
         self.preiteration = 0
+        self.files_processed = []
+        self.files_exported = []
         self.files_queue = queue.Queue()
 
         self.mcPlot.getPlotItem().clear()
