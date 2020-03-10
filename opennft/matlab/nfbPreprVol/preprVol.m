@@ -186,8 +186,6 @@ if P.isRTQA && indVolNorm > FIRST_SNR_VOLUME
     if ~P.isRestingState
         [ rtQA_matlab.cnrData ] = cnr_calc(indVolNorm, reslVol, smReslVol, rtQA_matlab.cnrData, isSmoothed);
     end;
-        
-    rtQA_matlab.snrMapCreated = 1; 
     
     if isShowRtqaVol
         
@@ -213,7 +211,9 @@ if P.isRTQA && indVolNorm > FIRST_SNR_VOLUME
             m.Data.statMap = uint8(statMap2D_pos);   
             assignin('base', 'statMap', statMap2D_pos);
         
-        end
+        end              
+        
+        rtQA_matlab.snrMapCreated = 1;
            
     end
 else

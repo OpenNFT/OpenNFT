@@ -1634,7 +1634,13 @@ class OpenNFT(QWidget):
         # with utils.timeit('Getting new orthview projections...'):
         self.readOrthViewImages()
 
-        if self.imageViewMode != ImageViewMode.mosaic:
+        # SNR/Stat map display
+        is_stat_map_created = bool(self.eng.evalin('base', 'mainLoopData.statMapCreated'))
+        is_snr_map_created = bool(self.eng.evalin('base', 'rtQA_matlab.snrMapCreated'))
+        is_rtqa_volume_checked = self.windowRTQA.volumeCheckBox.isChecked()
+
+        if (self.imageViewMode != ImageViewMode.mosaic) and (is_stat_map_created and not is_rtqa_volume_checked
+                     or is_snr_map_created and is_rtqa_volume_checked):
             pos_maps_values = np.array([], dtype=np.uint8)
             neg_maps_values = np.array([], dtype=np.uint8)
 
