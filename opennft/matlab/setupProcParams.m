@@ -324,7 +324,7 @@ end
 
 if P.isRTQA
     for i=1:P.NrROIs
-        rtQA_matlab.betRegr{i} = zeros(P.NrOfVolumes, 2+6+size(P.spmDesign,2));
+        rtQA_matlab.betRegr{i} = zeros(P.NrOfVolumes-P.nrSkipVol, 2+6+size(P.spmDesign,2));
     end
 end
 
