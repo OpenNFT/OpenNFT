@@ -911,8 +911,9 @@ class OpenNFT(QWidget):
                 self.windowRTQA.plot_stepsAndSpikes(data, posSpike, negSpike)
                 self.windowRTQA.plot_mcmd(dataMC[n, :])
 
-        with utils.timeit('Display mosaic image:'):
-            self.displayMosaicImage()
+        if self.imageViewMode == ImageViewMode.mosaic:
+            with utils.timeit('Display mosaic image:'):
+                self.displayMosaicImage()
 
         with utils.timeit('  Drawings:'):
             self.drawRoiPlots(init)

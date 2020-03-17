@@ -105,6 +105,10 @@ switch feedbackType
         
     %% Intermittent PSC
     case 'value_fixation'
+        indexSmiley = round(dispValue);
+        if indexSmiley == 0
+            indexSmiley = 1;
+        end
         switch condition
             case 1  % Baseline
                 for i = 1:2
@@ -153,12 +157,15 @@ switch feedbackType
                     P.Screen.w/2 - P.Screen.w/30+0, ...
                     P.Screen.h/2 - P.Screen.h/4, dispColor);
                 % smiley
+                disp(dispValue)
                 Screen('DrawTexture', P.Screen.wPtr, ...
-                    Tex(round(dispValue)), ...
+                    Tex(indexSmiley), ...
                     P.Screen.rectSm, P.Screen.dispRect+[0 0 0 0]);
                 % display
                 P.Screen.vbl = Screen('Flip', P.Screen.wPtr, ...
                     P.Screen.vbl + P.Screen.ifi/2);
+                displayStage = 'feedback';
+                displayData.displayStage = 'feedback';
         end
         
     %% Trial-based DCM
@@ -254,6 +261,7 @@ end
 % [t9, t10, displayTimeInstruction, displayTimeFeedback]
 t = posixtime(datetime('now','TimeZone','local'));
 tAbs = toc(tDispl);
+disp(iteration)
 if strcmp(displayStage, 'instruction')
     P.eventRecords(1, :) = repmat(iteration,1,4);
     P.eventRecords(iteration + 1, :) = zeros(1,4);
@@ -264,6 +272,7 @@ elseif strcmp(displayStage, 'feedback')
     P.eventRecords(iteration + 1, :) = zeros(1,4);
     P.eventRecords(iteration + 1, 2) = t;
     P.eventRecords(iteration + 1, 4) = tAbs;
+    disp(iteration)
 end
 recs = P.eventRecords;
 save(P.eventRecordsPath, 'recs', '-ascii', '-double');

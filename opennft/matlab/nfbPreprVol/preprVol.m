@@ -331,25 +331,43 @@ if isIGLM
         tContr = mainLoopData.tContr;
         
         if ~P.isRegrIGLM
-            nrBasFctRegr = 1;
+            if ~P.isRestingState
+                nrBasFctRegr = 1;
+            else
+                nrBasFctRegr = 6;
+            end
         else
             nrHighPassRegr = size(mainLoopData.K.X0,2);
-            nrMotRegr = 6;
-            if P.isHighPass && P.isMotionRegr && P.isLinRegr
-                nrBasFctRegr = nrMotRegr+nrHighPassRegr+2;
-                % adding 6 head motion, linear, high-pass filter, and
-                % constant regressors
-            elseif ~P.isHighPass && P.isMotionRegr && P.isLinRegr
-                nrBasFctRegr = nrMotRegr+2;
-                % adding 6 head motion, linear, and constant regressors
-            elseif P.isHighPass && ~P.isMotionRegr && P.isLinRegr
-                nrBasFctRegr = nrHighPassRegr+2;
-                % adding high-pass filter, linear, and constant regressors
-            elseif P.isHighPass && ~P.isMotionRegr && ~P.isLinRegr
-                nrBasFctRegr = nrHighPassRegr+1;
-                % adding high-pass filter, and constant regressors
-            elseif ~P.isHighPass && ~P.isMotionRegr && P.isLinRegr
-                nrBasFctRegr = 2; % adding linear, and constant regressors
+            if ~P.isRestingState
+                nrMotRegr = 6;
+                if P.isHighPass && P.isMotionRegr && P.isLinRegr
+                    nrBasFctRegr = nrMotRegr+nrHighPassRegr+2;
+                    % adding 6 head motion, linear, high-pass filter, and
+                    % constant regressors
+                elseif ~P.isHighPass && P.isMotionRegr && P.isLinRegr
+                    nrBasFctRegr = nrMotRegr+2;
+                    % adding 6 head motion, linear, and constant regressors
+                elseif P.isHighPass && ~P.isMotionRegr && P.isLinRegr
+                    nrBasFctRegr = nrHighPassRegr+2;
+                    % adding high-pass filter, linear, and constant regressors
+                elseif P.isHighPass && ~P.isMotionRegr && ~P.isLinRegr
+                    nrBasFctRegr = nrHighPassRegr+1;
+                    % adding high-pass filter, and constant regressors
+                elseif ~P.isHighPass && ~P.isMotionRegr && P.isLinRegr
+                    nrBasFctRegr = 2; % adding linear, and constant regressors
+                end
+            else
+                if P.isHighPass && P.isLinRegr
+                    nrBasFctRegr = nrHighPassRegr+2;
+                    % adding 6 head motion, linear, high-pass filter, and
+                    % constant regressors
+                elseif ~P.isHighPass && P.isLinRegr
+                    nrBasFctRegr = 2;
+                    % adding 6 head motion, linear, and constant regressors
+                elseif P.isHighPass && ~P.isLinRegr
+                    nrBasFctRegr = nrHighPassRegr+1;
+                    % adding high-pass filter, and constant regressors
+                end
             end
         end
         Cn = zeros(nrBasFct + nrBasFctRegr);
@@ -410,19 +428,13 @@ if isIGLM
     if ~P.isRestingState
         % combine with prepared basFct design regressors
         basFctRegr = [basFct(1:indIglm,:), tmpRegr];
-        % account for contrast term in contrast vector (+1)
-        tContr.pos = [tContr.pos; zeros(nrBasFctRegr,1)];
-        
-        tContr.neg = [tContr.neg; zeros(nrBasFctRegr,1)];
     else
         % combine with prepared basFct design regressors
-        basFctRegr = tmpRegr;
-        % account for contrast term in contrast vector (+1)
-        if  P.isMotionRegr && P.isLinRegr && P.isHighPass
-            tContr.pos = [tContr.pos; zeros(nrBasFctRegr-size(P.motCorrParam,2),1)];
-            tContr.neg = [tContr.neg; zeros(nrBasFctRegr-size(P.motCorrParam,2),1)];
-        end
+        basFctRegr = [zscore(P.motCorrParam(1:indIglm,:)), tmpRegr];
     end
+    % account for contrast term in contrast vector (+1)
+    tContr.pos = [tContr.pos; zeros(nrBasFctRegr,1)];
+    tContr.neg = [tContr.neg; zeros(nrBasFctRegr,1)];
     
     % estimate iGLM
     [idxActVoxIGLM, dyntTh, tTh, Cn, Dn, s2n, tn, neg_e2n, Bn, e2n] = ...
@@ -476,6 +488,10 @@ if ~isempty(idxActVoxIGLM.pos) && max(tn.pos) > 0 % handle empty activation map
         img2DdimX, img2DdimY, dimVol) / maxTval_pos;
     statMap2D_pos = statMap2D_pos * 255;
    
+    if indVol == 26
+       1 ;
+    end
+    
     if ~isShowRtqaVol && ~imageViewMode
         
         m_out =  evalin('base', 'mmStatMap');
