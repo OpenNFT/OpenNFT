@@ -38,7 +38,7 @@ function [tv, ts] = analyzeEventRecords(eventrecordsFileName, paramsFileName, st
 %
 %   Note that for simplicity, the time events t6 - t12 are named differently in the manuscript 
 %__________________________________________________________________________
-% Copyright (C) 2016-2019 OpenNFT.org
+% Copyright (C) 2016-2020 OpenNFT.org
 %
 % Written by Yury Koush, Artem Nikonorov
 
@@ -156,42 +156,45 @@ function [tv, ts] = analyzeEventRecords(eventrecordsFileName, paramsFileName, st
         m = round(mean(ds(:,1:4)),1);
         s = round(std(ds(:,1:4)),1);
         
-        % t7-t6, time until instruction display (Python)
+        % t7-t6, time until instruction and feedback display (Python)
         ds_t7t6 = tv(startScan + 1:maxCount, 8) - tv(startScan + 1:maxCount, 7); 
         % t9-t7, display instruction time (Matlab)
-        ds_t9t7 = tv(startScan + 1:maxCount, 10) - tv(startScan + 1:maxCount, 8);   
+        ds_t9t7_instr = tv(startScan + indCond, 10) - tv(startScan + indCond, 8);   
+        % t9-t7, display feedback time (Matlab)
+        ds_t9t7_fb = tv(startScan + indFB, 11) - tv(startScan + indFB, 8);  
                       
         m(5) = round(mean(ds_t7t6(indCond))*1000,1); 
         s(5) = round(std(ds_t7t6(indCond))*1000,1);
         m(6) = round(mean(ds_t7t6(indFB))*1000,1); 
         s(6) = round(std(ds_t7t6(indFB))*1000,1);      
         
-        m(7) = round(mean(ds_t9t7(indCond))*1000,1); 
-        s(7) = round(std(ds_t9t7(indCond))*1000,1);
-        m(8) = round(mean(ds_t9t7(indFB))*1000,1); 
-        s(8) = round(std(ds_t9t7(indFB))*1000,1);    
+        m(7) = round(mean(ds_t9t7_instr)*1000,1); 
+        s(7) = round(std(ds_t9t7_instr)*1000,1);
+        m(8) = round(mean(ds_t9t7_fb)*1000,1); 
+        s(8) = round(std(ds_t9t7_fb)*1000,1);    
         
         % Matlab PTB Helper absolute display time
         % for instruction
         m(9) = round(mean(tv(startScan + indCond, 15))*1000,1);
         s(9) = round(std(tv(startScan + indCond, 15))*1000,1);
         % for feedback
-        m(10) = round(mean(tv(startScan + indFB, 15))*1000,1);
-        s(10) = round(std(tv(startScan + indFB, 15))*1000,1);
+        m(10) = round(mean(tv(startScan + indFB, 16))*1000,1);
+        s(10) = round(std(tv(startScan + indFB, 16))*1000,1);
                 
         disp('Durations mean and std (msec.):')
-        fprintf('\tt2-t1\tt3-t2\tt4-t3\tt5-t4\tt7-t6(i)\tt7-t6(fb)\tt9-t7(i)\tt9-t7(fb)\ttAbs(i)\ttAbs(fb)\n')
+        fprintf('\tt2-t1\tt3-t2\tt4-t3\tt5-t4\tt7-t6(in)\tt7-t6(fb)\tt9-t7(in)\tt9-t7(fb)\ttAbs(in)\ttAbs(fb)\n')
         fprintf('\t%5.1f\t%5.1f\t%5.1f\t%5.1f\t%5.1f\t%5.1f\t%5.1f\t%5.1f\t%5.1f\t%5.1f\n', ...
             m(1), m(2), m(3), m(4), m(5), m(6), m(7), m(8), m(9), m(10))
         fprintf('\t%5.1f\t%5.1f\t%5.1f\t%5.1f\t%5.1f\t%5.1f\t%5.1f\t%5.1f\t%5.1f\t%5.1f\n', ...
             s(1), s(2), s(3), s(4), s(5), s(6), s(7), s(8), s(9), s(10))
         
         % Total display time, here, NOT equal for instruction and feedback.
-        ds_t7t6_ms = ds_t9t7 + ds_t7t6;
-        m_fb_displ = round(mean(ds_t7t6_ms(indFB))*1000,1); % t8-t5 in the ms
-        s_fb_displ = round(std(ds_t7t6_ms(indFB))*1000,1);         
-        m_instr_displ = round(mean(ds_t7t6_ms(indCond))*1000,1); % t7-t6 in the ms
-        s_instr_displ = round(std(ds_t7t6_ms(indCond))*1000,1);     
+        ds_t7t6_ms_instr = ds_t9t7_instr + ds_t7t6(indCond);
+        ds_t7t6_ms_fb = ds_t9t7_fb + ds_t7t6(indFB);
+        m_fb_displ = round(mean(ds_t7t6_ms_fb)*1000,1); % t8-t5 in the ms
+        s_fb_displ = round(std(ds_t7t6_ms_fb)*1000,1);         
+        m_instr_displ = round(mean(ds_t7t6_ms_instr)*1000,1); % t7-t6 in the ms
+        s_instr_displ = round(std(ds_t7t6_ms_instr)*1000,1);     
         
         elapsedTime = tv(startScan + indCond, end-2)*1000;     
         
@@ -256,7 +259,7 @@ function [tv, ts] = analyzeEventRecords(eventrecordsFileName, paramsFileName, st
         s(10) = round(std(tv(startScan + indFB, 15))*1000,1);
         
         disp('Durations - mean, std, max (msec.):')
-        fprintf('\tt2-t1\tt3-t2\tt4-t3\tt5-t4\tt7-t6(i)\tt7-t6(fb)\tt9-t7(i)\tt9-t7(fb)\ttAbs(i)\ttAbs(fb)\n')
+        fprintf('\tt2-t1\tt3-t2\tt4-t3\tt5-t4\tt7-t6(in)\tt7-t6(fb)\tt9-t7(in)\tt9-t7(fb)\ttAbs(in)\ttAbs(fb)\n')
         fprintf('\t%5.1f\t%5.1f\t%5.1f\t%5.1f\t%5.1f\t%5.1f\t%5.1f\t%5.1f\t%5.1f\t%5.1f\n', ...
             m(1), m(2), m(3), m(4), m(5), m(6), m(7), m(8), m(9), m(10))
         fprintf('\t%5.1f\t%5.1f\t%5.1f\t%5.1f\t%5.1f\t%5.1f\t%5.1f\t%5.1f\t%5.1f\t%5.1f\n', ...
