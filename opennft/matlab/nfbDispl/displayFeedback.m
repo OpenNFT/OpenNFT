@@ -157,15 +157,12 @@ switch feedbackType
 %                     P.Screen.w/2 - P.Screen.w/30+0, ...
 %                     P.Screen.h/2 - P.Screen.h/4, dispColor);
                 % smiley
-                disp(dispValue)
                 Screen('DrawTexture', P.Screen.wPtr, ...
                     Tex(indexSmiley), ...
                     P.Screen.rectSm, P.Screen.dispRect+[0 0 0 0]);
                 % display
                 P.Screen.vbl = Screen('Flip', P.Screen.wPtr, ...
                     P.Screen.vbl + P.Screen.ifi/2);
-                displayStage = 'feedback';
-                displayData.displayStage = 'feedback';
         end
         
     %% Trial-based DCM

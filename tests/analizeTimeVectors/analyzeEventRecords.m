@@ -157,16 +157,17 @@ function [tv, ts] = analyzeEventRecords(eventrecordsFileName, paramsFileName, st
         s = round(std(ds(:,1:4)),1);
         
         % t7-t6, time until instruction and feedback display (Python)
-        ds_t7t6 = tv(startScan + 1:maxCount, 8) - tv(startScan + 1:maxCount, 7); 
+        ds_t7t6_instr = tv(startScan + indCond, 8) - tv(startScan + indCond, 7); 
+        ds_t7t6_fb = tv(startScan + indFB, 9) - tv(startScan + indFB, 7); 
         % t9-t7, display instruction time (Matlab)
         ds_t9t7_instr = tv(startScan + indCond, 10) - tv(startScan + indCond, 8);   
         % t9-t7, display feedback time (Matlab)
-        ds_t9t7_fb = tv(startScan + indFB, 11) - tv(startScan + indFB, 8);  
+        ds_t9t7_fb = tv(startScan + indFB, 11) - tv(startScan + indFB, 9);  
                       
-        m(5) = round(mean(ds_t7t6(indCond))*1000,1); 
-        s(5) = round(std(ds_t7t6(indCond))*1000,1);
-        m(6) = round(mean(ds_t7t6(indFB))*1000,1); 
-        s(6) = round(std(ds_t7t6(indFB))*1000,1);      
+        m(5) = round(mean(ds_t7t6_instr)*1000,1); 
+        s(5) = round(std(ds_t7t6_instr)*1000,1);
+        m(6) = round(mean(ds_t7t6_fb)*1000,1); 
+        s(6) = round(std(ds_t7t6_fb)*1000,1);      
         
         m(7) = round(mean(ds_t9t7_instr)*1000,1); 
         s(7) = round(std(ds_t9t7_instr)*1000,1);
@@ -189,8 +190,8 @@ function [tv, ts] = analyzeEventRecords(eventrecordsFileName, paramsFileName, st
             s(1), s(2), s(3), s(4), s(5), s(6), s(7), s(8), s(9), s(10))
         
         % Total display time, here, NOT equal for instruction and feedback.
-        ds_t7t6_ms_instr = ds_t9t7_instr + ds_t7t6(indCond);
-        ds_t7t6_ms_fb = ds_t9t7_fb + ds_t7t6(indFB);
+        ds_t7t6_ms_instr = ds_t9t7_instr + ds_t7t6_instr;
+        ds_t7t6_ms_fb = ds_t9t7_fb + ds_t7t6_fb;
         m_fb_displ = round(mean(ds_t7t6_ms_fb)*1000,1); % t8-t5 in the ms
         s_fb_displ = round(std(ds_t7t6_ms_fb)*1000,1);         
         m_instr_displ = round(mean(ds_t7t6_ms_instr)*1000,1); % t7-t6 in the ms
@@ -290,4 +291,5 @@ function [tv, ts] = analyzeEventRecords(eventrecordsFileName, paramsFileName, st
     fprintf('Display feedback time (msec.) mean = %f, std = %f\n', m_fb_displ, s_fb_displ) 
     fprintf('Display instruction time (msec.) mean = %f, std = %f\n', m_instr_displ, s_instr_displ) 
     fprintf('Elapsed time (msec.) mean = %f, std = %f\n', round(mean(elapsedTime),1), round(std(elapsedTime),1))    
+    
     
