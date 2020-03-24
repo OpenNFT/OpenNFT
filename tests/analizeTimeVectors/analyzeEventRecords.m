@@ -285,11 +285,74 @@ function [tv, ts] = analyzeEventRecords(eventrecordsFileName, paramsFileName, st
         fprintf('DCM calculation time (sec.) mean = %f, std = %f\n', round(mean(resDcm),1), round(std(resDcm),1))        
               
         elapsedTime = [tv(startScan + indCond, end-2)]*1000;
+    
+    elseif strcmp(nfbType,'task')        
+        % cumulative time stamps
+        % 1st column is trigger-pulse time, not taken into account here
+        ts = tv(startScan + 1:maxCount, 2:6) - repmat(tv(startScan + 1:maxCount, 2), 1, 5);
+        ts(ts<0)=0;
+        % msec
+        ts = ts*1000;        
+    
+        % time stamp differences
+        % 1st column is trigger-pulse time, not taken into account here
+        ds = tv(startScan + 1:maxCount, 3:6) - tv(startScan + 1:maxCount, 2:5);
+        ds(ds<0) = 0;
+        % msec
+        ds = ds*1000; 
+        m = round(mean(ds(:,1:4)),1);
+        s = round(std(ds(:,1:4)),1);
+              
+        % Matlab PTB Helper absolute display time
+        % for feedback
+        m(7) = round(mean(tv(startScan + 1:maxCount, 16))*1000,1);
+        s(7) = round(std(tv(startScan + 1:maxCount, 16))*1000,1);
+                
+        disp('Durations mean and std (msec.):')
+        fprintf('\tt2-t1\tt3-t2\tt4-t3\tt5-t4\n')
+        fprintf('\t%5.1f\t%5.1f\t%5.1f\t%5.1f\n', ...
+            m(1), m(2), m(3), m(4))
+        fprintf('\t%5.1f\t%5.1f\t%5.1f\t%5.1f\n', ...
+            s(1), s(2), s(3), s(4))
+                
+        % No nfb display in task 
+        m_fb_displ = 0;
+        s_fb_displ = 0;
+        m_instr_displ = 0;
+        s_instr_displ = 0;
+        
+        elapsedTime = tv(startScan + 1:maxCount, end-2)*1000;        
+        
+    elseif strcmp(nfbType,'rest')
+        % cumulative time stamps
+        % 1st column is trigger-pulse time, not taken into account here
+        ts = tv(startScan + 1:maxCount, 2:6) - repmat(tv(startScan + 1:maxCount, 2), 1, 5);
+        ts(ts<0)=0;
+        % msec
+        ts = ts*1000;
+        
+        % time stamp differences
+        % 1st column is trigger-pulse time, not taken into account here
+        ds = tv(startScan + 1:maxCount, 3:5) - tv(startScan + 1:maxCount, 2:4);
+        ds(ds<0) = 0;
+        % msec
+        ds = ds*1000;
+        m = round(mean(ds(:,1:3)),1);
+        s = round(std(ds(:,1:3)),1);
+                
+        disp('Durations mean and std (msec.):')
+        fprintf('\tt2-t1\tt3-t2\tt4-t3\t\n')
+        fprintf('\t%5.1f\t%5.1f\t%5.1f\n', ...
+            m(1), m(2), m(3))
+        fprintf('\t%5.1f\t%5.1f\t%5.1f\n', ...
+            s(1), s(2), s(3))
+        
+        elapsedTime = tv(startScan + 1:maxCount, end)*1000;
         
     end
-   
-    fprintf('Display feedback time (msec.) mean = %f, std = %f\n', m_fb_displ, s_fb_displ) 
-    fprintf('Display instruction time (msec.) mean = %f, std = %f\n', m_instr_displ, s_instr_displ) 
-    fprintf('Elapsed time (msec.) mean = %f, std = %f\n', round(mean(elapsedTime),1), round(std(elapsedTime),1))    
     
+    fprintf('Display feedback time (msec.) mean = %f, std = %f\n', m_fb_displ, s_fb_displ)
+    fprintf('Display instruction time (msec.) mean = %f, std = %f\n', m_instr_displ, s_instr_displ)
+    fprintf('Elapsed time (msec.) mean = %f, std = %f\n', round(mean(elapsedTime),1), round(std(elapsedTime),1))
+
     
