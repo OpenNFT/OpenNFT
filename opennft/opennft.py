@@ -788,7 +788,7 @@ class OpenNFT(QWidget):
             self.outputSamples = self.eng.preprSig(self.iteration)
 
         # t4
-        self.recorder.recordEvent(erd.Times.t4, self.iteration)
+        self.recorder.recordEvent(erd.Times.t4, self.iteration, time.time())
 
         if self.P['Type'] == 'DCM':
             if self.isCalculateDcm:
@@ -802,7 +802,7 @@ class OpenNFT(QWidget):
 
                 if (self.tagFuture.done() and self.oppFuture.done()) or lastBlankScan:
                     # t12 last DCM model computation is done
-                    self.recorder.recordEvent(erd.Times.t12, self.iteration)
+                    self.recorder.recordEvent(erd.Times.t12, self.iteration, time.time())
                     dcmTagLE = self.tagFuture.result()
                     dcmOppLE = self.oppFuture.result()
                     logger.info('DCM calculated')
@@ -812,7 +812,7 @@ class OpenNFT(QWidget):
                                                         nargout=1)
 
                     # t5
-                    self.recorder.recordEvent(erd.Times.t5, self.iteration)
+                    self.recorder.recordEvent(erd.Times.t5, self.iteration, time.time())
                     self.isCalculateDcm = False
 
             else:
@@ -829,7 +829,7 @@ class OpenNFT(QWidget):
 
                     # Parallel DCM computing on two matlab engines
                     # t11 first DCM model computation started
-                    self.recorder.recordEvent(erd.Times.t11, self.iteration)
+                    self.recorder.recordEvent(erd.Times.t11, self.iteration, time.time())
                     self.tagFuture = self.mlPtbDcmHelper.engine.dcmCalc(
                         'Tag', nargout=1, async=True)
 
@@ -849,13 +849,13 @@ class OpenNFT(QWidget):
             self.displayData = self.eng.nfbCalc(self.iteration, self.displayData, nargout=1)
 
             # t5
-            self.recorder.recordEvent(erd.Times.t5, self.iteration)
+            self.recorder.recordEvent(erd.Times.t5, self.iteration, time.time())
 
         elif self.P['Type'] == 'PSC':
             self.displayData = self.eng.nfbCalc(self.iteration, self.displayData, nargout=1)
 
             # t5
-            self.recorder.recordEvent(erd.Times.t5, self.iteration)
+            self.recorder.recordEvent(erd.Times.t5, self.iteration, time.time())
 
             if self.P['Prot'] != 'Inter':
                 if config.USE_PTB:
