@@ -99,7 +99,7 @@ class CreateFileEventHandler(FileSystemEventHandler):
         # if not event.is_directory and event.src_path.endswith(self.filepat):
         if not event.is_directory and fnmatch.fnmatch(os.path.basename(event.src_path), self.filepat):
             # t1
-            self.recorder.recordEvent(erd.Times.t1, 0)
+            self.recorder.recordEvent(erd.Times.t1, 0, time.time())
             self.fq.put(event.src_path)
 
 
@@ -730,7 +730,7 @@ class OpenNFT(QWidget):
                 self.files_exported.remove(fname)
 
         # t2
-        self.recorder.recordEvent(erd.Times.t2, self.iteration)
+        self.recorder.recordEvent(erd.Times.t2, self.iteration, time.time())
 
         if not self.reachedFirstFile:
             if not self.P['FirstFileName'] in fname:
@@ -770,7 +770,7 @@ class OpenNFT(QWidget):
             self.eng.preprVol(fname, self.iteration, nargout=0)
 
         # t3
-        self.recorder.recordEvent(erd.Times.t3, self.iteration)
+        self.recorder.recordEvent(erd.Times.t3, self.iteration, time.time())
         self.updatePlugins()
 
         if self.windowRTQA.volumeCheckBox.isChecked() and config.FIRST_SNR_VOLUME < self.iteration:
