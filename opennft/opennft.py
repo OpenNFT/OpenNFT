@@ -1776,6 +1776,7 @@ class OpenNFT(QWidget):
 
         if self.P['Type'] == 'PSC':
             if not os.path.isdir(self.P['RoiFilesFolder']):
+                logger.error("Couldn't find: " + self.P['RoiFilesFolder'])
                 return
 
             self.eng.selectROI(self.P['RoiFilesFolder'], nargout=0)
@@ -1784,6 +1785,7 @@ class OpenNFT(QWidget):
         elif self.P['Type'] == 'SVM':
 
             if not os.path.isdir(self.P['RoiFilesFolder']):
+                logger.error("Couldn't find: " + self.P['RoiFilesFolder'])
                 return
 
             self.eng.selectROI(self.P['RoiFilesFolder'], nargout=0)
@@ -1795,6 +1797,7 @@ class OpenNFT(QWidget):
             self.engSPM.selectROI(p, nargout=0)
         elif self.P['Type'] == 'None':
             if not os.path.isdir(self.P['RoiFilesFolder']):
+                logger.error("Couldn't find: " + self.P['RoiFilesFolder'])
                 return
 
             self.eng.selectROI(self.P['RoiFilesFolder'], nargout=0)
