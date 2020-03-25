@@ -21,7 +21,7 @@ mask = "001_000008_000"
 #fns = [1, 2, 3, 4, 6, 5, 7, 8]
 fns = None
 
-testCase = 'TASK'
+testCase = 'PSC'
 
 if testCase == 'PSC':
     srcpath = 'C:/_RT/rtData/NF_PSC/NF_Run_1_src'
@@ -41,12 +41,12 @@ elif testCase == 'DCM':
 elif testCase == 'REST': 
     srcpath = 'C:/_RT/rtData/rtQA_REST/RS_Run_1_src'
     dstpath = 'C:/_RT/rtData/rtQA_REST/RS_Run_1'
-    pause_in_sec = 1
+    pause_in_sec = 1.97
 
 elif testCase == 'TASK': 
     srcpath = 'C:/_RT/rtData/rtQA_TASK/TASK_Run_1_src'
     dstpath = 'C:/_RT/rtData/rtQA_TASK/TASK_Run_1'
-    pause_in_sec = 1
+    pause_in_sec = 1.97
 
 if delete_files:
     files = glob.glob(dstpath+'/*')
