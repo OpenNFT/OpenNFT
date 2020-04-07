@@ -641,7 +641,7 @@ class RTQAWindow(QtWidgets.QWidget):
             items.remove(m)
 
         if data.any():
-            plotitem.setYRange(np.min(self.glmProcTimeSeries), np.max(self.glmProcTimeSeries), padding=0.0)
+            plotitem.setYRange(np.min(self.glmProcTimeSeries)-1, np.max(self.glmProcTimeSeries)+1, padding=0.0)
 
     def data_packing(self):
 

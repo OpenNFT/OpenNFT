@@ -10,6 +10,10 @@ function [tv, ts] = analyzeEventRecords(eventrecordsFileName, paramsFileName, st
 % [tv, ts] = analyzeEventRecords('path\to\TimeVectors_*.txt', 'path\to\*_*_P.mat', 6, 'svmCont');
 % For intermittent DCM feedback,
 % [tv, ts] = analyzeEventRecords('path\to\TimeVectors_*.txt', 'path\to\*_*_P.mat', 11, 'dcmInt');
+% For Resting state,
+% [tv, ts] = analyzeEventRecords('path\to\TimeVectors_*.txt', 'path\to\*_*_P.mat', 7, 'rest');
+% For Task,
+% [tv, ts] = analyzeEventRecords('path\to\TimeVectors_*.txt', 'path\to\*_*_P.mat', 7, 'task');
 %
 % Based on eventrecorder.py:
 %     # Events timestamps
