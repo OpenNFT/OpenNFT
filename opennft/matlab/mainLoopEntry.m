@@ -58,6 +58,7 @@ if (strcmp(P.Prot, 'Inter') ||  strcmp(P.Prot, 'Cont') || strcmp(P.Prot, 'ContTa
         elseif condition == 2
             mainLoopData.flagEndPSC = 1;
         end
+        displayData.displayStage = 'instruction';
     end
     
     if strcmp(P.Prot, 'ContTask')
@@ -71,6 +72,7 @@ if (strcmp(P.Prot, 'Inter') ||  strcmp(P.Prot, 'Cont') || strcmp(P.Prot, 'ContTa
             mainLoopData.flagEndPSC = 0;
             mainLoopData.Reward = '';
         end
+        displayData.displayStage = 'instruction';
     end
 
     if strcmp(P.Prot, 'Inter')
@@ -79,12 +81,15 @@ if (strcmp(P.Prot, 'Inter') ||  strcmp(P.Prot, 'Cont') || strcmp(P.Prot, 'ContTa
                 mainLoopData.flagEndPSC = 0;
                 mainLoopData.dispValue = 0;
                 mainLoopData.Reward = '';
+                displayData.displayStage = 'instruction';
             case 2
                 mainLoopData.flagEndPSC = 0;
                 mainLoopData.dispValue = 0;
                 mainLoopData.Reward = '';
+                displayData.displayStage = 'instruction';
             case 3
                 mainLoopData.flagEndPSC = 1;
+                displayData.displayStage = 'feedback';
         end
     end
     % displayData assignment
@@ -132,13 +137,13 @@ if strcmp(P.Prot, 'InterBlock') && strcmp(P.Type, 'DCM')
     displayData.condition = condition;
     displayData.dispValue = mainLoopData.dispValue;
     displayData.Reward = mainLoopData.Reward;
+    displayData.displayStage = 'instruction';
 end
 
 if P.isRestingState
     displayData.feedbackType = 'none';
 end
 
-displayData.displayStage = 'instruction';
 displayData.iteration = indVol;
 displayData.displayBlankScreen = 0;
 displayData.taskseq = 0;

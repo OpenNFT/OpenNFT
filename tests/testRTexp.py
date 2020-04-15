@@ -17,15 +17,15 @@ import glob
 
 delete_files = True
 
-mask = "001_000007_000"
-fns = [1, 2, 3, 4, 6, 5, 7, 8]
-#fns = None
+mask = "001_000008_000"
+#fns = [1, 2, 3, 4, 6, 5, 7, 8]
+fns = None
 
 testCase = 'PSC'
 
 if testCase == 'PSC':
-    srcpath = 'C:/_RT/rtData/NF_PSC/NF_Run_1'
-    dstpath = 'C:/_RT/rtData/NF_PSC/NF_Run_RT'
+    srcpath = 'C:/_RT/rtData/NF_PSC/NF_Run_1_src'
+    dstpath = 'C:/_RT/rtData/NF_PSC/NF_Run_1'
     pause_in_sec = 1
 
 elif testCase == 'SVM':
@@ -37,6 +37,16 @@ elif testCase == 'DCM':
     srcpath = 'C:/_RT/rtData/NF_DCM/NF_Run_1_src'
     dstpath = 'C:/_RT/rtData/NF_DCM/NF_Run_1'
     pause_in_sec = 1
+
+elif testCase == 'REST': 
+    srcpath = 'C:/_RT/rtData/rtQA_REST/RS_Run_1_src'
+    dstpath = 'C:/_RT/rtData/rtQA_REST/RS_Run_1'
+    pause_in_sec = 1.97
+
+elif testCase == 'TASK': 
+    srcpath = 'C:/_RT/rtData/rtQA_TASK/TASK_Run_1_src'
+    dstpath = 'C:/_RT/rtData/rtQA_TASK/TASK_Run_1'
+    pause_in_sec = 1.97
 
 if delete_files:
     files = glob.glob(dstpath+'/*')

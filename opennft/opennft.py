@@ -99,7 +99,7 @@ class CreateFileEventHandler(FileSystemEventHandler):
         # if not event.is_directory and event.src_path.endswith(self.filepat):
         if not event.is_directory and fnmatch.fnmatch(os.path.basename(event.src_path), self.filepat):
             # t1
-            self.recorder.recordEvent(erd.Times.t1, 0)
+            self.recorder.recordEvent(erd.Times.t1, 0, time.time())
             self.fq.put(event.src_path)
 
 
@@ -730,7 +730,7 @@ class OpenNFT(QWidget):
                 self.files_exported.remove(fname)
 
         # t2
-        self.recorder.recordEvent(erd.Times.t2, self.iteration)
+        self.recorder.recordEvent(erd.Times.t2, self.iteration, time.time())
 
         if not self.reachedFirstFile:
             if not self.P['FirstFileName'] in fname:
@@ -770,7 +770,7 @@ class OpenNFT(QWidget):
             self.eng.preprVol(fname, self.iteration, nargout=0)
 
         # t3
-        self.recorder.recordEvent(erd.Times.t3, self.iteration)
+        self.recorder.recordEvent(erd.Times.t3, self.iteration, time.time())
         self.updatePlugins()
 
         if self.windowRTQA.volumeCheckBox.isChecked() and config.FIRST_SNR_VOLUME < self.iteration:
@@ -788,7 +788,7 @@ class OpenNFT(QWidget):
             self.outputSamples = self.eng.preprSig(self.iteration)
 
         # t4
-        self.recorder.recordEvent(erd.Times.t4, self.iteration)
+        self.recorder.recordEvent(erd.Times.t4, self.iteration, time.time())
 
         if self.P['Type'] == 'DCM':
             if self.isCalculateDcm:
@@ -802,7 +802,7 @@ class OpenNFT(QWidget):
 
                 if (self.tagFuture.done() and self.oppFuture.done()) or lastBlankScan:
                     # t12 last DCM model computation is done
-                    self.recorder.recordEvent(erd.Times.t12, self.iteration)
+                    self.recorder.recordEvent(erd.Times.t12, self.iteration, time.time())
                     dcmTagLE = self.tagFuture.result()
                     dcmOppLE = self.oppFuture.result()
                     logger.info('DCM calculated')
@@ -812,7 +812,7 @@ class OpenNFT(QWidget):
                                                         nargout=1)
 
                     # t5
-                    self.recorder.recordEvent(erd.Times.t5, self.iteration)
+                    self.recorder.recordEvent(erd.Times.t5, self.iteration, time.time())
                     self.isCalculateDcm = False
 
             else:
@@ -829,7 +829,7 @@ class OpenNFT(QWidget):
 
                     # Parallel DCM computing on two matlab engines
                     # t11 first DCM model computation started
-                    self.recorder.recordEvent(erd.Times.t11, self.iteration)
+                    self.recorder.recordEvent(erd.Times.t11, self.iteration, time.time())
                     self.tagFuture = self.mlPtbDcmHelper.engine.dcmCalc(
                         'Tag', nargout=1, async=True)
 
@@ -849,13 +849,13 @@ class OpenNFT(QWidget):
             self.displayData = self.eng.nfbCalc(self.iteration, self.displayData, nargout=1)
 
             # t5
-            self.recorder.recordEvent(erd.Times.t5, self.iteration)
+            self.recorder.recordEvent(erd.Times.t5, self.iteration, time.time())
 
         elif self.P['Type'] == 'PSC':
             self.displayData = self.eng.nfbCalc(self.iteration, self.displayData, nargout=1)
 
             # t5
-            self.recorder.recordEvent(erd.Times.t5, self.iteration)
+            self.recorder.recordEvent(erd.Times.t5, self.iteration, time.time())
 
             if self.P['Prot'] != 'Inter':
                 if config.USE_PTB:
@@ -911,8 +911,9 @@ class OpenNFT(QWidget):
                 self.windowRTQA.plot_stepsAndSpikes(data, posSpike, negSpike)
                 self.windowRTQA.plot_mcmd(dataMC[n, :])
 
-        with utils.timeit('Display mosaic image:'):
-            self.displayMosaicImage()
+        if self.imageViewMode == ImageViewMode.mosaic:
+            with utils.timeit('Display mosaic image:'):
+                self.displayMosaicImage()
 
         with utils.timeit('  Drawings:'):
             self.drawRoiPlots(init)
@@ -1154,6 +1155,7 @@ class OpenNFT(QWidget):
         self.normRoiPlot.getPlotItem().clear()
 
         self.pos_map_thresholds_widget.reset()
+        self.neg_map_thresholds_widget.reset()
 
         self.mosaic_background_image_reader.clear()
         self.mosaic_pos_map_image_reader.clear()
@@ -1598,8 +1600,12 @@ class OpenNFT(QWidget):
         self.updateOrthViewAsync()
 
     def onInteractWithMapImage(self):
-        if self.sender() is self.pos_map_thresholds_widget:
+        sender = self.sender()
+
+        if sender is self.pos_map_thresholds_widget:
             self.pos_map_thresholds_widget.auto_thresholds = False
+        if sender is self.neg_map_thresholds_widget:
+            self.neg_map_thresholds_widget.auto_thresholds = False
 
         if self.imageViewMode == ImageViewMode.mosaic:
             self.displayMosaicImage()
@@ -1631,7 +1637,13 @@ class OpenNFT(QWidget):
         # with utils.timeit('Getting new orthview projections...'):
         self.readOrthViewImages()
 
-        if self.imageViewMode != ImageViewMode.mosaic:
+        # SNR/Stat map display
+        is_stat_map_created = bool(self.eng.evalin('base', 'mainLoopData.statMapCreated'))
+        is_snr_map_created = bool(self.eng.evalin('base', 'rtQA_matlab.snrMapCreated'))
+        is_rtqa_volume_checked = self.windowRTQA.volumeCheckBox.isChecked()
+
+        if (self.imageViewMode != ImageViewMode.mosaic) and (is_stat_map_created and not is_rtqa_volume_checked
+                     or is_snr_map_created and is_rtqa_volume_checked):
             pos_maps_values = np.array([], dtype=np.uint8)
             neg_maps_values = np.array([], dtype=np.uint8)
 
@@ -1766,6 +1778,7 @@ class OpenNFT(QWidget):
 
         if self.P['Type'] == 'PSC':
             if not os.path.isdir(self.P['RoiFilesFolder']):
+                logger.error("Couldn't find: " + self.P['RoiFilesFolder'])
                 return
 
             self.eng.selectROI(self.P['RoiFilesFolder'], nargout=0)
@@ -1774,6 +1787,7 @@ class OpenNFT(QWidget):
         elif self.P['Type'] == 'SVM':
 
             if not os.path.isdir(self.P['RoiFilesFolder']):
+                logger.error("Couldn't find: " + self.P['RoiFilesFolder'])
                 return
 
             self.eng.selectROI(self.P['RoiFilesFolder'], nargout=0)
@@ -1785,6 +1799,7 @@ class OpenNFT(QWidget):
             self.engSPM.selectROI(p, nargout=0)
         elif self.P['Type'] == 'None':
             if not os.path.isdir(self.P['RoiFilesFolder']):
+                logger.error("Couldn't find: " + self.P['RoiFilesFolder'])
                 return
 
             self.eng.selectROI(self.P['RoiFilesFolder'], nargout=0)

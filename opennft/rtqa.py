@@ -641,7 +641,7 @@ class RTQAWindow(QtWidgets.QWidget):
             items.remove(m)
 
         if data.any():
-            plotitem.setYRange(np.min(self.glmProcTimeSeries), np.max(self.glmProcTimeSeries), padding=0.0)
+            plotitem.setYRange(np.min(self.glmProcTimeSeries)-1, np.max(self.glmProcTimeSeries)+1, padding=0.0)
 
     def data_packing(self):
 
@@ -660,7 +660,7 @@ class RTQAWindow(QtWidgets.QWidget):
         tsRTQA['excFDIndexes_1'] = matlab.double(self._fd.excFDIndexes_1.tolist())
         tsRTQA['excFDIndexes_2'] = matlab.double(self._fd.excFDIndexes_2.tolist())
         tsRTQA['excMDIndexes'] = matlab.double(self._fd.excMDIndexes.tolist())
-        tsRTQA['FD'] = matlab.double(np.array(self._fd.fd).tolist())
-        tsRTQA['MD'] = matlab.double(np.array(self._fd.md).tolist())
+        tsRTQA['FD'] = matlab.double(self._fd.fd.tolist())
+        tsRTQA['MD'] = matlab.double(self._fd.md.tolist())
 
         return tsRTQA

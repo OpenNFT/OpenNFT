@@ -226,11 +226,15 @@ P.isRegrIGLM = true;
 %% adding nuissance regressors to iGLM
 % Note, less efficient regressing out of the motion-related regressors than
 % offline GLM given the whole motion regressors at once.
-P.isMotionRegr = true;
+if ~P.isRestingState
+    P.isMotionRegr = true;
+else
+    P.isMotionRegr = false;
+end
 
 %% adding high-pass filter to iGLM
 % Note, different data processing iGLM approach as compared to SPM
-P.isHighPass = true;
+P.isHighPass = false;
 
 %% adding linear regressor
 P.isLinRegr = true;
@@ -315,7 +319,7 @@ if ~P.isRestingState
     end
 else
     mainLoopData.basFct = [];
-    mainLoopData.nrBasFct = 0;
+    mainLoopData.nrBasFct = 6; % size of motion regressors, P.motCorrParam
     mainLoopData.numscan = 0;
     [mainLoopData.numscan, mainLoopData.nrHighPassFct] = size(mainLoopData.K.X0);
     P.spmDesign = [];
@@ -326,7 +330,7 @@ end
 
 if P.isRTQA
     for i=1:P.NrROIs
-        rtQA_matlab.betRegr{i} = zeros(P.NrOfVolumes, 2+6+size(P.spmDesign,2));
+        rtQA_matlab.betRegr{i} = zeros(P.NrOfVolumes-P.nrSkipVol, 2+6+size(P.spmDesign,2));
     end
 end
 
