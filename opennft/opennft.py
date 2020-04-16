@@ -15,7 +15,7 @@ based on activity, connectivity and multivariate pattern analysis. (2017) Neuroi
 Real-time fMRI data for testing OpenNFT functionality. (2017) Data in Brief 14:344-347.
 
 _________________________________________________________________________
-Copyright (C) 2016-2019 OpenNFT.org
+Copyright (C) 2016-2020 OpenNFT.org
 
 License
 OpenNFT Software is open-source and is distributed under GNU GPL v3.0 license
@@ -1145,6 +1145,8 @@ class OpenNFT(QWidget):
         self.musterInfo = {}
         self.iteration = 1
         self.preiteration = 0
+        self.files_processed = []
+        self.files_exported = []
         self.files_queue = queue.Queue()
 
         self.mcPlot.getPlotItem().clear()

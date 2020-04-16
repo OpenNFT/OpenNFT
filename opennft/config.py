@@ -65,9 +65,9 @@ MUSTER_PLOT_ALPHA = 50
 MAX_ROI_NAME_LENGTH = 6
 
 ROI_PLOT_COLORS = [
-    pg.mkColor(0, 255, 0, 255),
-    pg.mkColor(0, 255, 255, 255),
     pg.mkColor(0, 0, 255, 255),
+    pg.mkColor(0, 255, 255, 255),
+    pg.mkColor(0, 255, 0, 255),
     pg.mkColor(255, 0, 255, 255),
     pg.mkColor(255, 0, 0, 255),
     pg.mkColor(255, 255, 0, 255),
@@ -77,9 +77,9 @@ ROI_PLOT_COLORS = [
     pg.mkColor(0, 0, 0, 255)
 ]
 STAT_PLOT_COLORS = [
-    pg.mkColor(0, 255, 0, 255),
-    pg.mkColor(0, 255, 255, 255),
     pg.mkColor(0, 0, 255, 255),
+    pg.mkColor(0, 255, 255, 255),
+    pg.mkColor(0, 255, 0, 255),
     pg.mkColor(255, 0, 255, 255),
     pg.mkColor(255, 0, 0, 255),
     pg.mkColor(255, 255, 0, 255),
@@ -89,9 +89,9 @@ STAT_PLOT_COLORS = [
     pg.mkColor(0, 0, 0, 255)
 ]
 ROI_BAS_COLORS = [
-    pg.mkColor(0, 255, 0, 255),
-    pg.mkColor(0, 255, 255, 255),
     pg.mkColor(0, 0, 255, 255),
+    pg.mkColor(0, 255, 255, 255),
+    pg.mkColor(0, 255, 0, 255),
     pg.mkColor(255, 0, 255, 255),
     pg.mkColor(255, 0, 0, 255),
     pg.mkColor(255, 255, 0, 255),
@@ -101,9 +101,9 @@ ROI_BAS_COLORS = [
     pg.mkColor(0, 0, 0, 255)
 ]
 ROI_COND_COLORS = [
-    pg.mkColor(0, 255, 0, 255),
-    pg.mkColor(0, 255, 255, 255),
     pg.mkColor(0, 0, 255, 255),
+    pg.mkColor(0, 255, 255, 255),
+    pg.mkColor(0, 255, 0, 255),
     pg.mkColor(255, 0, 255, 255),
     pg.mkColor(255, 0, 0, 255),
     pg.mkColor(255, 255, 0, 255),

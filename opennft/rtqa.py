@@ -647,7 +647,7 @@ class RTQAWindow(QtWidgets.QWidget):
 
         tsRTQA = dict.fromkeys(['rMean', 'rVar', 'rSNR',
                                 'meanBas', 'varBas', 'meanCond', 'varCond', 'rCNR',
-                                'excFDIndexes_1', 'excFDIndexes_2', 'excMDIndexes'])
+                                'excFDIndexes_1', 'excFDIndexes_2', 'excMDIndexes', 'FD', 'MD'])
 
         tsRTQA['rMean'] = matlab.double(self.rMean.tolist())
         tsRTQA['rVar'] = matlab.double(self.rVar.tolist())
