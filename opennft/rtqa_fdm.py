@@ -2,6 +2,7 @@
 
 import matlab
 import numpy as np
+import math
 
 import opennft.config as c
 
@@ -36,6 +37,8 @@ class FD:
         self.excFDIndexes_2 = np.array([-1])
         self.excMDIndexes = np.array([-1])
 
+        self.prevRMSDisp = 0;
+
                 
     # FD computation 
     def _di(self, i):
@@ -46,7 +49,7 @@ class FD:
     
     def _ij_FD(self,i,j): # displacement from i to j
         return sum(np.absolute(self._di(j)-self._di(i))) + \
-              sum(np.absolute(self._ri(j)-self._ri(i))) * self.radius
+              sum(np.absolute(self._ri(j)-self._ri(i))) * self.radius * math.pi/180;
               
     def all_fd(self):
         i = len(self.data)-1
@@ -79,8 +82,10 @@ class FD:
 
         rmsDisp = np.sqrt(rmsDisp)
 
-        self.md = np.append(self.md, abs(self.md[-1]-rmsDisp))
+        self.md = np.append(self.md, abs(self.prevRMSDisp-rmsDisp))
         self.meanMD = self.meanMD + (self.md[-1] - self.meanMD) / n
+
+        self.prevRMSDisp = rmsDisp;
 
         if self.md[n] >= self.threshold[0]:
             self.excVD += 1
@@ -111,10 +116,12 @@ class FD:
             rotPlotitem.plot(x=x, y=self.data[:, i], pen=c.PLOT_PEN_COLORS[i], name=self.names[i])
 
         if mdFlag:
+            fdPlotitem.setLabel('left', "MD [mm]")
             fdPlotitem.plot(x=x, y=self.md, pen=c.PLOT_PEN_COLORS[0], name='MD')
             fdPlotitem.plot(x=np.arange(0, self.xmax, dtype=np.float64), y=self.threshold[0] * np.ones(self.xmax),
                             pen=c.PLOT_PEN_COLORS[2], name='thr')
         else:
+            fdPlotitem.setLabel('left', "FD [mm]")
             fdPlotitem.plot(x=x, y=self.fd, pen=c.PLOT_PEN_COLORS[0], name='FD')
             thresholds = self.threshold[1:3]
             for i, t in enumerate(thresholds):

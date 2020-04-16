@@ -134,7 +134,7 @@ MC_PLOT_COLORS = [
     (145, 130, 43),
 ]
 
-PROJ_ROI_COLORS = ['g', 'c', 'b', 'm', 'y']
+PROJ_ROI_COLORS = ROI_PLOT_COLORS
 
 # debuging use only
 USE_SLEEP_IN_STOP = False
