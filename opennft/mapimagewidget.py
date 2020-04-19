@@ -35,12 +35,12 @@ class MapImageThresholdsCalculator:
         self._thr_coeff = thr_coeff
         self._no_value = no_value
 
-    def __call__(self, map_image: np.ndarray) -> Thresholds:
+    def __call__(self, map_image: np.ndarray) -> t.Optional[Thresholds]:
         map_image_ma = np.ma.masked_equal(map_image, self._no_value)
 
         if map_image_ma.mask.all():
             logger.warning('There are no any values on the map')
-            return Thresholds(0.0, 1.0)
+            return None
 
         data = np.sort(map_image_ma.compressed().ravel())
 
@@ -158,6 +158,7 @@ class MapImageThresholdsWidget(QtWidgets.QWidget):
 
         self._map_no_value = 0.0
         self._auto_thresholds = True
+        self._thr_calculator = MapImageThresholdsCalculator(no_value=self._map_no_value)
 
         self._make_colorbar()
 
@@ -180,10 +181,12 @@ class MapImageThresholdsWidget(QtWidgets.QWidget):
         if not self.auto_thresholds:
             return
 
-        thr_claculator = MapImageThresholdsCalculator(no_value=self._map_no_value)
-        thresholds = thr_claculator(map_values)
+        thresholds = self._thr_calculator(map_values)
 
-        self._set_thresholds(thresholds)
+        if thresholds:
+            self._set_thresholds(thresholds)
+        else:
+            logger.warning('Cannot compute thresholds')
 
     def compute_rgba(self, map_image, alpha: float = 1.0):
         thresholds = self._get_thresholds()
