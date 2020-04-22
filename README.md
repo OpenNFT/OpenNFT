@@ -20,7 +20,7 @@ Note, we are still tuning our pre-release version. Please check the updates regu
 - [JSONlab](https://uk.mathworks.com/matlabcentral/mlc-downloads/downloads/submissions/33381/versions/22/download/zip)
 
 ### Install optional/supplementary MATLAB Toolboxes
-- [prepNFB](https://github.com/lucp88/prepNFB)
+- [prepNFB](https://github.com/lucp88/prepNFB). Matlab toolbox to prepare neurofeedback session(s) by Lucas Peek.
 
 ### Install OpenNFT in virtual environment 
 
