@@ -10,6 +10,7 @@ Written by Tibor Auer
 """
 
 from pyniexp.connection import Udp
+from numpy import savetxt
 
 UDP_IP = "127.0.0.1"
 UDP_PORT = 1234
@@ -22,7 +23,7 @@ receiver.sending_time_stamp = True
 
 receiver.info()
 
-n = 0
+n = 0; dat = []
 cond = 'test'
 while receiver.is_open:
     data = receiver.receive_data(n=1,dtype='float')
@@ -34,6 +35,9 @@ while receiver.is_open:
         n += 1
         # if n == 1: receiver.ResetClock()
         receiver.log('volume #{:3d}, condition: {}, feedback: {} - {}'.format(n,cond,data[0],data[1]))
+        dat.append(data[1])
     elif receiver.is_open: receiver.log('volume #{:3d} no data!'.format(n))
 
 receiver.close()
+
+savetxt(fname='ROIcGLM.csv', X=dat, fmt='%.3f', delimiter=',')

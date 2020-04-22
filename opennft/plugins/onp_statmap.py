@@ -7,7 +7,7 @@ and they can be switched on and off according to the user's need.
 
 Each plugin has to be a subclass of *Process class specified in pyniexp.mlplugins. It has to contain a header in a format of dictionary (called META) with prespecified keys:
 - plugin_name: It is a freeform text which will be displayed in the plugin dialog and in the logs.
-- plugin_time: It is a event timestamp as specified in opennft.eventrecorder. Times, and it determines the execution time of the plugin (so far only t3 is implemented)
+- plugin_time: It is a event timestamp as specified in opennft.eventrecorder. Times, and it determines the execution time of the plugin (so far only t3 and t4 are implemented)
 - plugin_init: It is the initialization code of the plugin. "{}" can be used to refer to OpenNFT parameters as specified in the P paremeter dictionary.
 - plugin_signal: It is an expression returning to logical value, and it speicies the condition when the plugin can be executed.
 - plugin_exec: It is the execution code of the plugin, and it is usually calls the plugin's load_data method to transfer some data to the plugin.
@@ -39,7 +39,7 @@ META = {
     "plugin_time": "t3",
     "plugin_init": "myImageProcess(({MatrixSizeX}, {MatrixSizeY}, {NrOfSlices}),toDraw=False)",
     "plugin_signal": "self.parent.eng.evalin('base','isfield(mainLoopData,\\\'tn\\\')')",
-    "plugin_exec": "load_data(self.parent.eng.evalin('base','mainLoopData.tn.pos')._data.tolist())"
+    "plugin_exec": "load_data(self.parent.eng.evalin('base','mainLoopData.tn.pos'))"
 }
 
 class myImageProcess(imageProcess):
@@ -53,12 +53,6 @@ class myImageProcess(imageProcess):
 
         self.start_process()
 
-    def __del__(self):
-        if self.toDraw:
-            plt.close(self.figure)
-        
-        super().__del__()
-
     def process(self,image):
         # Convert 3D to 2D mosaic
         (vx,vy,vz) = self._image_dimension
@@ -70,6 +64,10 @@ class myImageProcess(imageProcess):
             self.axes.imshow(tiles,cmap='jet')
             self.figure.canvas.draw()
             plt.pause(0.01)
+
+    def finalize_process(self):
+        if self.toDraw:
+            plt.close(self.figure)
     
 def getFactorPair(n): # retrieve the pair of factors with the smalles difference   
     factorPairs = [[i, n//i] for i in range(1, int(n**0.5) + 1) if n % i == 0]

@@ -7,7 +7,7 @@ and they can be switched on and off according to the user's need.
 
 Each plugin has to be a subclass of *Process class specified in pyniexp.mlplugins. It has to contain a header in a format of dictionary (called META) with prespecified keys:
 - plugin_name: It is a freeform text which will be displayed in the plugin dialog and in the logs.
-- plugin_time: It is a event timestamp as specified in opennft.eventrecorder. Times, and it determines the execution time of the plugin (so far only t3 is implemented)
+- plugin_time: It is a event timestamp as specified in opennft.eventrecorder. Times, and it determines the execution time of the plugin (so far only t3 and t4 are implemented)
 - plugin_init: It is the initialization code of the plugin. "{}" can be used to refer to OpenNFT parameters as specified in the P paremeter dictionary.
 - plugin_signal: It is an expression returning to logical value, and it speicies the condition when the plugin can be executed.
 - plugin_exec: It is the execution code of the plugin, and it is usually calls the plugin's load_data method to transfer some data to the plugin.
@@ -29,21 +29,23 @@ Written by Tibor Auer
 from pyniexp.mlplugins import dataProcess, SIG_NOTSTARTED, SIG_RUNNING, SIG_STOPPED, SIG_NEWIMAGE
 from loguru import logger
 from multiprocessing import Value, RawArray
-from numpy import array
+from numpy import array, savetxt
 import matplotlib.pyplot as plt
+from os import path
 
 META = {
     "plugin_name": "ROI iGLM",
     "plugin_time": "t3", # according to opennft.eventrecorder.Times
-    "plugin_init": "ROIiGLM(int({NrROIs}),int({NrOfVolumes}),int({nrSkipVol}))",
+    "plugin_init": "ROIiGLM(int({NrROIs}),int({NrOfVolumes}),int({nrSkipVol}),r'{nfbDataFolder}')",
     "plugin_signal": "self.parent.eng.evalin('base','isfield(mainLoopData,\\\'tn\\\')')",
-    "plugin_exec": "load_data(self.parent.eng.evalin('base','onp_extract_rois')._data.tolist())"
+    "plugin_exec": "load_data(self.parent.eng.evalin('base','onp_extract_rois'))"
 }
 
 class ROIiGLM(dataProcess):
-    def __init__(self,nROIs,nVols, nSkipVols):
+    def __init__(self,nROIs,nVols, nSkipVols, nfbDataFolder):
         super().__init__(nROIs,autostart=False)
 
+        self.nfbDataFolder = nfbDataFolder
         self.nROIs = nROIs
         self.nVols = nVols
 
@@ -52,14 +54,17 @@ class ROIiGLM(dataProcess):
 
         self.start_process()
 
-    def __del__(self):
-        super().__del__()
-        plt.plot(array(self.rtdata).reshape(self.nVols,self.nROIs))
-        plt.show()
-
     def process(self,data):
         for r in data:
             self.rtdata[self.nData.value] = r
             self.nData.value += 1
         logger.info(('ROIs: [ ' + '{:.3f} '*len(data) + ']').format(*data))
 
+    def finalize_process(self):
+        dat = array(self.rtdata).reshape(self.nVols,self.nROIs)
+
+        fname = path.join(path.normpath(self.nfbDataFolder), 'ROIiGLM.csv')
+        savetxt(fname=fname, X=dat, fmt='%.3f', delimiter=',')
+
+        plt.plot(dat)
+        plt.show()

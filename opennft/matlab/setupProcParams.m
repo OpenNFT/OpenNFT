@@ -159,7 +159,7 @@ if P.isRTQA
     rtQA_matlab.tn.neg = cell(P.NrROIs,1);
 
     if ~P.isRestingState
-        rtQA_matlab.cnrData.cnrVol = []
+        rtQA_matlab.cnrData.cnrVol = [];
 
         rtQA_matlab.cnrData.basData.mean = [];
         rtQA_matlab.cnrData.basData.m2 = [];
@@ -245,12 +245,13 @@ SPM = setupSPM(P);
 % High-pass filter
 mainLoopData.K.X0 = SPM.xX.K.X0;
 
+%% rtQA
 if ~P.isRestingState
-    tmpindexesCond = find(SPM.xX.X(:,2)>0.6);
-    tmpindexesBas = find(SPM.xX.X(:,2)<0.1);
+    tmpindexesCond = find(SPM.xX.X(:,contains(SPM.xX.name, P.CondName))>0.6);
+    tmpindexesBas = find(SPM.xX.X(:,contains(SPM.xX.name, P.CondName))<0.1);
     indexesBas = tmpindexesBas(1:end-1)+1;
     indexesCond = tmpindexesCond-1;
-    P.inds = { indexesBas, indexesCond }
+    P.inds = { indexesBas, indexesCond };
     if P.isRTQA
         rtQA_matlab.cnrData.basData.indexesBas = indexesBas;
         rtQA_matlab.cnrData.condData.indexesCond = indexesCond;
@@ -279,15 +280,8 @@ if ~P.isRestingState
     mainLoopData.statMap3D_iGLM = [];
 
     % PSC
-    if isPSC && (strcmp(P.Prot, 'Cont') || strcmp(P.Prot, 'Inter')) && ~fIMAPH
-        % this contrast does not count constant term
-        tmpSpmDesign = SPM.xX.X(1:P.NrOfVolumes-P.nrSkipVol, 2);
-    end
-
-    % PSC (Phillips)
-    if isPSC && strcmp(P.Prot, 'Cont') && fIMAPH        
-        % this contrast does not count constant term
-        tmpSpmDesign = SPM.xX.X(1:P.NrOfVolumes-P.nrSkipVol,1);
+    if isPSC && (strcmp(P.Prot, 'Cont') || strcmp(P.Prot, 'ContTask') || strcmp(P.Prot, 'Inter'))
+        tmpSpmDesign = SPM.xX.X(1:P.NrOfVolumes-P.nrSkipVol,contains(SPM.xX.name, P.CondName));
     end
 
     % DCM
@@ -300,10 +294,10 @@ if ~P.isRestingState
 
     % SVM
     if isSVM && strcmp(P.Prot, 'Cont')
-        mainLoopData.basFct = mainLoopData.basFct(:,2);
+        mainLoopData.basFct = mainLoopData.basFct(:,find(contains(SPM.xX.name, P.CondName)));
         mainLoopData.nrBasFct = 1;
         % this contrast does not count constant term
-        tmpSpmDesign = SPM.xX.X(1:P.NrOfVolumes-P.nrSkipVol,strcmp(P.CondNames,P.CondName));
+        tmpSpmDesign = SPM.xX.X(1:P.NrOfVolumes-P.nrSkipVol,contains(SPM.xX.name, P.CondName));
     end
 
     %% High-pass filter for iGLM given by SPM
