@@ -37,7 +37,7 @@ class FD:
         self.excFDIndexes_2 = np.array([-1])
         self.excMDIndexes = np.array([-1])
 
-        self.prevRMSDisp = 0;
+        self.rmsDisp = np.array([0]);
 
                 
     # FD computation 
@@ -75,17 +75,15 @@ class FD:
     def micro_displacement(self):
 
         n = len(self.data) - 1
-        rmsDisp = 0;
+        squaredDisp = 0;
 
         for i in range(3):
-            rmsDisp += self.data[n, i]**2
+            squaredDisp += self.data[n, i]**2
 
-        rmsDisp = np.sqrt(rmsDisp)
+        self.rmsDisp = np.append(self.rmsDisp, np.sqrt(squaredDisp));
 
-        self.md = np.append(self.md, abs(self.prevRMSDisp-rmsDisp))
+        self.md = np.append(self.md, abs(self.rmsDisp[-2]-self.rmsDisp[-1]))
         self.meanMD = self.meanMD + (self.md[-1] - self.meanMD) / n
-
-        self.prevRMSDisp = rmsDisp;
 
         if self.md[n] >= self.threshold[0]:
             self.excVD += 1
