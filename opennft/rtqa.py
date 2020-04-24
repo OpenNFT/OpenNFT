@@ -660,7 +660,7 @@ class RTQAWindow(QtWidgets.QWidget):
         tsRTQA['excFDIndexes_1'] = matlab.double(self._fd.excFDIndexes_1.tolist())
         tsRTQA['excFDIndexes_2'] = matlab.double(self._fd.excFDIndexes_2.tolist())
         tsRTQA['excMDIndexes'] = matlab.double(self._fd.excMDIndexes.tolist())
-        tsRTQA['FD'] = matlab.double(self._fd.fd.tolist())
-        tsRTQA['MD'] = matlab.double(self._fd.md.tolist())
+        tsRTQA['FD'] = matlab.double(self._fd.FD.tolist())
+        tsRTQA['MD'] = matlab.double(self._fd.MD.tolist())
 
         return tsRTQA

@@ -25,9 +25,9 @@ class FD:
         self.threshold = c.DEFAULT_FD_THRESHOLDS
 
         self.xmax = xmax
-        self.fd = 0
+        self.FD = 0
         self.meanFD = 0
-        self.md = [0]
+        self.MD = [0]
         self.meanMD = 0
 
         self.excFD = [0, 0]
@@ -37,7 +37,7 @@ class FD:
         self.excFDIndexes_2 = np.array([-1])
         self.excMDIndexes = np.array([-1])
 
-        self.rmsDisp = np.array([0]);
+        self.rmsDispl = np.array([0]);
 
                 
     # FD computation 
@@ -53,10 +53,10 @@ class FD:
               
     def all_fd(self):
         i = len(self.data)-1
-        self.fd = np.append(self.fd, self._ij_FD(i-1, i))
-        self.meanFD = self.meanFD + (self.fd[i] - self.meanFD) / i
+        self.FD = np.append(self.FD, self._ij_FD(i-1, i))
+        self.meanFD = self.meanFD + (self.FD[i] - self.meanFD) / i
 
-        if self.fd[i] >= self.threshold[1]:
+        if self.FD[i] >= self.threshold[1]:
            self.excFD[0] += 1
 
            if self.excFDIndexes_1[-1] == -1:
@@ -64,7 +64,7 @@ class FD:
            else:
                self.excFDIndexes_1 = np.append(self.excFDIndexes_1, i - 1)
 
-           if self.fd[i] >= self.threshold[2]:
+           if self.FD[i] >= self.threshold[2]:
               self.excFD[1] += 1
 
               if self.excFDIndexes_2[-1] == -1:
@@ -75,17 +75,17 @@ class FD:
     def micro_displacement(self):
 
         n = len(self.data) - 1
-        squaredDisp = 0;
+        msDispl = 0;
 
         for i in range(3):
-            squaredDisp += self.data[n, i]**2
+            msDispl += self.data[n, i]**2
 
-        self.rmsDisp = np.append(self.rmsDisp, np.sqrt(squaredDisp));
+        self.rmsDispl = np.append(self.rmsDispl, np.sqrt(msDispl));
 
-        self.md = np.append(self.md, abs(self.rmsDisp[-2]-self.rmsDisp[-1]))
-        self.meanMD = self.meanMD + (self.md[-1] - self.meanMD) / n
+        self.MD = np.append(self.MD, abs(self.rmsDispl[-2]-self.rmsDispl[-1]))
+        self.meanMD = self.meanMD + (self.MD[-1] - self.meanMD) / n
 
-        if self.md[n] >= self.threshold[0]:
+        if self.MD[n] >= self.threshold[0]:
             self.excVD += 1
             if self.excMDIndexes[-1] == -1:
                 self.excMDIndexes = np.array([ n-1 ])
@@ -115,12 +115,12 @@ class FD:
 
         if mdFlag:
             fdPlotitem.setLabel('left', "MD [mm]")
-            fdPlotitem.plot(x=x, y=self.md, pen=c.PLOT_PEN_COLORS[0], name='MD')
+            fdPlotitem.plot(x=x, y=self.MD, pen=c.PLOT_PEN_COLORS[0], name='MD')
             fdPlotitem.plot(x=np.arange(0, self.xmax, dtype=np.float64), y=self.threshold[0] * np.ones(self.xmax),
                             pen=c.PLOT_PEN_COLORS[2], name='thr')
         else:
             fdPlotitem.setLabel('left', "FD [mm]")
-            fdPlotitem.plot(x=x, y=self.fd, pen=c.PLOT_PEN_COLORS[0], name='FD')
+            fdPlotitem.plot(x=x, y=self.FD, pen=c.PLOT_PEN_COLORS[0], name='FD')
             thresholds = self.threshold[1:3]
             for i, t in enumerate(thresholds):
                 fdPlotitem.plot(x=np.arange(0, self.xmax, dtype=np.float64), y=float(t) * np.ones(self.xmax),
