@@ -37,7 +37,7 @@ class FD:
         self.excFDIndexes_2 = np.array([-1])
         self.excMDIndexes = np.array([-1])
 
-        self.rmsDispl = np.array([0]);
+        self.rsqDispl = np.array([0]);
 
                 
     # FD computation 
@@ -80,9 +80,9 @@ class FD:
         for i in range(3):
             sqDispl += self.data[n, i]**2
 
-        self.rmsDispl = np.append(self.rmsDispl, np.sqrt(sqDispl));
+        self.rsqDispl = np.append(self.rsqDispl, np.sqrt(sqDispl));
 
-        self.MD = np.append(self.MD, abs(self.rmsDispl[-2]-self.rmsDispl[-1]))
+        self.MD = np.append(self.MD, abs(self.rsqDispl[-2]-self.rsqDispl[-1]))
         self.meanMD = self.meanMD + (self.MD[-1] - self.meanMD) / n
 
         if self.MD[n] >= self.threshold[0]:
