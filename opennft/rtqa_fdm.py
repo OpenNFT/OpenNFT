@@ -75,12 +75,12 @@ class FD:
     def micro_displacement(self):
 
         n = len(self.data) - 1
-        msDispl = 0;
+        sqDispl = 0;
 
         for i in range(3):
-            msDispl += self.data[n, i]**2
+            sqDispl += self.data[n, i]**2
 
-        self.rmsDispl = np.append(self.rmsDispl, np.sqrt(msDispl));
+        self.rmsDispl = np.append(self.rmsDispl, np.sqrt(sqDispl));
 
         self.MD = np.append(self.MD, abs(self.rmsDispl[-2]-self.rmsDispl[-1]))
         self.meanMD = self.meanMD + (self.MD[-1] - self.meanMD) / n
