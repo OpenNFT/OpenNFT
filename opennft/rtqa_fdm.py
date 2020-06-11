@@ -125,7 +125,7 @@ class FD:
             trPlotitem.plot(x=x, y=self.data[:, i], pen=c.PLOT_PEN_COLORS[i], name=self.names[i])
 
         for i in range(3, 6):
-            rotPlotitem.plot(x=x, y=self.data[:, i], pen=c.PLOT_PEN_COLORS[i], name=self.names[i])
+            rotPlotitem.plot(x=x, y=self.data[:, i]*50, pen=c.PLOT_PEN_COLORS[i], name=self.names[i])
 
         if mdFlag:
             fdPlotitem.setLabel('left', "MD [mm]")
