@@ -123,58 +123,6 @@ mainLoopData.mposMin = [];
 mainLoopData.blockNF = 0;
 mainLoopData.firstNF = 0;
 
-rtQA_matlab.snrMapCreated = 0; 
-if P.isRTQA
-    rtQA_python.meanSNR = [];
-    rtQA_python.m2SNR = [];
-    rtQA_python.rSNR = [];
-    rtQA_python.meanBas = [];
-    rtQA_python.varBas = [];
-    rtQA_python.meanCond = [];
-    rtQA_python.varCond = [];
-    rtQA_python.rCNR = [];
-    rtQA_python.excFDIndexes_1 = [];
-    rtQA_python.excFDIndexes_2 = [];
-    rtQA_python.excMDIndexes = [];
-    rtQA_python.FD = [];
-    rtQA_python.MD = [];
-
-    rtQA_matlab.kalmanSpikesPos = zeros(P.NrROIs,P.VolumesNumber);
-    rtQA_matlab.kalmanSpikesNeg = zeros(P.NrROIs,P.VolumesNumber);
-
-    rtQA_matlab.snrData.snrVol = [];
-    rtQA_matlab.snrData.meanSmoothed = [];
-    rtQA_matlab.snrData.m2Smoothed = [];
-    rtQA_matlab.snrData.meanNonSmoothed = [];
-    rtQA_matlab.snrData.m2NonSmoothed = [];
-
-    rtQA_matlab.betRegr = cell(P.NrROIs,1);
-    rtQA_matlab.varErGlmProcTimeSeries = zeros(P.NrROIs,P.VolumesNumber);
-    rtQA_matlab.tGlmProcTimeSeries.pos = zeros(P.NrROIs,P.VolumesNumber);
-    rtQA_matlab.tGlmProcTimeSeries.neg = zeros(P.NrROIs,P.VolumesNumber);
-    
-    rtQA_matlab.Bn = cell(P.NrROIs,1);
-    rtQA_matlab.var = cell(P.NrROIs,1);
-    rtQA_matlab.tn.pos = cell(P.NrROIs,1);
-    rtQA_matlab.tn.neg = cell(P.NrROIs,1);
-
-    if ~P.isRestingState
-        rtQA_matlab.cnrData.cnrVol = [];
-
-        rtQA_matlab.cnrData.basData.mean = [];
-        rtQA_matlab.cnrData.basData.m2 = [];
-        rtQA_matlab.cnrData.basData.meanSmoothed = [];
-        rtQA_matlab.cnrData.basData.m2Smoothed = [];
-        rtQA_matlab.cnrData.basData.iteration = 1;
-
-        rtQA_matlab.cnrData.condData.mean = [];
-        rtQA_matlab.cnrData.condData.m2 = [];
-        rtQA_matlab.cnrData.condData.meanSmoothed = [];
-        rtQA_matlab.cnrData.condData.m2Smoothed = [];
-        rtQA_matlab.cnrData.condData.iteration = 1;
-    end
-end
-
 %% DCM Settings
 if isDCM
     % This is to simplify the P.Protocol parameter listings for DCM,
@@ -245,18 +193,8 @@ SPM = setupSPM(P);
 % High-pass filter
 mainLoopData.K.X0 = SPM.xX.K.X0;
 
-%% rtQA
-if ~P.isRestingState
-    tmpindexesCond = find(SPM.xX.X(:,contains(SPM.xX.name, P.CondName))>0.6);
-    tmpindexesBas = find(SPM.xX.X(:,contains(SPM.xX.name, P.CondName))<0.1);
-    indexesBas = tmpindexesBas(1:end-1)+1;
-    indexesCond = tmpindexesCond-1;
-    P.inds = { indexesBas, indexesCond };
-    if P.isRTQA
-        rtQA_matlab.cnrData.basData.indexesBas = indexesBas;
-        rtQA_matlab.cnrData.condData.indexesCond = indexesCond;
-    end
-end
+
+
 
 %% Explicit contrasts (optional)
 if isfield(P,'Contrast')
@@ -303,8 +241,6 @@ if ~P.isRestingState
     %% High-pass filter for iGLM given by SPM
     mainLoopData.K = SPM.xX.K;
 
-    clear SPM
-
     %% AR(1) for cGLM in signal preproessing
     if ~P.iglmAR1
         P.spmDesign = tmpSpmDesign;
@@ -322,9 +258,94 @@ else
     mainLoopData.statMap3D_iGLM = [];
 end
 
+%% rtQA init
+rtQA_matlab.snrMapCreated = 0; 
 if P.isRTQA
+    % rtQA python saving preparation
+    rtQA_python.meanSNR = [];
+    rtQA_python.m2SNR = [];
+    rtQA_python.rSNR = [];
+    rtQA_python.meanBas = [];
+    rtQA_python.varBas = [];
+    rtQA_python.meanCond = [];
+    rtQA_python.varCond = [];
+    rtQA_python.rCNR = [];
+    rtQA_python.excFDIndexes_1 = [];
+    rtQA_python.excFDIndexes_2 = [];
+    rtQA_python.excMDIndexes = [];
+    rtQA_python.FD = [];
+    rtQA_python.MD = [];
+
+    % rtQA matlab part structure preparation
+    if isDCM
+        rtQA_matlab.kalmanSpikesPos = zeros(P.NrROIs,P.lengthDCMTrial*P.nrNFtrials);
+        rtQA_matlab.kalmanSpikesNeg = zeros(P.NrROIs,P.lengthDCMTrial*P.nrNFtrials);        
+        rtQA_matlab.varErGlmProcTimeSeries = zeros(P.NrROIs,P.lengthDCMTrial*P.nrNFtrials);
+        rtQA_matlab.tGlmProcTimeSeries.pos = zeros(P.NrROIs,P.lengthDCMTrial*P.nrNFtrials);
+        rtQA_matlab.tGlmProcTimeSeries.neg = zeros(P.NrROIs,P.lengthDCMTrial*P.nrNFtrials);
+    else
+        rtQA_matlab.kalmanSpikesPos = zeros(P.NrROIs,P.VolumesNumber);
+        rtQA_matlab.kalmanSpikesNeg = zeros(P.NrROIs,P.VolumesNumber);
+        rtQA_matlab.varErGlmProcTimeSeries = zeros(P.NrROIs,P.VolumesNumber);
+        rtQA_matlab.tGlmProcTimeSeries.pos = zeros(P.NrROIs,P.VolumesNumber);
+        rtQA_matlab.tGlmProcTimeSeries.neg = zeros(P.NrROIs,P.VolumesNumber);
+    end
+    
+    rtQA_matlab.snrData.snrVol = [];
+    rtQA_matlab.snrData.meanSmoothed = [];
+    rtQA_matlab.snrData.m2Smoothed = [];
+    rtQA_matlab.snrData.meanNonSmoothed = [];
+    rtQA_matlab.snrData.m2NonSmoothed = [];
+    rtQA_matlab.snrData.iteration = 1;
+
+    rtQA_matlab.betRegr = cell(P.NrROIs,1);
     for i=1:P.NrROIs
+        % TODO:
+        % 2 - linear trend and constant; 6 - motion regressors
         rtQA_matlab.betRegr{i} = zeros(P.NrOfVolumes-P.nrSkipVol, 2+6+size(P.spmDesign,2));
+    end
+    
+    rtQA_matlab.Bn = cell(P.NrROIs,1);
+    rtQA_matlab.var = cell(P.NrROIs,1);
+    rtQA_matlab.tn.pos = cell(P.NrROIs,1);
+    rtQA_matlab.tn.neg = cell(P.NrROIs,1);
+
+    if ~P.isRestingState
+        rtQA_matlab.cnrData.cnrVol = [];
+
+        rtQA_matlab.cnrData.basData.mean = [];
+        rtQA_matlab.cnrData.basData.m2 = [];
+        rtQA_matlab.cnrData.basData.meanSmoothed = [];
+        rtQA_matlab.cnrData.basData.m2Smoothed = [];
+        rtQA_matlab.cnrData.basData.iteration = 1;
+
+        rtQA_matlab.cnrData.condData.mean = [];
+        rtQA_matlab.cnrData.condData.m2 = [];
+        rtQA_matlab.cnrData.condData.meanSmoothed = [];
+        rtQA_matlab.cnrData.condData.m2Smoothed = [];
+        rtQA_matlab.cnrData.condData.iteration = 1;
+        
+        tmpindexesCond = find(SPM.xX.X(:,contains(SPM.xX.name, P.CondName))>0.6);
+        tmpindexesBas = find(SPM.xX.X(:,contains(SPM.xX.name, P.CondName))<0.1);
+        if isDCM
+            tmpindexesBas = tmpindexesBas(1:end-1)+1;
+            tmpindexesCond = tmpindexesCond-1;
+            indexesBas = [];
+            indexesCond = [];
+            for i=0:P.nrNFtrials-1
+                indexesBas = [ indexesBas; tmpindexesBas+i*(P.lengthDCMPeriod-P.dcmRemoveInterval) ];
+                indexesCond = [ indexesCond; tmpindexesCond+i*(P.lengthDCMPeriod-P.dcmRemoveInterval) ];
+            end
+        else
+            indexesBas = tmpindexesBas(1:end-1)+1;
+            indexesCond = tmpindexesCond-1;
+        end
+        P.inds = { indexesBas, indexesCond };
+        rtQA_matlab.cnrData.basData.indexesBas = indexesBas;
+        rtQA_matlab.cnrData.condData.indexesCond = indexesCond;
+        
+        clear SPM
+        
     end
 end
 

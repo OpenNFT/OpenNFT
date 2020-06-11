@@ -181,6 +181,12 @@ spm_smooth(reslVol, smReslVol, gKernel);
 
 if P.isRTQA && indVolNorm > FIRST_SNR_VOLUME
     
+    if isDCM && ~isempty(find(P.beginDCMblock == indVol-P.nrSkipVol,1))
+        rtQA_matlab.snrData.meanSmoothed = [];
+        rtQA_matlab.cnrData.basData.mean = [];
+        rtQA_matlab.cnrData.condData.mean = [];        
+    end
+    
     [ rtQA_matlab.snrData ] = snr_calc(indVolNorm, reslVol, smReslVol, rtQA_matlab.snrData, isSmoothed);
     
     if ~P.isRestingState
