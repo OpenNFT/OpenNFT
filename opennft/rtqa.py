@@ -143,7 +143,7 @@ class RTQAWindow(QtWidgets.QWidget):
         self.rdPlot.addWidget(self._plot_rotat)
 
         p = self._plot_rotat.getPlotItem()
-        p.setLabel('left', "Angle [rad]")
+        p.setLabel('left', "Amplitude [mm]")
         p.setMenuEnabled(enableMenu=True)
         p.setMouseEnabled(x=False, y=False)
         p.showGrid(x=True, y=True, alpha=1)
