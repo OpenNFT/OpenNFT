@@ -18,17 +18,20 @@ function [ snrData ] = snr_calc( iteration, vol, volSmoothed, snrData, isSmoothe
     meanNonSmoothed = snrData.meanNonSmoothed;
     m2NonSmoothed = snrData.m2NonSmoothed;
     
-    n = double(iteration);
     shape = size(vol);
     snrData.snrVol = zeros(shape);
-    if isempty(meanNonSmoothed) & isempty(m2NonSmoothed) & isempty(meanSmoothed) & isempty(m2Smoothed)
+    if isempty(meanSmoothed)
         snrData.meanNonSmoothed = vol;
         snrData.m2NonSmoothed = zeros(shape);
         snrData.meanSmoothed = volSmoothed;
         snrData.m2Smoothed = zeros(shape);
+        snrData.iteration = 1;
         return;
     end;
 
+    snrData.iteration = snrData.iteration + 1;
+    n = double(snrData.iteration);
+    
     meanPrev = meanSmoothed;
     meanSmoothed = meanSmoothed + (volSmoothed - meanSmoothed) / n;
     m2Smoothed = m2Smoothed + (volSmoothed - meanPrev).*(volSmoothed - meanSmoothed);

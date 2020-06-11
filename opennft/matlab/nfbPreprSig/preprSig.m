@@ -317,6 +317,9 @@ end
 
 for indRoi = 1:P.NrROIs
 
+    if indVolNorm == 649
+        1;
+    end
     % 3. modified Kalman low-pass filter + spike identification & correction
     if isPSC || isSVM || isDCM || P.isRestingState
         tmpStd = std(mainLoopData.glmProcTimeSeries(indRoi,:));
@@ -327,10 +330,10 @@ for indRoi = 1:P.NrROIs
     end
     if isPSC || isSVM || P.isRestingState
         % See Koush 2012 for setting the constants
-        mainLoopData.S(indRoi).Q = tmpStd^2;
-        mainLoopData.S(indRoi).R = 1.95*tmpStd^2;
+        mainLoopData.S(indRoi).Q = .25*tmpStd^2;
+        mainLoopData.S(indRoi).R = tmpStd^2;
     end
-    kalmThreshold = .9*tmpStd; 
+    kalmThreshold = .9*tmpStd;
     [mainLoopData.kalmanProcTimeSeries(indRoi,indVolNorm), ...
         mainLoopData.S(indRoi), mainLoopData.fPositDerivSpike(indRoi), ...
         mainLoopData.fNegatDerivSpike(indRoi)] = ...
@@ -339,9 +342,7 @@ for indRoi = 1:P.NrROIs
         mainLoopData.S(indRoi), mainLoopData.fPositDerivSpike(indRoi), ...
         mainLoopData.fNegatDerivSpike(indRoi));
     rtQA_matlab.kalmanSpikesPos(indRoi,indVolNorm) = mainLoopData.fPositDerivSpike(indRoi);
-    mainLoopData.fPositDerivSpike(indRoi) = 0;
     rtQA_matlab.kalmanSpikesNeg(indRoi,indVolNorm) = mainLoopData.fNegatDerivSpike(indRoi);
-    mainLoopData.fNegatDerivSpike(indRoi) = 0;
 
     %4. Scaling
     if ~P.isRestingState
