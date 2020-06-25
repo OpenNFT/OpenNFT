@@ -25,7 +25,6 @@ prt = loadjson(jsonFile);
 if ~P.isRestingState  
     
     P.CondName = prt.RegulationName;
-    P.BasName = prt.BaselineName;
 
     P.vectEncCond = ones(1,NrOfVolumes-nrSkipVol);
     P.ProtNF = {};
@@ -36,7 +35,7 @@ if ~P.isRestingState
 
     %% PSC
     if strcmp(P.Prot, 'Cont') && isPSC
-        P.CondNames = {P.BasName, P.CondName};
+        P.CondNames = {P.CondName};
         for x = 1:lCond
             for k = 1:length(prt.Cond{x}.OnOffsets(:,1)) 
                 unitBlock = prt.Cond{x}.OnOffsets(k,1) : prt.Cond{x}.OnOffsets(k,2); 
@@ -70,7 +69,7 @@ if ~P.isRestingState
 
     if strcmp(P.Prot, 'Inter') && isPSC
         P.DispName = prt.nfbDisplayName;
-        P.CondNames = {P.BasName, P.CondName, P.DispName}; 
+        P.CondNames = {P.CondName, P.DispName}; 
         for x = 1:lCond
             for k = 1:length(prt.Cond{x}.OnOffsets(:,1))
                 unitBlock = prt.Cond{x}.OnOffsets(k,1) : prt.Cond{x}.OnOffsets(k,2);
@@ -105,7 +104,7 @@ if ~P.isRestingState
 
     %% SVM
     if strcmp(P.Prot, 'Cont') && isSVM
-        P.CondNames = {P.BasName, P.CondName};
+        P.CondNames = {P.CondName};
         for x = 1:lCond
             for k = 1:length(prt.Cond{x}.OnOffsets(:,1)) 
                 unitBlock = prt.Cond{x}.OnOffsets(k,1) : prt.Cond{x}.OnOffsets(k,2); 
