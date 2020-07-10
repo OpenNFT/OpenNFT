@@ -23,7 +23,7 @@ Note, we are still tuning our pre-release version. Please check the updates regu
 - [prepNFB](https://github.com/lucp88/prepNFB). Matlab toolbox to prepare neurofeedback session(s) by Lucas Peek.
 
 ### Install OpenNFT in virtual environment 
-Install using the cartooned rtFIN 2019 presentation number 4 on [Project Set Up](https://github.com/OpenNFT/Courses/releases/tag/1.0).
+Recommended installation is illustrated in the rtFIN 2019 presentation number 4 on [Project Set Up](https://github.com/OpenNFT/Courses/releases/tag/1.0).
 Please also check all the other useful presentations there.
 Alternative instalaltions and useful tips are also listed below.
 
