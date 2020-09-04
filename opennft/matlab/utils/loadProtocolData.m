@@ -87,7 +87,7 @@ if ~P.isRestingState
     if strcmp(P.Prot, 'InterBlock') && isDCM
         P.DispName = prt.nfbDisplayName;
         P.RestName = prt.RestName;
-        P.CondNames = {prt.BaselineName, P.CondName}; 
+        P.CondNames = {P.BasName, P.CondName}; 
         for x = 1:lCond
             for k = 1:length(prt.Cond{x}.OnOffsets(:,1))
                 unitBlock = prt.Cond{x}.OnOffsets(k,1) : prt.Cond{x}.OnOffsets(k,2);
@@ -104,7 +104,7 @@ if ~P.isRestingState
 
     %% SVM
     if strcmp(P.Prot, 'Cont') && isSVM
-        P.CondNames = {prt.BaselineName, P.CondName};
+        P.CondNames = {P.CondName};
         for x = 1:lCond
             for k = 1:length(prt.Cond{x}.OnOffsets(:,1)) 
                 unitBlock = prt.Cond{x}.OnOffsets(k,1) : prt.Cond{x}.OnOffsets(k,2); 

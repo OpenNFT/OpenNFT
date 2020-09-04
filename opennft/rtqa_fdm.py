@@ -2,7 +2,6 @@
 
 import matlab
 import numpy as np
-import math
 
 import opennft.config as c
 
@@ -29,6 +28,7 @@ class FD:
         self.meanFD = 0
         self.MD = [0]
         self.meanMD = 0
+        self.blockIter = 1;
 
         self.excFD = [0, 0]
         self.excVD = 0
@@ -49,12 +49,17 @@ class FD:
     
     def _ij_FD(self,i,j): # displacement from i to j
         return sum(np.absolute(self._di(j)-self._di(i))) + \
-              sum(np.absolute(self._ri(j)-self._ri(i))) * self.radius * math.pi/180;
+              sum(np.absolute(self._ri(j)-self._ri(i))) * self.radius;
               
     def all_fd(self):
         i = len(self.data)-1
-        self.FD = np.append(self.FD, self._ij_FD(i-1, i))
-        self.meanFD = self.meanFD + (self.FD[i] - self.meanFD) / i
+
+        if not self.isNewDCMBlock:
+            self.FD = np.append(self.FD, self._ij_FD(i-1, i))
+            self.meanFD = self.meanFD + (self.FD[i] - self.meanFD) / self.blockIter
+        else:
+            self.FD = np.append(self.FD, 0)
+            self.meanFD = 0
 
         if self.FD[i] >= self.threshold[1]:
            self.excFD[0] += 1
@@ -77,13 +82,19 @@ class FD:
         n = len(self.data) - 1
         sqDispl = 0;
 
-        for i in range(3):
-            sqDispl += self.data[n, i]**2
+        if not self.isNewDCMBlock:
 
-        self.rsqDispl = np.append(self.rsqDispl, np.sqrt(sqDispl));
+            for i in range(3):
+                sqDispl += self.data[n, i]**2
 
-        self.MD = np.append(self.MD, abs(self.rsqDispl[-2]-self.rsqDispl[-1]))
-        self.meanMD = self.meanMD + (self.MD[-1] - self.meanMD) / n
+            self.rsqDispl = np.append(self.rsqDispl, np.sqrt(sqDispl));
+
+            self.MD = np.append(self.MD, abs(self.rsqDispl[-2]-self.rsqDispl[-1]))
+            self.meanMD = self.meanMD + (self.MD[-1] - self.meanMD) / self.blockIter
+
+        else:
+            self.MD = np.append(self.MD, 0)
+            self.meanMD = 0
 
         if self.MD[n] >= self.threshold[0]:
             self.excVD += 1
@@ -93,11 +104,14 @@ class FD:
                 self.excMDIndexes = np.append(self.excMDIndexes, n-1)
 
 
-    def calc_mc_plots(self, data):
+    def calc_mc_plots(self, data, isNewDCMBlock):
 
+        self.isNewDCMBlock = isNewDCMBlock;
         self.data = np.vstack((self.data,data))
         self.micro_displacement()
         self.all_fd()
+        if isNewDCMBlock:
+            self.blockIter = 1;
 
     def draw_mc_plots(self, mdFlag, trPlotitem, rotPlotitem, fdPlotitem):
 
@@ -111,7 +125,7 @@ class FD:
             trPlotitem.plot(x=x, y=self.data[:, i], pen=c.PLOT_PEN_COLORS[i], name=self.names[i])
 
         for i in range(3, 6):
-            rotPlotitem.plot(x=x, y=self.data[:, i], pen=c.PLOT_PEN_COLORS[i], name=self.names[i])
+            rotPlotitem.plot(x=x, y=self.data[:, i]*50, pen=c.PLOT_PEN_COLORS[i], name=self.names[i])
 
         if mdFlag:
             fdPlotitem.setLabel('left', "MD [mm]")

@@ -900,20 +900,26 @@ class OpenNFT(QWidget):
 
         # rtQA calculation for time-series
         if bool(self.outputSamples) and self.P['isRTQA']:
+
             dataRealRaw = np.array(self.outputSamples['rawTimeSeries'], ndmin=2)
             dataMC = np.array(self.outputSamples['motCorrParam'], ndmin=2)
             n = len(dataRealRaw[0, :])-1
             data = dataRealRaw[:, n]
-            self.windowRTQA.calculate_snr(data, n)
+            if self.P['Type'] == 'DCM' and (self.iteration - self.P['nrSkipVol']) in self.P['beginDCMblock'][0]:
+                isNewDCMBlock = True
+            else:
+                isNewDCMBlock = False
+
+            self.windowRTQA.calculate_snr(data, n, isNewDCMBlock)
             if not self.P['isRestingState']:
-                self.windowRTQA.calculate_cnr(data, n)
+                self.windowRTQA.calculate_cnr(data, n, isNewDCMBlock)
             self.windowRTQA.plot_rtQA(init, n)
             if n > 0:
                 data = np.array(self.eng.evalin('base','mainLoopData.glmProcTimeSeries(:,end)'), ndmin=2)
                 posSpike = np.array(self.eng.evalin('base','rtQA_matlab.kalmanSpikesPos(:,mainLoopData.indVolNorm)'), ndmin=2)
                 negSpike = np.array(self.eng.evalin('base','rtQA_matlab.kalmanSpikesNeg(:,mainLoopData.indVolNorm)'), ndmin=2)
                 self.windowRTQA.plot_stepsAndSpikes(data, posSpike, negSpike)
-                self.windowRTQA.plot_mcmd(dataMC[n, :])
+                self.windowRTQA.plot_mcmd(dataMC[n, :],isNewDCMBlock)
 
         if self.imageViewMode == ImageViewMode.mosaic:
             with utils.timeit('Display mosaic image:'):

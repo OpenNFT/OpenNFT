@@ -143,7 +143,7 @@ class RTQAWindow(QtWidgets.QWidget):
         self.rdPlot.addWidget(self._plot_rotat)
 
         p = self._plot_rotat.getPlotItem()
-        p.setLabel('left', "Angle [rad]")
+        p.setLabel('left', "Amplitude [mm]")
         p.setMenuEnabled(enableMenu=True)
         p.setMouseEnabled(x=False, y=False)
         p.showGrid(x=True, y=True, alpha=1)
@@ -181,6 +181,7 @@ class RTQAWindow(QtWidgets.QWidget):
         self.tsCheckBox.setChecked(True)
 
         self.iteration = 1;
+        self.blockIter = 0;
         self.rMean = np.zeros((sz, xrange))
         self.m2 = np.zeros((sz, 1))
         self.rVar = np.zeros((sz, xrange))
@@ -417,73 +418,70 @@ class RTQAWindow(QtWidgets.QWidget):
 
         return muster
 
-    def calculate_snr(self, data, iteration):
+    def calculate_snr(self, data, n, isNewDCMBlock):
+
         sz = data.size
-        snr = np.zeros((sz, 1))
-        n = iteration
+        snr = np.zeros((sz,))
 
-        variance = self.rVar[:, n-1]
-        mean = self.rMean[:, n-1]
-        m2 = self.m2
+        if isNewDCMBlock:
+            self.blockIter=0;
 
-        meanPrev = mean
-
-        if n:
+        if self.blockIter:
 
             for i in range(sz):
-                mean[i] = mean[i] + (data[i] - mean[i]) / n
-                if n == 1:
-                    variance[i] = 0
-                else:
-                    m2[i] = m2[i] + (data[i] - meanPrev[i]) * (data[i] - mean[i])
-                    variance[i] = m2[i] / (n - 1)
-                if variance[i] == 0:
-                    snr[i] = 0
-                else:
-                    snr[i] = mean[i] / (variance[i] ** (.5))
+                self.rMean[i, n] = self.rMean[i, n - 1] + (data[i] - self.rMean[i, n - 1]) / ( self.blockIter + 1 )
+                self.m2[i] = self.m2[i] + (data[i] - self.rMean[i, n - 1]) * (data[i] - self.rMean[i, n])
+                self.rVar[i, n] = self.m2[i] / self.blockIter
+                self.rSNR[i, n] = self.rMean[i, n] / (self.rVar[i, n] ** (.5))
+
+            self.blockIter += 1
 
         else:
 
-            mean = data
+            self.rVar[:, n] = np.zeros((sz,))
+            self.m2 = np.zeros((sz,))
+            self.rMean[:, n] = data
+            self.blockIter = 1;
 
-        self.rMean[:, n] = mean
-        self.m2 = m2
-        self.rVar[:, n] = variance
-        if iteration < 8:
-            snr = np.zeros((sz, 1))
-        for i in range(sz):
-            self.rSNR[i][n] = snr[i]
+        if self.blockIter < 8:
+            self.rSNR[:, n] = np.zeros((sz,))
 
         if not self.comboBox.currentIndex():
 
             names = ['SNR ']
             pens = [config.PLOT_PEN_COLORS[6]]
             for i in range(sz):
-                names.append('ROI_' + str(i + 1) + ': ' + '{0:.3f}'.format(float(snr[i])))
+                names.append('ROI_' + str(i + 1) + ': ' + '{0:.3f}'.format(float(self.rSNR[i, n])))
                 pens.append(pg.mkPen(color=config.ROI_PLOT_COLORS[i], width=1.2))
 
             self.makeTextValueLabel(self.valuesLabel, names, pens)
 
         self.iteration = n;
 
-    def calculate_cnr(self, data, indexVolume):
+    def calculate_cnr(self, data, indexVolume, isNewDCMBlock):
 
         sz = data.size
+
+        if isNewDCMBlock:
+            self.iterBas = 0
+            self.iterCond = 0
+            return
 
         if indexVolume in self.indBas:
             if not self.iterBas:
                 self.meanBas[:, indexVolume] = data
                 self.varBas[:, indexVolume] = np.zeros(sz)
+                self.m2Bas = np.zeros(sz)
                 self.iterBas += 1
 
             else:
 
-                self.iterBas += 1
-
                 for i in range(sz):
-                    self.meanBas[i, indexVolume] = self.meanBas[i, indexVolume-1] + (data[i] - self.meanBas[i,indexVolume-1]) / self.iterBas
+                    self.meanBas[i, indexVolume] = self.meanBas[i, indexVolume-1] + (data[i] - self.meanBas[i,indexVolume-1]) / (self.iterBas+1)
                     self.m2Bas[i] = self.m2Bas[i] + (data[i] - self.meanBas[i, indexVolume-1]) * (data[i] - self.meanBas[i, indexVolume])
-                    self.varBas[i, indexVolume] = self.m2Bas[i] / (self.iterBas - 1)
+                    self.varBas[i, indexVolume] = self.m2Bas[i] / self.iterBas
+
+                self.iterBas += 1
 
         else:
 
@@ -495,16 +493,17 @@ class RTQAWindow(QtWidgets.QWidget):
             if not self.iterCond:
                 self.meanCond[:, indexVolume] = data
                 self.varCond[:, indexVolume] = np.zeros(sz)
+                self.m2Cond = np.zeros(sz)
                 self.iterCond += 1
 
             else:
 
-                self.iterCond += 1
-
                 for i in range(sz):
-                    self.meanCond[i, indexVolume] = self.meanCond[i, indexVolume-1] + (data[i] - self.meanCond[i, indexVolume-1]) / self.iterCond
+                    self.meanCond[i, indexVolume] = self.meanCond[i, indexVolume-1] + (data[i] - self.meanCond[i, indexVolume-1]) / (self.iterCond + 1)
                     self.m2Cond[i] = self.m2Cond[i] + (data[i] - self.meanCond[i, indexVolume-1]) * (data[i] - self.meanCond[i, indexVolume])
-                    self.varCond[i, indexVolume] = self.m2Cond[i] / (self.iterCond - 1)
+                    self.varCond[i, indexVolume] = self.m2Cond[i] / self.iterCond
+
+                self.iterCond += 1
 
         else:
 
@@ -526,9 +525,9 @@ class RTQAWindow(QtWidgets.QWidget):
 
                 self.makeTextValueLabel(self.valuesLabel, names, pens)
 
-    def plot_mcmd(self, data):
+    def plot_mcmd(self, data, isNewDCMBlock):
 
-        self._fd.calc_mc_plots(data)
+        self._fd.calc_mc_plots(data, isNewDCMBlock)
         self._fd.draw_mc_plots(self.mcrRadioButton.isChecked(), self._plot_translat, self._plot_rotat, self._plot_fd)
         names = ['<u>FD</u> ']
         pens = [config.PLOT_PEN_COLORS[6]]

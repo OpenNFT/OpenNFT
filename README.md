@@ -23,8 +23,11 @@ Note, we are still tuning our pre-release version. Please check the updates regu
 - [prepNFB](https://github.com/lucp88/prepNFB). Matlab toolbox to prepare neurofeedback session(s) by Lucas Peek.
 
 ### Install OpenNFT in virtual environment 
+Recommended installation is illustrated in the rtFIN 2019 presentation number 4 on [Project Set Up](https://github.com/OpenNFT/Courses/releases/tag/1.0).
+Please also check all the other useful presentations there.
+Alternative instalaltions and useful tips are also listed below.
 
-Install with conda and Python 3.5:
+Install with conda and e.g. Python 3.5:
 - `$ conda create -n OpenNFT_venv python=3.5 pip setuptools`
 - `$ conda activate OpenNFT_venv`
 - `(OpenNFT_venv)$ python -m pip install -U pip setuptools`
