@@ -221,6 +221,7 @@ if ~P.isRestingState
 
     % DCM
     if isDCM && strcmp(P.Prot, 'InterBlock')
+        % this contrast does not count constant term
         tmpSpmDesign = SPM.xX.X(1:P.lengthDCMTrial,2);
         [mainLoopData.DCM_EN, mainLoopData.dcmParTag, ...
             mainLoopData.dcmParOpp] = dcmPrep(SPM);
@@ -228,9 +229,12 @@ if ~P.isRestingState
 
     % SVM
     if isSVM && strcmp(P.Prot, 'Cont')
+        mainLoopData.basFct = mainLoopData.basFct(:,find(contains(SPM.xX.name, P.CondName)));
+        mainLoopData.nrBasFct = 1;
+        % this contrast does not count constant term
         tmpSpmDesign = SPM.xX.X(1:P.NrOfVolumes-P.nrSkipVol,contains(SPM.xX.name, P.CondName));
     end
-
+        
     %% High-pass filter for iGLM given by SPM
     mainLoopData.K = SPM.xX.K;
 
@@ -336,11 +340,10 @@ if P.isRTQA
         P.inds = { indexesBas, indexesCond };
         rtQA_matlab.cnrData.basData.indexesBas = indexesBas;
         rtQA_matlab.cnrData.condData.indexesCond = indexesCond;
-        
-        clear SPM
-        
     end
 end
+
+clear SPM
 
 mainLoopData.mf = [];
 mainLoopData.npv = 0;
