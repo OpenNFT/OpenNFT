@@ -1290,7 +1290,15 @@ class OpenNFT(QWidget):
             self.initUdpSender()
 
             with utils.timeit("  Initialize plugins:"):
-                for i in range(len(self.plugins)): self.plugins[i].initialize()
+                excPlugins = []
+                for i in range(len(self.plugins)):
+                    try:
+                        self.plugins[i].initialize()
+                    except KeyError as e:
+                        logger.warning("Initializing plugin '{}' failed - {} not found in settings".format(self.plugins[i].module.META['plugin_name'],str(e)))
+                        excPlugins.append(i)
+                for i in excPlugins:
+                    del self.plugins[i]
 
             self.btnStart.setEnabled(True)
             if self.P['isRTQA']:
