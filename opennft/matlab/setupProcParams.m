@@ -268,6 +268,7 @@ if P.isRTQA
     rtQA_python.excMDIndexes = [];
     rtQA_python.FD = [];
     rtQA_python.MD = [];
+    rtQA_python.rMSE = [];
 
     % rtQA matlab part structure preparation
     if isDCM

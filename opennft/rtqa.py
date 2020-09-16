@@ -178,6 +178,32 @@ class RTQAWindow(QtWidgets.QWidget):
 
         self.makeRoiPlotLegend(self.fdLabel, names, pens)
 
+        self.mseplot = pg.PlotWidget(self)
+        self.mseplot.setBackground((255, 255, 255))
+        self.msePlot.addWidget(self.mseplot)
+
+        p = self.mseplot.getPlotItem()
+        p.setLabel('left', "Mean squared error [a.u.]")
+        p.setMenuEnabled(enableMenu=False)
+        p.setMouseEnabled(x=False, y=False)
+        p.showGrid(x=True, y=True, alpha=1)
+        p.installEventFilter(self)
+        p.disableAutoRange(axis=pg.ViewBox.XAxis)
+        p.setXRange(1, xrange, padding=0.0)
+
+        self.trendplot = pg.PlotWidget(self)
+        self.trendplot.setBackground((255, 255, 255))
+        self.linearTreandPlot.addWidget(self.trendplot)
+
+        p = self.trendplot.getPlotItem()
+        p.setLabel('left', "Beta regressor amplitude [a.u.]")
+        p.setMenuEnabled(enableMenu=False)
+        p.setMouseEnabled(x=False, y=False)
+        p.showGrid(x=True, y=True, alpha=1)
+        p.installEventFilter(self)
+        p.disableAutoRange(axis=pg.ViewBox.XAxis)
+        p.setXRange(1, xrange, padding=0.0)
+
         self.tsCheckBox.setChecked(True)
 
         self.iteration = 1;
@@ -196,6 +222,8 @@ class RTQAWindow(QtWidgets.QWidget):
         self.glmProcTimeSeries = np.zeros((sz, 1))
         self.posSpikes = dict.fromkeys(['{:d}'.format(x) for x in range(sz)], np.array(0))
         self.negSpikes = dict.fromkeys(['{:d}'.format(x) for x in range(sz)], np.array(0))
+        self.rMSE = np.zeros((sz, xrange))
+        self.linTrendCoeff = np.zeros([])
 
         self.currentMode = 0;
 
@@ -346,6 +374,25 @@ class RTQAWindow(QtWidgets.QWidget):
             data = np.append(data, self.varCond[:, 0:n], axis=0)
             self.plot_rStatValues(init, plotitem, data, color, style)
 
+        plotitem = self.mseplot.getPlotItem()
+        data = self.rMSE[:, 0:n]
+        self.plot_ts(init, plotitem, data)
+
+        plotitem = self.trendplot.getPlotItem()
+        data = self.linTrendCoeff
+        self.plot_ts(init, plotitem, data)
+
+        if self.comboBox.currentIndex() == 5:
+
+            sz, l = data.shape
+            names = ['LinTrend betas ']
+            pens = [config.PLOT_PEN_COLORS[6]]
+            for i in range(sz):
+                names.append('ROI_' + str(i + 1) + ': ' + '{0:.3f}'.format(float(self.linTrendCoeff[i, n])))
+                pens.append(pg.mkPen(color=config.ROI_PLOT_COLORS[i], width=1.2))
+
+            self.makeTextValueLabel(self.trendLabel, names, pens)
+
     def plot_rStatValues(self, init, plotitem, data, color, style):
 
         if self.tsCheckBox.isChecked():
@@ -421,7 +468,6 @@ class RTQAWindow(QtWidgets.QWidget):
     def calculate_snr(self, data, n, isNewDCMBlock):
 
         sz = data.size
-        snr = np.zeros((sz,))
 
         if isNewDCMBlock:
             self.blockIter=0;
@@ -525,6 +571,24 @@ class RTQAWindow(QtWidgets.QWidget):
 
                 self.makeTextValueLabel(self.valuesLabel, names, pens)
 
+    def calculate_mse(self, inputSignal, outputSignal):
+
+        sz = inputSignal.size
+        n = self.blockIter-1;
+
+        for i in range (sz):
+            self.rMSE[i,n] = (n/(n+1)) * self.rMSE[i,n-1] + ((inputSignal[i]-outputSignal[i])**2)/(n+1)
+
+        if self.comboBox.currentIndex() == 4:
+
+            names = ['MSE ']
+            pens = [config.PLOT_PEN_COLORS[6]]
+            for i in range(sz):
+                names.append('ROI_' + str(i + 1) + ': ' + '{0:.3f}'.format(float(self.rMSE[i, n])))
+                pens.append(pg.mkPen(color=config.ROI_PLOT_COLORS[i], width=1.2))
+
+            self.makeTextValueLabel(self.mseLabel, names, pens)
+
     def plot_mcmd(self, data, isNewDCMBlock):
 
         self._fd.calc_mc_plots(data, isNewDCMBlock)
@@ -560,7 +624,7 @@ class RTQAWindow(QtWidgets.QWidget):
                     self.posSpikes[str(i)] = np.append(self.posSpikes[str(i)], l-1)
                 else:
                     self.posSpikes[str(i)] = np.array([l-1])
-            if negSpike[i] == 1:
+            if negSpike[i] == 1 and l>2:
                 if self.negSpikes[str(i)].any():
                     self.negSpikes[str(i)] = np.append(self.negSpikes[str(i)], l-1)
                 else:
@@ -646,7 +710,7 @@ class RTQAWindow(QtWidgets.QWidget):
 
         tsRTQA = dict.fromkeys(['rMean', 'rVar', 'rSNR',
                                 'meanBas', 'varBas', 'meanCond', 'varCond', 'rCNR',
-                                'excFDIndexes_1', 'excFDIndexes_2', 'excMDIndexes', 'FD', 'MD'])
+                                'excFDIndexes_1', 'excFDIndexes_2', 'excMDIndexes', 'FD', 'MD', 'rMSE'])
 
         tsRTQA['rMean'] = matlab.double(self.rMean.tolist())
         tsRTQA['rVar'] = matlab.double(self.rVar.tolist())
@@ -661,5 +725,6 @@ class RTQAWindow(QtWidgets.QWidget):
         tsRTQA['excMDIndexes'] = matlab.double(self._fd.excMDIndexes.tolist())
         tsRTQA['FD'] = matlab.double(self._fd.FD.tolist())
         tsRTQA['MD'] = matlab.double(self._fd.MD.tolist())
+        tsRTQA['rMSE'] = matlab.double(self.rMSE.tolist())
 
         return tsRTQA
