@@ -317,9 +317,6 @@ end
 
 for indRoi = 1:P.NrROIs
 
-    if indVolNorm == 649
-        1;
-    end
     % 3. modified Kalman low-pass filter + spike identification & correction
     if isPSC || isSVM || isDCM || P.isRestingState
         tmpStd = std(mainLoopData.glmProcTimeSeries(indRoi,:));

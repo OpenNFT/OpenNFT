@@ -834,15 +834,20 @@ class OpenNFT(QWidget):
                     # Parallel DCM computing on two matlab engines
                     # t11 first DCM model computation started
                     self.recorder.recordEvent(erd.Times.t11, self.iteration, time.time())
-                    self.tagFuture = self.mlPtbDcmHelper.engine.dcmCalc(
-                        'Tag', nargout=1, async=True)
 
                     if config.USE_MATLAB_MODEL_HELPER:
+                        self.tagFuture = self.mlModelHelper.engine.dcmCalc(
+                            'Tag', nargout=1, async=True)
                         self.oppFuture = self.mlModelHelper.engine.dcmCalc(
                             'Opp', nargout=1, async=True)
-                    else:
+                    elif config.USE_PTB_HELPER:
+                        self.tagFuture = self.mlPtbDcmHelper.engine.dcmCalc(
+                            'Tag', nargout=1, async=True)
                         self.oppFuture = self.mlPtbDcmHelper.engine.dcmCalc(
                             'Opp', nargout=1, async=True)
+                    else:
+                        dcmTagLE = []
+                        dcmOppLE = []
 
                 else:
                     dcmTagLE = []
@@ -1113,6 +1118,9 @@ class OpenNFT(QWidget):
             logger.info('Using Matlab session "{}" for Model Helper', self.mlModelHelper.name)
 
         self.mlMainHelper.prepare()
+
+        if not(config.USE_MATLAB_MODEL_HELPER) and not(config.USE_PTB_HELPER):
+            logger.warning('There is no main Matlab model helper. DCM calculation is not possible.')
         if config.USE_PTB_HELPER:
             self.mlPtbDcmHelper.prepare()
         self.mlSpmHelper.prepare()
@@ -1282,7 +1290,15 @@ class OpenNFT(QWidget):
             self.initUdpSender()
 
             with utils.timeit("  Initialize plugins:"):
-                for i in range(len(self.plugins)): self.plugins[i].initialize()
+                excPlugins = []
+                for i in range(len(self.plugins)):
+                    try:
+                        self.plugins[i].initialize()
+                    except KeyError as e:
+                        logger.warning("Initializing plugin '{}' failed - {} not found in settings".format(self.plugins[i].module.META['plugin_name'],str(e)))
+                        excPlugins.append(i)
+                for i in excPlugins:
+                    del self.plugins[i]
 
             self.btnStart.setEnabled(True)
             if self.P['isRTQA']:
