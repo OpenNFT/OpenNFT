@@ -912,8 +912,8 @@ class OpenNFT(QWidget):
                 self.windowRTQA.linTrendCoeff = np.append(self.windowRTQA.linTrendCoeff, betaCoeff, axis=1)
             else:
                 self.windowRTQA.linTrendCoeff = np.array(betaCoeff)
-            posSpike = np.array(self.eng.evalin('base','rtQA_matlab.kalmanSpikesPos(:,mainLoopData.indVolNorm)'), ndmin=2)
-            negSpike = np.array(self.eng.evalin('base','rtQA_matlab.kalmanSpikesNeg(:,mainLoopData.indVolNorm)'), ndmin=2)
+            posSpikes = np.array(self.eng.evalin('base','rtQA_matlab.kalmanSpikesPos(:,mainLoopData.indVolNorm)'), ndmin=2)
+            negSpikes = np.array(self.eng.evalin('base','rtQA_matlab.kalmanSpikesNeg(:,mainLoopData.indVolNorm)'), ndmin=2)
             if self.P['Type'] == 'DCM' and (self.iteration - self.P['nrSkipVol']) in self.P['beginDCMblock'][0]:
                 isNewDCMBlock = True
             else:
@@ -922,10 +922,10 @@ class OpenNFT(QWidget):
             self.windowRTQA.calculate_snr(data, n, isNewDCMBlock)
             if not self.P['isRestingState']:
                 self.windowRTQA.calculate_cnr(data, n, isNewDCMBlock)
+            self.windowRTQA.calculate_spikes(dataGLM, n, posSpikes, negSpikes)
             self.windowRTQA.calculate_mse(dataGLM, dataProc[:, n])
 
-            self.windowRTQA.plot_rtQA(init, n)
-            self.windowRTQA.plot_stepsAndSpikes(dataGLM, posSpike, negSpike)
+            self.windowRTQA.plot_rtQA(n+1)
             self.windowRTQA.plot_mcmd(dataMC[n, :],isNewDCMBlock)
 
         if self.imageViewMode == ImageViewMode.mosaic:
@@ -1332,6 +1332,7 @@ class OpenNFT(QWidget):
             self.eng.assignin('base', 'FIRST_SNR_VOLUME', config.FIRST_SNR_VOLUME, nargout=0)
 
             self.isStopped = False
+            self.windowRTQA.isStopped = False;
 
     # --------------------------------------------------------------------------
     def start(self):
@@ -1364,6 +1365,8 @@ class OpenNFT(QWidget):
     def stop(self):
 
         self.isStopped = True
+        if self.windowRTQA:
+            self.windowRTQA.isStopped = True;
         self.btnStop.setEnabled(False)
         self.btnStart.setEnabled(False)
         self.btnSetup.setEnabled(True)

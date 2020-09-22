@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1154</width>
-    <height>543</height>
+    <height>540</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -380,7 +380,10 @@
     </widget>
    </item>
    <item>
-    <layout class="QVBoxLayout" name="verticalLayout">
+    <layout class="QVBoxLayout" name="menuLayout">
+     <property name="bottomMargin">
+      <number>240</number>
+     </property>
      <item>
       <widget class="QComboBox" name="comboBox">
        <property name="editable">
@@ -472,7 +475,7 @@
            <property name="sizeHint" stdset="0">
             <size>
              <width>77</width>
-             <height>442</height>
+             <height>424</height>
             </size>
            </property>
           </spacer>
@@ -668,6 +671,23 @@
          </item>
         </layout>
        </widget>
+      </widget>
+     </item>
+     <item>
+      <widget class="QGroupBox" name="roiGroupBox">
+       <property name="font">
+        <font>
+         <pointsize>10</pointsize>
+        </font>
+       </property>
+       <property name="title">
+        <string>ROI selection</string>
+       </property>
+       <layout class="QVBoxLayout" name="verticalLayout_23">
+        <item>
+         <layout class="QVBoxLayout" name="groupBoxLayout"/>
+        </item>
+       </layout>
       </widget>
      </item>
     </layout>

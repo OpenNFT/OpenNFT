@@ -27,6 +27,19 @@ class RTQAWindow(QtWidgets.QWidget):
         self.indCond = indCond
         self.iterBas = 0
         self.iterCond = 0
+        self.init = True
+        self.isStopped = True;
+
+        groupBoxLayout = self.roiGroupBox.layout()
+        for i in range(sz):
+            checkbox = QtWidgets.QCheckBox('ROI_' + str(i + 1))
+            checkbox.setStyleSheet("color: "+config.ROI_PLOT_COLORS[i].name())
+            if not i:
+                checkbox.setChecked(True)
+            checkbox.stateChanged.connect(self.roiCheckBoxStateChanged)
+            groupBoxLayout.addWidget(checkbox)
+
+        self.roiCheckBoxes = self.roiGroupBox.findChildren(QtWidgets.QCheckBox);
 
         self.musterInfo = musterInfo
 
@@ -219,11 +232,12 @@ class RTQAWindow(QtWidgets.QWidget):
         self.varCond = np.zeros((sz, xrange))
         self.m2Cond = np.zeros((sz, 1))
         self.rCNR = np.zeros((sz, xrange))
-        self.glmProcTimeSeries = np.zeros((sz, 1))
+        self.glmProcTimeSeries = np.zeros((sz, xrange))
         self.posSpikes = dict.fromkeys(['{:d}'.format(x) for x in range(sz)], np.array(0))
         self.negSpikes = dict.fromkeys(['{:d}'.format(x) for x in range(sz)], np.array(0))
         self.rMSE = np.zeros((sz, xrange))
         self.linTrendCoeff = np.zeros([])
+        self.checkedBoxesInd = []
 
         self.currentMode = 0;
 
@@ -317,7 +331,13 @@ class RTQAWindow(QtWidgets.QWidget):
         self.hide()
         event.accept()
 
-    def plot_ts(self, init, plotitem, data):
+    def roiCheckBoxStateChanged(self):
+        self.init = True
+        if self.isStopped:
+            self.plot_rtQA(self.rSNR.size)
+        return
+
+    def plot_ts(self, init, plotitem, data, checkedBoxesInd):
 
         if self.tsCheckBox.isChecked():
 
@@ -330,7 +350,7 @@ class RTQAWindow(QtWidgets.QWidget):
 
                 muster = self.drawMusterPlot(plotitem)
 
-                for i, c in zip(range(sz), config.ROI_PLOT_COLORS):
+                for i, c in zip(range(sz),np.array(config.ROI_PLOT_COLORS)[checkedBoxesInd]):
                     pen = pg.mkPen(color=c, width=config.ROI_PLOT_WIDTH)
                     p = plotitem.plot(pen=pen)
                     plots.append(p)
@@ -339,7 +359,8 @@ class RTQAWindow(QtWidgets.QWidget):
 
             x = np.arange(1, l+1, dtype=np.float64)
 
-            for p, y in zip(self.plot_ts.__dict__[plotitem][0], data):
+            plotitems = self.plot_ts.__dict__[plotitem][0]
+            for p, y in zip(plotitems, data):
                 p.setData(x=x, y=np.array(y))
 
             items = plotitem.listDataItems()
@@ -350,41 +371,51 @@ class RTQAWindow(QtWidgets.QWidget):
             if data.any():
                 plotitem.setYRange(np.min(data), np.max(data), padding=0.0)
 
-    def plot_rtQA(self, init, n):
+    def plot_rtQA(self, n):
+
+        if self.init:
+            sz, l =  self.rSNR.shape
+            checkedBoxes = [self.roiCheckBoxes[i].isChecked() for i in range(sz)]
+            self.checkedBoxesInd = [j for j, val in enumerate(checkedBoxes) if val]
 
         plotitem = self.snrplot.getPlotItem()
-        data = self.rSNR[:, 0:n]
-        self.plot_ts(init, plotitem, data)
+        data = self.rSNR[self.checkedBoxesInd, 0:n]
+        self.plot_ts(self.init, plotitem, data, self.checkedBoxesInd)
 
         if self.comboBox.model().item(2).isEnabled():
             plotitem = self.cnrplot.getPlotItem()
-            data = self.rCNR[:, 0:n]
-            self.plot_ts(init, plotitem, data)
+            data = self.rCNR[self.checkedBoxesInd, 0:n]
+            self.plot_ts(self.init, plotitem, data, self.checkedBoxesInd)
 
             plotitem = self.meanplot.getPlotItem()
-            data = np.append(self.rMean[:, 0:n], self.meanBas[:, 0:n], axis=0)
-            data = np.append(data, self.meanCond[:, 0:n], axis=0)
-            m = len(self.rSNR[:, 1])
-            color = config.STAT_PLOT_COLORS[0:m] + config.ROI_BAS_COLORS[0:m] + config.ROI_COND_COLORS[0:m]
+            data = np.append(self.rMean[self.checkedBoxesInd, 0:n], self.meanBas[self.checkedBoxesInd, 0:n], axis=0)
+            data = np.append(data, self.meanCond[self.checkedBoxesInd, 0:n], axis=0)
+            # m = len(self.rSNR[self.checkedBoxesInd, 1])
+            color = np.array(config.STAT_PLOT_COLORS)[self.checkedBoxesInd]
+            color = np.append(color,np.array(config.ROI_BAS_COLORS)[self.checkedBoxesInd])
+            color = np.append(color,np.array(config.ROI_COND_COLORS)[self.checkedBoxesInd])
             style = [QtCore.Qt.SolidLine, QtCore.Qt.DashLine, QtCore.Qt.DashLine]
-            self.plot_rStatValues(init, plotitem, data, color, style)
+            self.plot_rStatValues(self.init, plotitem, data, color, style)
 
             plotitem = self.varplot.getPlotItem()
-            data = np.append(self.rVar[:, 0:n], self.varBas[:, 0:n], axis=0)
-            data = np.append(data, self.varCond[:, 0:n], axis=0)
-            self.plot_rStatValues(init, plotitem, data, color, style)
+            data = np.append(self.rVar[self.checkedBoxesInd, 0:n], self.varBas[self.checkedBoxesInd, 0:n], axis=0)
+            data = np.append(data, self.varCond[self.checkedBoxesInd, 0:n], axis=0)
+            self.plot_rStatValues(self.init, plotitem, data, color, style)
+
+        plotitem = self.spikes_plot.getPlotItem()
+        data = self.glmProcTimeSeries[self.checkedBoxesInd, 0:n]
+        self.plot_stepsAndSpikes(self.init, plotitem, data, self.checkedBoxesInd)
 
         plotitem = self.mseplot.getPlotItem()
-        data = self.rMSE[:, 0:n]
-        self.plot_ts(init, plotitem, data)
+        data = self.rMSE[self.checkedBoxesInd, 0:n]
+        self.plot_ts(self.init, plotitem, data, self.checkedBoxesInd)
 
         plotitem = self.trendplot.getPlotItem()
-        data = self.linTrendCoeff
-        self.plot_ts(init, plotitem, data)
+        data = self.linTrendCoeff[self.checkedBoxesInd,:]
+        self.plot_ts(self.init, plotitem, data, self.checkedBoxesInd)
 
         if self.comboBox.currentIndex() == 5:
 
-            sz, l = data.shape
             names = ['LinTrend betas ']
             pens = [config.PLOT_PEN_COLORS[6]]
             for i in range(sz):
@@ -392,6 +423,8 @@ class RTQAWindow(QtWidgets.QWidget):
                 pens.append(pg.mkPen(color=config.ROI_PLOT_COLORS[i], width=1.2))
 
             self.makeTextValueLabel(self.trendLabel, names, pens)
+
+        self.init = False
 
     def plot_rStatValues(self, init, plotitem, data, color, style):
 
@@ -571,6 +604,23 @@ class RTQAWindow(QtWidgets.QWidget):
 
                 self.makeTextValueLabel(self.valuesLabel, names, pens)
 
+    def calculate_spikes(self, data, n, posSpikes, negSpikes):
+
+        sz, l = data.shape
+        self.glmProcTimeSeries[:,n] = data[:,0]
+
+        for i in range(sz):
+            if posSpikes[i] == 1:
+                if self.posSpikes[str(i)].any():
+                    self.posSpikes[str(i)] = np.append(self.posSpikes[str(i)], n)
+                else:
+                    self.posSpikes[str(i)] = np.array([n])
+            if negSpikes[i] == 1 and l > 2:
+                if self.negSpikes[str(i)].any():
+                    self.negSpikes[str(i)] = np.append(self.negSpikes[str(i)], n)
+                else:
+                    self.negSpikes[str(i)] = np.array([n])
+
     def calculate_mse(self, inputSignal, outputSignal):
 
         sz = inputSignal.size
@@ -613,80 +663,80 @@ class RTQAWindow(QtWidgets.QWidget):
         pens.append(config.PLOT_PEN_COLORS[6])
         self.makeTextValueLabel(self.mcmdValuesLabel, names, pens)
 
-    def plot_stepsAndSpikes(self, data, posSpike, negSpike):
+    def plot_stepsAndSpikes(self, init, plotitem, data, checkedBoxesInd):
 
-        self.glmProcTimeSeries = np.append(self.glmProcTimeSeries, data, axis=1)
-        sz, l = self.glmProcTimeSeries.shape
+        sz, l = data.shape
+        x = np.arange(1, l+1, dtype=np.float64)
 
-        for i in range(sz):
-            if posSpike[i] == 1:
-                if self.posSpikes[str(i)].any():
-                    self.posSpikes[str(i)] = np.append(self.posSpikes[str(i)], l-1)
-                else:
-                    self.posSpikes[str(i)] = np.array([l-1])
-            if negSpike[i] == 1 and l>2:
-                if self.negSpikes[str(i)].any():
-                    self.negSpikes[str(i)] = np.append(self.negSpikes[str(i)], l-1)
-                else:
-                    self.negSpikes[str(i)] = np.array([l-1])
+        if init:
+            plotitem.clear()
+            plots = []
 
-        x = np.arange(0, l, dtype=np.float64)
+            muster = self.drawMusterPlot(plotitem)
 
-        plotitem = self.spikes_plot.getPlotItem()
-        plotitem.clear()
-        plots = []
+            for i, c in zip(range(sz),np.array(config.ROI_PLOT_COLORS)[checkedBoxesInd]):
+                pen = pg.mkPen(color=c, width=config.ROI_PLOT_WIDTH)
+                p = plotitem.plot(pen=pen)
+                plots.append(p)
 
-        muster = self.drawMusterPlot(plotitem)
+            self.plot_stepsAndSpikes.__dict__[plotitem] = plots, muster
 
-        for i, c in zip(range(sz), config.ROI_PLOT_COLORS):
-            pen = pg.mkPen(color=c, width=config.ROI_PLOT_WIDTH)
-            p = plotitem.plot(pen=pen)
-            plots.append(p)
-
-        self.plot_stepsAndSpikes.__dict__[plotitem] = plots, muster
-
-        for p, y in zip(self.plot_stepsAndSpikes.__dict__[plotitem][0], self.glmProcTimeSeries):
+        plots = self.plot_stepsAndSpikes.__dict__[plotitem][0]
+        for p, y in zip(plots, data):
             p.setData(x=x, y=np.array(y))
 
-        for i, c in zip(range(sz), config.ROI_PLOT_COLORS):
+        for i, c in zip(range(sz),np.array(config.ROI_PLOT_COLORS)[checkedBoxesInd]):
 
-            if self.posSpikes[str(i)].any():
+            roiInd = checkedBoxesInd[i]
+            if self.posSpikes[str(roiInd)].any():
                 brush = pg.mkBrush(color=c)
                 p = plotitem.scatterPlot(symbol='o', size=20, brush=brush)
                 plots.append(p)
-                plots[-1].setData(x=x[self.posSpikes[str(i)]], y=self.glmProcTimeSeries[i, self.posSpikes[str(i)]])
+                plots[-1].setData(x=self.posSpikes[str(roiInd)]+1, y=self.glmProcTimeSeries[roiInd, self.posSpikes[str(roiInd)]])
 
                 pen = pg.mkPen(color=pg.mkColor(0, 0, 0), width=1.5*config.ROI_PLOT_WIDTH)
                 p = plotitem.plot(pen=pen)
                 plots.append(p)
 
-                inds = self.posSpikes[str(i)]
-                inds = np.array(list(itertools.chain.from_iterable(zip(inds, inds-1))))
+                inds = self.posSpikes[str(roiInd)]
+                indX = np.array(list(itertools.chain.from_iterable(zip(inds, inds + 1))))
+                indY = np.array(list(itertools.chain.from_iterable(zip(inds - 1, inds))))
 
-                y = np.array(self.glmProcTimeSeries[i,inds])
-                x1 = inds
+                y = np.array(self.glmProcTimeSeries[roiInd,indY])
+                x1 = indX
 
                 plots[-1].setData(x=x1, y=y, connect='pairs')
 
-            if self.negSpikes[str(i)].any():
+            if self.negSpikes[str(roiInd)].any():
                 brush = pg.mkBrush(color=c)
                 p = plotitem.scatterPlot(symbol='d', size=20, brush=brush)
                 plots.append(p)
-                plots[-1].setData(x=x[self.negSpikes[str(i)]], y=self.glmProcTimeSeries[i, self.negSpikes[str(i)]])
+                plots[-1].setData(x=self.negSpikes[str(roiInd)]+1, y=self.glmProcTimeSeries[roiInd, self.negSpikes[str(roiInd)]])
 
                 pen = pg.mkPen(color=pg.mkColor(0, 0, 0), width=1.5*config.ROI_PLOT_WIDTH)
                 p = plotitem.plot(pen=pen)
                 plots.append(p)
 
-                inds = self.negSpikes[str(i)]
-                inds = np.array(list(itertools.chain.from_iterable(zip(inds, inds - 1))))
+                inds = self.negSpikes[str(roiInd)]
+                indX = np.array(list(itertools.chain.from_iterable(zip(inds, inds + 1))))
+                indY = np.array(list(itertools.chain.from_iterable(zip(inds - 1, inds))))
 
-                y = np.array(self.glmProcTimeSeries[i,inds])
-                x1 = inds
+                y = np.array(self.glmProcTimeSeries[roiInd,indY])
+                x1 = indX
 
                 plots[-1].setData(x=x1, y=y, connect='pairs')
 
-        cnt = 0;
+        items = plotitem.listDataItems()
+
+        for m in self.plot_stepsAndSpikes.__dict__[plotitem][1]:
+            items.remove(m)
+
+        if data.any():
+            plotitem.setYRange(np.min(self.glmProcTimeSeries)-1, np.max(self.glmProcTimeSeries)+1, padding=0.0)
+
+        # number of spikes counting label
+        sz, l = self.glmProcTimeSeries.shape
+        cnt = 0
         for i in range(sz):
             cnt = cnt + np.count_nonzero(self.posSpikes[str(i)])
         names = ['( Circles ) <br>Positive spikes: ' + str(int(cnt))]
@@ -697,14 +747,6 @@ class RTQAWindow(QtWidgets.QWidget):
         names.append('<br>( Diamonds )<br>Negative spikes: ' + str(int(cnt)))
         pens = [pg.mkPen(color=config.STAT_PLOT_COLORS[9], width=1.2), pg.mkPen(color=config.STAT_PLOT_COLORS[9], width=1.2)]
         self.makeTextValueLabel(self.spikesLabel, names, pens)
-
-        items = plotitem.listDataItems()
-
-        for m in self.plot_stepsAndSpikes.__dict__[plotitem][1]:
-            items.remove(m)
-
-        if data.any():
-            plotitem.setYRange(np.min(self.glmProcTimeSeries)-1, np.max(self.glmProcTimeSeries)+1, padding=0.0)
 
     def data_packing(self):
 
