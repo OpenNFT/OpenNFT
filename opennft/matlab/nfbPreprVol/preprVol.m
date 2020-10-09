@@ -15,12 +15,14 @@ function preprVol(inpFileName, indVol)
 P = evalin('base', 'P');
 mainLoopData = evalin('base', 'mainLoopData');
 imageViewMode = evalin('base', 'imageViewMode');
-isShowRtqaVol = evalin('base', 'isShowRtqaVol');
 if P.isRTQA
+    isShowRtqaVol = evalin('base', 'isShowRtqaVol');
     rtQAMode = evalin('base', 'rtQAMode');
     isSmoothed = evalin('base', 'isSmoothed');
     rtQA_matlab = evalin('base', 'rtQA_matlab');
     FIRST_SNR_VOLUME = evalin('base', 'FIRST_SNR_VOLUME');
+else
+    isShowRtqaVol = false;
 end
 
 if P.UseTCPData, tcp = evalin('base', 'tcp'); end

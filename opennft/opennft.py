@@ -1311,16 +1311,22 @@ class OpenNFT(QWidget):
             if self.P['isRTQA']:
                 self.btnRTQA.setEnabled(True)
 
-            if self.P['isRestingState']:
+                if self.P['isRestingState']:
+                    xrange = (self.P['NrOfVolumes'] - self.P['nrSkipVol'])
+                    indBas = 0
+                    indCond = 0
+                else:
+                    self.computeMusterPlotData(config.MUSTER_Y_LIMITS)
+                    xrange = max(self.musterInfo['tmpCond1'][-1][1],
+                                 self.musterInfo['tmpCond2'][-1][1])
+                    indBas = np.array(self.P['inds'][0])-1
+                    indCond = np.array(self.P['inds'][1])-1
+
+            else:
+
                 xrange = (self.P['NrOfVolumes'] - self.P['nrSkipVol'])
                 indBas = 0
                 indCond = 0
-            else:
-                self.computeMusterPlotData(config.MUSTER_Y_LIMITS)
-                xrange = max(self.musterInfo['tmpCond1'][-1][1],
-                             self.musterInfo['tmpCond2'][-1][1])
-                indBas = np.array(self.P['inds'][0])-1
-                indCond = np.array(self.P['inds'][1])-1
 
             self.cbImageViewMode.setEnabled(False)
             self.cbImageViewMode.setCurrentIndex(0)
@@ -1381,8 +1387,9 @@ class OpenNFT(QWidget):
     def stop(self):
 
         self.isStopped = True
-        if self.windowRTQA:
+        if self.P['isRTQA']:
             self.windowRTQA.isStopped = True;
+            self.eng.workspace['rtQA_python'] = self.windowRTQA.data_packing()
         self.btnStop.setEnabled(False)
         self.btnStart.setEnabled(False)
         self.btnSetup.setEnabled(True)
@@ -1423,7 +1430,6 @@ class OpenNFT(QWidget):
         if self.fFinNFB:
             for i in range(len(self.plugins)): self.plugins[i].finalize()
             self.finalizeUdpSender()
-            self.eng.workspace['rtQA_python'] = self.windowRTQA.data_packing()
             self.nfbFinStarted = self.eng.nfbSave(self.iteration, nargout=0, async=True)
             self.fFinNFB = False
 
