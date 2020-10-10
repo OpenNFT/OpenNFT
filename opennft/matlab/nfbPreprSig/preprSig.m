@@ -252,8 +252,10 @@ for indRoi = 1:P.NrROIs
             if ~P.isRestingState
                 cX0 = [tmpRegr P.spmDesign(1:tmp_ind_end,:)];
                 betaReg = pinv(cX0) * tmp_rawTimeSeries;
+%                 tmp_glmProcTimeSeries = (tmp_rawTimeSeries - ...
+%                     cX0 * [betaReg(1:end-1); zeros(1,1)])';
                 tmp_glmProcTimeSeries = (tmp_rawTimeSeries - ...
-                    cX0 * [betaReg(1:end-1); zeros(1,1)])';
+                    cX0 * [betaReg(1:end-4); zeros(4,1)])';
             else
                 cX0 = tmpRegr;
                 betaReg = pinv(cX0) * tmp_rawTimeSeries;

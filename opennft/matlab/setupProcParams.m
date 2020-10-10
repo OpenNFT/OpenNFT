@@ -215,9 +215,13 @@ if ~P.isRestingState
     mainLoopData.statMap3D_iGLM = [];
 
     % PSC
-    if isPSC && (strcmp(P.Prot, 'Cont') || strcmp(P.Prot, 'ContTask') || strcmp(P.Prot, 'Inter'))
+    if isPSC && (strcmp(P.Prot, 'Cont') || strcmp(P.Prot, 'ContTask'))
         tmpSpmDesign = SPM.xX.X(1:P.NrOfVolumes-P.nrSkipVol,contains(SPM.xX.name, P.CondName));
     end
+    if isPSC && strcmp(P.Prot, 'Inter')
+%         tmpSpmDesign = SPM.xX.X(1:P.NrOfVolumes-P.nrSkipVol,contains(SPM.xX.name, [string(P.CondName)]));
+        tmpSpmDesign = SPM.xX.X(1:P.NrOfVolumes-P.nrSkipVol,contains(SPM.xX.name, [string(P.CondName),string(P.Task2Name),string(P.Task3Name),P.DispName]));
+    end    
 
     % DCM
     if isDCM && strcmp(P.Prot, 'InterBlock')
