@@ -122,6 +122,10 @@ mainLoopData.mposMin = [];
 
 mainLoopData.blockNF = 0;
 mainLoopData.firstNF = 0;
+mainLoopData.blockTask2 = 0;
+mainLoopData.firstTask2 = 0;
+mainLoopData.blockTask3 = 0;
+mainLoopData.firstTask3 = 0;
 
 %% DCM Settings
 if isDCM
@@ -219,7 +223,6 @@ if ~P.isRestingState
         tmpSpmDesign = SPM.xX.X(1:P.NrOfVolumes-P.nrSkipVol,contains(SPM.xX.name, P.CondName));
     end
     if isPSC && strcmp(P.Prot, 'Inter')
-%         tmpSpmDesign = SPM.xX.X(1:P.NrOfVolumes-P.nrSkipVol,contains(SPM.xX.name, [string(P.CondName)]));
         tmpSpmDesign = SPM.xX.X(1:P.NrOfVolumes-P.nrSkipVol,contains(SPM.xX.name, [string(P.CondName),string(P.Task2Name),string(P.Task3Name),P.DispName]));
     end    
 

@@ -106,17 +106,47 @@ end
 if isPSC && strcmp(P.Prot, 'Inter')
     blockNF = mainLoopData.blockNF;
     firstNF = mainLoopData.firstNF;
+    blockTask2 = mainLoopData.blockTask2;
+    firstTask2 = mainLoopData.firstTask2;    
+    blockTask3 = mainLoopData.blockTask3;
+    firstTask3 = mainLoopData.firstTask3;      
+    
     dispValue = mainLoopData.dispValue;
     Reward = mainLoopData.Reward;
 
+    % count blocks
+    if condition == 3 || condition == 4                      
+        % Task2 block
+        iTask2 = cellfun(@(x) x(end) == indVolNorm, P.ProtTask2);
+        if any(iTask2)
+            blockTask2 = find(iTask2);
+            firstTask2 = indVolNorm;
+            mainLoopData.flagEndPSC = 1;          
+        end        
+        % Task3 block
+        iTask3 = cellfun(@(x) x(end) == indVolNorm, P.ProtTask3);
+        if any(iTask3)
+            blockTask3 = find(iTask3);
+            firstTask3 = indVolNorm;
+            mainLoopData.flagEndPSC = 1;          
+        end  
+    end
+    
     % NF estimation condition
-    if condition == 2             
-        % count NF regulation blocks
-        k = cellfun(@(x) x(end) == indVolNorm, P.ProtNF);
+    if condition == 5                    
+        % count Rest blocks
+        k = cellfun(@(x) x(end) == indVolNorm, P.ProtREST);
         if any(k)
             blockNF = find(k);
             firstNF = indVolNorm;
             mainLoopData.flagEndPSC = 1;
+            if (P.ProtTask1{blockNF}(end)+1) == (P.ProtTask2{blockTask2}(1))
+                isTask2 = 1;
+                isTask3 = 0;
+            elseif (P.ProtTask1{blockNF}(end)+1) == (P.ProtTask3{blockTask3}(1))
+                isTask2 = 0;
+                isTask3 = 1;               
+            end            
         end
 
         regSuccess = 0;
@@ -124,11 +154,19 @@ if isPSC && strcmp(P.Prot, 'Inter')
             % expected when assigning volumes for averaging, take HRF delay
             % into account
             if blockNF<2
-                i_blockNF = P.ProtNF{blockNF}(end-6:end); 
-                i_blockBAS = P.ProtBAS{blockNF}(end-6:end);
+                if isTask2
+                    i_blockNF = [P.ProtTask1{blockNF}(3:end) P.ProtTask2{blockTask2}(3:end)]; 
+                elseif isTask3
+                    i_blockNF = [P.ProtTask1{blockNF}(3:end) P.ProtTask3{blockTask3}(3:end)]; 
+                end
+                i_blockBAS = P.ProtBAS{blockNF}(3:end);
             else
-                i_blockNF = P.ProtNF{blockNF}(end-6:end);
-                i_blockBAS = [P.ProtBAS{blockNF}(end-5:end) ...
+                if isTask2
+                    i_blockNF = [P.ProtTask1{blockNF}(3:end) P.ProtTask2{blockTask2}(3:end)]; 
+                elseif isTask3
+                    i_blockNF = [P.ProtTask1{blockNF}(3:end) P.ProtTask3{blockTask3}(3:end)]; 
+                end
+                i_blockBAS = [P.ProtBAS{blockNF}(3:end) ...
                               P.ProtBAS{blockNF}(end)+1];
             end
 
@@ -150,7 +188,7 @@ if isPSC && strcmp(P.Prot, 'Inter')
             end
 
             % compute average %SC feedback value
-            tmp_fbVal = eval(P.RoiAnatOperation); 
+            tmp_fbVal = norm_percValues(2)-norm_percValues(1); %eval(P.RoiAnatOperation); 
             mainLoopData.vectNFBs(indVolNorm) = tmp_fbVal;
             dispValue = round(P.MaxFeedbackVal*tmp_fbVal, P.FeedbackValDec); 
 
@@ -214,6 +252,11 @@ if isPSC && strcmp(P.Prot, 'Inter')
     mainLoopData.vectNFBs(indVolNorm) = tmp_fbVal;    
     mainLoopData.blockNF = blockNF;
     mainLoopData.firstNF = firstNF;
+    mainLoopData.blockTask2 = blockTask2;
+    mainLoopData.firstTask2 = firstTask2;    
+    mainLoopData.blockTask3 = blockTask3;
+    mainLoopData.firstTask3 = firstTask3;  
+    
     mainLoopData.Reward = '';
 
     displayData.Reward = mainLoopData.Reward;

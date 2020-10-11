@@ -25,6 +25,7 @@ sender.sending_time_stamp = True
 
 sender.info()
 
+cond = ''
 while not(keyboard.is_pressed('q')):
     if keyboard.is_pressed('b'): 
         cond = 'Bas'
@@ -38,6 +39,6 @@ while not(keyboard.is_pressed('q')):
     sender.send_data(val)
     print(cond,val)
     
-    sleep(0.1)
+    sleep(1)
 
 sender.close()
