@@ -27,6 +27,10 @@ if ~P.isRestingState
     P.vectEncCond = ones(1,NrOfVolumes-nrSkipVol);
     P.ProtNF = {};
     P.ProtTask = {};
+    P.ProtTask1 = {};
+    P.ProtTask2 = {};
+    P.ProtTask3 = {};
+    P.ProtREST = {};
 
     P.basBlockLength = prt.Cond{1}.OnOffsets(1,2);
     lCond = length(prt.Cond);
