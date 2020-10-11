@@ -23,7 +23,6 @@ AUTHOR_EMAIL = 'opennft@gmail.com'
 DESCRIPTION = 'An open-source Python/Matlab framework for real-time fMRI neurofeedback training'
 
 PYTHON_REQUIRES = '>=3.6, <3.9'
-MATLAB_REQUIRES = '>=9.3, <10.0'
 
 ROOT_DIR = pathlib.Path(__file__).parent
 
@@ -182,7 +181,6 @@ setup(
     version=get_version(),
 
     python_requires=PYTHON_REQUIRES,
-    matlab_requires=MATLAB_REQUIRES,
     install_requires=specify_requirements(),
 
     packages=find_packages(exclude=["tests", "*.tests", "*.tests.*", "tests.*"]),
