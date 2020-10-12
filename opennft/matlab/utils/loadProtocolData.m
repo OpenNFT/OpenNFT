@@ -161,7 +161,8 @@ if isfield(prt,'Contrast')
     else
         conVect = double(cell2mat(textscan(prt.Contrast,'%d','Delimiter',';'))');
     end
-    P.Contrast = [1 0 0 0]';%conVect';
+    %P.Contrast = [1 0 0 0]';%conVect';
+    P.Contrast = [0 1 1 0]';%conVect';
 end
 
 %% Save

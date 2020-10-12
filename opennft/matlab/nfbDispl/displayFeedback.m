@@ -144,10 +144,15 @@ switch feedbackType
                  P.Screen.vbl = Screen('Flip', P.Screen.wPtr, ...
                      P.Screen.vbl + P.Screen.ifi/2);
             case 3  % Regualtion 2
+                if P.vectList(iteration) == 1
+                    wordDisp = char(P.wordList(iteration));
+                else
+                    wordDisp = char(' ');
+                end
                 % Text 
                 Screen(P.Screen.wPtr, 'FillRect', [125 125 125]); 
                 Screen('TextSize', P.Screen.wPtr , P.Screen.h/10);
-                Screen('DrawText', P.Screen.wPtr, 'IMAG READ W', ...
+                Screen('DrawText', P.Screen.wPtr, wordDisp, ...
                     floor(P.Screen.w/2-P.Screen.h/4), ...
                     floor(P.Screen.h/2-P.Screen.h/10), instrColor);
                 % Fixation Point
@@ -158,12 +163,33 @@ switch feedbackType
                     floor(P.Screen.h/2+P.Screen.w/200)]);                 
                 
                  P.Screen.vbl = Screen('Flip', P.Screen.wPtr, ...
-                     P.Screen.vbl + P.Screen.ifi/2);                 
+                     P.Screen.vbl + P.Screen.ifi/2);   
+                 
+                 nPause = 1+randi(5)/10;
+                 pause(nPause);
+                 
+                % blanck screen
+                 Screen(P.Screen.wPtr, 'FillRect', [125 125 125]); 
+                 % Fixation Point
+                 Screen('FillOval', P.Screen.wPtr, [200 200 200], ...
+                     [floor(P.Screen.w/2-P.Screen.w/200), ...
+                     floor(P.Screen.h/2-P.Screen.w/200), ...
+                     floor(P.Screen.w/2+P.Screen.w/200), ...
+                     floor(P.Screen.h/2+P.Screen.w/200)]);   
+                 
+                 P.Screen.vbl = Screen('Flip', P.Screen.wPtr, ...
+                     P.Screen.vbl + P.Screen.ifi/2);                   
+                 
             case 4  % Regualtion 3
+                if P.vectList(iteration) == 2
+                    wordDisp = char(P.wordList(iteration));
+                else
+                    wordDisp = char(' ');
+                end                
                 % Text 
                 Screen(P.Screen.wPtr, 'FillRect', [125 125 125]); 
                 Screen('TextSize', P.Screen.wPtr , P.Screen.h/10);
-                Screen('DrawText', P.Screen.wPtr, 'IMAG READ NW', ...
+                Screen('DrawText', P.Screen.wPtr, wordDisp, ...
                     floor(P.Screen.w/2-P.Screen.h/4), ...
                     floor(P.Screen.h/2-P.Screen.h/10), instrColor);
                 % Fixation Point
@@ -175,6 +201,20 @@ switch feedbackType
                 
                  P.Screen.vbl = Screen('Flip', P.Screen.wPtr, ...
                      P.Screen.vbl + P.Screen.ifi/2);     
+                                  
+                 nPause = 1+randi(5)/10;
+                 pause(nPause);
+                 
+                 % blanck screen
+                 Screen(P.Screen.wPtr, 'FillRect', [125 125 125]); 
+                 % Fixation Point
+                 Screen('FillOval', P.Screen.wPtr, [200 200 200], ...
+                     [floor(P.Screen.w/2-P.Screen.w/200), ...
+                     floor(P.Screen.h/2-P.Screen.w/200), ...
+                     floor(P.Screen.w/2+P.Screen.w/200), ...
+                     floor(P.Screen.h/2+P.Screen.w/200)]);                  
+                 P.Screen.vbl = Screen('Flip', P.Screen.wPtr, ...
+                     P.Screen.vbl + P.Screen.ifi/2);                  
             case 5  % Rest
                 % blanck screen
                  Screen(P.Screen.wPtr, 'FillRect', [0 0 0]);                

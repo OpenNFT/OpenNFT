@@ -155,18 +155,18 @@ if isPSC && strcmp(P.Prot, 'Inter')
             % into account
             if blockNF<2
                 if isTask2
-                    i_blockNF = [P.ProtTask1{blockNF}(3:end) P.ProtTask2{blockTask2}(3:end)]; 
+                    i_blockNF = [P.ProtTask1{blockNF}(4:end) P.ProtTask2{blockTask2}(4:end)]; 
                 elseif isTask3
-                    i_blockNF = [P.ProtTask1{blockNF}(3:end) P.ProtTask3{blockTask3}(3:end)]; 
+                    i_blockNF = [P.ProtTask1{blockNF}(4:end) P.ProtTask3{blockTask3}(4:end)]; 
                 end
                 i_blockBAS = P.ProtBAS{blockNF}(3:end);
             else
                 if isTask2
-                    i_blockNF = [P.ProtTask1{blockNF}(3:end) P.ProtTask2{blockTask2}(3:end)]; 
+                    i_blockNF = [P.ProtTask1{blockNF}(4:end) P.ProtTask2{blockTask2}(4:end)]; 
                 elseif isTask3
-                    i_blockNF = [P.ProtTask1{blockNF}(3:end) P.ProtTask3{blockTask3}(3:end)]; 
+                    i_blockNF = [P.ProtTask1{blockNF}(4:end) P.ProtTask3{blockTask3}(4:end)]; 
                 end
-                i_blockBAS = [P.ProtBAS{blockNF}(3:end) ...
+                i_blockBAS = [P.ProtBAS{blockNF}(4:end) ...
                               P.ProtBAS{blockNF}(end)+1];
             end
 
@@ -188,7 +188,7 @@ if isPSC && strcmp(P.Prot, 'Inter')
             end
 
             % compute average %SC feedback value
-            tmp_fbVal = norm_percValues(2)-norm_percValues(1); %eval(P.RoiAnatOperation); 
+            tmp_fbVal = 0.7*norm_percValues(2)-0.3*norm_percValues(1); %eval(P.RoiAnatOperation); 
             mainLoopData.vectNFBs(indVolNorm) = tmp_fbVal;
             dispValue = round(P.MaxFeedbackVal*tmp_fbVal, P.FeedbackValDec); 
 

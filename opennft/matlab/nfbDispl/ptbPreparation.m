@@ -218,6 +218,45 @@ if strcmp(protName, 'Inter')
     
     Screen('TextSize',P.Screen.wPtr, 100);
     
+    %% 
+    fName = [workFolder filesep 'Settings' filesep 'NF_PCS_int_FT.json'];
+    prt = loadjson(fName);
+
+    vectList = zeros(600,1);
+    wordList = strings(600,1);
+
+    load([workFolder filesep 'Settings' filesep 'WORDS.mat']);
+    load([workFolder filesep 'Settings' filesep 'NOWORDS.mat']);
+
+    for i = 1:6
+        tmpOnstes = prt.Cond{i}.OnOffsets;
+        tmpName = prt.Cond{i}.ConditionName;
+        lOnsets = size(tmpOnstes,1);
+        kW = 0; kNW = 0;
+        for iOn = 1:lOnsets
+            newOnsets = tmpOnstes(iOn,1):2:tmpOnstes(iOn,2);
+            if strcmp(tmpName,'READW')
+                vectList(newOnsets) = 1;
+
+                for iStim = 1:length(newOnsets)
+                    kW = kW + 1;
+                    wordList(newOnsets(iStim)) = WORDS(kW);
+                end
+
+            elseif strcmp(tmpName,'READNW')
+                vectList(newOnsets) = 2;
+
+                for iStim = 1:length(newOnsets)
+                    kNW = kNW + 1;
+                    wordList(newOnsets(iStim)) = NOWORDS(kNW);
+                end            
+
+            end
+
+        end
+    end  
+    P.vectList = vectList;
+    P.wordList = wordList;
 end
 
 %% DCM
