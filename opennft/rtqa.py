@@ -28,7 +28,7 @@ class RTQAWindow(QtWidgets.QWidget):
         self.iterBas = 0
         self.iterCond = 0
         self.init = True
-        self.isStopped = True;
+        self.isStopped = True
 
         groupBoxLayout = self.roiGroupBox.layout()
         for i in range(sz):
@@ -39,7 +39,7 @@ class RTQAWindow(QtWidgets.QWidget):
             checkbox.stateChanged.connect(self.roiCheckBoxStateChanged)
             groupBoxLayout.addWidget(checkbox)
 
-        self.roiCheckBoxes = self.roiGroupBox.findChildren(QtWidgets.QCheckBox);
+        self.roiCheckBoxes = self.roiGroupBox.findChildren(QtWidgets.QCheckBox)
 
         self.musterInfo = musterInfo
 
@@ -219,8 +219,8 @@ class RTQAWindow(QtWidgets.QWidget):
 
         self.tsCheckBox.setChecked(True)
 
-        self.iteration = 1;
-        self.blockIter = 0;
+        self.iteration = 1
+        self.blockIter = 0
         self.rMean = np.zeros((sz, xrange))
         self.m2 = np.zeros((sz, 1))
         self.rVar = np.zeros((sz, xrange))
@@ -239,7 +239,7 @@ class RTQAWindow(QtWidgets.QWidget):
         self.linTrendCoeff = np.zeros([])
         self.checkedBoxesInd = []
 
-        self.currentMode = 0;
+        self.currentMode = 0
 
     def onComboboxChanged(self):
 
@@ -390,7 +390,6 @@ class RTQAWindow(QtWidgets.QWidget):
             plotitem = self.meanplot.getPlotItem()
             data = np.append(self.rMean[self.checkedBoxesInd, 0:n], self.meanBas[self.checkedBoxesInd, 0:n], axis=0)
             data = np.append(data, self.meanCond[self.checkedBoxesInd, 0:n], axis=0)
-            # m = len(self.rSNR[self.checkedBoxesInd, 1])
             color = np.array(config.STAT_PLOT_COLORS)[self.checkedBoxesInd]
             color = np.append(color,np.array(config.ROI_BAS_COLORS)[self.checkedBoxesInd])
             color = np.append(color,np.array(config.ROI_COND_COLORS)[self.checkedBoxesInd])
@@ -418,8 +417,10 @@ class RTQAWindow(QtWidgets.QWidget):
 
             names = ['LinTrend betas ']
             pens = [config.PLOT_PEN_COLORS[6]]
+            sz = self.linTrendCoeff.shape[0]
+
             for i in range(sz):
-                names.append('ROI_' + str(i + 1) + ': ' + '{0:.3f}'.format(float(self.linTrendCoeff[i, n])))
+                names.append('ROI_' + str(i + 1) + ': ' + '{0:.3f}'.format(float(self.linTrendCoeff[i, n-1])))
                 pens.append(pg.mkPen(color=config.ROI_PLOT_COLORS[i], width=1.2))
 
             self.makeTextValueLabel(self.trendLabel, names, pens)
@@ -741,7 +742,7 @@ class RTQAWindow(QtWidgets.QWidget):
             cnt = cnt + np.count_nonzero(self.posSpikes[str(i)])
         names = ['( Circles ) <br>Positive spikes: ' + str(int(cnt))]
 
-        cnt = 0;
+        cnt = 0
         for i in range(sz):
             cnt = cnt + np.count_nonzero(self.negSpikes[str(i)])
         names.append('<br>( Diamonds )<br>Negative spikes: ' + str(int(cnt)))
