@@ -499,7 +499,7 @@ class RTQAWindow(QtWidgets.QWidget):
 
         return muster
 
-    def calculate_snr(self, data, n, isNewDCMBlock):
+    def calculate_snr(self, data, indexVolume, isNewDCMBlock):
 
         sz = data.size
 
@@ -509,34 +509,34 @@ class RTQAWindow(QtWidgets.QWidget):
         if self.blockIter:
 
             for i in range(sz):
-                self.rMean[i, n] = self.rMean[i, n - 1] + (data[i] - self.rMean[i, n - 1]) / ( self.blockIter + 1 )
-                self.m2[i] = self.m2[i] + (data[i] - self.rMean[i, n - 1]) * (data[i] - self.rMean[i, n])
-                self.rVar[i, n] = self.m2[i] / self.blockIter
-                self.rSNR[i, n] = self.rMean[i, n] / (self.rVar[i, n] ** (.5))
+                self.rMean[i, indexVolume] = self.rMean[i, indexVolume- 1] + (data[i] - self.rMean[i, indexVolume- 1]) / ( self.blockIter + 1 )
+                self.m2[i] = self.m2[i] + (data[i] - self.rMean[i, indexVolume- 1]) * (data[i] - self.rMean[i, indexVolume])
+                self.rVar[i, indexVolume] = self.m2[i] / self.blockIter
+                self.rSNR[i, indexVolume] = self.rMean[i, indexVolume] / (self.rVar[i, indexVolume] ** (.5))
 
             self.blockIter += 1
 
         else:
 
-            self.rVar[:, n] = np.zeros((sz,))
+            self.rVar[:, indexVolume] = np.zeros((sz,))
             self.m2 = np.zeros((sz,))
-            self.rMean[:, n] = data
+            self.rMean[:, indexVolume] = data
             self.blockIter = 1;
 
         if self.blockIter < 8:
-            self.rSNR[:, n] = np.zeros((sz,))
+            self.rSNR[:, indexVolume] = np.zeros((sz,))
 
         if not self.comboBox.currentIndex():
 
             names = ['SNR ']
             pens = [config.PLOT_PEN_COLORS[6]]
             for i in range(sz):
-                names.append('ROI_' + str(i + 1) + ': ' + '{0:.3f}'.format(float(self.rSNR[i, n])))
+                names.append('ROI_' + str(i + 1) + ': ' + '{0:.3f}'.format(float(self.rSNR[i, indexVolume])))
                 pens.append(pg.mkPen(color=config.ROI_PLOT_COLORS[i], width=1.2))
 
             self.makeTextValueLabel(self.valuesLabel, names, pens)
 
-        self.iteration = n;
+        self.iteration = indexVolume;
 
     def calculate_cnr(self, data, indexVolume, isNewDCMBlock):
 
@@ -605,37 +605,37 @@ class RTQAWindow(QtWidgets.QWidget):
 
                 self.makeTextValueLabel(self.valuesLabel, names, pens)
 
-    def calculate_spikes(self, data, n, posSpikes, negSpikes):
+    def calculate_spikes(self, data, indexVolume, posSpikes, negSpikes):
 
         sz, l = data.shape
-        self.glmProcTimeSeries[:,n] = data[:,0]
+        self.glmProcTimeSeries[:,indexVolume] = data[:,0]
 
         for i in range(sz):
             if posSpikes[i] == 1:
                 if self.posSpikes[str(i)].any():
-                    self.posSpikes[str(i)] = np.append(self.posSpikes[str(i)], n)
+                    self.posSpikes[str(i)] = np.append(self.posSpikes[str(i)], indexVolume)
                 else:
-                    self.posSpikes[str(i)] = np.array([n])
+                    self.posSpikes[str(i)] = np.array([indexVolume])
             if negSpikes[i] == 1 and l > 2:
                 if self.negSpikes[str(i)].any():
-                    self.negSpikes[str(i)] = np.append(self.negSpikes[str(i)], n)
+                    self.negSpikes[str(i)] = np.append(self.negSpikes[str(i)], indexVolume)
                 else:
-                    self.negSpikes[str(i)] = np.array([n])
+                    self.negSpikes[str(i)] = np.array([indexVolume])
 
-    def calculate_mse(self, inputSignal, outputSignal):
+    def calculate_mse(self, indexVolume, inputSignal, outputSignal):
 
         sz = inputSignal.size
         n = self.blockIter-1;
 
         for i in range (sz):
-            self.rMSE[i,n] = (n/(n+1)) * self.rMSE[i,n-1] + ((inputSignal[i]-outputSignal[i])**2)/(n+1)
+            self.rMSE[i,indexVolume] = (n/(n+1)) * self.rMSE[i,indexVolume-1] + ((inputSignal[i]-outputSignal[i])**2)/(n+1)
 
         if self.comboBox.currentIndex() == 4:
 
             names = ['MSE ']
             pens = [config.PLOT_PEN_COLORS[6]]
             for i in range(sz):
-                names.append('ROI_' + str(i + 1) + ': ' + '{0:.3f}'.format(float(self.rMSE[i, n])))
+                names.append('ROI_' + str(i + 1) + ': ' + '{0:.3f}'.format(float(self.rMSE[i, indexVolume])))
                 pens.append(pg.mkPen(color=config.ROI_PLOT_COLORS[i], width=1.2))
 
             self.makeTextValueLabel(self.mseLabel, names, pens)

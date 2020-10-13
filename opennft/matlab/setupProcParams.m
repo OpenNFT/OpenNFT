@@ -391,10 +391,12 @@ if ~exist(P.nfbDataFolder, 'dir')
     mkdir(P.nfbDataFolder);
 end
 
-assignin('base', 'rtQA_matlab', rtQA_matlab);
+
 if P.isRTQA
+    assignin('base', 'rtQA_matlab', rtQA_matlab);
     assignin('base', 'rtQA_python', rtQA_python);
 end
+
 assignin('base', 'mainLoopData', mainLoopData);
 assignin('base', 'P', P);
 if P.UseTCPData, assignin('base', 'tcp', tcp); end

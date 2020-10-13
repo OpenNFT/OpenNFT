@@ -359,6 +359,7 @@ class OpenNFT(QWidget):
 
         return plots
 
+    # --------------------------------------------------------------------------
     def textChangedDual(self, leFrom, leTo):
         pos = leTo.cursorPosition()
         leTo.setText(leFrom.text())
@@ -454,18 +455,21 @@ class OpenNFT(QWidget):
         self.onChangeNegMapVisible()
         self.onChangeUseUDPFeedback()
 
+    # --------------------------------------------------------------------------
     def onChangePosMapVisible(self):
         is_visible = self.posMapCheckBox.isChecked()
 
         self.mosaicImageView.set_pos_map_visible(is_visible)
         self.orthView.set_pos_map_visible(is_visible)
 
+    # --------------------------------------------------------------------------
     def onChangeNegMapVisible(self):
         is_visible = self.negMapCheckBox.isChecked()
 
         self.mosaicImageView.set_neg_map_visible(is_visible)
         self.orthView.set_neg_map_visible(is_visible)
 
+    # --------------------------------------------------------------------------
     def onChangeNegMapPolicy(self):
         if self.windowRTQA:
             is_rtqa_volume = self.windowRTQA.volumeCheckBox.isChecked()
@@ -936,7 +940,7 @@ class OpenNFT(QWidget):
             if not self.P['isRestingState']:
                 self.windowRTQA.calculate_cnr(data, n, isNewDCMBlock)
             self.windowRTQA.calculate_spikes(dataGLM, n, posSpikes, negSpikes)
-            self.windowRTQA.calculate_mse(dataGLM, dataProc[:, n])
+            self.windowRTQA.calculate_mse(n, dataGLM, dataProc[:, n])
 
             self.windowRTQA.plot_rtQA(n+1)
             self.windowRTQA.plot_mcmd(dataMC[n, :],isNewDCMBlock)
@@ -1334,7 +1338,7 @@ class OpenNFT(QWidget):
                 if self.windowRTQA:
                     self.windowRTQA.deleteLater()
 
-                self.windowRTQA = rtqa.RTQAWindow(int(self.P['NrROIs']),xrange, indBas, indCond, self.musterInfo, parent=self)
+                self.windowRTQA = rtqa.RTQAWindow(int(self.P['NrROIs']), xrange, indBas, indCond, self.musterInfo, parent=self)
                 self.windowRTQA.volumeCheckBox.stateChanged.connect(self.onShowRtqaVol)
                 self.windowRTQA.volumeCheckBox.stateChanged.connect(self.onChangeNegMapPolicy)
                 self.windowRTQA.volumeCheckBox.stateChanged.connect(self.onInteractWithMapImage)
@@ -1463,14 +1467,12 @@ class OpenNFT(QWidget):
             self.eng.offlineImageSwitch(nargout=0)
 
     # --------------------------------------------------------------------------
-
     def onSmoothedChecked(self):
 
         is_rtqa_smoothed = self.windowRTQA.smoothedCheckBox.isChecked()
         self.eng.assignin('base', 'isSmoothed', is_rtqa_smoothed, nargout=0)
 
     # --------------------------------------------------------------------------
-
     def onModeChanged(self):
 
         if self.windowRTQA:
@@ -1634,6 +1636,7 @@ class OpenNFT(QWidget):
             self.updateOrthViewAsync()
             self.onInteractWithMapImage()
 
+    # --------------------------------------------------------------------------
     def updateOrthViewAsync(self):
         if not self.engSPM:
             return
@@ -1649,6 +1652,7 @@ class OpenNFT(QWidget):
             self.currentCursorPos, self.currentProjection.value, bgType,
             rtqa, async=True, nargout=0)
 
+    # --------------------------------------------------------------------------
     def onChangeOrthViewCursorPosition(self, pos, proj):
         self.currentCursorPos = pos
         self.currentProjection = proj
@@ -1656,6 +1660,7 @@ class OpenNFT(QWidget):
         logger.debug('New cursor coords {} for proj "{}" have been received', pos, proj.name)
         self.updateOrthViewAsync()
 
+    # --------------------------------------------------------------------------
     def onInteractWithMapImage(self):
         sender = self.sender()
 
