@@ -74,8 +74,6 @@ from opennft import (
     eventrecorder as erd,
 )
 
-import matlab
-
 if config.USE_MRPULSE:
     from opennft import mrpulse
 
@@ -837,14 +835,14 @@ class OpenNFT(QWidget):
 
                     if config.USE_MATLAB_MODEL_HELPER:
                         self.tagFuture = self.mlModelHelper.engine.dcmCalc(
-                            'Tag', nargout=1, async=True)
+                            'Tag', nargout=1, background=True)
                         self.oppFuture = self.mlModelHelper.engine.dcmCalc(
-                            'Opp', nargout=1, async=True)
+                            'Opp', nargout=1, background=True)
                     elif config.USE_PTB_HELPER:
                         self.tagFuture = self.mlPtbDcmHelper.engine.dcmCalc(
-                            'Tag', nargout=1, async=True)
+                            'Tag', nargout=1, background=True)
                         self.oppFuture = self.mlPtbDcmHelper.engine.dcmCalc(
-                            'Opp', nargout=1, async=True)
+                            'Opp', nargout=1, background=True)
                     else:
                         dcmTagLE = []
                         dcmOppLE = []
@@ -1414,7 +1412,7 @@ class OpenNFT(QWidget):
             for i in range(len(self.plugins)): self.plugins[i].finalize()
             self.finalizeUdpSender()
             self.eng.workspace['rtQA_python'] = self.windowRTQA.data_packing()
-            self.nfbFinStarted = self.eng.nfbSave(self.iteration, nargout=0, async=True)
+            self.nfbFinStarted = self.eng.nfbSave(self.iteration, nargout=0, background=True)
             self.fFinNFB = False
 
         if self.recorder.records.shape[0] > 2:
@@ -1616,7 +1614,7 @@ class OpenNFT(QWidget):
 
         self.orthViewUpdateFuture = self.engSPM.helperUpdateOrthView(
             self.currentCursorPos, self.currentProjection.value, bgType,
-            rtqa, async=True, nargout=0)
+            rtqa, background=True, nargout=0)
 
     def onChangeOrthViewCursorPosition(self, pos, proj):
         self.currentCursorPos = pos
