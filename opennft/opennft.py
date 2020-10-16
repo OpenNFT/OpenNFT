@@ -42,6 +42,7 @@ import re
 import fnmatch
 import threading
 import multiprocessing
+import platform
 
 from loguru import logger
 
@@ -1101,6 +1102,14 @@ class OpenNFT(QWidget):
         ts = time.time()
 
         self.isInitialized = False
+
+        if config.START_MATLAB_SCRIPT_USE:
+            if platform.system() == 'Linux':
+                os.system('sh linux_startmatlab.sh')
+            elif platform.system() == 'Darwin':
+                os.system('./macos_startmatlab.sh')
+            else:
+                os.system('./win_startmatlab.bat')
 
         if not runmatlab.connect_to_matlab(start=start):
             if not start:

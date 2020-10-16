@@ -68,7 +68,7 @@ class RgbaMapImage:
         self._no_value = no_value
 
         if isinstance(colormap, str):
-            colormap = cm.get_cmap(colormap)
+            colormap = cm.get_cmap(colormap).__copy__()
 
         self._colormap = colormap
         self._colormap.set_bad(alpha=0.0)

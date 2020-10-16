@@ -30,7 +30,7 @@ Alternative instalaltions and useful tips are also listed below.
 Install with conda and e.g. Python 3.6:
 - `$ conda create -n OpenNFT_venv python=3.6 pip setuptools`
 - `$ conda activate OpenNFT_venv`
-- `(OpenNFT_venv)$ python -m pip install -U pip setuptools`
+- `(OpenNFT_venv)$ python -m pip install -U pip setuptools wheel`
 - (optional for numpy+MKL) `(OpenNFT_venv)$ conda install mkl numpy`
 - `(OpenNFT_venv)$ pip install git+https://github.com/OpenNFT/OpenNFT.git --install-option "--matlab-root=<MATLABROOT>"`
 
@@ -38,7 +38,7 @@ Install without conda using your existing Python (>=3.6, <3.9):
 - `$ python -m venv OpenNFT_venv`
 - (Linux/macos) `$ source OpenNFT_venv/bin/acivate`
 - (Windows) `$ OpenNFT_venv\Scripts\acivate.bat`
-- `(OpenNFT_venv)$ python -m pip install -U pip setuptools`
+- `(OpenNFT_venv)$ python -m pip install -U pip setuptools wheel`
 - `(OpenNFT_venv)$ pip install git+https://github.com/OpenNFT/OpenNFT.git --install-option "--matlab-root=<MATLABROOT>"`
 
 Also if you do not set install option `--matlab-root` we try to find Matlab automatically.
