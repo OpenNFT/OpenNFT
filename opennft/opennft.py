@@ -216,9 +216,9 @@ class OpenNFT(QWidget):
             if platform.system() == 'Linux':
                 os.system('sh linux_startmatlab.sh')
             elif platform.system() == 'Darwin':
-                os.system('./macos_startmatlab.sh')
+                os.system('sh macos_startmatlab.sh')
             else:
-                os.system('./win_startmatlab.bat')
+                os.system('win_startmatlab.bat')
 
         # Core Matlab helper process
         matlab_helpers = runmatlab.get_matlab_helpers()
