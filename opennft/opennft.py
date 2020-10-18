@@ -61,6 +61,10 @@ from PyQt5.QtCore import QSettings, QTimer, QEvent, QRegExp
 from PyQt5.uic import loadUi
 from PyQt5.QtGui import QRegExpValidator
 
+from pathlib import Path
+import matlab.engine as me
+import subprocess
+
 from opennft import (
     config,
     runmatlab,
@@ -213,12 +217,15 @@ class OpenNFT(QWidget):
         self.musterInfo = {}
 
         if config.START_MATLAB_SCRIPT_USE:
-            if platform.system() == 'Linux':
-                os.system('sh linux_startmatlab.sh')
-            elif platform.system() == 'Darwin':
-                os.system('sh macos_startmatlab.sh')
-            else:
-                os.system('win_startmatlab.bat')
+            p = Path(me._engine_dir)
+            extern = p.parts.index('extern')
+            matlab_path = str(Path(*p.parts[:extern]))+'\\bin\\matlab'
+            matlab_sessions = ["matlab.engine.shareEngine('MATLAB_NFB_MAIN_00001')",
+                               "matlab.engine.shareEngine('MATLAB_NFB_PTB_00001')",
+                               "matlab.engine.shareEngine('MATLAB_NFB_SPM_00001')"]
+            for i in range(3):
+                subprocess.run([matlab_path, '-desktop', '-r', matlab_sessions[i]])
+
 
         # Core Matlab helper process
         matlab_helpers = runmatlab.get_matlab_helpers()
