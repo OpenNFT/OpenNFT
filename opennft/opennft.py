@@ -226,9 +226,6 @@ class OpenNFT(QWidget):
             if platform.system() == 'Linux' or platform.system() == 'Darwin':
                 for i in range(3):
                     subprocess.run([matlab_path, '-desktop', '-r', matlab_sessions[i], '> /dev/null 2>&1 &'])
-            else:
-                for i in range(3):
-                    subprocess.run([matlab_path, '-regserver', '-desktop', '-r', matlab_sessions[i]])
 
 
         # Core Matlab helper process
