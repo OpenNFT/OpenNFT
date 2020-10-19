@@ -219,12 +219,16 @@ class OpenNFT(QWidget):
         if config.START_MATLAB_SCRIPT_USE:
             p = Path(me._engine_dir)
             extern = p.parts.index('extern')
-            matlab_path = str(Path(*p.parts[:extern]))+'/bin/matlab'
+            matlab_path = str(Path(*p.parts[:extern], 'bin', 'matlab'))
             matlab_sessions = ["matlab.engine.shareEngine('MATLAB_NFB_MAIN_00001')",
                                "matlab.engine.shareEngine('MATLAB_NFB_PTB_00001')",
                                "matlab.engine.shareEngine('MATLAB_NFB_SPM_00001')"]
-            for i in range(3):
-                subprocess.run([matlab_path, '-desktop', '-r', matlab_sessions[i]])
+            if platform.system() == 'Linux' or platform.system() == 'Darwin':
+                for i in range(3):
+                    subprocess.run([matlab_path, '-desktop', '-r', matlab_sessions[i]], '> /dev/null 2>&1 &')
+            else:
+                for i in range(3):
+                    subprocess.run([matlab_path, '-regserver', '-desktop', '-r', matlab_sessions[i]])
 
 
         # Core Matlab helper process
