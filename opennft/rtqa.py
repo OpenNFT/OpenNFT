@@ -421,7 +421,7 @@ class RTQAWindow(QtWidgets.QWidget):
         # Linear trend coefficients value label
         if self.comboBox.currentIndex() == 5:
 
-            names = ['LinTrend betas ']
+            names = ['Linear trend beta ']
             pens = [config.PLOT_PEN_COLORS[6]]
             sz = self.linTrendCoeff.shape[0]
             for i in range(sz):
