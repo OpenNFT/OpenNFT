@@ -9,4 +9,4 @@
 /usr/local/Polyspace/R2020b/bin/matlab -desktop -r "matlab.engine.shareEngine('MATLAB_NFB_PTB_00001')" > /dev/null 2>&1 &
 /usr/local/Polyspace/R2020b/bin/matlab -desktop -r "matlab.engine.shareEngine('MATLAB_NFB_SPM_00001')" > /dev/null 2>&1 &
 # uncomment for DCM feedback
-#/usr/local/Polyspace/R2020b/bin/matlab -nodesktop -r "matlab.engine.shareEngine('MATLAB_NFB_MODEL_HELPER_00001')" > /dev/null 2>&1 &
+#/usr/local/Polyspace/R2020b/bin/matlab -desktop -r "matlab.engine.shareEngine('MATLAB_NFB_MODEL_HELPER_00001')" > /dev/null 2>&1 &
