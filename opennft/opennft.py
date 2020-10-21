@@ -216,18 +216,6 @@ class OpenNFT(QWidget):
         self.outputSamples = {}
         self.musterInfo = {}
 
-        if config.START_MATLAB_SCRIPT_USE:
-            p = Path(me._engine_dir)
-            extern = p.parts.index('extern')
-            matlab_path = str(Path(*p.parts[:extern], 'bin', 'matlab'))
-            matlab_sessions = ["matlab.engine.shareEngine('MATLAB_NFB_MAIN_00001')",
-                               "matlab.engine.shareEngine('MATLAB_NFB_PTB_00001')",
-                               "matlab.engine.shareEngine('MATLAB_NFB_SPM_00001')"]
-            if platform.system() == 'Linux' or platform.system() == 'Darwin':
-                for i in range(3):
-                    subprocess.run([matlab_path, '-desktop', '-r', matlab_sessions[i], '> /dev/null 2>&1 &'])
-
-
         # Core Matlab helper process
         matlab_helpers = runmatlab.get_matlab_helpers()
 
@@ -1115,6 +1103,18 @@ class OpenNFT(QWidget):
 
     # --------------------------------------------------------------------------
     def initialize(self, start=True):
+
+        if config.START_MATLAB_SCRIPT_USE:
+            p = Path(me._engine_dir)
+            extern = p.parts.index('extern')
+            matlab_path = str(Path(*p.parts[:extern], 'bin', 'matlab'))
+            matlab_sessions = ["matlab.engine.shareEngine('MATLAB_NFB_MAIN_00001')",
+                               "matlab.engine.shareEngine('MATLAB_NFB_PTB_00001')",
+                               "matlab.engine.shareEngine('MATLAB_NFB_SPM_00001')"]
+            if platform.system() == 'Linux' or platform.system() == 'Darwin':
+                for i in range(3):
+                    subprocess.run([matlab_path, '-desktop', '-r', matlab_sessions[i], '> /dev/null 2>&1 &'])
+
         ts = time.time()
 
         self.isInitialized = False
