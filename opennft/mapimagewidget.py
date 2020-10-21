@@ -16,6 +16,7 @@ from PyQt5 import QtCore
 
 from opennft import pgext
 
+from copy import copy
 
 ColormapType = t.Union[str, colors.Colormap]
 Thresholds = collections.namedtuple('Thresholds', ('lower', 'upper'))
@@ -68,7 +69,7 @@ class RgbaMapImage:
         self._no_value = no_value
 
         if isinstance(colormap, str):
-            colormap = cm.get_cmap(colormap).__copy__()
+            colormap = copy(cm.get_cmap(colormap))
 
         self._colormap = colormap
         self._colormap.set_bad(alpha=0.0)

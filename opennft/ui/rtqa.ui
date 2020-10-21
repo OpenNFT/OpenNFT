@@ -59,7 +59,7 @@
           </widget>
          </item>
          <item>
-          <layout class="QVBoxLayout" name="snrPlot"/>
+          <layout class="QVBoxLayout" name="snrPlotLayout"/>
          </item>
         </layout>
        </item>
@@ -98,7 +98,7 @@
               </widget>
              </item>
              <item>
-              <layout class="QVBoxLayout" name="fdPlot"/>
+              <layout class="QVBoxLayout" name="fdPlotLayout"/>
              </item>
             </layout>
            </item>
@@ -121,7 +121,7 @@
               </widget>
              </item>
              <item>
-              <layout class="QVBoxLayout" name="tdPlot"/>
+              <layout class="QVBoxLayout" name="tdPlotLayout"/>
              </item>
             </layout>
            </item>
@@ -144,7 +144,7 @@
               </widget>
              </item>
              <item>
-              <layout class="QVBoxLayout" name="rdPlot"/>
+              <layout class="QVBoxLayout" name="rdPlotLayout"/>
              </item>
             </layout>
            </item>
@@ -192,7 +192,7 @@
               </widget>
              </item>
              <item>
-              <layout class="QVBoxLayout" name="cnrPlot"/>
+              <layout class="QVBoxLayout" name="cnrPlotLayout"/>
              </item>
             </layout>
            </item>
@@ -215,7 +215,7 @@
               </widget>
              </item>
              <item>
-              <layout class="QVBoxLayout" name="meanPlot"/>
+              <layout class="QVBoxLayout" name="meanPlotLayout"/>
              </item>
             </layout>
            </item>
@@ -238,7 +238,7 @@
               </widget>
              </item>
              <item>
-              <layout class="QVBoxLayout" name="varPlot"/>
+              <layout class="QVBoxLayout" name="varPlotLayout"/>
              </item>
             </layout>
            </item>
@@ -279,7 +279,7 @@
           </widget>
          </item>
          <item>
-          <layout class="QVBoxLayout" name="spikesPlot"/>
+          <layout class="QVBoxLayout" name="spikesPlotLayout"/>
          </item>
         </layout>
        </item>
@@ -325,7 +325,7 @@
           </widget>
          </item>
          <item>
-          <layout class="QVBoxLayout" name="msePlot"/>
+          <layout class="QVBoxLayout" name="msePlotLayout"/>
          </item>
         </layout>
        </item>
@@ -371,7 +371,7 @@
           </widget>
          </item>
          <item>
-          <layout class="QVBoxLayout" name="linearTreandPlot"/>
+          <layout class="QVBoxLayout" name="linearTreandPlotLayout"/>
          </item>
         </layout>
        </item>
@@ -438,6 +438,9 @@
           <widget class="QCheckBox" name="tsCheckBox">
            <property name="text">
             <string>Time series</string>
+           </property>
+           <property name="checked">
+            <bool>true</bool>
            </property>
           </widget>
          </item>
