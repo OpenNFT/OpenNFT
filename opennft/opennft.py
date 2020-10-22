@@ -74,8 +74,6 @@ from opennft import (
     eventrecorder as erd,
 )
 
-import matlab
-
 if config.USE_MRPULSE:
     from opennft import mrpulse
 

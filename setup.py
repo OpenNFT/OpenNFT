@@ -22,7 +22,7 @@ AUTHOR = 'OpenNFT Team'
 AUTHOR_EMAIL = 'opennft@gmail.com'
 DESCRIPTION = 'An open-source Python/Matlab framework for real-time fMRI neurofeedback training'
 
-PYTHON_REQUIRES = '>=3.5, <3.7'
+PYTHON_REQUIRES = '>=3.6, <3.9'
 
 ROOT_DIR = pathlib.Path(__file__).parent
 
@@ -206,8 +206,9 @@ setup(
         'License :: OSI Approved :: GPL-3.0 License',
         'Programming Language :: Python',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: Implementation :: CPython',
     ],
 
