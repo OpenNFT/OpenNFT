@@ -1,5 +1,15 @@
 function [ cnrData ] = cnr_calc( index, vol, volSmoothed, cnrData, isSmoothed )
-
+% Function to calculate Contrast-to-Noise Ratio for volume
+%
+% input:
+% iteration   - which volume is now processing
+% vol - the volume for processing
+% volSmoothed - smoothed volume for processing
+% cnrData - structure with values of smoothed and non-smoothed mean, m2, СNR values and baseline and condition indexes
+%
+% output:
+% cnrVol   - updated structure of CNR data
+%
     shape = size(vol);
     cnrData.cnrVol = zeros(shape);
     

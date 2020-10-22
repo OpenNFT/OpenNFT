@@ -181,6 +181,7 @@ spm_smooth(reslVol, smReslVol, gKernel);
 
 % statMap2D_pos = zeros(img2DdimY, img2DdimX);
 
+% RTQA calculations of SNR and CNR
 if P.isRTQA && indVolNorm > FIRST_SNR_VOLUME
     
     if isDCM && ~isempty(find(P.beginDCMblock == indVol-P.nrSkipVol,1))
@@ -196,7 +197,8 @@ if P.isRTQA && indVolNorm > FIRST_SNR_VOLUME
     end
         
     rtQA_matlab.snrMapCreated = 1; 
-    
+
+    % Transfer data for following visualization
     if isShowRtqaVol
         
         if ~rtQAMode || P.isRestingState

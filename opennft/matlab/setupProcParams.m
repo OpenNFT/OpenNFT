@@ -322,7 +322,8 @@ if P.isRTQA
         rtQA_matlab.cnrData.condData.meanSmoothed = [];
         rtQA_matlab.cnrData.condData.m2Smoothed = [];
         rtQA_matlab.cnrData.condData.iteration = 1;
-        
+
+        % indexes of baseline and condition for CNR calculation
         tmpindexesCond = find(SPM.xX.X(:,contains(SPM.xX.name, P.CondName))>0.6);
         tmpindexesBas = find(SPM.xX.X(:,contains(SPM.xX.name, P.CondName))<0.1);
         if isDCM

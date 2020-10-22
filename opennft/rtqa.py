@@ -213,8 +213,9 @@ class RTQAWindow(QtWidgets.QWidget):
 
     # --------------------------------------------------------------------------
     def onComboboxChanged(self):
-        # SNR/CNR label switching
-        # Both modes use the same label
+        """  SNR/CNR label switching. Both modes use the same label
+        """
+
         state = self.comboBox.currentIndex()
 
         # SNR state
@@ -245,8 +246,9 @@ class RTQAWindow(QtWidgets.QWidget):
 
     # --------------------------------------------------------------------------
     def onRadioButtonStateChanged(self):
-        # FD and MD mode change
-        # Mode changing switch plots and plot title
+        """ FD and MD mode change. Mode changing switch plots and plot title
+        """
+
         if self.mcrRadioButton.isChecked():
             names = ['Micro Displacement']
             pens = [config.PLOT_PEN_COLORS[0]]
@@ -266,7 +268,13 @@ class RTQAWindow(QtWidgets.QWidget):
 
     # --------------------------------------------------------------------------
     def makeTextValueLabel(self, label, names, pens, lineBreak = ' '):
-        # Dynamic generation of titles and value labels
+        """ Dynamic generation of titles and value labels
+
+        :param label: label for text update
+        :param names: set of names
+        :param pens: set of pens for each name
+        :param lineBreak: line break for value labels, space by default for title labels
+        """
 
         label.setText('')
         legendText = '<html><head/><body><p>'
@@ -282,9 +290,8 @@ class RTQAWindow(QtWidgets.QWidget):
 
     # --------------------------------------------------------------------------
     def roiCheckBoxStateChanged(self):
-        # Redrawing plots when the set of
-        # selected ROIs is changed
-        # even if run is stopped
+        """ Redrawing plots when the set of selected ROIs is changed even if run is stopped
+        """
 
         self.init = True
         if self.isStopped:
@@ -331,7 +338,13 @@ class RTQAWindow(QtWidgets.QWidget):
 
     # --------------------------------------------------------------------------
     def plotTs(self, init, plotitem, data, checkedBoxesInd):
-        # Time-series plot method
+        """ Time-series plot method
+
+        :param init: flag for plot initializtion
+        :param plotitem: time-series plotitem
+        :param data: time-series value for drawing
+        :param checkedBoxesInd: indexes of selected ROIs
+        """
 
         if self.tsCheckBox.isChecked():
 
@@ -367,7 +380,10 @@ class RTQAWindow(QtWidgets.QWidget):
 
     # --------------------------------------------------------------------------
     def plotRTQA(self, n):
-        # Encapsulated plots drawing
+        """ Encapsulated plots drawing
+
+        :param n: last volume index
+        """
 
         # The set of active ROIs changing
         if self.init:
@@ -406,7 +422,7 @@ class RTQAWindow(QtWidgets.QWidget):
         # Spikes plot
         plotitem = self.spikesPlot.getPlotItem()
         data = self.glmProcTimeSeries[self.checkedBoxesInd, 0:n]
-        self.plotStepsAndSpikes(self.init, plotitem, data, self.checkedBoxesInd)
+        self.plotSpikes(self.init, plotitem, data, self.checkedBoxesInd)
 
         # Kalman filter MSE plot
         plotitem = self.msePlot.getPlotItem()
@@ -433,7 +449,14 @@ class RTQAWindow(QtWidgets.QWidget):
 
     # --------------------------------------------------------------------------
     def plotStatValues(self, init, plotitem, data, color, style):
-        # Drawing method for mean and variance statistics
+        """ Drawing method for mean and variance statistics
+
+        :param init: flag for plot initializtion
+        :param plotitem: mean or variance plotitem
+        :param data: signal values for drawing
+        :param color: color of each ROI line
+        :param style: style of each ROI line
+        """
 
         if self.tsCheckBox.isChecked():
 
@@ -470,7 +493,11 @@ class RTQAWindow(QtWidgets.QWidget):
 
     # --------------------------------------------------------------------------
     def plotDisplacements(self, data, isNewDCMBlock):
-        # Calculation and drawing of Framewise and Micro Displacements
+        """ Calculation and drawing of Framewise and Micro Displacements
+
+        :param data: motion correction data
+        :param isNewDCMBlock: flag of new dcm block
+        """
 
         self._fd.calc_mc_plots(data, isNewDCMBlock)
         
@@ -497,8 +524,16 @@ class RTQAWindow(QtWidgets.QWidget):
         self.makeTextValueLabel(self.mcmdValuesLabel, names, pens, lineBreak='<br>')
 
     # --------------------------------------------------------------------------
-    def plotStepsAndSpikes(self, init, plotitem, data, checkedBoxesInd):
+    def plotSpikes(self, init, plotitem, data, checkedBoxesInd):
+        """ Spikes plot drawing
 
+        :param init: flag for plot initializtion
+        :param plotitem: spikes plotitem
+        :param data: signal values for drawing
+        :param checkedBoxesInd: indexes of selected ROIs
+        """
+
+        # First part - line drawing
         sz, l = data.shape
         x = np.arange(1, l+1, dtype=np.float64)
 
@@ -513,12 +548,13 @@ class RTQAWindow(QtWidgets.QWidget):
                 p = plotitem.plot(pen=pen)
                 plots.append(p)
 
-            self.plotStepsAndSpikes.__dict__[plotitem] = plots, muster
+            self.plotSpikes.__dict__[plotitem] = plots, muster
 
-        plots = self.plotStepsAndSpikes.__dict__[plotitem][0]
+        plots = self.plotSpikes.__dict__[plotitem][0]
         for p, y in zip(plots, data):
             p.setData(x=x, y=np.array(y))
 
+        # Second part - spikes marking
         for i, c in zip(range(sz),np.array(config.ROI_PLOT_COLORS)[checkedBoxesInd]):
 
             roiInd = checkedBoxesInd[i]
@@ -562,13 +598,13 @@ class RTQAWindow(QtWidgets.QWidget):
 
         items = plotitem.listDataItems()
 
-        for m in self.plotStepsAndSpikes.__dict__[plotitem][1]:
+        for m in self.plotSpikes.__dict__[plotitem][1]:
             items.remove(m)
 
         if data.any():
             plotitem.setYRange(np.min(self.glmProcTimeSeries)-1, np.max(self.glmProcTimeSeries)+1, padding=0.0)
 
-        # number of spikes counting label
+        # number of spikes label
         sz, l = self.glmProcTimeSeries.shape
         cnt = 0
         for i in range(sz):
@@ -584,9 +620,15 @@ class RTQAWindow(QtWidgets.QWidget):
 
     # --------------------------------------------------------------------------
     def calculateSNR(self, data, indexVolume, isNewDCMBlock):
+        """ Recursive time-series SNR calculation
+
+        :param data: new value of raw time-series
+        :param indexVolume: current volume index
+        :param isNewDCMBlock: flag of new dcm block
+        :return: calculated SNR are written in RTQA class
+        """
 
         sz = data.size
-
         if isNewDCMBlock:
             self.blockIter=0;
 
@@ -624,6 +666,13 @@ class RTQAWindow(QtWidgets.QWidget):
 
     # --------------------------------------------------------------------------
     def calculateCNR(self, data, indexVolume, isNewDCMBlock):
+        """ Recursive time-series CNR calculation
+
+        :param data: new value of raw time-series
+        :param indexVolume: current volume index
+        :param isNewDCMBlock: flag of new dcm block
+        :return: calculated CNR are written in RTQA class
+        """
 
         sz = data.size
 
@@ -692,6 +741,13 @@ class RTQAWindow(QtWidgets.QWidget):
 
     # --------------------------------------------------------------------------
     def calculateSpikes(self, data, indexVolume, posSpikes, negSpikes):
+        """ Spikes and GLM signal recording
+
+        :param data: signal values after GLM process
+        :param indexVolume: current volume index
+        :param posSpikes: flags of positive spikes
+        :param negSpikes: flags of negative spikes
+        """
 
         sz, l = data.shape
         self.glmProcTimeSeries[:,indexVolume] = data[:,0]
@@ -710,6 +766,13 @@ class RTQAWindow(QtWidgets.QWidget):
 
     # --------------------------------------------------------------------------
     def calculateMSE(self, indexVolume, inputSignal, outputSignal):
+        """ Low pass filter performance estimated by recursive mean squared error
+
+        :param indexVolume: current volume index
+        :param inputSignal: signal value before filtration
+        :param outputSignal: signal value after filtration
+
+        """
 
         sz = inputSignal.size
         n = self.blockIter-1;
@@ -729,6 +792,8 @@ class RTQAWindow(QtWidgets.QWidget):
 
     # --------------------------------------------------------------------------
     def dataPacking(self):
+        """ Packaging of python RTQA data for following save
+        """
 
         tsRTQA = dict.fromkeys(['rMean', 'rVar', 'rSNR',
                                 'meanBas', 'varBas', 'meanCond', 'varCond', 'rCNR',
