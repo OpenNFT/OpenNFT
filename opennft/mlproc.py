@@ -13,6 +13,9 @@ Written by Evgeny Prilepin
 
 import time
 import multiprocessing as mp
+import platform
+import subprocess
+from pathlib import Path
 
 from loguru import logger
 
@@ -54,6 +57,20 @@ class MatlabSharedEngineHelper:
     def connect(self, start=True, name_prefix=None):
         """Connects to a shared matlab session
         """
+        if start and config.START_MATLAB_SCRIPT_USE and not me.find_matlab():
+            p = Path(me._engine_dir)
+            extern = p.parts.index('extern')
+            matPath = str(Path(*p.parts[:extern], 'bin', 'matlab'))
+            matSessions = ["matlab.engine.shareEngine('MATLAB_NFB_MAIN_00001')",
+                               "matlab.engine.shareEngine('MATLAB_NFB_PTB_00001')",
+                               "matlab.engine.shareEngine('MATLAB_NFB_SPM_00001')"]
+            if platform.system() == 'Linux' or platform.system() == 'Darwin':
+                for i in range(3):
+                    subprocess.run([matPath, '-desktop', '-r', matSessions[i], '> /dev/null 2>&1 &'])
+            while not ('MATLAB_NFB_MAIN_00001' in me.find_matlab() and 'MATLAB_NFB_PTB_00001' in me.find_matlab()
+                   and 'MATLAB_NFB_SPM_00001' in me.find_matlab()):
+                time.sleep(0.1)
+
         if self.engine is not None:
             return True
 
