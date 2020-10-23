@@ -2,6 +2,7 @@
 
 import sys
 import collections
+import multiprocessing as mp
 import typing
 
 from loguru import logger
@@ -123,4 +124,5 @@ def main():
 
 
 if __name__ == '__main__':
+    mp.set_start_method('spawn')
     main()
