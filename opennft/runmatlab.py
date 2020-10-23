@@ -112,6 +112,7 @@ def is_shared_matlab() -> bool:
 
 
 def main():
+    mp.set_start_method('spawn')
     config.MATLAB_NAME_SUFFIX = _SHARED_SUFFIX
 
     with utils.timeit('Running Matlab shared engines: '):
@@ -124,5 +125,4 @@ def main():
 
 
 if __name__ == '__main__':
-    mp.set_start_method('spawn')
     main()

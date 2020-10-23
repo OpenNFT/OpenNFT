@@ -18,6 +18,8 @@ from opennft import opennft
 
 
 def main():
+    mp.set_start_method('spawn')
+
     # Override default exception hook to show any exceptions on PyQt5 slots
     excepthook.set_hook()
 
@@ -36,5 +38,4 @@ def main():
 
 
 if __name__ == '__main__':
-    mp.set_start_method('spawn')
     sys.exit(main())
