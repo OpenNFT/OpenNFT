@@ -1,16 +1,14 @@
 function [ snrData ] = snr_calc( iteration, vol, volSmoothed, snrData, isSmoothed )
-% Function to calculate Signal-Noise Ratio for volume
+% Function to calculate Signal-to-Noise Ratio for volume
 % 
 % input:
 % iteration   - which volume is now processing
 % vol - the volume for processing
-% mean      - mean value of previous iterations
-% m2      - the second moment of the signal
+% volSmoothed - smoothed volume for processing
+% snrData - structure with values of smoothed and non-smoothed mean, m2 and SNR values
 %
 % output:
-% snrVol   - SNR volume statistic
-% mean  - the new mean value of the signal
-% m2 - the new second moment of the signal
+% snrVol   - updated structure of SNR data
 %
     
     meanSmoothed = snrData.meanSmoothed;
