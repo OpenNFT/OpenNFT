@@ -19,17 +19,12 @@ PLUGIN_PATH = os.path.join(ROOT_PATH, 'plugins')
 OpenNFT_ICON = os.path.join(ROOT_PATH, 'ui', 'images', 'appicon.png')
 MATLAB_FUNCTIONS_PATH = os.path.join(ROOT_PATH, 'matlab')
 
-# Default setting for Windows
-# Set True on MacOS and Linux to avoid Matlab session connection error
-START_MATLAB_SCRIPT_USE = False
-
 # Matlab sessions
 MAIN_MATLAB_NAME = 'MATLAB_NFB_MAIN'
 PTB_MATLAB_NAME = 'MATLAB_NFB_PTB'
 SPM_MATLAB_NAME = 'MATLAB_NFB_SPM'
 MODEL_HELPER_MATLAB_NAME = 'MATLAB_NFB_MODEL_HELPER'
 
-# For MacOS and Linux this flags are ignored but set in the main code
 MAIN_MATLAB_STARTUP_OPTIONS = '-nodesktop'
 PTB_MATLAB_STARTUP_OPTIONS = '-nodesktop'
 SPM_MATLAB_STARTUP_OPTIONS = '-nodesktop'

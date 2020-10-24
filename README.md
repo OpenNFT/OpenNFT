@@ -84,7 +84,7 @@ OpenNFT               1.0.0rc0   c:\workspace\projects\opennft
 
 Update pip:
 
-`python -m pip install -U pip setuptools`
+`python -m pip install -U pip setuptools wheel`
 
 Update dependencies:
 

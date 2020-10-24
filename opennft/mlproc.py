@@ -40,7 +40,7 @@ class MatlabSharedEngineHelper:
         self._startup_options = startup_options
         self._shared_name = shared_name
         self._name = ''
-        self._pid = mp.Value('i', 0)
+        self._terminate_event = mp.Event()
         self._proc = None  # type: mp.Process
 
     @property
@@ -82,9 +82,8 @@ class MatlabSharedEngineHelper:
 
         logger.info('Destroy Matlab engine "{}"...', self.name)
 
-        if self._pid.value != -1:
-            # send termination signal
-            self._pid.value = -1
+        # send termination signal
+        self._terminate_event.set()
 
         self._engine = None
 
@@ -149,10 +148,10 @@ class MatlabSharedEngineHelper:
                       shared_name=None):
 
         pid = mp.current_process().pid
-        self._pid.value = pid
 
         logger.info('Starting Matlab engine "{}" helper process {}...', shared_name, pid)
 
+        self._terminate_event.clear()
         event.clear()
 
         try:
@@ -174,7 +173,7 @@ class MatlabSharedEngineHelper:
         finally:
             event.set()
 
-        while self._pid.value != -1:
+        while not self._terminate_event.is_set():
             # Is matlab alive?
             try:
                 eng.version(nargout=0)

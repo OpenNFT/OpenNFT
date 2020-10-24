@@ -2,6 +2,7 @@
 
 import sys
 import collections
+import multiprocessing as mp
 import typing
 
 from loguru import logger
@@ -111,6 +112,7 @@ def is_shared_matlab() -> bool:
 
 
 def main():
+    mp.set_start_method('spawn')
     config.MATLAB_NAME_SUFFIX = _SHARED_SUFFIX
 
     with utils.timeit('Running Matlab shared engines: '):
