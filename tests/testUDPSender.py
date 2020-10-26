@@ -25,7 +25,7 @@ sender.sending_time_stamp = True
 
 sender.info()
 
-cond = ''
+cond = 'C'
 while not(keyboard.is_pressed('q')):
     if keyboard.is_pressed('b'): 
         cond = 'Bas'
