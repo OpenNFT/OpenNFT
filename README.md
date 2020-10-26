@@ -8,10 +8,10 @@ Note, we are still tuning our pre-release version. Please check the updates regu
 ## Installation (based on the to be updated [OpenNFT manual](https://github.com/OpenNFT/opennft.github.io/blob/master/OpenNFT_Manual_v1.0.pdf))
 
 ### Prerequisites
-- MATLAB (x64) `>= R2016b`
+- MATLAB (x64) `>= R2017b`
     - Image Processing Toolbox
     - Statistics and Machine Learning Toolbox
-- Python (x64) `>= 3.5, <= 3.6`, for example [Miniconda3](https://docs.conda.io/en/latest/miniconda.html)
+- Python (x64) `>= 3.6, < 3.9`, for example [Miniconda3](https://docs.conda.io/en/latest/miniconda.html)
 - [Git](https://git-scm.com/downloads): for installing SPM, Psychtoolbox, OpenNFT
 
 ### Install MATLAB Toolboxes
@@ -27,18 +27,18 @@ Recommended installation is illustrated in the rtFIN 2019 presentation number 4 
 Please also check all the other useful presentations there.
 Alternative instalaltions and useful tips are also listed below.
 
-Install with conda and e.g. Python 3.5:
-- `$ conda create -n OpenNFT_venv python=3.5 pip setuptools`
+Install with conda and e.g. Python 3.6:
+- `$ conda create -n OpenNFT_venv python=3.6 pip setuptools`
 - `$ conda activate OpenNFT_venv`
-- `(OpenNFT_venv)$ python -m pip install -U pip setuptools`
+- `(OpenNFT_venv)$ python -m pip install -U pip setuptools wheel`
 - (optional for numpy+MKL) `(OpenNFT_venv)$ conda install mkl numpy`
 - `(OpenNFT_venv)$ pip install git+https://github.com/OpenNFT/OpenNFT.git --install-option "--matlab-root=<MATLABROOT>"`
 
-Install without conda using your existing Python (>=3.5, <3.7):
+Install without conda using your existing Python (>=3.6, <3.9):
 - `$ python -m venv OpenNFT_venv`
 - (Linux/macos) `$ source OpenNFT_venv/bin/acivate`
 - (Windows) `$ OpenNFT_venv\Scripts\acivate.bat`
-- `(OpenNFT_venv)$ python -m pip install -U pip setuptools`
+- `(OpenNFT_venv)$ python -m pip install -U pip setuptools wheel`
 - `(OpenNFT_venv)$ pip install git+https://github.com/OpenNFT/OpenNFT.git --install-option "--matlab-root=<MATLABROOT>"`
 
 Also if you do not set install option `--matlab-root` we try to find Matlab automatically.
@@ -84,7 +84,7 @@ OpenNFT               1.0.0rc0   c:\workspace\projects\opennft
 
 Update pip:
 
-`python -m pip install -U pip setuptools`
+`python -m pip install -U pip setuptools wheel`
 
 Update dependencies:
 

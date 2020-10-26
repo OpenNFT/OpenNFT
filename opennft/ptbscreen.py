@@ -80,7 +80,7 @@ class PtbScreen(object):
 
         # if display_blank:
         if displayData['displayBlankScreen'] > 0:
-            self.eng.ptbBlankScreen(nargout=0, async=True)
+            self.eng.ptbBlankScreen(nargout=0, background=True)
             displayData['displayBlankScreen'] = 0
         else:
             if displayData['displayStage'] == 'instruction':
@@ -91,10 +91,10 @@ class PtbScreen(object):
                 self.recorder.recordEvent(Times.t8, int(displayData['iteration']))
             
             if displayData['taskseq'] > 0:
-                self.eng.ptbTask(nargout=0, async=True)
+                self.eng.ptbTask(nargout=0, background=True)
                 displayData['taskseq'] = 0
             else:
-                self.eng.displayFeedback(displayData, nargout=0, async=True)
+                self.eng.displayFeedback(displayData, nargout=0, background=True)
 
         # logger.info('ptbDisplay 3-{}', displayData['iteration'])
 
