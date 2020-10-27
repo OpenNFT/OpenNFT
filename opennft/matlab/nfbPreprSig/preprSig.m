@@ -261,6 +261,9 @@ for indRoi = 1:P.NrROIs
             end
             
             if P.isRTQA
+                if indRoi == 1
+                    invCX0 = inv(cX0'*cX0);
+                end
                 tContr = mainLoopData.tContr;
                 erGlmProcTimeSeries = tmp_rawTimeSeries - cX0*betaReg;
                 rtQA_matlab.varErGlmProcTimeSeries(indRoi,tmp_ind_end) = erGlmProcTimeSeries'*erGlmProcTimeSeries/(tmp_ind_end - length(tContr.pos));
