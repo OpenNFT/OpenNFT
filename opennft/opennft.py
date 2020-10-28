@@ -1095,6 +1095,9 @@ class OpenNFT(QWidget):
         self.drawMusterPlot(rawTimeSeries)
         self.drawMusterPlot(proc)
         self.drawMusterPlot(norm)
+        rawTimeSeries.setYRange(-1, 1, padding=0.0)
+        proc.setYRange(-1, 1, padding=0.0)
+        norm.setYRange(-1, 1, padding=0.0)
 
     # --------------------------------------------------------------------------
     def setupMcPlots(self):
@@ -2241,6 +2244,9 @@ class OpenNFT(QWidget):
         sz, l = data.shape
 
         if init:
+
+            plotitem.enableAutoRange(enable=True, x=False, y=True)
+
             plotitem.clear()
             muster = self.drawMusterPlot(plotitem)
 
