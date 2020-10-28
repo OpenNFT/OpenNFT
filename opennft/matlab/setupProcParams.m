@@ -251,6 +251,29 @@ if ~P.isRestingState
     else
         P.spmDesign = arRegr(P.aAR1, tmpSpmDesign);
     end
+    
+    % PSC
+    if isPSC && (strcmp(P.Prot, 'Cont') || strcmp(P.Prot, 'ContTask') || strcmp(P.Prot, 'Inter'))
+
+        if P.NFRunNr > 1
+            lSpmDesign = size(tmpSpmDesign,1);
+            P.prevNfbDataFolder = fullfile(P.WorkFolder,['NF_Data_' sprintf('%d',P.NFRunNr-1)]); 
+            % get motion correction parameters 
+            pathPrevP = dir(fullfile(P.prevNfbDataFolder,'*_P.mat'));
+            prevP = load(fullfile(P.prevNfbDataFolder,pathPrevP.name));            
+            % get time-series
+            pathPrevTS = dir(fullfile(P.prevNfbDataFolder,'*_raw_tsROIs.mat'));
+            mainLoopData.prevTS = load(fullfile(P.prevNfbDataFolder,pathPrevTS.name));
+            % construct regressors
+            tmpRegr = [ones(lSpmDesign,1) P.linRegr zscore(prevP.motCorrParam)];
+            if P.cglmAR1
+                mainLoopData.prev_cX0 = arRegr(P.aAR1,tmpRegr);
+            end
+            mainLoopData.prev_cX0 = [tmpRegr, P.spmDesign]; 
+        end
+              
+    end    
+    
 else
     mainLoopData.basFct = [];
     mainLoopData.nrBasFct = 6; % size of motion regressors, P.motCorrParam
