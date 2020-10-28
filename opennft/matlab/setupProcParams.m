@@ -285,6 +285,14 @@ else
     mainLoopData.statMap3D_iGLM = [];
 end
 
+%% rGLM beta init
+mainLoopData.betRegr = cell(P.NrROIs,1);
+for i=1:P.NrROIs
+    % TODO:
+    % 2 - linear trend and constant; 6 - motion regressors
+    mainLoopData.betRegr{i} = zeros(P.NrOfVolumes-P.nrSkipVol, 2+6+size(P.spmDesign,2));
+end
+
 %% rtQA init
 rtQA_matlab.snrMapCreated = 0; 
 if P.isRTQA
@@ -326,12 +334,7 @@ if P.isRTQA
     rtQA_matlab.snrData.m2NonSmoothed = [];
     rtQA_matlab.snrData.iteration = 1;
 
-    rtQA_matlab.betRegr = cell(P.NrROIs,1);
-    for i=1:P.NrROIs
-        % TODO:
-        % 2 - linear trend and constant; 6 - motion regressors
-        rtQA_matlab.betRegr{i} = zeros(P.NrOfVolumes-P.nrSkipVol, 2+6+size(P.spmDesign,2));
-    end
+    rtQA_matlab.betRegr = mainLoopData.betRegr;
     
     rtQA_matlab.Bn = cell(P.NrROIs,1);
     rtQA_matlab.var = cell(P.NrROIs,1);

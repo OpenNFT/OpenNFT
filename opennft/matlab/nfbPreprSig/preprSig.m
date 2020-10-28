@@ -201,7 +201,7 @@ for indRoi = 1:P.NrROIs
                 cX0 = tmpRegr;
                 betaReg = pinv(cX0)*tmp_rawTimeSeries;
                 tmp_glmProcTimeSeries = (tmp_rawTimeSeries - cX0*betaReg)';
-                mainLoopData.betRegr{indRoi}(tmp_ind_end,:) = [ betaReg; zeros(length(rtQA_matlab.betRegr{indRoi}(tmp_ind_end,:))-length(betaReg),1) ];
+                mainLoopData.betRegr{indRoi}(tmp_ind_end,:) = [ betaReg; zeros(length(mainLoopData.betRegr{indRoi}(tmp_ind_end,:))-length(betaReg),1) ];
 
                 if P.isRTQA
                     tContr = mainLoopData.tContr;
@@ -218,7 +218,7 @@ for indRoi = 1:P.NrROIs
                 cX0 = tmpRegr;
                 betaReg = pinv(cX0) * tmp_rawTimeSeries;
                 tmp_glmProcTimeSeries = (tmp_rawTimeSeries - cX0 * betaReg)';
-                mainLoopData.betRegr{indRoi}(tmp_ind_end,:) = [ betaReg; zeros(length(rtQA_matlab.betRegr{indRoi}(tmp_ind_end,:))-length(betaReg),1) ];
+                mainLoopData.betRegr{indRoi}(tmp_ind_end,:) = [ betaReg; zeros(length(mainLoopData.betRegr{indRoi}(tmp_ind_end,:))-length(betaReg),1) ];
 
                 if P.isRTQA
                     tContr = mainLoopData.tContr;
@@ -236,7 +236,7 @@ for indRoi = 1:P.NrROIs
                 cX0 = tmpRegr;
                 betaReg = pinv(cX0) * tmp_rawTimeSeries;
                 tmp_glmProcTimeSeries = (tmp_rawTimeSeries - cX0 * betaReg)';
-                mainLoopData.betRegr{indRoi}(tmp_ind_end,:) = [ betaReg; zeros(length(rtQA_matlab.betRegr{indRoi}(tmp_ind_end,:))-length(betaReg),1) ];
+                mainLoopData.betRegr{indRoi}(tmp_ind_end,:) = [ betaReg; zeros(length(mainLoopData.betRegr{indRoi}(tmp_ind_end,:))-length(betaReg),1) ];
 
                 if P.isRTQA
                     tContr = mainLoopData.tContr;
