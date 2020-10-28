@@ -219,14 +219,14 @@ if strcmp(protName, 'Inter')
     Screen('TextSize',P.Screen.wPtr, 100);
     
     %% 
-    fName = [workFolder filesep 'Settings' filesep 'NF_PCS_int_FT.json'];
+    fName = [workFolder filesep 'Settings' filesep 'NF_PCS_int_FT_run_' sprintf('%d',P.NFRunNr) '.json'];
     prt = loadjson(fName);
 
-    vectList = zeros(600,1);
-    wordList = strings(600,1);
+    vectList = zeros(603,1);
+    wordList = strings(603,1);
 
-    load([workFolder filesep 'Settings' filesep 'WORDS.mat']);
-    load([workFolder filesep 'Settings' filesep 'NOWORDS.mat']);
+    load([workFolder filesep 'Settings' filesep 'WORDS_Run_' sprintf('%d',P.NFRunNr) '.mat']);
+    load([workFolder filesep 'Settings' filesep 'NOWORDS_Run_' sprintf('%d',P.NFRunNr) '.mat']);
 
     for i = 1:6
         tmpOnstes = prt.Cond{i}.OnOffsets;
@@ -234,7 +234,7 @@ if strcmp(protName, 'Inter')
         lOnsets = size(tmpOnstes,1);
         kW = 0; kNW = 0;
         for iOn = 1:lOnsets
-            newOnsets = tmpOnstes(iOn,1):2:tmpOnstes(iOn,2);
+            newOnsets = tmpOnstes(iOn,1):2:tmpOnstes(iOn,2)-1;
             if strcmp(tmpName,'READW')
                 vectList(newOnsets) = 1;
 

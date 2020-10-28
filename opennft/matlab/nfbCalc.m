@@ -140,10 +140,10 @@ if isPSC && strcmp(P.Prot, 'Inter')
             blockNF = find(k);
             firstNF = indVolNorm;
             mainLoopData.flagEndPSC = 1;
-            if (P.ProtTask1{blockNF}(end)+1) == (P.ProtTask2{blockTask2}(1))
+            if (P.ProtTask1{blockNF}(end)+4) == (P.ProtTask2{blockTask2}(1))
                 isTask2 = 1;
                 isTask3 = 0;
-            elseif (P.ProtTask1{blockNF}(end)+1) == (P.ProtTask3{blockTask3}(1))
+            elseif (P.ProtTask1{blockNF}(end)+4) == (P.ProtTask3{blockTask3}(1))
                 isTask2 = 0;
                 isTask3 = 1;               
             end            
