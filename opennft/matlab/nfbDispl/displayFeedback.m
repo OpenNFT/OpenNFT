@@ -105,9 +105,11 @@ switch feedbackType
         
     %% Intermittent PSC
     case 'value_fixation'
-        indexSmiley = round(dispValue);
+        indexSmiley = round(dispValue/10);
         if indexSmiley == 0
             indexSmiley = 1;
+        elseif indexSmiley > 10
+            indexSmiley = 10;
         end
         switch condition
             case 1  % Baseline

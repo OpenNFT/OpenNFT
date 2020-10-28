@@ -176,23 +176,42 @@ if isPSC && strcmp(P.Prot, 'Inter')
                                                               i_blockBAS));
                 mCond = median(mainLoopData.kalmanProcTimeSeries(indRoi,...
                                                                i_blockNF));
-
-                % Scaling
-                mBasScaled  = (mBas - mainLoopData.mposMin(indVolNorm)) / ...
-                                        (mainLoopData.mposMax(indVolNorm) - ...
-                                         mainLoopData.mposMin(indVolNorm));
-                mCondScaled = (mCond - mainLoopData.mposMin(indVolNorm)) / ...
-                                        (mainLoopData.mposMax(indVolNorm) - ...
-                                         mainLoopData.mposMin(indVolNorm));                   
-                norm_percValues(indRoi) = mCondScaled - mBasScaled;               
+                                                           
+                % Set conventional PSC or common range Scaling (recommneded
+                % /tested for bilateral co-activation only. Separarte range
+                % scaling should be also used with caution because signals
+                % may have reasonably different ranges and separate scaling
+                % would neutralize it.
+                isFeedbackPSC = 1;
+                if ~isFeedbackPSC                                           
+                    % Scaling                
+                    mBasScaled  = (mBas - mainLoopData.mposMin(indVolNorm)) / ...
+                                            (mainLoopData.mposMax(indVolNorm) - ...
+                                             mainLoopData.mposMin(indVolNorm));
+                    mCondScaled = (mCond - mainLoopData.mposMin(indVolNorm)) / ...
+                                            (mainLoopData.mposMax(indVolNorm) - ...
+                                             mainLoopData.mposMin(indVolNorm));                   
+                    norm_percValues(indRoi) = mCondScaled - mBasScaled;                        
+                else
+                    % PSC estimation
+                    mBasPSC  = median(mainLoopData.constProcTimeSeries(indRoi,...
+                        i_blockBAS));
+                    mCondPSC = median(mainLoopData.constProcTimeSeries(indRoi,...
+                        i_blockNF));
+                    norm_percValues(indRoi) = 100*(mCondPSC - mBasPSC)/mBasPSC;                    
+                end
             end
-
-            % compute average %SC feedback value
-            tmp_fbVal = 0.7*norm_percValues(2)-0.3*norm_percValues(1); %eval(P.RoiAnatOperation); 
+            
+            % compute feedback based on two ROIs average or difference
+            if ~isFeedbackPSC && P.NrROIs == 2  
+                tmp_fbVal = eval(P.RoiAnatOperation); 
+            elseif isFeedbackPSC && P.NrROIs == 2                
+                tmp_fbVal = norm_percValues(2) - norm_percValues(1); 
+            end
             mainLoopData.vectNFBs(indVolNorm) = tmp_fbVal;
             dispValue = round(P.MaxFeedbackVal*tmp_fbVal, P.FeedbackValDec); 
 
-            % [0...P.MaxFeedbackVal], for Display
+            % display feedback value and threshold overheads
             if ~P.NegFeedback && dispValue < 0
                 dispValue = 0;
             elseif P.NegFeedback && dispValue < P.MinFeedbackVal
@@ -202,7 +221,7 @@ if isPSC && strcmp(P.Prot, 'Inter')
                 dispValue = P.MaxFeedbackVal;
             end
 
-            % regSuccess and Shaping 
+            % regSuccess and shaping 
             P.actValue(blockNF) = tmp_fbVal;
             if P.NFRunNr == 1
                 if blockNF == 1
