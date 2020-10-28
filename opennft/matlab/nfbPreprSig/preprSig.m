@@ -261,6 +261,7 @@ for indRoi = 1:P.NrROIs
             end
             
             if P.isRTQA
+                % invCX0 initialized once at the beginning
                 if indRoi == 1
                     invCX0 = inv(cX0'*cX0);
                 end
@@ -270,7 +271,6 @@ for indRoi = 1:P.NrROIs
                 rtQA_matlab.betRegr{indRoi}(tmp_ind_end,:) = betaReg; 
                 tContr.pos = [ zeros(length(betaReg)-length(tContr.pos),1); tContr.pos ];
                 tContr.neg = [ zeros(length(betaReg)-length(tContr.neg),1); tContr.neg ];
-                invCX0 = inv(cX0'*cX0);
                 pos_invCX0 = tContr.pos'*invCX0*tContr.pos;
                 neg_invCX0 = tContr.neg'*invCX0*tContr.neg;
                 rtQA_matlab.tGlmProcTimeSeries.pos(indRoi,tmp_ind_end) = tContr.pos'*betaReg /sqrt(rtQA_matlab.varErGlmProcTimeSeries(indRoi,tmp_ind_end)*pos_invCX0);
