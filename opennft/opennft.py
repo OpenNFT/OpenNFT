@@ -2076,11 +2076,12 @@ class OpenNFT(QWidget):
 
         # SNR/Stat map display
         is_stat_map_created = bool(self.eng.evalin('base', 'mainLoopData.statMapCreated'))
-        is_snr_map_created = bool(self.eng.evalin('base', 'rtQA_matlab.snrMapCreated'))
         if self.windowRTQA:
             is_rtqa_volume_checked = self.windowRTQA.volumeCheckBox.isChecked()
+            is_snr_map_created = bool(self.eng.evalin('base', 'rtQA_matlab.snrMapCreated'))
         else:
             is_rtqa_volume_checked = False
+            is_snr_map_created = False
 
         if (background_image is not None
                 and (is_stat_map_created and not is_rtqa_volume_checked
