@@ -123,9 +123,9 @@ mainLoopData.mposMin = [];
 mainLoopData.blockNF = 0;
 mainLoopData.firstNF = 0;
 mainLoopData.blockTask2 = 0;
-mainLoopData.firstTask2 = 0;
+mainLoopData.lastTask2 = 0;
 mainLoopData.blockTask3 = 0;
-mainLoopData.firstTask3 = 0;
+mainLoopData.lastTask3 = 0;
 
 %% DCM Settings
 if isDCM
