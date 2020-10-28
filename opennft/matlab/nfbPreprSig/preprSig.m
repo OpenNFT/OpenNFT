@@ -277,8 +277,9 @@ for indRoi = 1:P.NrROIs
                 end
             end
         else
-            % previous NFB run estimates, skip first ca 50 unstable
-            comb_tmp_rawTimeSeries = [mainLoopData.prevTS.rawTimeSeries(indRoi,51:end)'; tmp_rawTimeSeries];
+            % previous NFB run estimates, skip first # unstable
+            nrSkipPrevRunScansGLM = 50;
+            comb_tmp_rawTimeSeries = [mainLoopData.prevTS.rawTimeSeries(indRoi,nrSkipPrevRunScansGLM+1:end)'; tmp_rawTimeSeries];
 
             % zscore() is cumulative, which limits truly recursive
             % AR(1) filtering on regressors
@@ -288,7 +289,7 @@ for indRoi = 1:P.NrROIs
                 tmpRegr = arRegr(P.aAR1,tmpRegr);
             end
             if ~P.isRestingState
-                comb_cX0 = [mainLoopData.prev_cX0(51:end,:);[tmpRegr P.spmDesign(1:tmp_ind_end,:)]];
+                comb_cX0 = [mainLoopData.prev_cX0(nrSkipPrevRunScansGLM+1:end,:);[tmpRegr P.spmDesign(1:tmp_ind_end,:)]];
                 betaReg = pinv(comb_cX0) * comb_tmp_rawTimeSeries;
                 tmp_glmProcTimeSeries = (comb_tmp_rawTimeSeries - ...
                     comb_cX0 * [betaReg(1:end-1); zeros(1,1)])';
