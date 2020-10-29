@@ -8,14 +8,18 @@ OpenNFT
 
 An open-source Python/Matlab framework for real-time fMRI neurofeedback training.
 
+Contents
+--------
+
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
 
+   install
+   quickstart
 
 
 Indices and tables
-==================
+------------------
 
 * :ref:`genindex`
 * :ref:`modindex`
