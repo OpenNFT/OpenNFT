@@ -8,6 +8,8 @@ Copyright (C) 2016-2019 OpenNFT.org
 """
 
 import sys
+import multiprocessing as mp
+
 from PyQt5.QtWidgets import QApplication
 
 from opennft import excepthook, utils
@@ -16,6 +18,8 @@ from opennft import opennft
 
 
 def main():
+    mp.set_start_method('spawn')
+
     # Override default exception hook to show any exceptions on PyQt5 slots
     excepthook.set_hook()
 

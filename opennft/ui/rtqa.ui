@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1154</width>
-    <height>543</height>
+    <height>540</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -59,7 +59,7 @@
           </widget>
          </item>
          <item>
-          <layout class="QVBoxLayout" name="snrPlot"/>
+          <layout class="QVBoxLayout" name="snrPlotLayout"/>
          </item>
         </layout>
        </item>
@@ -98,7 +98,7 @@
               </widget>
              </item>
              <item>
-              <layout class="QVBoxLayout" name="fdPlot"/>
+              <layout class="QVBoxLayout" name="fdPlotLayout"/>
              </item>
             </layout>
            </item>
@@ -121,7 +121,7 @@
               </widget>
              </item>
              <item>
-              <layout class="QVBoxLayout" name="tdPlot"/>
+              <layout class="QVBoxLayout" name="tdPlotLayout"/>
              </item>
             </layout>
            </item>
@@ -144,7 +144,7 @@
               </widget>
              </item>
              <item>
-              <layout class="QVBoxLayout" name="rdPlot"/>
+              <layout class="QVBoxLayout" name="rdPlotLayout"/>
              </item>
             </layout>
            </item>
@@ -192,7 +192,7 @@
               </widget>
              </item>
              <item>
-              <layout class="QVBoxLayout" name="cnrPlot"/>
+              <layout class="QVBoxLayout" name="cnrPlotLayout"/>
              </item>
             </layout>
            </item>
@@ -215,7 +215,7 @@
               </widget>
              </item>
              <item>
-              <layout class="QVBoxLayout" name="meanPlot"/>
+              <layout class="QVBoxLayout" name="meanPlotLayout"/>
              </item>
             </layout>
            </item>
@@ -238,7 +238,7 @@
               </widget>
              </item>
              <item>
-              <layout class="QVBoxLayout" name="varPlot"/>
+              <layout class="QVBoxLayout" name="varPlotLayout"/>
              </item>
             </layout>
            </item>
@@ -279,44 +279,111 @@
           </widget>
          </item>
          <item>
-          <layout class="QVBoxLayout" name="spikesPlot"/>
+          <layout class="QVBoxLayout" name="spikesPlotLayout"/>
          </item>
         </layout>
        </item>
       </layout>
      </widget>
-     <widget class="QWidget" name="pageTrendPlot">
+     <widget class="QWidget" name="pageMsePlot">
       <layout class="QVBoxLayout" name="verticalLayout_8">
+       <property name="leftMargin">
+        <number>0</number>
+       </property>
+       <property name="topMargin">
+        <number>0</number>
+       </property>
+       <property name="rightMargin">
+        <number>0</number>
+       </property>
+       <property name="bottomMargin">
+        <number>0</number>
+       </property>
        <item>
-        <widget class="QLabel" name="label_3">
-         <property name="text">
-          <string>Trend plot</string>
-         </property>
-         <property name="alignment">
-          <set>Qt::AlignCenter</set>
-         </property>
-        </widget>
+        <layout class="QVBoxLayout" name="mseLayout">
+         <item>
+          <widget class="QLabel" name="label_3">
+           <property name="maximumSize">
+            <size>
+             <width>949</width>
+             <height>250</height>
+            </size>
+           </property>
+           <property name="font">
+            <font>
+             <pointsize>10</pointsize>
+             <weight>75</weight>
+             <bold>true</bold>
+            </font>
+           </property>
+           <property name="text">
+            <string>Mean squared error estimation of Kalman filter performance</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <layout class="QVBoxLayout" name="msePlotLayout"/>
+         </item>
+        </layout>
        </item>
       </layout>
      </widget>
-     <widget class="QWidget" name="pageStepsPlot">
+     <widget class="QWidget" name="pageLinearTrendPlot">
       <layout class="QVBoxLayout" name="verticalLayout_9">
+       <property name="leftMargin">
+        <number>0</number>
+       </property>
+       <property name="topMargin">
+        <number>0</number>
+       </property>
+       <property name="rightMargin">
+        <number>0</number>
+       </property>
+       <property name="bottomMargin">
+        <number>0</number>
+       </property>
        <item>
-        <widget class="QLabel" name="label_4">
-         <property name="text">
-          <string>Steps plot</string>
+        <layout class="QVBoxLayout" name="linearTrendLayout">
+         <property name="spacing">
+          <number>6</number>
          </property>
-         <property name="alignment">
-          <set>Qt::AlignCenter</set>
+         <property name="sizeConstraint">
+          <enum>QLayout::SetMaximumSize</enum>
          </property>
-        </widget>
+         <property name="leftMargin">
+          <number>0</number>
+         </property>
+         <item>
+          <widget class="QLabel" name="label_4">
+           <property name="font">
+            <font>
+             <pointsize>10</pointsize>
+             <weight>75</weight>
+             <bold>true</bold>
+            </font>
+           </property>
+           <property name="text">
+            <string>Linear trend beta coefficients</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <layout class="QVBoxLayout" name="linearTreandPlotLayout"/>
+         </item>
+        </layout>
        </item>
       </layout>
      </widget>
     </widget>
    </item>
    <item>
-    <layout class="QVBoxLayout" name="verticalLayout">
+    <layout class="QVBoxLayout" name="menuLayout">
+     <property name="bottomMargin">
+      <number>240</number>
+     </property>
      <item>
       <widget class="QComboBox" name="comboBox">
        <property name="editable">
@@ -345,6 +412,16 @@
          <string>Spikes &amp; Steps</string>
         </property>
        </item>
+       <item>
+        <property name="text">
+         <string>Kalman performance</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Linear trend</string>
+        </property>
+       </item>
       </widget>
      </item>
      <item>
@@ -361,6 +438,9 @@
           <widget class="QCheckBox" name="tsCheckBox">
            <property name="text">
             <string>Time series</string>
+           </property>
+           <property name="checked">
+            <bool>true</bool>
            </property>
           </widget>
          </item>
@@ -398,7 +478,7 @@
            <property name="sizeHint" stdset="0">
             <size>
              <width>77</width>
-             <height>442</height>
+             <height>424</height>
             </size>
            </property>
           </spacer>
@@ -521,12 +601,17 @@
          </item>
         </layout>
        </widget>
-       <widget class="QWidget" name="pageTrend">
+       <widget class="QWidget" name="pageMse">
         <layout class="QVBoxLayout" name="verticalLayout_21">
          <item>
-          <widget class="QLabel" name="trendLabel">
+          <widget class="QLabel" name="mseLabel">
+           <property name="font">
+            <font>
+             <pointsize>10</pointsize>
+            </font>
+           </property>
            <property name="text">
-            <string>Trend page</string>
+            <string/>
            </property>
           </widget>
          </item>
@@ -545,6 +630,67 @@
          </item>
         </layout>
        </widget>
+       <widget class="QWidget" name="pageTrend">
+        <property name="maximumSize">
+         <size>
+          <width>159</width>
+          <height>497</height>
+         </size>
+        </property>
+        <property name="contextMenuPolicy">
+         <enum>Qt::DefaultContextMenu</enum>
+        </property>
+        <layout class="QVBoxLayout" name="verticalLayout_22">
+         <item>
+          <widget class="QLabel" name="trendLabel">
+           <property name="maximumSize">
+            <size>
+             <width>141</width>
+             <height>16777215</height>
+            </size>
+           </property>
+           <property name="font">
+            <font>
+             <pointsize>10</pointsize>
+            </font>
+           </property>
+           <property name="text">
+            <string/>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <spacer name="verticalSpacer_6">
+           <property name="orientation">
+            <enum>Qt::Vertical</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>20</width>
+             <height>476</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+        </layout>
+       </widget>
+      </widget>
+     </item>
+     <item>
+      <widget class="QGroupBox" name="roiGroupBox">
+       <property name="font">
+        <font>
+         <pointsize>10</pointsize>
+        </font>
+       </property>
+       <property name="title">
+        <string>ROI selection</string>
+       </property>
+       <layout class="QVBoxLayout" name="verticalLayout_23">
+        <item>
+         <layout class="QVBoxLayout" name="groupBoxLayout"/>
+        </item>
+       </layout>
       </widget>
      </item>
     </layout>

@@ -15,173 +15,38 @@ from opennft.rtqa_fdm import FD
 
 
 class RTQAWindow(QtWidgets.QWidget):
+    """Real-time quality assessment GUI and methods application class
+    """
 
-    def __init__(self, sz, xrange, indBas, indCond, musterInfo, parent=None):
+    # --------------------------------------------------------------------------
+    def __init__(self, parent=None):
         super().__init__(parent=parent, flags=QtCore.Qt.Window)
 
         uic.loadUi(utils.get_ui_file('rtqa.ui'), self)
 
+        # parent data transfer block
+        sz = int(parent.P['NrROIs'])
+        if parent.P['isRestingState']:
+            xrange = (parent.P['NrOfVolumes'] - parent.P['nrSkipVol'])
+            self.comboBox.model().item(2).setEnabled(False)
+            self.indBas = 0
+            self.indCond = 0
+        else:
+            parent.computeMusterPlotData(config.MUSTER_Y_LIMITS)
+            xrange = max(parent.musterInfo['tmpCond1'][-1][1],
+                         parent.musterInfo['tmpCond2'][-1][1])
+            self.indBas = np.array(parent.P['inds'][0]) - 1
+            self.indCond = np.array(parent.P['inds'][1]) - 1
+
+        # main class data initialization block
         self._fd = FD(xrange)
         self.names = ['X', 'Y', 'Z', 'Pitch', 'Roll', 'Yaw', 'FD']
-        self.indBas = indBas
-        self.indCond = indCond
         self.iterBas = 0
         self.iterCond = 0
-
-        self.musterInfo = musterInfo
-
-        self.mcrRadioButton.toggled.connect(self.onRadioButtonStateChanged)
-
-        self.snrplot = pg.PlotWidget(self)
-        self.snrplot.setBackground((255, 255, 255))
-        self.snrPlot.addWidget(self.snrplot)
-
-        p = self.snrplot.getPlotItem()
-        p.setLabel('left', "SNR [a.u.]")
-        p.setMenuEnabled(enableMenu=False)
-        p.setMouseEnabled(x=False, y=False)
-        p.showGrid(x=True, y=True, alpha=1)
-        p.installEventFilter(self)
-        p.disableAutoRange(axis=pg.ViewBox.XAxis)
-        p.setXRange(1, xrange, padding=0.0)
-
-        if not parent.P['isRestingState']:
-
-            self.cnrplot = pg.PlotWidget(self)
-            self.cnrplot.setBackground((255, 255, 255))
-            self.cnrPlot.addWidget(self.cnrplot)
-
-            p = self.cnrplot.getPlotItem()
-            p.setLabel('left', "CNR [a.u.]")
-            p.setMenuEnabled(enableMenu=False)
-            p.setMouseEnabled(x=False, y=False)
-            p.showGrid(x=True, y=True, alpha=1)
-            p.installEventFilter(self)
-            p.disableAutoRange(axis=pg.ViewBox.XAxis)
-            p.setXRange(1, xrange, padding=0.0)
-
-            self.meanplot = pg.PlotWidget(self)
-            self.meanplot.setBackground((255, 255, 255))
-            self.meanPlot.addWidget(self.meanplot)
-
-            p = self.meanplot.getPlotItem()
-            p.setLabel('left', "Mean [a.u.]")
-            p.setMenuEnabled(enableMenu=False)
-            p.setMouseEnabled(x=False, y=False)
-            p.showGrid(x=True, y=True, alpha=1)
-            p.installEventFilter(self)
-            p.disableAutoRange(axis=pg.ViewBox.XAxis)
-            p.setXRange(1, xrange, padding=0.0)
-
-            names = ['ROI_1 rMean', ' bas', ' cond']
-            color = [config.STAT_PLOT_COLORS[0], config.ROI_BAS_COLORS[0], config.ROI_COND_COLORS[0]]
-            for i in range(sz-1):
-                names.append('ROI_' + str(i + 2) + ' rMean')
-                names.append(' bas')
-                names.append(' cond')
-                color = color + [config.STAT_PLOT_COLORS[i + 1]] + [config.ROI_BAS_COLORS[i + 1]] + [config.ROI_COND_COLORS[i + 1]]
-            pens = []
-            for i in range(sz*3):
-                pens = pens + [pg.mkPen(color[i], width=1.2)]
-            self.makeRoiPlotLegend(self.labelMean, names, pens)
-
-            self.varplot = pg.PlotWidget(self)
-            self.varplot.setBackground((255, 255, 255))
-            self.varPlot.addWidget(self.varplot)
-
-            p = self.varplot.getPlotItem()
-            p.setLabel('left', "Variance [a.u.]")
-            p.setMenuEnabled(enableMenu=False)
-            p.setMouseEnabled(x=False, y=False)
-            p.showGrid(x=True, y=True, alpha=1)
-            p.installEventFilter(self)
-            p.disableAutoRange(axis=pg.ViewBox.XAxis)
-            p.setXRange(1, xrange, padding=0.0)
-
-            names = ['ROI_1 rVariance', ' bas', ' cond']
-            for i in range(sz - 1):
-                names.append('ROI_' + str(i + 2) + ' rVariance')
-                names.append(' bas')
-                names.append(' cond')
-            self.makeRoiPlotLegend(self.labelVar, names, pens)
-
-        self.spikes_plot = pg.PlotWidget(self)
-        self.spikes_plot.setBackground((255, 255, 255))
-        self.spikesPlot.addWidget(self.spikes_plot)
-
-        p = self.spikes_plot.getPlotItem()
-        p.setLabel('left', "Amplitude [a.u.]")
-        p.setMenuEnabled(enableMenu=False)
-        p.setMouseEnabled(x=False, y=False)
-        p.showGrid(x=True, y=True, alpha=1)
-        p.installEventFilter(self)
-        p.disableAutoRange(axis=pg.ViewBox.XAxis)
-        p.setXRange(1, xrange, padding=0.0)
-
-        self._plot_translat = pg.PlotWidget(self)
-        self._plot_translat.setBackground((255, 255, 255))
-        self.tdPlot.addWidget(self._plot_translat)
-
-        p = self._plot_translat.getPlotItem()
-        p.setLabel('left', "Amplitude [mm]")
-        p.setMenuEnabled(enableMenu=True)
-        p.setMouseEnabled(x=False, y=False)
-        p.showGrid(x=True, y=True, alpha=1)
-        p.installEventFilter(self)
-        p.disableAutoRange(axis=pg.ViewBox.XAxis)
-        p.setXRange(1, xrange, padding=0.0)
-        names = ['Translationals: ']
-        pens = [config.PLOT_PEN_COLORS[6]]
-        for i in range(3):
-            names.append(self.names[i])
-            pens.append(config.PLOT_PEN_COLORS[i])
-
-        self.makeRoiPlotLegend(self.tdLabel, names, pens)
-
-        self._plot_rotat = pg.PlotWidget(self)
-        self._plot_rotat.setBackground((255, 255, 255))
-        self.rdPlot.addWidget(self._plot_rotat)
-
-        p = self._plot_rotat.getPlotItem()
-        p.setLabel('left', "Amplitude [mm]")
-        p.setMenuEnabled(enableMenu=True)
-        p.setMouseEnabled(x=False, y=False)
-        p.showGrid(x=True, y=True, alpha=1)
-        p.installEventFilter(self)
-        p.disableAutoRange(axis=pg.ViewBox.XAxis)
-        p.setXRange(1, xrange, padding=0.0)
-        names = ['Rotations: ']
-        pens = [config.PLOT_PEN_COLORS[6]]
-        for i in range(3):
-            names.append(self.names[i+3])
-            pens.append(config.PLOT_PEN_COLORS[i + 3])
-
-        self.makeRoiPlotLegend(self.rdLabel, names, pens)
-
-        self._plot_fd = pg.PlotWidget(self)
-        self._plot_fd.setBackground((255, 255, 255))
-        self.fdPlot.addWidget(self._plot_fd)
-
-        p = self._plot_fd.getPlotItem()
-        p.setLabel('left', "FD [mm]")
-        p.setMenuEnabled(enableMenu=True)
-        p.setMouseEnabled(x=False, y=False)
-        p.showGrid(x=True, y=True, alpha=1)
-        p.installEventFilter(self)
-        p.disableAutoRange(axis=pg.ViewBox.XAxis)
-        p.setXRange(1, xrange, padding=0.0)
-        names = ['Framewise Displacement']
-        pens = [config.PLOT_PEN_COLORS[0]]
-        for i in range(len(config.DEFAULT_FD_THRESHOLDS)-1):
-            names.append('Threshold ' + str(i+1))
-            pens.append(config.PLOT_PEN_COLORS[i + 1])
-
-        self.makeRoiPlotLegend(self.fdLabel, names, pens)
-
-        self.tsCheckBox.setChecked(True)
-
-        self.iteration = 1;
-        self.blockIter = 0;
+        self.init = True
+        self.isStopped = True
+        self.iteration = 1
+        self.blockIter = 0
         self.rMean = np.zeros((sz, xrange))
         self.m2 = np.zeros((sz, 1))
         self.rVar = np.zeros((sz, xrange))
@@ -193,16 +58,171 @@ class RTQAWindow(QtWidgets.QWidget):
         self.varCond = np.zeros((sz, xrange))
         self.m2Cond = np.zeros((sz, 1))
         self.rCNR = np.zeros((sz, xrange))
-        self.glmProcTimeSeries = np.zeros((sz, 1))
+        self.glmProcTimeSeries = np.zeros((sz, xrange))
         self.posSpikes = dict.fromkeys(['{:d}'.format(x) for x in range(sz)], np.array(0))
         self.negSpikes = dict.fromkeys(['{:d}'.format(x) for x in range(sz)], np.array(0))
+        self.rMSE = np.zeros((sz, xrange))
+        self.linTrendCoeff = np.zeros((sz, xrange))
+        self.checkedBoxesInd = []
+        self.currentMode = 0
 
-        self.currentMode = 0;
+        # Additional GUI elements connection and initialization
+        groupBoxLayout = self.roiGroupBox.layout()
+        for i in range(sz):
+            checkbox = QtWidgets.QCheckBox('ROI_' + str(i + 1))
+            checkbox.setStyleSheet("color: "+config.ROI_PLOT_COLORS[i].name())
+            if not i:
+                checkbox.setChecked(True)
+            checkbox.stateChanged.connect(self.roiCheckBoxStateChanged)
+            groupBoxLayout.addWidget(checkbox)
+        self.roiCheckBoxes = self.roiGroupBox.findChildren(QtWidgets.QCheckBox)
+        self.musterInfo = parent.musterInfo
+        self.mcrRadioButton.toggled.connect(self.onRadioButtonStateChanged)
 
+        # Plots initialization
+        self.snrPlot = pg.PlotWidget(self)
+        self.snrPlot.setBackground((255, 255, 255))
+        self.snrPlotLayout.addWidget(self.snrPlot)
+        p = self.snrPlot.getPlotItem()
+        self.plotsSetup(p, "SNR [a.u.]", xrange)
+        self.drawMusterPlot(p)
+        p.setYRange(-1, 1, padding=0.0)
+
+        self.msePlot = pg.PlotWidget(self)
+        self.msePlot.setBackground((255, 255, 255))
+        self.msePlotLayout.addWidget(self.msePlot)
+        p = self.msePlot.getPlotItem()
+        self.plotsSetup(p, "Mean squared error [a.u.]", xrange)
+        self.drawMusterPlot(p)
+        p.setYRange(-1, 1, padding=0.0)
+
+        self.trendPlot = pg.PlotWidget(self)
+        self.trendPlot.setBackground((255, 255, 255))
+        self.linearTreandPlotLayout.addWidget(self.trendPlot)
+        p = self.trendPlot.getPlotItem()
+        self.plotsSetup(p, "Beta regressor amplitude [a.u.]", xrange)
+        self.drawMusterPlot(p)
+        p.setYRange(-1, 1, padding=0.0)
+
+        self.fdPlot = pg.PlotWidget(self)
+        self.fdPlot.setBackground((255, 255, 255))
+        self.fdPlotLayout.addWidget(self.fdPlot)
+        p = self.fdPlot.getPlotItem()
+        self.plotsSetup(p, "FD [mm]", xrange)
+
+        self.translatPlot = pg.PlotWidget(self)
+        self.translatPlot.setBackground((255, 255, 255))
+        self.tdPlotLayout.addWidget(self.translatPlot)
+        p = self.translatPlot.getPlotItem()
+        self.plotsSetup(p, "Amplitude [mm]", xrange)
+
+        self.rotatPlot = pg.PlotWidget(self)
+        self.rotatPlot.setBackground((255, 255, 255))
+        self.rdPlotLayout.addWidget(self.rotatPlot)
+        p = self.rotatPlot.getPlotItem()
+        self.plotsSetup(p, "Amplitude [mm]", xrange)
+
+        self.spikesPlot = pg.PlotWidget(self)
+        self.spikesPlot.setBackground((255, 255, 255))
+        self.spikesPlotLayout.addWidget(self.spikesPlot)
+        p = self.spikesPlot.getPlotItem()
+        self.plotsSetup(p, "Amplitude [a.u.]", xrange)
+        self.drawMusterPlot(p)
+        p.setYRange(-1, 1, padding=0.0)
+
+        # CNR, means and variances plots and labels
+        if not parent.P['isRestingState']:
+
+            self.cnrPlot = pg.PlotWidget(self)
+            self.cnrPlot.setBackground((255, 255, 255))
+            self.cnrPlotLayout.addWidget(self.cnrPlot)
+            p = self.cnrPlot.getPlotItem()
+            self.plotsSetup(p, "CNR [a.u.]", xrange)
+            self.drawMusterPlot(p)
+            p.setYRange(-1, 1, padding=0.0)
+
+            self.meanPlot = pg.PlotWidget(self)
+            self.meanPlot.setBackground((255, 255, 255))
+            self.meanPlotLayout.addWidget(self.meanPlot)
+            p = self.meanPlot.getPlotItem()
+            self.plotsSetup(p, "Mean [a.u.]", xrange)
+            self.drawMusterPlot(p)
+            p.setYRange(-1, 1, padding=0.0)
+
+            self.varPlot = pg.PlotWidget(self)
+            self.varPlot.setBackground((255, 255, 255))
+            self.varPlotLayout.addWidget(self.varPlot)
+            p = self.varPlot.getPlotItem()
+            self.plotsSetup(p, "Variance [a.u.]", xrange)
+            self.drawMusterPlot(p)
+            p.setYRange(-1, 1, padding=0.0)
+
+            names = ['ROI_1 rMean', ' bas', ' cond']
+            color = [config.STAT_PLOT_COLORS[0], config.ROI_BAS_COLORS[0], config.ROI_COND_COLORS[0]]
+            for i in range(sz-1):
+                names.append('ROI_' + str(i + 2) + ' rMean')
+                names.append(' bas')
+                names.append(' cond')
+                color = color + [config.STAT_PLOT_COLORS[i + 1]] + [config.ROI_BAS_COLORS[i + 1]] + [config.ROI_COND_COLORS[i + 1]]
+            pens = []
+            for i in range(sz*3):
+                pens = pens + [pg.mkPen(color[i], width=1.2)]
+            self.makeTextValueLabel(self.labelMean, names, pens)
+
+            names = ['ROI_1 rVariance', ' bas', ' cond']
+            for i in range(sz - 1):
+                names.append('ROI_' + str(i + 2) + ' rVariance')
+                names.append(' bas')
+                names.append(' cond')
+            self.makeTextValueLabel(self.labelVar, names, pens)
+
+        # Other labels initialization
+        names = ['Translationals: ']
+        pens = [config.PLOT_PEN_COLORS[6]]
+        for i in range(3):
+            names.append(self.names[i])
+            pens.append(config.PLOT_PEN_COLORS[i])
+        self.makeTextValueLabel(self.tdLabel, names, pens)
+
+        names = ['Rotations: ']
+        pens = [config.PLOT_PEN_COLORS[6]]
+        for i in range(3):
+            names.append(self.names[i+3])
+            pens.append(config.PLOT_PEN_COLORS[i + 3])
+        self.makeTextValueLabel(self.rdLabel, names, pens)
+
+        names = ['Framewise Displacement']
+        pens = [config.PLOT_PEN_COLORS[0]]
+        for i in range(len(config.DEFAULT_FD_THRESHOLDS)-1):
+            names.append('Threshold ' + str(i+1))
+            pens.append(config.PLOT_PEN_COLORS[i + 1])
+        self.makeTextValueLabel(self.fdLabel, names, pens)
+
+    # --------------------------------------------------------------------------
+    def closeEvent(self, event):
+
+        self.hide()
+        event.accept()
+
+    # --------------------------------------------------------------------------
+    def plotsSetup(self, p, yName, xrange):
+
+        p.setLabel('left', yName)
+        p.setMenuEnabled(enableMenu=False)
+        p.setMouseEnabled(x=False, y=False)
+        p.showGrid(x=True, y=True, alpha=1)
+        p.installEventFilter(self)
+        p.disableAutoRange(axis=pg.ViewBox.XAxis)
+        p.setXRange(1, xrange, padding=0.0)
+
+    # --------------------------------------------------------------------------
     def onComboboxChanged(self):
+        """  SNR/CNR label switching. Both modes use the same label
+        """
 
         state = self.comboBox.currentIndex()
 
+        # SNR state
         if state == 0:
 
             names = ['SNR ']
@@ -211,16 +231,13 @@ class RTQAWindow(QtWidgets.QWidget):
             for i in range(sz):
                 names.append('ROI_' + str(i + 1) + ':  ' + '{0:.3f}'.format(float(self.rSNR[i][self.iteration])))
                 pens.append(pg.mkPen(color=config.ROI_PLOT_COLORS[i], width=1.2))
+            self.makeTextValueLabel(self.valuesLabel, names, pens, lineBreak='<br>')
+            self.currentMode = 0
 
-            self.makeTextValueLabel(self.valuesLabel, names, pens)
+        # CNR state
+        elif state == 2:
 
-            self.currentMode = 0;
-
-            return
-        if state == 1:
-            return
-        if state == 2:
-            self.stackedWidgetOptions.setCurrentIndex(0);
+            self.stackedWidgetOptions.setCurrentIndex(0)
 
             names = ['СNR ']
             pens = [config.PLOT_PEN_COLORS[6]]
@@ -228,160 +245,65 @@ class RTQAWindow(QtWidgets.QWidget):
             for i in range(sz):
                 names.append('ROI_' + str(i + 1) + ':  ' + '{0:.3f}'.format(float(self.rCNR[i][self.iteration])))
                 pens.append(pg.mkPen(color=config.ROI_PLOT_COLORS[i], width=1.2))
+            self.makeTextValueLabel(self.valuesLabel, names, pens, lineBreak='<br>')
+            self.currentMode = 2
 
-            self.makeTextValueLabel(self.valuesLabel, names, pens)
-
-            self.currentMode = 2;
-
-            return
-        if state == 3:
-            return
-        if state == 4:
-            return
-
+    # --------------------------------------------------------------------------
     def onRadioButtonStateChanged(self):
+        """ FD and MD mode change. Mode changing switch plots and plot title
+        """
 
         if self.mcrRadioButton.isChecked():
             names = ['Micro Displacement']
             pens = [config.PLOT_PEN_COLORS[0]]
             names.append('Threshold')
             pens.append(config.PLOT_PEN_COLORS[2])
+            self.makeTextValueLabel(self.fdLabel, names, pens)
 
-            self.makeRoiPlotLegend(self.fdLabel, names, pens)
         else:
             names = ['Framewise Displacement']
             pens = [config.PLOT_PEN_COLORS[0]]
             for i in range(len(config.DEFAULT_FD_THRESHOLDS)-1):
                 names.append('Threshold ' + str(i+1))
                 pens.append(config.PLOT_PEN_COLORS[i + 1])
+            self.makeTextValueLabel(self.fdLabel, names, pens)
 
-            self.makeRoiPlotLegend(self.fdLabel, names, pens)
+        self._fd.draw_mc_plots(self.mcrRadioButton.isChecked(), self.translatPlot, self.rotatPlot, self.fdPlot)
 
-        self._fd.draw_mc_plots(self.mcrRadioButton.isChecked(), self._plot_translat, self._plot_rotat, self._plot_fd)
+    # --------------------------------------------------------------------------
+    def makeTextValueLabel(self, label, names, pens, lineBreak = ' '):
+        """ Dynamic generation of titles and value labels
 
-    def makeRoiPlotLegend(self, label, names, pens):
+        :param label: label for text update
+        :param names: set of names
+        :param pens: set of pens for each name
+        :param lineBreak: line break for value labels, space by default for title labels
+        """
+
         label.setText('')
         legendText = '<html><head/><body><p>'
 
         for n, c in zip(names, pens):
             cname = c.color().name()
             legendText += (
-                    '<span style="font-weight:600;color:{};">'.format(cname) + '{}</span> '.format(n))
+                    '<span style="font-weight:600;color:{};">'.format(cname) + '{}</span>' .format(n)+ lineBreak)
 
         legendText += '</p></body></html>'
 
         label.setText(legendText)
 
-    def makeTextValueLabel(self, label, names, pens):
+    # --------------------------------------------------------------------------
+    def roiCheckBoxStateChanged(self):
+        """ Redrawing plots when the set of selected ROIs is changed even if run is stopped
+        """
 
-        label.setText('')
-        text = '<html><head/><body><p>'
-        for n, c in zip(names, pens):
-            cname = c.color().name()
-            text += (
-                    '<span style="font-weight:600;color:{};">'.format(cname) + '{}</span><br>'.format(n))
+        self.init = True
+        if self.isStopped:
+            self.plotRTQA(self.rSNR.size)
 
-        text += '</p></body></html>'
-
-        label.setText(text)
-
-    def closeEvent(self, event):
-        self.hide()
-        event.accept()
-
-    def plot_ts(self, init, plotitem, data):
-
-        if self.tsCheckBox.isChecked():
-
-            sz, l = data.shape
-
-            if init:
-
-                plotitem.clear()
-                plots = []
-
-                muster = self.drawMusterPlot(plotitem)
-
-                for i, c in zip(range(sz), config.ROI_PLOT_COLORS):
-                    pen = pg.mkPen(color=c, width=config.ROI_PLOT_WIDTH)
-                    p = plotitem.plot(pen=pen)
-                    plots.append(p)
-
-                self.plot_ts.__dict__[plotitem] = plots, muster
-
-            x = np.arange(1, l+1, dtype=np.float64)
-
-            for p, y in zip(self.plot_ts.__dict__[plotitem][0], data):
-                p.setData(x=x, y=np.array(y))
-
-            items = plotitem.listDataItems()
-
-            for m in self.plot_ts.__dict__[plotitem][1]:
-                items.remove(m)
-
-            if data.any():
-                plotitem.setYRange(np.min(data), np.max(data), padding=0.0)
-
-    def plot_rtQA(self, init, n):
-
-        plotitem = self.snrplot.getPlotItem()
-        data = self.rSNR[:, 0:n]
-        self.plot_ts(init, plotitem, data)
-
-        if self.comboBox.model().item(2).isEnabled():
-            plotitem = self.cnrplot.getPlotItem()
-            data = self.rCNR[:, 0:n]
-            self.plot_ts(init, plotitem, data)
-
-            plotitem = self.meanplot.getPlotItem()
-            data = np.append(self.rMean[:, 0:n], self.meanBas[:, 0:n], axis=0)
-            data = np.append(data, self.meanCond[:, 0:n], axis=0)
-            m = len(self.rSNR[:, 1])
-            color = config.STAT_PLOT_COLORS[0:m] + config.ROI_BAS_COLORS[0:m] + config.ROI_COND_COLORS[0:m]
-            style = [QtCore.Qt.SolidLine, QtCore.Qt.DashLine, QtCore.Qt.DashLine]
-            self.plot_rStatValues(init, plotitem, data, color, style)
-
-            plotitem = self.varplot.getPlotItem()
-            data = np.append(self.rVar[:, 0:n], self.varBas[:, 0:n], axis=0)
-            data = np.append(data, self.varCond[:, 0:n], axis=0)
-            self.plot_rStatValues(init, plotitem, data, color, style)
-
-    def plot_rStatValues(self, init, plotitem, data, color, style):
-
-        if self.tsCheckBox.isChecked():
-
-            sz, l = data.shape
-
-            if init:
-
-                plotitem.clear()
-                plots = []
-
-                muster = self.drawMusterPlot(plotitem)
-
-                style = np.repeat(style, sz/3)
-
-                for i, c, s in zip(range(sz), color, style):
-                    pen = pg.mkPen(c, width=3.0, style=QtCore.Qt.PenStyle(s))
-                    p = plotitem.plot(pen=pen)
-                    plots.append(p)
-
-                self.plot_ts.__dict__[plotitem] = plots, muster
-
-            x = np.arange(1, l+1, dtype=np.float64)
-
-            for p, y in zip(self.plot_ts.__dict__[plotitem][0], data):
-                p.setData(x=x, y=np.array(y))
-
-            items = plotitem.listDataItems()
-
-            for m in self.plot_ts.__dict__[plotitem][1]:
-                items.remove(m)
-
-            if data.any():
-                plotitem.setYRange(np.min(data[np.nonzero(data)]), np.max(data), padding=0.0)
-
+    # --------------------------------------------------------------------------
     def drawMusterPlot(self, plotitem):
+
         ylim = config.MUSTER_Y_LIMITS
 
         if self.comboBox.model().item(2).isEnabled():
@@ -418,47 +340,345 @@ class RTQAWindow(QtWidgets.QWidget):
 
         return muster
 
-    def calculate_snr(self, data, n, isNewDCMBlock):
+    # --------------------------------------------------------------------------
+    def plotTs(self, init, plotitem, data, checkedBoxesInd):
+        """ Time-series plot method
+
+        :param init: flag for plot initializtion
+        :param plotitem: time-series plotitem
+        :param data: time-series value for drawing
+        :param checkedBoxesInd: indexes of selected ROIs
+        """
+
+        if self.tsCheckBox.isChecked():
+
+            sz, l = data.shape
+
+            if init:
+
+                plotitem.clear()
+                plots = []
+
+                muster = self.drawMusterPlot(plotitem)
+
+                for i, c in zip(range(sz),np.array(config.ROI_PLOT_COLORS)[checkedBoxesInd]):
+                    pen = pg.mkPen(color=c, width=config.ROI_PLOT_WIDTH)
+                    p = plotitem.plot(pen=pen)
+                    plots.append(p)
+
+                self.plotTs.__dict__[plotitem] = plots, muster
+
+            x = np.arange(1, l+1, dtype=np.float64)
+
+            plotitems = self.plotTs.__dict__[plotitem][0]
+            for p, y in zip(plotitems, data):
+                p.setData(x=x, y=np.array(y))
+
+            items = plotitem.listDataItems()
+
+            for m in self.plotTs.__dict__[plotitem][1]:
+                items.remove(m)
+
+            if data.any():
+                if plotitem.vb.state["targetRange"][1] == [-1, 1]:
+                    plotitem.enableAutoRange(enable=True, x=False, y=True)
+                plotitem.setYRange(np.min(data), np.max(data), padding=0.0)
+
+    # --------------------------------------------------------------------------
+    def plotRTQA(self, n):
+        """ Encapsulated plots drawing
+
+        :param n: last volume index
+        """
+
+        # The set of active ROIs changing
+        if self.init:
+            sz, l =  self.rSNR.shape
+            checkedBoxes = [self.roiCheckBoxes[i].isChecked() for i in range(sz)]
+            self.checkedBoxesInd = [j for j, val in enumerate(checkedBoxes) if val]
+
+        # SNR plot
+        plotitem = self.snrPlot.getPlotItem()
+        data = self.rSNR[self.checkedBoxesInd, 0:n]
+        self.plotTs(self.init, plotitem, data, self.checkedBoxesInd)
+
+        if self.comboBox.model().item(2).isEnabled():
+
+            # CNR plot
+            plotitem = self.cnrPlot.getPlotItem()
+            data = self.rCNR[self.checkedBoxesInd, 0:n]
+            self.plotTs(self.init, plotitem, data, self.checkedBoxesInd)
+
+            # Means plot
+            plotitem = self.meanPlot.getPlotItem()
+            data = np.append(self.rMean[self.checkedBoxesInd, 0:n], self.meanBas[self.checkedBoxesInd, 0:n], axis=0)
+            data = np.append(data, self.meanCond[self.checkedBoxesInd, 0:n], axis=0)
+            color = np.array(config.STAT_PLOT_COLORS)[self.checkedBoxesInd]
+            color = np.append(color,np.array(config.ROI_BAS_COLORS)[self.checkedBoxesInd])
+            color = np.append(color,np.array(config.ROI_COND_COLORS)[self.checkedBoxesInd])
+            style = [QtCore.Qt.SolidLine, QtCore.Qt.DashLine, QtCore.Qt.DashLine]
+            self.plotStatValues(self.init, plotitem, data, color, style)
+
+            # Variances plot
+            plotitem = self.varPlot.getPlotItem()
+            data = np.append(self.rVar[self.checkedBoxesInd, 0:n], self.varBas[self.checkedBoxesInd, 0:n], axis=0)
+            data = np.append(data, self.varCond[self.checkedBoxesInd, 0:n], axis=0)
+            self.plotStatValues(self.init, plotitem, data, color, style)
+
+        # Spikes plot
+        plotitem = self.spikesPlot.getPlotItem()
+        data = self.glmProcTimeSeries[self.checkedBoxesInd, 0:n]
+        self.plotSpikes(self.init, plotitem, data, self.checkedBoxesInd)
+
+        # Kalman filter MSE plot
+        plotitem = self.msePlot.getPlotItem()
+        data = self.rMSE[self.checkedBoxesInd, 0:n]
+        self.plotTs(self.init, plotitem, data, self.checkedBoxesInd)
+
+        # Linear trend coefficients plot
+        plotitem = self.trendPlot.getPlotItem()
+        data = self.linTrendCoeff[self.checkedBoxesInd, 0:n]
+        self.plotTs(self.init, plotitem, data, self.checkedBoxesInd)
+
+        # Linear trend coefficients value label
+        if self.comboBox.currentIndex() == 5:
+
+            names = ['Linear trend beta ']
+            pens = [config.PLOT_PEN_COLORS[6]]
+            sz = self.linTrendCoeff.shape[0]
+            for i in range(sz):
+                names.append('ROI_' + str(i + 1) + ': ' + '{0:.3f}'.format(float(self.linTrendCoeff[i, n-1])))
+                pens.append(pg.mkPen(color=config.ROI_PLOT_COLORS[i], width=1.2))
+            self.makeTextValueLabel(self.trendLabel, names, pens, lineBreak='<br>')
+
+        self.init = False
+
+    # --------------------------------------------------------------------------
+    def plotStatValues(self, init, plotitem, data, color, style):
+        """ Drawing method for mean and variance statistics
+
+        :param init: flag for plot initializtion
+        :param plotitem: mean or variance plotitem
+        :param data: signal values for drawing
+        :param color: color of each ROI line
+        :param style: style of each ROI line
+        """
+
+        if self.tsCheckBox.isChecked():
+
+            sz, l = data.shape
+
+            if init:
+
+                plotitem.clear()
+                plots = []
+
+                muster = self.drawMusterPlot(plotitem)
+
+                style = np.repeat(style, sz/3)
+
+                for i, c, s in zip(range(sz), color, style):
+                    pen = pg.mkPen(c, width=3.0, style=QtCore.Qt.PenStyle(s))
+                    p = plotitem.plot(pen=pen)
+                    plots.append(p)
+
+                self.plotTs.__dict__[plotitem] = plots, muster
+
+            x = np.arange(1, l+1, dtype=np.float64)
+
+            for p, y in zip(self.plotTs.__dict__[plotitem][0], data):
+                p.setData(x=x, y=np.array(y))
+
+            items = plotitem.listDataItems()
+
+            for m in self.plotTs.__dict__[plotitem][1]:
+                items.remove(m)
+
+            if data.any():
+                plotitem.setYRange(np.min(data[np.nonzero(data)]), np.max(data), padding=0.0)
+
+    # --------------------------------------------------------------------------
+    def plotDisplacements(self, data, isNewDCMBlock):
+        """ Calculation and drawing of Framewise and Micro Displacements
+
+        :param data: motion correction data
+        :param isNewDCMBlock: flag of new dcm block
+        """
+
+        self._fd.calc_mc_plots(data, isNewDCMBlock)
+        
+        self._fd.draw_mc_plots(self.mcrRadioButton.isChecked(), self.translatPlot, self.rotatPlot, self.fdPlot)
+
+        names = ['<u>FD</u> ']
+        pens = [config.PLOT_PEN_COLORS[6]]
+        names.append('Threshold 1: ' + str(int(self._fd.excFD[0])))
+        pens.append(config.PLOT_PEN_COLORS[1])
+        names.append('Threshold 2: ' + str(int(self._fd.excFD[1])))
+        pens.append(config.PLOT_PEN_COLORS[2])
+        names.append('<br><u>MD</u> ')
+        pens.append(config.PLOT_PEN_COLORS[6])
+        names.append('Threshold: ' + str(int(self._fd.excVD)))
+        pens.append(config.PLOT_PEN_COLORS[2])
+        names.append('<br><u>Mean FD</u> ')
+        pens.append(config.PLOT_PEN_COLORS[6])
+        names.append('{0:.3f}'.format(self._fd.meanFD))
+        pens.append(config.PLOT_PEN_COLORS[6])
+        names.append('<br><u>Mean MD</u> ')
+        pens.append(config.PLOT_PEN_COLORS[6])
+        names.append('{0:.3f}'.format(self._fd.meanMD))
+        pens.append(config.PLOT_PEN_COLORS[6])
+        self.makeTextValueLabel(self.mcmdValuesLabel, names, pens, lineBreak='<br>')
+
+    # --------------------------------------------------------------------------
+    def plotSpikes(self, init, plotitem, data, checkedBoxesInd):
+        """ Spikes plot drawing
+
+        :param init: flag for plot initializtion
+        :param plotitem: spikes plotitem
+        :param data: signal values for drawing
+        :param checkedBoxesInd: indexes of selected ROIs
+        """
+
+        # First part - line drawing
+        sz, l = data.shape
+        x = np.arange(1, l+1, dtype=np.float64)
+
+        if init:
+            plotitem.clear()
+            plots = []
+
+            muster = self.drawMusterPlot(plotitem)
+
+            for i, c in zip(range(sz),np.array(config.ROI_PLOT_COLORS)[checkedBoxesInd]):
+                pen = pg.mkPen(color=c, width=config.ROI_PLOT_WIDTH)
+                p = plotitem.plot(pen=pen)
+                plots.append(p)
+
+            self.plotSpikes.__dict__[plotitem] = plots, muster
+
+        plots = self.plotSpikes.__dict__[plotitem][0]
+        for p, y in zip(plots, data):
+            p.setData(x=x, y=np.array(y))
+
+        # Second part - spikes marking
+        for i, c in zip(range(sz),np.array(config.ROI_PLOT_COLORS)[checkedBoxesInd]):
+
+            roiInd = checkedBoxesInd[i]
+            if self.posSpikes[str(roiInd)].any():
+                brush = pg.mkBrush(color=c)
+                p = plotitem.scatterPlot(symbol='o', size=20, brush=brush)
+                plots.append(p)
+                plots[-1].setData(x=self.posSpikes[str(roiInd)]+1, y=self.glmProcTimeSeries[roiInd, self.posSpikes[str(roiInd)]])
+
+                pen = pg.mkPen(color=pg.mkColor(0, 0, 0), width=1.5*config.ROI_PLOT_WIDTH)
+                p = plotitem.plot(pen=pen)
+                plots.append(p)
+
+                inds = self.posSpikes[str(roiInd)]
+                indX = np.array(list(itertools.chain.from_iterable(zip(inds, inds + 1))))
+                indY = np.array(list(itertools.chain.from_iterable(zip(inds - 1, inds))))
+
+                y = np.array(self.glmProcTimeSeries[roiInd,indY])
+                x1 = indX
+
+                plots[-1].setData(x=x1, y=y, connect='pairs')
+
+            if self.negSpikes[str(roiInd)].any():
+                brush = pg.mkBrush(color=c)
+                p = plotitem.scatterPlot(symbol='d', size=20, brush=brush)
+                plots.append(p)
+                plots[-1].setData(x=self.negSpikes[str(roiInd)]+1, y=self.glmProcTimeSeries[roiInd, self.negSpikes[str(roiInd)]])
+
+                pen = pg.mkPen(color=pg.mkColor(0, 0, 0), width=1.5*config.ROI_PLOT_WIDTH)
+                p = plotitem.plot(pen=pen)
+                plots.append(p)
+
+                inds = self.negSpikes[str(roiInd)]
+                indX = np.array(list(itertools.chain.from_iterable(zip(inds, inds + 1))))
+                indY = np.array(list(itertools.chain.from_iterable(zip(inds - 1, inds))))
+
+                y = np.array(self.glmProcTimeSeries[roiInd,indY])
+                x1 = indX
+
+                plots[-1].setData(x=x1, y=y, connect='pairs')
+
+        items = plotitem.listDataItems()
+
+        for m in self.plotSpikes.__dict__[plotitem][1]:
+            items.remove(m)
+
+        if data.any():
+            plotitem.setYRange(np.min(self.glmProcTimeSeries)-1, np.max(self.glmProcTimeSeries)+1, padding=0.0)
+
+        # number of spikes label
+        sz, l = self.glmProcTimeSeries.shape
+        cnt = 0
+        for i in range(sz):
+            cnt = cnt + np.count_nonzero(self.posSpikes[str(i)])
+        names = ['( Circles ) <br>Positive spikes: ' + str(int(cnt))]
+
+        cnt = 0
+        for i in range(sz):
+            cnt = cnt + np.count_nonzero(self.negSpikes[str(i)])
+        names.append('<br>( Diamonds )<br>Negative spikes: ' + str(int(cnt)))
+        pens = [pg.mkPen(color=config.STAT_PLOT_COLORS[9], width=1.2), pg.mkPen(color=config.STAT_PLOT_COLORS[9], width=1.2)]
+        self.makeTextValueLabel(self.spikesLabel, names, pens, lineBreak='<br>')
+
+    # --------------------------------------------------------------------------
+    def calculateSNR(self, data, indexVolume, isNewDCMBlock):
+        """ Recursive time-series SNR calculation
+
+        :param data: new value of raw time-series
+        :param indexVolume: current volume index
+        :param isNewDCMBlock: flag of new dcm block
+        :return: calculated SNR are written in RTQA class
+        """
 
         sz = data.size
-        snr = np.zeros((sz,))
-
         if isNewDCMBlock:
             self.blockIter=0;
 
         if self.blockIter:
 
             for i in range(sz):
-                self.rMean[i, n] = self.rMean[i, n - 1] + (data[i] - self.rMean[i, n - 1]) / ( self.blockIter + 1 )
-                self.m2[i] = self.m2[i] + (data[i] - self.rMean[i, n - 1]) * (data[i] - self.rMean[i, n])
-                self.rVar[i, n] = self.m2[i] / self.blockIter
-                self.rSNR[i, n] = self.rMean[i, n] / (self.rVar[i, n] ** (.5))
+                self.rMean[i, indexVolume] = self.rMean[i, indexVolume- 1] + (data[i] - self.rMean[i, indexVolume- 1]) / ( self.blockIter + 1 )
+                self.m2[i] = self.m2[i] + (data[i] - self.rMean[i, indexVolume- 1]) * (data[i] - self.rMean[i, indexVolume])
+                self.rVar[i, indexVolume] = self.m2[i] / self.blockIter
+                self.rSNR[i, indexVolume] = self.rMean[i, indexVolume] / (self.rVar[i, indexVolume] ** (.5))
 
             self.blockIter += 1
 
         else:
 
-            self.rVar[:, n] = np.zeros((sz,))
+            self.rVar[:, indexVolume] = np.zeros((sz,))
             self.m2 = np.zeros((sz,))
-            self.rMean[:, n] = data
+            self.rMean[:, indexVolume] = data
             self.blockIter = 1;
 
         if self.blockIter < 8:
-            self.rSNR[:, n] = np.zeros((sz,))
+            self.rSNR[:, indexVolume] = np.zeros((sz,))
 
         if not self.comboBox.currentIndex():
 
             names = ['SNR ']
             pens = [config.PLOT_PEN_COLORS[6]]
             for i in range(sz):
-                names.append('ROI_' + str(i + 1) + ': ' + '{0:.3f}'.format(float(self.rSNR[i, n])))
+                names.append('ROI_' + str(i + 1) + ': ' + '{0:.3f}'.format(float(self.rSNR[i, indexVolume])))
                 pens.append(pg.mkPen(color=config.ROI_PLOT_COLORS[i], width=1.2))
 
-            self.makeTextValueLabel(self.valuesLabel, names, pens)
+            self.makeTextValueLabel(self.valuesLabel, names, pens, lineBreak='<br>')
 
-        self.iteration = n;
+        self.iteration = indexVolume;
 
-    def calculate_cnr(self, data, indexVolume, isNewDCMBlock):
+    # --------------------------------------------------------------------------
+    def calculateCNR(self, data, indexVolume, isNewDCMBlock):
+        """ Recursive time-series CNR calculation
+
+        :param data: new value of raw time-series
+        :param indexVolume: current volume index
+        :param isNewDCMBlock: flag of new dcm block
+        :return: calculated CNR are written in RTQA class
+        """
 
         sz = data.size
 
@@ -523,130 +743,67 @@ class RTQAWindow(QtWidgets.QWidget):
                     names.append('ROI_' + str(i + 1) + ': ' + '{0:.3f}'.format(float(self.rCNR[i][indexVolume-1])))
                     pens.append(pg.mkPen(color=config.ROI_PLOT_COLORS[i], width=1.2))
 
-                self.makeTextValueLabel(self.valuesLabel, names, pens)
+                self.makeTextValueLabel(self.valuesLabel, names, pens, lineBreak='<br>')
 
-    def plot_mcmd(self, data, isNewDCMBlock):
+    # --------------------------------------------------------------------------
+    def calculateSpikes(self, data, indexVolume, posSpikes, negSpikes):
+        """ Spikes and GLM signal recording
 
-        self._fd.calc_mc_plots(data, isNewDCMBlock)
-        self._fd.draw_mc_plots(self.mcrRadioButton.isChecked(), self._plot_translat, self._plot_rotat, self._plot_fd)
-        names = ['<u>FD</u> ']
-        pens = [config.PLOT_PEN_COLORS[6]]
-        names.append('Threshold 1: ' + str(int(self._fd.excFD[0])))
-        pens.append(config.PLOT_PEN_COLORS[1])
-        names.append('Threshold 2: ' + str(int(self._fd.excFD[1])))
-        pens.append(config.PLOT_PEN_COLORS[2])
-        names.append('<br><u>MD</u> ')
-        pens.append(config.PLOT_PEN_COLORS[6])
-        names.append('Threshold: ' + str(int(self._fd.excVD)))
-        pens.append(config.PLOT_PEN_COLORS[2])
-        names.append('<br><u>Mean FD</u> ')
-        pens.append(config.PLOT_PEN_COLORS[6])
-        names.append('{0:.3f}'.format(self._fd.meanFD))
-        pens.append(config.PLOT_PEN_COLORS[6])
-        names.append('<br><u>Mean MD</u> ')
-        pens.append(config.PLOT_PEN_COLORS[6])
-        names.append('{0:.3f}'.format(self._fd.meanMD))
-        pens.append(config.PLOT_PEN_COLORS[6])
-        self.makeTextValueLabel(self.mcmdValuesLabel, names, pens)
+        :param data: signal values after GLM process
+        :param indexVolume: current volume index
+        :param posSpikes: flags of positive spikes
+        :param negSpikes: flags of negative spikes
+        """
 
-    def plot_stepsAndSpikes(self, data, posSpike, negSpike):
-
-        self.glmProcTimeSeries = np.append(self.glmProcTimeSeries, data, axis=1)
-        sz, l = self.glmProcTimeSeries.shape
+        sz, l = data.shape
+        self.glmProcTimeSeries[:,indexVolume] = data[:,0]
 
         for i in range(sz):
-            if posSpike[i] == 1:
+            if posSpikes[i] == 1:
                 if self.posSpikes[str(i)].any():
-                    self.posSpikes[str(i)] = np.append(self.posSpikes[str(i)], l-1)
+                    self.posSpikes[str(i)] = np.append(self.posSpikes[str(i)], indexVolume)
                 else:
-                    self.posSpikes[str(i)] = np.array([l-1])
-            if negSpike[i] == 1:
+                    self.posSpikes[str(i)] = np.array([indexVolume])
+            if negSpikes[i] == 1 and l > 2:
                 if self.negSpikes[str(i)].any():
-                    self.negSpikes[str(i)] = np.append(self.negSpikes[str(i)], l-1)
+                    self.negSpikes[str(i)] = np.append(self.negSpikes[str(i)], indexVolume)
                 else:
-                    self.negSpikes[str(i)] = np.array([l-1])
+                    self.negSpikes[str(i)] = np.array([indexVolume])
 
-        x = np.arange(0, l, dtype=np.float64)
+    # --------------------------------------------------------------------------
+    def calculateMSE(self, indexVolume, inputSignal, outputSignal):
+        """ Low pass filter performance estimated by recursive mean squared error
 
-        plotitem = self.spikes_plot.getPlotItem()
-        plotitem.clear()
-        plots = []
+        :param indexVolume: current volume index
+        :param inputSignal: signal value before filtration
+        :param outputSignal: signal value after filtration
 
-        muster = self.drawMusterPlot(plotitem)
+        """
 
-        for i, c in zip(range(sz), config.ROI_PLOT_COLORS):
-            pen = pg.mkPen(color=c, width=config.ROI_PLOT_WIDTH)
-            p = plotitem.plot(pen=pen)
-            plots.append(p)
+        sz = inputSignal.size
+        n = self.blockIter-1;
 
-        self.plot_stepsAndSpikes.__dict__[plotitem] = plots, muster
+        for i in range (sz):
+            self.rMSE[i,indexVolume] = (n/(n+1)) * self.rMSE[i,indexVolume-1] + ((inputSignal[i]-outputSignal[i])**2)/(n+1)
 
-        for p, y in zip(self.plot_stepsAndSpikes.__dict__[plotitem][0], self.glmProcTimeSeries):
-            p.setData(x=x, y=np.array(y))
+        if self.comboBox.currentIndex() == 4:
 
-        for i, c in zip(range(sz), config.ROI_PLOT_COLORS):
+            names = ['MSE ']
+            pens = [config.PLOT_PEN_COLORS[6]]
+            for i in range(sz):
+                names.append('ROI_' + str(i + 1) + ': ' + '{0:.3f}'.format(float(self.rMSE[i, indexVolume])))
+                pens.append(pg.mkPen(color=config.ROI_PLOT_COLORS[i], width=1.2))
 
-            if self.posSpikes[str(i)].any():
-                brush = pg.mkBrush(color=c)
-                p = plotitem.scatterPlot(symbol='o', size=20, brush=brush)
-                plots.append(p)
-                plots[-1].setData(x=x[self.posSpikes[str(i)]], y=self.glmProcTimeSeries[i, self.posSpikes[str(i)]])
+            self.makeTextValueLabel(self.mseLabel, names, pens, lineBreak='<br>')
 
-                pen = pg.mkPen(color=pg.mkColor(0, 0, 0), width=1.5*config.ROI_PLOT_WIDTH)
-                p = plotitem.plot(pen=pen)
-                plots.append(p)
-
-                inds = self.posSpikes[str(i)]
-                inds = np.array(list(itertools.chain.from_iterable(zip(inds, inds-1))))
-
-                y = np.array(self.glmProcTimeSeries[i,inds])
-                x1 = inds
-
-                plots[-1].setData(x=x1, y=y, connect='pairs')
-
-            if self.negSpikes[str(i)].any():
-                brush = pg.mkBrush(color=c)
-                p = plotitem.scatterPlot(symbol='d', size=20, brush=brush)
-                plots.append(p)
-                plots[-1].setData(x=x[self.negSpikes[str(i)]], y=self.glmProcTimeSeries[i, self.negSpikes[str(i)]])
-
-                pen = pg.mkPen(color=pg.mkColor(0, 0, 0), width=1.5*config.ROI_PLOT_WIDTH)
-                p = plotitem.plot(pen=pen)
-                plots.append(p)
-
-                inds = self.negSpikes[str(i)]
-                inds = np.array(list(itertools.chain.from_iterable(zip(inds, inds - 1))))
-
-                y = np.array(self.glmProcTimeSeries[i,inds])
-                x1 = inds
-
-                plots[-1].setData(x=x1, y=y, connect='pairs')
-
-        cnt = 0;
-        for i in range(sz):
-            cnt = cnt + np.count_nonzero(self.posSpikes[str(i)])
-        names = ['( Circles ) <br>Positive spikes: ' + str(int(cnt))]
-
-        cnt = 0;
-        for i in range(sz):
-            cnt = cnt + np.count_nonzero(self.negSpikes[str(i)])
-        names.append('<br>( Diamonds )<br>Negative spikes: ' + str(int(cnt)))
-        pens = [pg.mkPen(color=config.STAT_PLOT_COLORS[9], width=1.2), pg.mkPen(color=config.STAT_PLOT_COLORS[9], width=1.2)]
-        self.makeTextValueLabel(self.spikesLabel, names, pens)
-
-        items = plotitem.listDataItems()
-
-        for m in self.plot_stepsAndSpikes.__dict__[plotitem][1]:
-            items.remove(m)
-
-        if data.any():
-            plotitem.setYRange(np.min(self.glmProcTimeSeries)-1, np.max(self.glmProcTimeSeries)+1, padding=0.0)
-
-    def data_packing(self):
+    # --------------------------------------------------------------------------
+    def dataPacking(self):
+        """ Packaging of python RTQA data for following save
+        """
 
         tsRTQA = dict.fromkeys(['rMean', 'rVar', 'rSNR',
                                 'meanBas', 'varBas', 'meanCond', 'varCond', 'rCNR',
-                                'excFDIndexes_1', 'excFDIndexes_2', 'excMDIndexes', 'FD', 'MD'])
+                                'excFDIndexes_1', 'excFDIndexes_2', 'excMDIndexes', 'FD', 'MD', 'rMSE'])
 
         tsRTQA['rMean'] = matlab.double(self.rMean.tolist())
         tsRTQA['rVar'] = matlab.double(self.rVar.tolist())
@@ -661,5 +818,6 @@ class RTQAWindow(QtWidgets.QWidget):
         tsRTQA['excMDIndexes'] = matlab.double(self._fd.excMDIndexes.tolist())
         tsRTQA['FD'] = matlab.double(self._fd.FD.tolist())
         tsRTQA['MD'] = matlab.double(self._fd.MD.tolist())
+        tsRTQA['rMSE'] = matlab.double(self.rMSE.tolist())
 
         return tsRTQA

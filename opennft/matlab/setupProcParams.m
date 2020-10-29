@@ -272,6 +272,7 @@ if P.isRTQA
     rtQA_python.excMDIndexes = [];
     rtQA_python.FD = [];
     rtQA_python.MD = [];
+    rtQA_python.rMSE = [];
 
     % rtQA matlab part structure preparation
     if isDCM
@@ -321,7 +322,8 @@ if P.isRTQA
         rtQA_matlab.cnrData.condData.meanSmoothed = [];
         rtQA_matlab.cnrData.condData.m2Smoothed = [];
         rtQA_matlab.cnrData.condData.iteration = 1;
-        
+
+        % indexes of baseline and condition for CNR calculation
         tmpindexesCond = find(SPM.xX.X(:,contains(SPM.xX.name, P.CondName))>0.6);
         tmpindexesBas = find(SPM.xX.X(:,contains(SPM.xX.name, P.CondName))<0.1);
         if isDCM
@@ -390,10 +392,12 @@ if ~exist(P.nfbDataFolder, 'dir')
     mkdir(P.nfbDataFolder);
 end
 
-assignin('base', 'rtQA_matlab', rtQA_matlab);
+
 if P.isRTQA
+    assignin('base', 'rtQA_matlab', rtQA_matlab);
     assignin('base', 'rtQA_python', rtQA_python);
 end
+
 assignin('base', 'mainLoopData', mainLoopData);
 assignin('base', 'P', P);
 if P.UseTCPData, assignin('base', 'tcp', tcp); end
