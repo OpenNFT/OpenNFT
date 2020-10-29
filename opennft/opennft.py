@@ -1095,6 +1095,9 @@ class OpenNFT(QWidget):
         self.drawMusterPlot(rawTimeSeries)
         self.drawMusterPlot(proc)
         self.drawMusterPlot(norm)
+        rawTimeSeries.setYRange(-1, 1, padding=0.0)
+        proc.setYRange(-1, 1, padding=0.0)
+        norm.setYRange(-1, 1, padding=0.0)
 
     # --------------------------------------------------------------------------
     def setupMcPlots(self):
@@ -2069,11 +2072,12 @@ class OpenNFT(QWidget):
 
         # SNR/Stat map display
         is_stat_map_created = bool(self.eng.evalin('base', 'mainLoopData.statMapCreated'))
-        is_snr_map_created = bool(self.eng.evalin('base', 'rtQA_matlab.snrMapCreated'))
         if self.windowRTQA:
             is_rtqa_volume_checked = self.windowRTQA.volumeCheckBox.isChecked()
+            is_snr_map_created = bool(self.eng.evalin('base', 'rtQA_matlab.snrMapCreated'))
         else:
             is_rtqa_volume_checked = False
+            is_snr_map_created = False
 
         if (background_image is not None
                 and (is_stat_map_created and not is_rtqa_volume_checked
@@ -2240,6 +2244,9 @@ class OpenNFT(QWidget):
         sz, l = data.shape
 
         if init:
+
+            plotitem.enableAutoRange(enable=True, x=False, y=True)
+
             plotitem.clear()
             muster = self.drawMusterPlot(plotitem)
 
