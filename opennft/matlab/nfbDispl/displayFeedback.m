@@ -25,7 +25,7 @@ eval(varsFromStruct(displayData, fieldNames, defaultFields))
 
 if ~strcmp(feedbackType, 'DCM')
     dispColor = [255, 255, 255];
-    instrColor = [200, 200, 200];
+    instrColor = [155, 150, 150];
 end
 
 switch feedbackType    
@@ -113,7 +113,7 @@ switch feedbackType
         end
         switch condition
             case 1  % Baseline
-                Screen(P.Screen.wPtr, 'FillRect', [125 125 125]); 
+                Screen(P.Screen.wPtr, 'FillRect', [100 100 100]);
                 % fixation cross
                 Screen('DrawLines', P.Screen.wPtr, ...
                     [floor(P.Screen.w/2-P.Screen.w/20), ...
@@ -131,7 +131,7 @@ switch feedbackType
                 
             case 2  % Regualtion 1
                 % Text 
-                Screen(P.Screen.wPtr, 'FillRect', [125 125 125]); 
+                Screen(P.Screen.wPtr, 'FillRect', [100 100 100]);
                 Screen('TextSize', P.Screen.wPtr , P.Screen.h/10);
                 Screen('DrawText', P.Screen.wPtr, 'IMAGINE  TAPPING', ...
                     floor(P.Screen.w/2-P.Screen.h/3), ...
@@ -152,10 +152,10 @@ switch feedbackType
                     wordDisp = char(' ');
                 end
                 % Text 
-                Screen(P.Screen.wPtr, 'FillRect', [125 125 125]); 
+                Screen(P.Screen.wPtr, 'FillRect', [100 100 100]);
                 Screen('TextSize', P.Screen.wPtr , P.Screen.h/10);
                 Screen('DrawText', P.Screen.wPtr, wordDisp, ...
-                    floor(P.Screen.w/2-P.Screen.h/4), ...
+                    floor(P.Screen.w/2-P.Screen.h/10), ...
                     floor(P.Screen.h/2-P.Screen.h/10), instrColor);
                 % Fixation Point
                 Screen('FillOval', P.Screen.wPtr, [200 200 200], ...
@@ -167,11 +167,11 @@ switch feedbackType
                  P.Screen.vbl = Screen('Flip', P.Screen.wPtr, ...
                      P.Screen.vbl + P.Screen.ifi/2);   
                  
-                 nPause = 1+randi(5)/10;
+                 nPause = 1.5+randi(5)/10;
                  pause(nPause);
                  
                 % blanck screen
-                 Screen(P.Screen.wPtr, 'FillRect', [125 125 125]); 
+                 Screen(P.Screen.wPtr, 'FillRect', [100 100 100]);
                  % Fixation Point
                  Screen('FillOval', P.Screen.wPtr, [200 200 200], ...
                      [floor(P.Screen.w/2-P.Screen.w/200), ...
@@ -189,10 +189,10 @@ switch feedbackType
                     wordDisp = char(' ');
                 end                
                 % Text 
-                Screen(P.Screen.wPtr, 'FillRect', [125 125 125]); 
+                Screen(P.Screen.wPtr, 'FillRect', [100 100 100]);
                 Screen('TextSize', P.Screen.wPtr , P.Screen.h/10);
                 Screen('DrawText', P.Screen.wPtr, wordDisp, ...
-                    floor(P.Screen.w/2-P.Screen.h/4), ...
+                    floor(P.Screen.w/2-P.Screen.h/10), ...
                     floor(P.Screen.h/2-P.Screen.h/10), instrColor);
                 % Fixation Point
                 Screen('FillOval', P.Screen.wPtr, [200 200 200], ...
@@ -204,11 +204,11 @@ switch feedbackType
                  P.Screen.vbl = Screen('Flip', P.Screen.wPtr, ...
                      P.Screen.vbl + P.Screen.ifi/2);     
                                   
-                 nPause = 1+randi(5)/10;
+                 nPause = 1.5+randi(5)/10;
                  pause(nPause);
                  
                  % blanck screen
-                 Screen(P.Screen.wPtr, 'FillRect', [125 125 125]); 
+                 Screen(P.Screen.wPtr, 'FillRect', [100 100 100]);
                  % Fixation Point
                  Screen('FillOval', P.Screen.wPtr, [200 200 200], ...
                      [floor(P.Screen.w/2-P.Screen.w/200), ...
