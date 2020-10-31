@@ -1,7 +1,7 @@
 .. _install:
 
-Installing
-==========
+Installation
+============
 
 The installation process has been tested on three x86_64 platforms:
 
@@ -25,8 +25,8 @@ Firstly, the following software should be installed:
 * `Python <https://www.python.org/downloads/>`_ x86_64 3.6-3.8
 
 
-Installing OpenNFT
-------------------
+Install OpenNFT
+---------------
 
 We recommend using a virtual environment for installing OpenNFT.
 
@@ -58,8 +58,8 @@ Creating Virtual Environment
     opennft-venv\Scripts\activate.bat
     python -m pip install -U pip setuptools wheel
 
-Installing from GitHub
-++++++++++++++++++++++
+Install from GitHub
++++++++++++++++++++
 
 .. note::
 
@@ -78,8 +78,8 @@ Run the command:
     install "Matlab Engine for Python" with Administrator/root privileges
     (It elevates privileges via UAC/sudo).
 
-Installing from Project Directory
-+++++++++++++++++++++++++++++++++
+Install from Project Directory
+++++++++++++++++++++++++++++++
 
 Also you can install OpenNFT from your working directory (OpenNFT project root directory).
 It is convenient if you working on the project or you want to contribute.
@@ -139,8 +139,8 @@ You can use both ``-e/--editable`` and  ``--install-option "--matlab-root=<MATLA
     (It elevates privileges via UAC/sudo).
 
 
-Checking Installation
----------------------
+Check Installation
+------------------
 
 Run the command:
 
@@ -162,8 +162,8 @@ If everything went well, you should see something like this:
 
 Check the existence of ``matlabengineforpython`` and ``OpenNFT`` names.
 
-Running
--------
+Run Application
+---------------
 
 You can now start OpenNFT. Run the command:
 
