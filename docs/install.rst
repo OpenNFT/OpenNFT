@@ -140,7 +140,7 @@ You can use both ``-e/--editable`` and  ``--install-option "--matlab-root=<MATLA
 
 
 Checking Installation
-+++++++++++++++++++++
+---------------------
 
 Run the command:
 
@@ -161,3 +161,18 @@ If everything went well, you should see something like this:
     ...
 
 Check the existence of ``matlabengineforpython`` and ``OpenNFT`` names.
+
+Running
+-------
+
+You can now start OpenNFT. Run the command:
+
+.. code-block::
+
+    opennft
+
+Also you can run shared MATLAB sessions for reusing them before running OpenNFT in separated terminal:
+
+.. code-block::
+
+    run_matlab
