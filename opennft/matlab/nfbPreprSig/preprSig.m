@@ -306,6 +306,7 @@ for indRoi = 1:P.NrROIs
             mainLoopData.betRegr{indRoi}(tmp_ind_end,:) = betaReg;
 
             if P.isRTQA
+                % invCX0 is estimated for the first ROI, is the same for other ROIs
                 if indRoi == 1
                     invCX0 = inv(cX0'*cX0);
                 end

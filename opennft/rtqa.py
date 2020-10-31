@@ -86,6 +86,7 @@ class RTQAWindow(QtWidgets.QWidget):
         p = self.snrPlot.getPlotItem()
         self.plotsSetup(p, "SNR [a.u.]", xrange)
         self.drawMusterPlot(p)
+        p.setYRange(-1, 1, padding=0.0)
 
         self.msePlot = pg.PlotWidget(self)
         self.msePlot.setBackground((255, 255, 255))
@@ -93,6 +94,7 @@ class RTQAWindow(QtWidgets.QWidget):
         p = self.msePlot.getPlotItem()
         self.plotsSetup(p, "Mean squared error [a.u.]", xrange)
         self.drawMusterPlot(p)
+        p.setYRange(-1, 1, padding=0.0)
 
         self.trendPlot = pg.PlotWidget(self)
         self.trendPlot.setBackground((255, 255, 255))
@@ -100,20 +102,25 @@ class RTQAWindow(QtWidgets.QWidget):
         p = self.trendPlot.getPlotItem()
         self.plotsSetup(p, "Beta regressor amplitude [a.u.]", xrange)
         self.drawMusterPlot(p)
+        p.setYRange(-1, 1, padding=0.0)
 
         self.fdPlot = pg.PlotWidget(self)
         self.fdPlot.setBackground((255, 255, 255))
         self.fdPlotLayout.addWidget(self.fdPlot)
         p = self.fdPlot.getPlotItem()
         self.plotsSetup(p, "FD [mm]", xrange)
-        self.drawMusterPlot(p)
+
+        self.translatPlot = pg.PlotWidget(self)
+        self.translatPlot.setBackground((255, 255, 255))
+        self.tdPlotLayout.addWidget(self.translatPlot)
+        p = self.translatPlot.getPlotItem()
+        self.plotsSetup(p, "Amplitude [mm]", xrange)
 
         self.rotatPlot = pg.PlotWidget(self)
         self.rotatPlot.setBackground((255, 255, 255))
         self.rdPlotLayout.addWidget(self.rotatPlot)
         p = self.rotatPlot.getPlotItem()
         self.plotsSetup(p, "Amplitude [mm]", xrange)
-        self.drawMusterPlot(p)
 
         self.spikesPlot = pg.PlotWidget(self)
         self.spikesPlot.setBackground((255, 255, 255))
@@ -121,13 +128,7 @@ class RTQAWindow(QtWidgets.QWidget):
         p = self.spikesPlot.getPlotItem()
         self.plotsSetup(p, "Amplitude [a.u.]", xrange)
         self.drawMusterPlot(p)
-
-        self.translatPlot = pg.PlotWidget(self)
-        self.translatPlot.setBackground((255, 255, 255))
-        self.tdPlotLayout.addWidget(self.translatPlot)
-        p = self.translatPlot.getPlotItem()
-        self.plotsSetup(p, "Amplitude [mm]", xrange)
-        self.drawMusterPlot(p)
+        p.setYRange(-1, 1, padding=0.0)
 
         # CNR, means and variances plots and labels
         if not parent.P['isRestingState']:
@@ -138,6 +139,7 @@ class RTQAWindow(QtWidgets.QWidget):
             p = self.cnrPlot.getPlotItem()
             self.plotsSetup(p, "CNR [a.u.]", xrange)
             self.drawMusterPlot(p)
+            p.setYRange(-1, 1, padding=0.0)
 
             self.meanPlot = pg.PlotWidget(self)
             self.meanPlot.setBackground((255, 255, 255))
@@ -145,6 +147,7 @@ class RTQAWindow(QtWidgets.QWidget):
             p = self.meanPlot.getPlotItem()
             self.plotsSetup(p, "Mean [a.u.]", xrange)
             self.drawMusterPlot(p)
+            p.setYRange(-1, 1, padding=0.0)
 
             self.varPlot = pg.PlotWidget(self)
             self.varPlot.setBackground((255, 255, 255))
@@ -152,6 +155,7 @@ class RTQAWindow(QtWidgets.QWidget):
             p = self.varPlot.getPlotItem()
             self.plotsSetup(p, "Variance [a.u.]", xrange)
             self.drawMusterPlot(p)
+            p.setYRange(-1, 1, padding=0.0)
 
             names = ['ROI_1 rMean', ' bas', ' cond']
             color = [config.STAT_PLOT_COLORS[0], config.ROI_BAS_COLORS[0], config.ROI_COND_COLORS[0]]
@@ -376,6 +380,8 @@ class RTQAWindow(QtWidgets.QWidget):
                 items.remove(m)
 
             if data.any():
+                if plotitem.vb.state["targetRange"][1] == [-1, 1]:
+                    plotitem.enableAutoRange(enable=True, x=False, y=True)
                 plotitem.setYRange(np.min(data), np.max(data), padding=0.0)
 
     # --------------------------------------------------------------------------

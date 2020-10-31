@@ -24,9 +24,9 @@ class FD:
         self.threshold = c.DEFAULT_FD_THRESHOLDS
 
         self.xmax = xmax
-        self.FD = 0
+        self.FD = np.array([0])
         self.meanFD = 0
-        self.MD = [0]
+        self.MD = np.array([0])
         self.meanMD = 0
         self.blockIter = 1;
 
