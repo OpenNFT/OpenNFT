@@ -192,7 +192,7 @@ for indRoi = 1:P.NrROIs
     % Regressors, which may require a justification for particular project
     regrStep = nrRegrDesign+nrRegrToCorrect;
     if isPSC || isSVM || P.isRestingState
-        if P.NFRunNr == 1
+        if P.NFRunNr == 1 || (P.NFRunNr > 1 && tmp_ind_end > 134)
             if (tmp_ind_end < regrStep)
                 tmpRegr = ones(tmp_ind_end,1);
                 if P.cglmAR1
@@ -283,7 +283,7 @@ for indRoi = 1:P.NrROIs
             end
         else
             % previous NFB run estimates, skip first # unstable
-            nrSkipPrevRunScansGLM = 50;
+            nrSkipPrevRunScansGLM = 134;
             comb_tmp_rawTimeSeries = [mainLoopData.prevTS.rawTimeSeries(indRoi,nrSkipPrevRunScansGLM+1:end)'; tmp_rawTimeSeries];
 
             % zscore() is cumulative, which limits truly recursive
@@ -297,7 +297,7 @@ for indRoi = 1:P.NrROIs
                 comb_cX0 = [mainLoopData.prev_cX0(nrSkipPrevRunScansGLM+1:end,:);[tmpRegr P.spmDesign(1:tmp_ind_end,:)]];
                 betaReg = pinv(comb_cX0) * comb_tmp_rawTimeSeries;
                 tmp_glmProcTimeSeries = (comb_tmp_rawTimeSeries - ...
-                    comb_cX0 * [betaReg(1:end-1); zeros(1,1)])';
+                    comb_cX0 * [betaReg(1:end-4); zeros(4,1)])';
             else
                 comb_cX0 = tmpRegr;
                 betaReg = pinv(comb_cX0) * comb_tmp_rawTimeSeries;
