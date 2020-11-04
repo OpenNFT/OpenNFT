@@ -15,6 +15,7 @@ Prerequisites
 Firstly, the following software should be installed:
 
 * `Git <https://git-scm.com/downloads>`_: for installing SPM, Psychtoolbox and OpenNFT
+* PyCharm `Professional or Community <https://www.jetbrains.com/pycharm/download/>`_
 * MATLAB x86_64 R2017b or above
     - Image Processing Toolbox
     - Statistics and Machine Learning Toolbox
