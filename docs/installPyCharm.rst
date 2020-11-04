@@ -43,7 +43,7 @@ Or if you want to contribute to the project - create fork repository and use you
 
 .. code-block::
 
-    https://github.com/Your_Repository/OpenNFT.git
+    https://github.com/your_github_name/OpenNFT.git
 
 .. image:: _static/pycharminstall_2.png
 
