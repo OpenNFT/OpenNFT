@@ -6,7 +6,7 @@ Installation
 The installation process has been tested on three x86_64 platforms:
 
 * Linux (Ubuntu 18.04)
-* Mac OS
+* Mac OS (High Sierra 10.13.6)
 * Windows 10
 
 Prerequisites
@@ -22,7 +22,7 @@ Firstly, the following software should be installed:
     - `Psychtoolbox 3 <https://github.com/Psychtoolbox-3/Psychtoolbox-3>`_
     - `JSONlab <https://github.com/fangq/jsonlab>`_
     - `prepNFB <https://github.com/lucp88/prepNFB>`_ (optional)
-* `Python <https://www.python.org/downloads/>`_ x86_64 3.6-3.8
+* `Python <https://www.python.org/downloads/>`_ x86_64 3.6.0-3.8.6
 
 
 Install OpenNFT
@@ -33,25 +33,26 @@ We recommend using a virtual environment for installing OpenNFT.
 Creating Virtual Environment
 ++++++++++++++++++++++++++++
 
-.. rubric:: Linux
+.. rubric:: Unix (Linux, MacOS)
 
-.. code-block:: bash
+.. note::
 
-    sudo apt install python3-venv
+    In Linux system you might need to use following command first
+
+    .. code-block::
+
+        sudo apt install python3-venv
+
+.. code-block::
+
     cd /path/to/your/workspace/directory
     python3 -m venv opennft-venv
     source opennft-venv/bin/activate
     python -m pip install -U pip setuptools wheel
 
-.. rubric:: Mac OS
-
-.. todo::
-
-    Add instructions for macos
-
 .. rubric:: Windows
 
-.. code-block:: bat
+.. code-block::
 
     cd C:\path\to\your\workspace\directory
     py -3 -m venv opennft-venv
@@ -86,25 +87,23 @@ It is convenient if you working on the project or you want to contribute.
 
 .. rubric:: Cloning the project repository
 
-Firstly, the project reposiory (or its fork) should be cloned:
+Firstly, the project repository (or its fork) should be cloned:
 
 .. code-block::
 
     cd /path/to/your/workspace/directory
     git clone --recurse-submodules https://github.com/OpenNFT/OpenNFT.git
 
-
 .. rubric:: Install the project dependencies
 
 .. note::
 
-    The virual environment should be activated.
-    See above how to create and activate the virual environment on your platform.
+    The virtual environment should be activated.
+    See above how to create and activate the virtual environment on your platform.
 
 .. code-block::
 
     pip install -U -r /path/to/your/workspace/directory/OpenNFT/requirements.txt
-
 
 .. rubric:: Install OpenNFT
 
