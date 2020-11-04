@@ -137,7 +137,8 @@ You can use both ``-e/--editable`` and  ``--install-option "--matlab-root=<MATLA
     install "Matlab Engine for Python" with Administrator/root privileges
     (It elevates privileges via UAC/sudo).
 
-.. _Installation check:
+.. _check_installation:
+
 Check Installation
 ------------------
 

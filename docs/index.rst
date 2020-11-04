@@ -15,7 +15,7 @@ Contents
    :maxdepth: 2
 
    install
-   installPyCharm
+   install_pycharm
    quickstart
 
 

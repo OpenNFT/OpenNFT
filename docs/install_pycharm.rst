@@ -1,4 +1,4 @@
-.. _install:
+.. _install_pycharm:
 
 PyCharm based Installation
 ==========================
@@ -101,7 +101,7 @@ Or
 Check Installation
 ------------------
 
-Check the installation before run: :ref:`Installation check`
+Check the installation before run: :ref:`check_installation`
 
 
 Run Application
