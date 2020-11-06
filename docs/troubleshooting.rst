@@ -34,7 +34,7 @@ The configuration of the optimal signal processing settings depends on the exper
 Possible Matlab engine startup failure
 ++++++++++++++++++++++++++++++++++++++
 
-Normally, pressing Initialize button we obtain one Matlab session running in desktop mode (with visible GUI) and two or three running without GUI. If you get a problem with Matlab startup after pressing Initialize, you could use batch files for starting Matlab manually. Run the win_startmatlab.bat for Windows system or macos_startmatlab.sh for macOS (see also Sections: :ref:`7_2_6` :ref:`Single_case_error_when_starting_Matlab` :ref:`Single_case_error_on_Win`).
+Normally, pressing Initialize button we obtain one Matlab session running in desktop mode (with visible GUI) and two or three running without GUI. If you get a problem with Matlab startup after pressing Initialize, you could use batch files for starting Matlab manually. Run the win_startmatlab.bat for Windows system or macos_startmatlab.sh for macOS (see also Sections: :ref:`7_2_6` :ref:`7_2_7` :ref:`7_2_8`).
 
 Runtime errors and troubleshooting
 ----------------------------------
@@ -124,10 +124,10 @@ On one workstation with multiple accounts and different account rights, we obser
 
 The easiest way to solve it is to use win_startmatlab.bat to run the Matlab instances. Fourth instance is optional, see config.py for details.
 
-.. _Single_case_error_on_Win:
+.. _7_2_8:
 
 Single-case error on Win for pop-up file dialog
 +++++++++++++++++++++++++++++++++++++++++++++++
 
-On the same workstation as in Section :any:`7_2_7`, we observed the problem with opening the dialog windows. The problem is similar to described in http://stackoverflow.com/questions/33145515/pythonw-exe-has-stopped-working-when-running-qfiledialog-getexistingdirectory. This problem was solved by adding `options=QFileDialog.DontUseNativeDialog` to the QFileDialog.getOpenFileName() call. Set DONOT_USE_QFILE_NATIVE_DIALOG flag in config.py in case of the similar problem.
+On the same workstation as in Section :ref:`7_2_7`, we observed the problem with opening the dialog windows. The problem is similar to described in `Stack Overflow <http://stackoverflow.com/questions/33145515/pythonw-exe-has-stopped-working-when-running-qfiledialog-getexistingdirectory>`_ . This problem was solved by adding `options=QFileDialog.DontUseNativeDialog` to the QFileDialog.getOpenFileName() call. Set DONOT_USE_QFILE_NATIVE_DIALOG flag in config.py in case of the similar problem.
 
