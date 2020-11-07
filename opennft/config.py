@@ -140,7 +140,7 @@ PROJ_ROI_COLORS = ROI_PLOT_COLORS
 USE_SLEEP_IN_STOP = False
 HIDE_TEST_BTN = True
 
-# rtQA may cause lear performance loss on the big data
+# rtQA may cause linear performance loss on the big data
 # due to saving process of iGLM quality paramaters
 USE_RTQA = True
 USE_IGLM = True
