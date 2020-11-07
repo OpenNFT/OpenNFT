@@ -9,7 +9,7 @@ Before running the project, you should know, that you can disable following proc
 * incremental GLM (USE_IGLM flag)
 * region of interest visualization (USE_ROI flag)
 
-First step: Initialization
+Initialization
 --------------------------
 
 Before you run the scanning process you need to initialize MATLAB sessions. You can do it two ways:
@@ -30,7 +30,7 @@ After this, MATLAB sessions will be initialized.
 
     You can change ``-nodesktop`` or ``-desktop`` parameter for MATLAB sessions in opennft/config.py file
 
-Second step: Setup
+Setup
 ------------------
 
 After initialization you can choose Setup file of your scanning. This file contains the set of parameters, which you can change before pressing ``Setup`` button.
@@ -51,7 +51,7 @@ If you enable rtQA, you can check available modes for your experiment.
 
 .. image:: _static/quickstart_3.png
 
-Third step: Run
+Run
 ---------------
 
 During the run you can change parameters of 3D image visualization
@@ -63,7 +63,7 @@ During the run you can change parameters of 3D image visualization
 
 .. image:: _static/quickstart_4.png
 
-Fourth step: Stop and Exit
+Stop and Exit
 --------------------------
 
 To stop scanning process press ``Stop`` button. All data will be saved to /Your/Data/Path/NF_Data_1
