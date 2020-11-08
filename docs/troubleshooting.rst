@@ -34,7 +34,7 @@ The configuration of the optimal signal processing settings depends on the exper
 Possible Matlab engine startup failure
 ++++++++++++++++++++++++++++++++++++++
 
-Normally, pressing Initialize button we obtain one Matlab session running in desktop mode (with visible GUI) and two or three running without GUI. If you get a problem with Matlab startup after pressing Initialize, you could use batch files for starting Matlab manually. Run the win_startmatlab.bat for Windows system or macos_startmatlab.sh for macOS (see also Sections: :ref:`7_2_6` :ref:`7_2_7` :ref:`7_2_8`).
+Normally, pressing Initialize button we obtain one Matlab session running in desktop mode (with visible GUI) and two or three running without GUI. If you get a problem with Matlab startup after pressing Initialize, you could use ``run_matlab`` command in terminal.
 
 Runtime errors and troubleshooting
 ----------------------------------
@@ -91,43 +91,10 @@ Line #353
 
 `personName(p) = makePerson(pnParts);`
 
-.. _7_2_6:
-
-Error when starting Matlab processes on macOS
-+++++++++++++++++++++++++++++++++++++++++++++
-
-We observed problems when starting Matlab instances on macOS from within OpenNFT, either during startup or using the `Initialize` button. The way to fix this problem is to independently start and share the required Matlab instances (main, PTB, and SPM instances) using the macOS command line:
-
-`/Applications/MATLAB_R2016b.app/bin/matlab -desktop -r "matlab.engine.shareEngine('MATLAB_NFB_MAIN_00001')"`
-
-`/Applications/MATLAB_R2016b.app/bin/matlab -nodesktop -r "matlab.engine.shareEngine('MATLAB_NFB_PTB_00001')"`
-
-`/Applications/MATLAB_R2016b.app/bin/matlab -nodesktop -r "matlab.engine.shareEngine('MATLAB_NFB_SPM_00001')"`
-
-`/Applications/MATLAB_R2016b.app/bin/matlab -nodesktop -r "matlab.engine.shareEngine('MATLAB_NFB_MODEL_HELPER_00001')"`
-
-The easiest way is to use our macos_startmatlab.sh to run the Matlab instances. Fourth instance is optional, see config.py for details.
-
-.. _7_2_7:
-
-Single-case error when starting Matlab processes on Win workstation with multiple accounts
-++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-On one workstation with multiple accounts and different account rights, we observed the problem with Matlab instances during startup, which was very similar to that described for macOS (Section :ref:`7_2_6`). However, the solution for macOS didn’t work unless an option `-regserver` was added:
-
-.. code-block::
-
-    "Path\To\bin\matlab" -regserver -desktop -r "matlab.engine.shareEngine('MATLAB_NFB_MAIN_00001')"
-    "Path\To\bin\matlab" -regserver -nodesktop -r "matlab.engine.shareEngine('MATLAB_NFB_PTB_00001')"
-    "Path\To\bin\matlab" -regserver -nodesktop -r "matlab.engine.shareEngine('MATLAB_NFB_SPM_00001')"
-    "Path\To\bin\matlab" -regserver -nodesktop -r "matlab.engine.shareEngine('MATLAB_NFB_MODEL_HELPER_00001')"
-
-The easiest way to solve it is to use win_startmatlab.bat to run the Matlab instances. Fourth instance is optional, see config.py for details.
-
 .. _7_2_8:
 
 Single-case error on Win for pop-up file dialog
 +++++++++++++++++++++++++++++++++++++++++++++++
 
-On the same workstation as in Section :ref:`7_2_7`, we observed the problem with opening the dialog windows. The problem is similar to described in `Stack Overflow <http://stackoverflow.com/questions/33145515/pythonw-exe-has-stopped-working-when-running-qfiledialog-getexistingdirectory>`_ . This problem was solved by adding `options=QFileDialog.DontUseNativeDialog` to the QFileDialog.getOpenFileName() call. Set DONOT_USE_QFILE_NATIVE_DIALOG flag in config.py in case of the similar problem.
+We observed the problem with opening the dialog windows. The problem is similar to described in `Stack Overflow <http://stackoverflow.com/questions/33145515/pythonw-exe-has-stopped-working-when-running-qfiledialog-getexistingdirectory>`_ . This problem was solved by adding `options=QFileDialog.DontUseNativeDialog` to the QFileDialog.getOpenFileName() call. Set DONOT_USE_QFILE_NATIVE_DIALOG flag in config.py in case of the similar problem.
 

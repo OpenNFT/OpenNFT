@@ -17,8 +17,9 @@ Contents
    install
    install_pycharm
    quickstart
-   testing_opennft
+   testing
    troubleshooting
+   uninstall
 
 
 

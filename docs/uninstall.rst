@@ -14,7 +14,7 @@ Uninstalling (installations without using venv)
 -----------------------------------------------
 
 - Remove Python Matlab engine API: Remove installed matlab engine files from Python site-packages directory: pythonroot\Lib\site-packages\matlab
-- Uninstall PyQt5 via uninstaller (for Python 3.4) or use `pip uninstall pyqt5` (for Python 3.5)
+- Uninstall PyQt5 via `pip uninstall pyqt5`
 - Uninstall other dependencies python packages from cmd:
 
 .. code-block::

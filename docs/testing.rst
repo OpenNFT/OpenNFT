@@ -1,4 +1,4 @@
-.. _testing_opennft:
+.. _testing:
 
 Testing OpenNFT
 ===============

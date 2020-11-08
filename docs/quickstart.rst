@@ -45,6 +45,7 @@ Demo data can be found here_.
 .. note::
 
     If you run OpenNFT on offline data - enable ``Offline mode``
+    More about testing OpenNFT on different data is on :ref:`testing` page.
 
 
 If you enable rtQA, you can check available modes for your experiment.
