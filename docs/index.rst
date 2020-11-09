@@ -19,7 +19,6 @@ Contents
    quickstart
    testing
    troubleshooting
-   uninstall
 
 
 
