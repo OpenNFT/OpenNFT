@@ -125,11 +125,13 @@ MUSTER_BRUSH_COLORS = [
     (127, 255, 157, MUSTER_PLOT_ALPHA),
     (255, 255, 255, MUSTER_PLOT_ALPHA)
 ]
+
+# Motion correction plot colors
 MC_PLOT_COLORS = [
-    (255, 123, 0),
+    (255, 123, 0),   # translations - x, y, z
     (255, 56, 109),
     (127, 0, 255),
-    (0, 46, 255),
+    (0, 46, 255),    # rotations - alpha, betta, gamma
     (0, 147, 54),
     (145, 130, 43),
 ]
