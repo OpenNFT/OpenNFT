@@ -98,3 +98,9 @@ Single-case error on Win for pop-up file dialog
 
 We observed the problem with opening the dialog windows. The problem is similar to described in `Stack Overflow <http://stackoverflow.com/questions/33145515/pythonw-exe-has-stopped-working-when-running-qfiledialog-getexistingdirectory>`_ . This problem was solved by adding `options=QFileDialog.DontUseNativeDialog` to the QFileDialog.getOpenFileName() call. Set DONOT_USE_QFILE_NATIVE_DIALOG flag in config.py in case of the similar problem.
 
+.. _possible_error:
+
+Run confugiration error
++++++++++++++++++++++++
+
+Specify Module name as “opennft” (NOT Script path) and Project interpreter according to your venv. Select 'Store as project file'. Double-check if PyCharm switches to newly configured venv in the Terminal command line, if not you have to try to close and open the Terminal window.

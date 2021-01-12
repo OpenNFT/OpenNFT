@@ -137,6 +137,14 @@ You can use both ``-e/--editable`` and  ``--install-option "--matlab-root=<MATLA
     install "Matlab Engine for Python" with Administrator/root privileges
     (It elevates privileges via UAC/sudo).
 
+Or you can use the second way to specify and install Matlab engine
+
+.. code-block::
+
+    cd /Path/To/Matlab/Root/extern/engines/python/
+    python setup.py build --build-base="C:\Path\To\Project\Directory\Venv_directory\Lib\site-packages\MatlabEngineBuild" install
+    cd /Path/To/Project/Directory/
+
 .. _check_installation:
 
 Check Installation

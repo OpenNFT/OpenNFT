@@ -98,15 +98,13 @@ Or
     python setup.py build --build-base="C:\Path\To\Project\Directory\Venv_directory\Lib\site-packages\MatlabEngineBuild" install
     cd /Path/To/Project/Directory/
 
-.. note::
+Example of MATLABROOT and build-base paths
 
-    Example of MATLABROOT and build-base paths
+.. code-block::
 
-    .. code-block::
+   pip install --install-option "--matlab-root=C:\Program Files\MATLAB\R2018b" -e .
 
-       pip install --install-option "--matlab-root=C:\Program Files\MATLAB\R2018b" -e .
-
-       python setup.py build --build-bas="C:\OpenNFT\OpenNFT_venv_36\Lib\site-packages\MatlabEngineBuild" install
+   python setup.py build --build-bas="C:\OpenNFT\OpenNFT_venv_36\Lib\site-packages\MatlabEngineBuild" install
 
 Check Installation
 ------------------
@@ -126,6 +124,8 @@ Before run you need to create Run Configuration
 Specify Module name as "opennft" (NOT Script path) and Project interpreter according to your venv
 
 .. image:: _static/pycharminstall_8.png
+
+Sometimes you can't create configuration without 'Store as project file' enabled. :ref:`possible_error`
 
 And then press run
 
