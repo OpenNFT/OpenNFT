@@ -95,9 +95,18 @@ Or
 .. code-block::
 
     cd /Path/To/Matlab/Root/extern/engines/python/
-    python build setup.py install
+    python setup.py build --build-base="C:\Path\To\Project\Directory\Venv_directory\Lib\site-packages\MatlabEngineBuild" install
     cd /Path/To/Project/Directory/
 
+.. note::
+
+    Example of MATLABROOT and build-base paths
+
+    .. code-block::
+
+       pip install --install-option "--matlab-root=C:\Program Files\MATLAB\R2018b" -e .
+
+       python setup.py build --build-bas="C:\OpenNFT\OpenNFT_venv_36\Lib\site-packages\MatlabEngineBuild" install
 
 Check Installation
 ------------------
