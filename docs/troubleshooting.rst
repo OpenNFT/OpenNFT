@@ -100,7 +100,7 @@ We observed the problem with opening the dialog windows. The problem is similar 
 
 .. _possible_error:
 
-Run confugiration error
-+++++++++++++++++++++++
+Run configuration problem
++++++++++++++++++++++++++
 
-Specify Module name as “opennft” (NOT Script path) and Project interpreter according to your venv. Select 'Store as project file'. Double-check if PyCharm switches to newly configured venv in the Terminal command line, if not you have to try to close and open the Terminal window.
+Sometimes it is necessary to select 'Store as project file'. Double-check if PyCharm switches to newly configured venv in the Terminal command line, if not you have to try to close and open the Terminal window.
