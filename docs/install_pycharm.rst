@@ -104,7 +104,7 @@ Example of MATLABROOT and build-base paths
 
    pip install --install-option "--matlab-root=C:\Program Files\MATLAB\R2018b" -e .
 
-   python setup.py build --build-bas="C:\OpenNFT\OpenNFT_venv_36\Lib\site-packages\MatlabEngineBuild" install
+   python setup.py build --build-base="C:\OpenNFT\OpenNFT_venv_36\Lib\site-packages\MatlabEngineBuild" install
 
 Check Installation
 ------------------
