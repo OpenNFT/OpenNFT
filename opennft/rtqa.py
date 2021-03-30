@@ -39,6 +39,7 @@ class RTQAWindow(QtWidgets.QWidget):
             self.indCond = np.array(parent.P['inds'][1]) - 1
 
         # main class data initialization block
+        self.prot = parent.P['Prot']
         self._fd = FD(xrange)
         self.names = ['X', 'Y', 'Z', 'Pitch', 'Roll', 'Yaw', 'FD']
         self.iterBas = 0
@@ -321,7 +322,7 @@ class RTQAWindow(QtWidgets.QWidget):
                               brush=config.MUSTER_BRUSH_COLORS[1]),
             ]
 
-            if ("xCond3" in self.musterInfo) and (self.musterInfo['xCond3'][0] != -1):
+            if self.prot != 'InterBlock':
                 muster.append(
                     plotitem.plot(x=self.musterInfo['xCond3'],
                                   y=self.musterInfo['yCond3'],
@@ -329,6 +330,19 @@ class RTQAWindow(QtWidgets.QWidget):
                                   pen=config.MUSTER_PEN_COLORS[2],
                                   brush=config.MUSTER_BRUSH_COLORS[2])
                 )
+
+                if self.prot == 'Inter':
+                    muster = [
+                        plotitem.plot(x=self.musterInfo['xCond' + str(i + 1)],
+                                      y=self.musterInfo['yCond' + str(i + 1)],
+                                      fillLevel=ylim[0],
+                                      pen=config.MUSTER_PEN_COLORS[i],
+                                      brush=config.MUSTER_BRUSH_COLORS[i])
+                        for i in range(3,self.musterInfo['condTotal'])
+                    ]
+
+
+
         else:
             muster = [
                 plotitem.plot(x=[1, self._fd.xmax],
