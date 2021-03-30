@@ -25,7 +25,7 @@ PTB_MATLAB_NAME = 'MATLAB_NFB_PTB'
 SPM_MATLAB_NAME = 'MATLAB_NFB_SPM'
 MODEL_HELPER_MATLAB_NAME = 'MATLAB_NFB_MODEL_HELPER'
 
-MAIN_MATLAB_STARTUP_OPTIONS = '-desktop'
+MAIN_MATLAB_STARTUP_OPTIONS = '-nodesktop'
 PTB_MATLAB_STARTUP_OPTIONS = '-nodesktop'
 SPM_MATLAB_STARTUP_OPTIONS = '-nodesktop'
 MODEL_HELPER_MATLAB_STARTUP_OPTIONS = '-nodesktop'
@@ -76,42 +76,6 @@ ROI_PLOT_COLORS = [
     pg.mkColor(147, 0, 0, 255),
     pg.mkColor(0, 0, 0, 255)
 ]
-STAT_PLOT_COLORS = [
-    pg.mkColor(0, 0, 255, 255),
-    pg.mkColor(0, 255, 255, 255),
-    pg.mkColor(0, 255, 0, 255),
-    pg.mkColor(255, 0, 255, 255),
-    pg.mkColor(255, 0, 0, 255),
-    pg.mkColor(255, 255, 0, 255),
-    pg.mkColor(140, 200, 240, 255),
-    pg.mkColor(208, 208, 147, 255),
-    pg.mkColor(147, 0, 0, 255),
-    pg.mkColor(0, 0, 0, 255)
-]
-ROI_BAS_COLORS = [
-    pg.mkColor(0, 0, 255, 255),
-    pg.mkColor(0, 255, 255, 255),
-    pg.mkColor(0, 255, 0, 255),
-    pg.mkColor(255, 0, 255, 255),
-    pg.mkColor(255, 0, 0, 255),
-    pg.mkColor(255, 255, 0, 255),
-    pg.mkColor(140, 200, 240, 255),
-    pg.mkColor(208, 208, 147, 255),
-    pg.mkColor(147, 0, 0, 255),
-    pg.mkColor(0, 0, 0, 255)
-]
-ROI_COND_COLORS = [
-    pg.mkColor(0, 0, 255, 255),
-    pg.mkColor(0, 255, 255, 255),
-    pg.mkColor(0, 255, 0, 255),
-    pg.mkColor(255, 0, 255, 255),
-    pg.mkColor(255, 0, 0, 255),
-    pg.mkColor(255, 255, 0, 255),
-    pg.mkColor(140, 200, 240, 255),
-    pg.mkColor(208, 208, 147, 255),
-    pg.mkColor(147, 0, 0, 255),
-    pg.mkColor(0, 0, 0, 255)
-]
 
 MUSTER_PEN_COLORS = [
     (73, 137, 255, 255),
@@ -119,7 +83,11 @@ MUSTER_PEN_COLORS = [
     (22, 255, 104, 255),
     (200, 200, 100, 255),
     (125, 125, 125, 255),
-    (200, 100, 200, 255)
+    (200, 100, 200, 255),
+    (100, 200, 200, 255),
+    (255, 22, 104, 255),
+    (250, 104, 22, 255),
+    (245, 245, 245, 255)
 ]
 MUSTER_BRUSH_COLORS = [
     (124, 196, 255, MUSTER_PLOT_ALPHA),
@@ -127,7 +95,11 @@ MUSTER_BRUSH_COLORS = [
     (127, 255, 157, MUSTER_PLOT_ALPHA),
     (200, 200, 100, MUSTER_PLOT_ALPHA),
     (125, 125, 125, MUSTER_PLOT_ALPHA),
-    (200, 100, 200, MUSTER_PLOT_ALPHA)
+    (200, 100, 200, MUSTER_PLOT_ALPHA),
+    (100, 200, 200, MUSTER_PLOT_ALPHA),
+    (255, 22, 104, MUSTER_PLOT_ALPHA),
+    (250, 104, 22, MUSTER_PLOT_ALPHA),
+    (245, 245, 245, MUSTER_PLOT_ALPHA)
 ]
 MC_PLOT_COLORS = [
     (255, 123, 0),
@@ -146,7 +118,7 @@ HIDE_TEST_BTN = True
 
 # rtQA may cause lear performance loss on the big data
 # due to saving process of iGLM quality paramaters
-USE_RTQA = False
+USE_RTQA = True
 USE_IGLM = True
 USE_ROI = True
 FIRST_SNR_VOLUME = 2
