@@ -121,7 +121,7 @@ class OpenNFT(QWidget):
         self.udpSender.sending_time_stamp = True
 
         self.udpCondNames = self.P['CondNames']
-        if not('BaselineName' in self.P['Protocol']): self.udpCondNames.insert(0,'BAS')
+        if not ('BaselineName' in self.P['Protocol']): self.udpCondNames.insert(0, 'BAS')
 
     # --------------------------------------------------------------------------
     def finalizeUdpSender(self):
@@ -444,10 +444,10 @@ class OpenNFT(QWidget):
         self.posMapCheckBox.toggled.connect(self.onChangePosMapVisible)
         self.negMapCheckBox.toggled.connect(self.onChangeNegMapVisible)
 
-        self.sliderMapsAlpha.valueChanged.connect(lambda v: self.mosaicImageView.set_pos_map_opacity(v/100.0))
-        self.sliderMapsAlpha.valueChanged.connect(lambda v: self.mosaicImageView.set_neg_map_opacity(v/100.0))
-        self.sliderMapsAlpha.valueChanged.connect(lambda v: self.orthView.set_pos_map_opacity(v/100.0))
-        self.sliderMapsAlpha.valueChanged.connect(lambda v: self.orthView.set_neg_map_opacity(v/100.0))
+        self.sliderMapsAlpha.valueChanged.connect(lambda v: self.mosaicImageView.set_pos_map_opacity(v / 100.0))
+        self.sliderMapsAlpha.valueChanged.connect(lambda v: self.mosaicImageView.set_neg_map_opacity(v / 100.0))
+        self.sliderMapsAlpha.valueChanged.connect(lambda v: self.orthView.set_pos_map_opacity(v / 100.0))
+        self.sliderMapsAlpha.valueChanged.connect(lambda v: self.orthView.set_neg_map_opacity(v / 100.0))
 
         self.onChangePosMapVisible()
         self.onChangeNegMapVisible()
@@ -484,18 +484,18 @@ class OpenNFT(QWidget):
 
     # --------------------------------------------------------------------------
     def showPluginDlg(self):
-        self.btnStart.setEnabled(False) # force rerunning Setup
+        self.btnStart.setEnabled(False)  # force rerunning Setup
 
         if self.pluginWindow.exec_():
             self.plugins = []
             for p in range(len(self.pluginWindow.plugins)):
                 if self.pluginWindow.lvPlugins.model().item(p).checkState():
-                    self.plugins += [plugin.Plugin(self,self.pluginWindow.plugins[p])]
+                    self.plugins += [plugin.Plugin(self, self.pluginWindow.plugins[p])]
 
     # --------------------------------------------------------------------------
     def updatePlugins(self):
         for i in range(len(self.plugins)): self.plugins[i].update()
-    
+
     # --------------------------------------------------------------------------
     def onChangeDataType(self):
         self.cbgetMAT.setChecked(self.cbgetMAT.isChecked() and self.cbDataType.currentText() == 'DICOM')
@@ -671,19 +671,21 @@ class OpenNFT(QWidget):
                     self.displayScreen()
 
                 if self.iteration > self.P['nrSkipVol'] and config.UDP_SEND_CONDITION:
-                    self.udpSender.send_data(self.udpCondNames[int(self.eng.evalin('base', 'mainLoopData.condition'))-1])
+                    self.udpSender.send_data(
+                        self.udpCondNames[int(self.eng.evalin('base', 'mainLoopData.condition')) - 1])
 
             elif self.P['Type'] == 'DCM':
                 if not self.isCalculateDcm and config.USE_PTB:
                     self.displayScreen()
 
             elif self.P['Type'] == 'SVM':
-                    if self.displayData and config.USE_UDP_FEEDBACK:
-                        logger.info('Sending by UDP - instrValue = ')  # + str(self.displayData['instrValue'])
-                        # self.udpSender.send_data(self.displayData['instrValue'])
+                if self.displayData and config.USE_UDP_FEEDBACK:
+                    logger.info('Sending by UDP - instrValue = ')  # + str(self.displayData['instrValue'])
+                    # self.udpSender.send_data(self.displayData['instrValue'])
 
-        if self.cbUseTCPData.isChecked() and self.eng.evalin('base','tcp.BytesAvailable'):
-            fname = os.path.join(self.P['WatchFolder'], self.P['FirstFileName']) # first file is required for initialization
+        if self.cbUseTCPData.isChecked() and self.eng.evalin('base', 'tcp.BytesAvailable'):
+            fname = os.path.join(self.P['WatchFolder'],
+                                 self.P['FirstFileName'])  # first file is required for initialization
         else:
             try:
                 fname = self.files_queue.get_nowait()
@@ -707,7 +709,7 @@ class OpenNFT(QWidget):
         # data acquisition
         if fname is not None:
             path = os.path.join(self.P['WatchFolder'], fname)
-            if (not(self.cbUseTCPData.isChecked()) or not(self.reachedFirstFile)) and not self.isOffline:
+            if (not (self.cbUseTCPData.isChecked()) or not (self.reachedFirstFile)) and not self.isOffline:
                 if not self.checkFileIsReady(path, fname):
                     self.isMainLoopEntered = False
                     return
@@ -903,7 +905,7 @@ class OpenNFT(QWidget):
 
         if self.displayData:
             if config.USE_SHAM:
-                self.displayData['dispValue'] = self.shamData[self.iteration-1]
+                self.displayData['dispValue'] = self.shamData[self.iteration - 1]
 
             if config.USE_UDP_FEEDBACK:
                 logger.info('Sending by UDP - dispValue = {}', self.displayData['dispValue'])
@@ -920,15 +922,18 @@ class OpenNFT(QWidget):
             dataGLM = np.array(self.eng.evalin('base', 'mainLoopData.glmProcTimeSeries(:,end)'), ndmin=2)
             dataProc = np.array(self.outputSamples['kalmanProcTimeSeries'], ndmin=2)
             dataMC = np.array(self.outputSamples['motCorrParam'], ndmin=2)
-            n = len(dataRealRaw[0, :])-1
+            n = len(dataRealRaw[0, :]) - 1
             data = dataRealRaw[:, n]
-            betaCoeff = np.array(self.eng.evalin('base', 'cellfun(@(a)a(mainLoopData.indVolNorm,2),rtQA_matlab.betRegr)'), ndmin=2)
+            betaCoeff = np.array(
+                self.eng.evalin('base', 'cellfun(@(a)a(mainLoopData.indVolNorm,2),rtQA_matlab.betRegr)'), ndmin=2)
 
-            for i in range (int(self.P['NrROIs'])):
-                self.windowRTQA.linTrendCoeff[i,n] = betaCoeff[i]
+            for i in range(int(self.P['NrROIs'])):
+                self.windowRTQA.linTrendCoeff[i, n] = betaCoeff[i]
 
-            posSpikes = np.array(self.eng.evalin('base','rtQA_matlab.kalmanSpikesPos(:,mainLoopData.indVolNorm)'), ndmin=2)
-            negSpikes = np.array(self.eng.evalin('base','rtQA_matlab.kalmanSpikesNeg(:,mainLoopData.indVolNorm)'), ndmin=2)
+            posSpikes = np.array(self.eng.evalin('base', 'rtQA_matlab.kalmanSpikesPos(:,mainLoopData.indVolNorm)'),
+                                 ndmin=2)
+            negSpikes = np.array(self.eng.evalin('base', 'rtQA_matlab.kalmanSpikesNeg(:,mainLoopData.indVolNorm)'),
+                                 ndmin=2)
 
             if self.P['Type'] == 'DCM' and (self.iteration - self.P['nrSkipVol']) in self.P['beginDCMblock'][0]:
                 isNewDCMBlock = True
@@ -941,8 +946,8 @@ class OpenNFT(QWidget):
             self.windowRTQA.calculateSpikes(dataGLM, n, posSpikes, negSpikes)
             self.windowRTQA.calculateMSE(n, dataGLM, dataProc[:, n])
 
-            self.windowRTQA.plotRTQA(n+1)
-            self.windowRTQA.plotDisplacements(dataMC[n, :],isNewDCMBlock)
+            self.windowRTQA.plotRTQA(n + 1)
+            self.windowRTQA.plotDisplacements(dataMC[n, :], isNewDCMBlock)
 
         if self.imageViewMode == ImageViewMode.mosaic:
             with utils.timeit('Display mosaic image:'):
@@ -1148,7 +1153,7 @@ class OpenNFT(QWidget):
 
         self.mlMainHelper.prepare()
 
-        if not(config.USE_MATLAB_MODEL_HELPER) and not(config.USE_PTB_HELPER):
+        if not (config.USE_MATLAB_MODEL_HELPER) and not (config.USE_PTB_HELPER):
             logger.warning('There is no main Matlab model helper. DCM calculation is not possible.')
         if config.USE_PTB_HELPER:
             self.mlPtbDcmHelper.prepare()
@@ -1162,7 +1167,6 @@ class OpenNFT(QWidget):
         self.eng.workspace['P'] = self.P
         self.eng.workspace['mainLoopData'] = self.mainLoopData
         self.eng.workspace['rtQA_matlab'] = self.rtQA_matlab
-
 
         self.frameParams.setEnabled(True)
         self.frameShortParams.setEnabled(True)
@@ -1325,7 +1329,8 @@ class OpenNFT(QWidget):
                     try:
                         self.plugins[i].initialize()
                     except KeyError as e:
-                        logger.warning("Initializing plugin '{}' failed - {} not found in settings".format(self.plugins[i].module.META['plugin_name'],str(e)))
+                        logger.warning("Initializing plugin '{}' failed - {} not found in settings".format(
+                            self.plugins[i].module.META['plugin_name'], str(e)))
                         excPlugins.append(i)
                 for i in excPlugins:
                     del self.plugins[i]
@@ -1443,7 +1448,7 @@ class OpenNFT(QWidget):
         if self.recorder.records.shape[0] > 2:
             if self.recorder.records[0, erd.Times.d0] > 0:
                 logger.info("Average elapsed time: {:.4f} s".format(
-                    np.sum(self.recorder.records[1:, erd.Times.d0])/self.recorder.records[0, erd.Times.d0]))
+                    np.sum(self.recorder.records[1:, erd.Times.d0]) / self.recorder.records[0, erd.Times.d0]))
 
         logger.info('Finished.')
 
@@ -1703,7 +1708,7 @@ class OpenNFT(QWidget):
             is_rtqa_volume_checked = False
 
         if (self.imageViewMode != ImageViewMode.mosaic) and (is_stat_map_created and not is_rtqa_volume_checked
-                     or is_snr_map_created and is_rtqa_volume_checked):
+                                                             or is_snr_map_created and is_rtqa_volume_checked):
             pos_maps_values = np.array([], dtype=np.uint8)
             neg_maps_values = np.array([], dtype=np.uint8)
 
@@ -2125,12 +2130,12 @@ class OpenNFT(QWidget):
             tmpCond.append(np.array(c['OnOffsets']).astype(np.int32))
             nrCond.append(tmpCond[-1].shape[0])
 
-        if not('BaselineName' in self.P['Protocol']): # implicit baseline
-            tmpCond.insert(0, np.array([np.array(t).astype(np.int32)[0,[0,-1]] for t in self.P['ProtBAS']]))
-            nrCond.insert(0,tmpCond[0].shape[0])
+        if not ('BaselineName' in self.P['Protocol']):  # implicit baseline
+            tmpCond.insert(0, np.array([np.array(t).astype(np.int32)[0, [0, -1]] for t in self.P['ProtBAS']]))
+            nrCond.insert(0, tmpCond[0].shape[0])
 
         c = 1
-        for c in range(len(tmpCond),4): # placeholders
+        for c in range(len(tmpCond), 4):  # placeholders
             tmpCond.append(np.array([(0, 0), (0, 0)]))
             nrCond.append(tmpCond[-1].shape[0])
 
@@ -2174,9 +2179,9 @@ class OpenNFT(QWidget):
             removeIntervals(tmpCond[0], remCond)
             removeIntervals(tmpCond[1], remCond)
 
-        tmpCondStr = ['tmpCond{:d}'.format(x+1) for x in range(len(tmpCond))]
-        nrCondStr = ['nrCond{:d}'.format(x+1) for x in range(len(nrCond))]
-        self.musterInfo = dict.fromkeys(tmpCondStr+nrCondStr)
+        tmpCondStr = ['tmpCond{:d}'.format(x + 1) for x in range(len(tmpCond))]
+        nrCondStr = ['nrCond{:d}'.format(x + 1) for x in range(len(nrCond))]
+        self.musterInfo = dict.fromkeys(tmpCondStr + nrCondStr)
         self.musterInfo['condTotal'] = len(nrCond)
         for condNumber in range(len(tmpCond)):
             self.musterInfo[tmpCondStr[condNumber]] = tmpCond[condNumber]
@@ -2206,9 +2211,10 @@ class OpenNFT(QWidget):
             return xCond, yCond
 
         for cond in range(self.musterInfo['condTotal']):
-            xCond, yCond = computeConds(self.musterInfo['nrCond'+str(cond+1)], self.musterInfo['tmpCond'+str(cond+1)])
-            self.musterInfo['xCond'+str(cond+1)] = xCond
-            self.musterInfo['yCond'+str(cond+1)] = yCond
+            xCond, yCond = computeConds(self.musterInfo['nrCond' + str(cond + 1)],
+                                        self.musterInfo['tmpCond' + str(cond + 1)])
+            self.musterInfo['xCond' + str(cond + 1)] = xCond
+            self.musterInfo['yCond' + str(cond + 1)] = yCond
 
         # xCond1, yCond1 = computeConds(
         #     self.musterInfo['nrCond1'], self.musterInfo['tmpCond1'])
@@ -2298,37 +2304,21 @@ class OpenNFT(QWidget):
 
         if not self.P['isRestingState']:
             self.computeMusterPlotData(ylim)
-            muster = [
-                plotitem.plot(x=self.musterInfo['xCond1'],
-                              y=self.musterInfo['yCond1'],
-                              fillLevel=ylim[0],
-                              pen=config.MUSTER_PEN_COLORS[0],
-                              brush=config.MUSTER_BRUSH_COLORS[0]),
+            muster = []
 
-                plotitem.plot(x=self.musterInfo['xCond2'],
-                              y=self.musterInfo['yCond2'],
-                              fillLevel=ylim[0],
-                              pen=config.MUSTER_PEN_COLORS[1],
-                              brush=config.MUSTER_BRUSH_COLORS[1]),
-            ]
+            for i in range(self.musterInfo['condTotal']):
 
-            if self.P['Prot'] != 'InterBlock':
+                if self.P['Prot'] == 'InterBlock' and i == 2:
+                    break
+
                 muster.append(
-                    plotitem.plot(x=self.musterInfo['xCond3'],
-                                  y=self.musterInfo['yCond3'],
+                    plotitem.plot(x=self.musterInfo['xCond' + str(i + 1)],
+                                  y=self.musterInfo['yCond' + str(i + 1)],
                                   fillLevel=ylim[0],
-                                  pen=config.MUSTER_PEN_COLORS[2],
-                                  brush=config.MUSTER_BRUSH_COLORS[2])
+                                  pen=config.MUSTER_PEN_COLORS[i],
+                                  brush=config.MUSTER_BRUSH_COLORS[i])
                 )
-                if self.P['Prot'] == 'Inter':
-                    muster = [
-                        plotitem.plot(x=self.musterInfo['xCond' + str(i + 1)],
-                                      y=self.musterInfo['yCond' + str(i + 1)],
-                                      fillLevel=ylim[0],
-                                      pen=config.MUSTER_PEN_COLORS[i],
-                                      brush=config.MUSTER_BRUSH_COLORS[i])
-                        for i in range(3,self.musterInfo['condTotal'])
-                    ]
+
         else:
             muster = [
                 plotitem.plot(x=[1, (self.P['NrOfVolumes'] - self.P['nrSkipVol'])],

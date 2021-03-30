@@ -308,39 +308,20 @@ class RTQAWindow(QtWidgets.QWidget):
         ylim = config.MUSTER_Y_LIMITS
 
         if self.comboBox.model().item(2).isEnabled():
-            muster = [
-                plotitem.plot(x=self.musterInfo['xCond1'],
-                              y=self.musterInfo['yCond1'],
-                              fillLevel=ylim[0],
-                              pen=config.MUSTER_PEN_COLORS[0],
-                              brush=config.MUSTER_BRUSH_COLORS[0]),
 
-                plotitem.plot(x=self.musterInfo['xCond2'],
-                              y=self.musterInfo['yCond2'],
-                              fillLevel=ylim[0],
-                              pen=config.MUSTER_PEN_COLORS[1],
-                              brush=config.MUSTER_BRUSH_COLORS[1]),
-            ]
+            muster = []
 
-            if self.prot != 'InterBlock':
+            for i in range(self.musterInfo['condTotal']):
+
+                if self.prot == 'InterBlock' and i == 2:
+                    break
                 muster.append(
-                    plotitem.plot(x=self.musterInfo['xCond3'],
-                                  y=self.musterInfo['yCond3'],
+                    plotitem.plot(x=self.musterInfo['xCond' + str(i + 1)],
+                                  y=self.musterInfo['yCond' + str(i + 1)],
                                   fillLevel=ylim[0],
-                                  pen=config.MUSTER_PEN_COLORS[2],
-                                  brush=config.MUSTER_BRUSH_COLORS[2])
+                                  pen=config.MUSTER_PEN_COLORS[i],
+                                  brush=config.MUSTER_BRUSH_COLORS[i])
                 )
-
-                if self.prot == 'Inter':
-                    muster = [
-                        plotitem.plot(x=self.musterInfo['xCond' + str(i + 1)],
-                                      y=self.musterInfo['yCond' + str(i + 1)],
-                                      fillLevel=ylim[0],
-                                      pen=config.MUSTER_PEN_COLORS[i],
-                                      brush=config.MUSTER_BRUSH_COLORS[i])
-                        for i in range(3,self.musterInfo['condTotal'])
-                    ]
-
 
 
         else:
