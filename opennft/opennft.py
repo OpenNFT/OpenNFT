@@ -1255,6 +1255,8 @@ class OpenNFT(QWidget):
             logger.info("  Setup plots...")
             if not self.P['isRestingState']:
                 self.createMusterInfo()
+
+            # TODO: Clean before new setup
             self.setupRoiPlots()
             self.setupMcPlots()
 
@@ -2114,7 +2116,8 @@ class OpenNFT(QWidget):
     # --------------------------------------------------------------------------
     def createMusterInfo(self):
         # TODO: More general way to use any protocol
-        tmpCond = list(); nrCond = list()
+        tmpCond = list()
+        nrCond = list()
         for c in self.P['Protocol']['Cond']:
             tmpCond.append(np.array(c['OnOffsets']).astype(np.int32))
             nrCond.append(tmpCond[-1].shape[0])
@@ -2123,19 +2126,18 @@ class OpenNFT(QWidget):
             tmpCond.insert(0, np.array([np.array(t).astype(np.int32)[0,[0,-1]] for t in self.P['ProtBAS']]))
             nrCond.insert(0,tmpCond[0].shape[0])
 
+        c = 1
         for c in range(len(tmpCond),4): # placeholders
             tmpCond.append(np.array([(0, 0), (0, 0)]))
             nrCond.append(tmpCond[-1].shape[0])
 
         if self.P['Prot'] == 'InterBlock':
-            blockLength = tmpCond[0][0][1] - tmpCond[0][0][0] + 1
+            blockLength = tmpCond[0][0][1] - tmpCond[0][0][0] + c
         else:
-            # FIXME: tmpCond4 (?)
-            blockLength = (
-                    tmpCond[0][0][1] - tmpCond[0][0][0] +
-                    tmpCond[1][0][1] - tmpCond[1][0][0] +
-                    tmpCond[2][0][1] - tmpCond[2][0][0] + 3
-            )
+            blockLength = 0
+            for condNumber in range(len(tmpCond)):
+                blockLength += tmpCond[condNumber][0][1] - tmpCond[condNumber][0][0]
+            blockLength += c
 
         # ----------------------------------------------------------------------
         def removeIntervals(data, remData):
@@ -2169,14 +2171,13 @@ class OpenNFT(QWidget):
             removeIntervals(tmpCond[0], remCond)
             removeIntervals(tmpCond[1], remCond)
 
-        self.musterInfo['tmpCond1'] = tmpCond[0]
-        self.musterInfo['nrCond1'] = nrCond[0]
-        self.musterInfo['tmpCond2'] = tmpCond[1]
-        self.musterInfo['nrCond2'] = nrCond[1]
-        self.musterInfo['tmpCond3'] = tmpCond[2]
-        self.musterInfo['nrCond3'] = nrCond[2]
-        self.musterInfo['tmpCond4'] = tmpCond[3]
-        self.musterInfo['nrCond4'] = nrCond[3]
+        tmpCondStr = ['tmpCond{:d}'.format(x+1) for x in range(len(tmpCond))]
+        nrCondStr = ['nrCond{:d}'.format(x+1) for x in range(len(nrCond))]
+        self.musterInfo = dict.fromkeys(tmpCondStr+nrCondStr)
+        self.musterInfo['condTotal'] = len(nrCond)
+        for condNumber in range(len(tmpCond)):
+            self.musterInfo[tmpCondStr[condNumber]] = tmpCond[condNumber]
+            self.musterInfo[nrCondStr[condNumber]] = nrCond[condNumber]
         self.musterInfo['blockLength'] = blockLength
 
     # --------------------------------------------------------------------------
@@ -2201,23 +2202,28 @@ class OpenNFT(QWidget):
 
             return xCond, yCond
 
-        xCond1, yCond1 = computeConds(
-            self.musterInfo['nrCond1'], self.musterInfo['tmpCond1'])
+        for cond in range(self.musterInfo['condTotal']):
+            xCond, yCond = computeConds(self.musterInfo['nrCond'+str(cond+1)], self.musterInfo['tmpCond'+str(cond+1)])
+            self.musterInfo['xCond'+str(cond+1)] = xCond
+            self.musterInfo['yCond'+str(cond+1)] = yCond
 
-        xCond2, yCond2 = computeConds(
-            self.musterInfo['nrCond2'], self.musterInfo['tmpCond2'])
-
-        self.musterInfo['xCond1'] = xCond1
-        self.musterInfo['yCond1'] = yCond1
-        self.musterInfo['xCond2'] = xCond2
-        self.musterInfo['yCond2'] = yCond2
-
-        if self.P['Prot'] != 'InterBlock':
-            xCond3, yCond3 = computeConds(
-                self.musterInfo['nrCond3'], self.musterInfo['tmpCond3'])
-
-            self.musterInfo['xCond3'] = xCond3
-            self.musterInfo['yCond3'] = yCond3
+        # xCond1, yCond1 = computeConds(
+        #     self.musterInfo['nrCond1'], self.musterInfo['tmpCond1'])
+        #
+        # xCond2, yCond2 = computeConds(
+        #     self.musterInfo['nrCond2'], self.musterInfo['tmpCond2'])
+        #
+        # self.musterInfo['xCond1'] = xCond1
+        # self.musterInfo['yCond1'] = yCond1
+        # self.musterInfo['xCond2'] = xCond2
+        # self.musterInfo['yCond2'] = yCond2
+        #
+        # if self.P['Prot'] != 'InterBlock':
+        #     xCond3, yCond3 = computeConds(
+        #         self.musterInfo['nrCond3'], self.musterInfo['tmpCond3'])
+        #
+        #     self.musterInfo['xCond3'] = xCond3
+        #     self.musterInfo['yCond3'] = yCond3
 
     # --------------------------------------------------------------------------
     def drawRoiPlots(self, init):
@@ -2311,13 +2317,22 @@ class OpenNFT(QWidget):
                                   pen=config.MUSTER_PEN_COLORS[2],
                                   brush=config.MUSTER_BRUSH_COLORS[2])
                 )
+                if self.P['Prot'] == 'Inter':
+                    muster = [
+                        plotitem.plot(x=self.musterInfo['xCond' + str(i + 1)],
+                                      y=self.musterInfo['yCond' + str(i + 1)],
+                                      fillLevel=ylim[0],
+                                      pen=config.MUSTER_PEN_COLORS[i],
+                                      brush=config.MUSTER_BRUSH_COLORS[i])
+                        for i in range(3,self.musterInfo['condTotal'])
+                    ]
         else:
             muster = [
                 plotitem.plot(x=[1, (self.P['NrOfVolumes'] - self.P['nrSkipVol'])],
                               y=[-1000, 1000],
                               fillLevel=ylim[0],
-                              pen=config.MUSTER_PEN_COLORS[3],
-                              brush=config.MUSTER_BRUSH_COLORS[3])
+                              pen=config.MUSTER_PEN_COLORS[9],
+                              brush=config.MUSTER_BRUSH_COLORS[9])
             ]
 
         return muster

@@ -76,6 +76,7 @@ ROI_PLOT_COLORS = [
     pg.mkColor(147, 0, 0, 255),
     pg.mkColor(0, 0, 0, 255)
 ]
+#TODO: Clean this
 STAT_PLOT_COLORS = [
     pg.mkColor(0, 0, 255, 255),
     pg.mkColor(0, 255, 255, 255),
@@ -117,13 +118,25 @@ MUSTER_PEN_COLORS = [
     (73, 137, 255, 255),
     (255, 103, 86, 255),
     (22, 255, 104, 255),
-    (255, 255, 255, 255)
+    (200, 200, 100, 255),
+    (125, 125, 125, 255),
+    (200, 100, 200, 255),
+    (100, 200, 200, 255),
+    (255, 22, 104, 255),
+    (250, 104, 22, 255),
+    (245, 245, 245, 255)
 ]
 MUSTER_BRUSH_COLORS = [
     (124, 196, 255, MUSTER_PLOT_ALPHA),
     (255, 156, 117, MUSTER_PLOT_ALPHA),
     (127, 255, 157, MUSTER_PLOT_ALPHA),
-    (255, 255, 255, MUSTER_PLOT_ALPHA)
+    (200, 200, 100, MUSTER_PLOT_ALPHA),
+    (125, 125, 125, MUSTER_PLOT_ALPHA),
+    (200, 100, 200, MUSTER_PLOT_ALPHA),
+    (100, 200, 200, MUSTER_PLOT_ALPHA),
+    (255, 22, 104, MUSTER_PLOT_ALPHA),
+    (250, 104, 22, MUSTER_PLOT_ALPHA),
+    (245, 245, 245, MUSTER_PLOT_ALPHA)
 ]
 MC_PLOT_COLORS = [
     (255, 123, 0),
