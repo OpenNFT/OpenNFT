@@ -1083,6 +1083,10 @@ class OpenNFT(QWidget):
         proc = self.procRoiPlot.getPlotItem()
         norm = self.normRoiPlot.getPlotItem()
 
+        rawTimeSeries.clear()
+        proc.clear()
+        norm.clear()
+
         if self.P['isRestingState']:
             grid = True;
         else:
@@ -1256,7 +1260,6 @@ class OpenNFT(QWidget):
             if not self.P['isRestingState']:
                 self.createMusterInfo()
 
-            # TODO: Clean before new setup
             self.setupRoiPlots()
             self.setupMcPlots()
 

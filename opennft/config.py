@@ -76,43 +76,6 @@ ROI_PLOT_COLORS = [
     pg.mkColor(147, 0, 0, 255),
     pg.mkColor(0, 0, 0, 255)
 ]
-#TODO: Clean this
-STAT_PLOT_COLORS = [
-    pg.mkColor(0, 0, 255, 255),
-    pg.mkColor(0, 255, 255, 255),
-    pg.mkColor(0, 255, 0, 255),
-    pg.mkColor(255, 0, 255, 255),
-    pg.mkColor(255, 0, 0, 255),
-    pg.mkColor(255, 255, 0, 255),
-    pg.mkColor(140, 200, 240, 255),
-    pg.mkColor(208, 208, 147, 255),
-    pg.mkColor(147, 0, 0, 255),
-    pg.mkColor(0, 0, 0, 255)
-]
-ROI_BAS_COLORS = [
-    pg.mkColor(0, 0, 255, 255),
-    pg.mkColor(0, 255, 255, 255),
-    pg.mkColor(0, 255, 0, 255),
-    pg.mkColor(255, 0, 255, 255),
-    pg.mkColor(255, 0, 0, 255),
-    pg.mkColor(255, 255, 0, 255),
-    pg.mkColor(140, 200, 240, 255),
-    pg.mkColor(208, 208, 147, 255),
-    pg.mkColor(147, 0, 0, 255),
-    pg.mkColor(0, 0, 0, 255)
-]
-ROI_COND_COLORS = [
-    pg.mkColor(0, 0, 255, 255),
-    pg.mkColor(0, 255, 255, 255),
-    pg.mkColor(0, 255, 0, 255),
-    pg.mkColor(255, 0, 255, 255),
-    pg.mkColor(255, 0, 0, 255),
-    pg.mkColor(255, 255, 0, 255),
-    pg.mkColor(140, 200, 240, 255),
-    pg.mkColor(208, 208, 147, 255),
-    pg.mkColor(147, 0, 0, 255),
-    pg.mkColor(0, 0, 0, 255)
-]
 
 MUSTER_PEN_COLORS = [
     (73, 137, 255, 255),

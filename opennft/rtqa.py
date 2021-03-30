@@ -158,12 +158,12 @@ class RTQAWindow(QtWidgets.QWidget):
             p.setYRange(-1, 1, padding=0.0)
 
             names = ['ROI_1 rMean', ' bas', ' cond']
-            color = [config.STAT_PLOT_COLORS[0], config.ROI_BAS_COLORS[0], config.ROI_COND_COLORS[0]]
+            color = [config.ROI_PLOT_COLORS[0], config.ROI_PLOT_COLORS[0], config.ROI_PLOT_COLORS[0]]
             for i in range(sz-1):
                 names.append('ROI_' + str(i + 2) + ' rMean')
                 names.append(' bas')
                 names.append(' cond')
-                color = color + [config.STAT_PLOT_COLORS[i + 1]] + [config.ROI_BAS_COLORS[i + 1]] + [config.ROI_COND_COLORS[i + 1]]
+                color = color + [config.ROI_PLOT_COLORS[i + 1]] + [config.ROI_PLOT_COLORS[i + 1]] + [config.ROI_PLOT_COLORS[i + 1]]
             pens = []
             for i in range(sz*3):
                 pens = pens + [pg.mkPen(color[i], width=1.2)]
@@ -334,8 +334,8 @@ class RTQAWindow(QtWidgets.QWidget):
                 plotitem.plot(x=[1, self._fd.xmax],
                               y=[-1000, 1000],
                               fillLevel=ylim[0],
-                              pen=config.MUSTER_PEN_COLORS[3],
-                              brush=config.MUSTER_BRUSH_COLORS[3])
+                              pen=config.MUSTER_PEN_COLORS[9],
+                              brush=config.MUSTER_BRUSH_COLORS[9])
             ]
 
         return muster
@@ -413,9 +413,9 @@ class RTQAWindow(QtWidgets.QWidget):
             plotitem = self.meanPlot.getPlotItem()
             data = np.append(self.rMean[self.checkedBoxesInd, 0:n], self.meanBas[self.checkedBoxesInd, 0:n], axis=0)
             data = np.append(data, self.meanCond[self.checkedBoxesInd, 0:n], axis=0)
-            color = np.array(config.STAT_PLOT_COLORS)[self.checkedBoxesInd]
-            color = np.append(color,np.array(config.ROI_BAS_COLORS)[self.checkedBoxesInd])
-            color = np.append(color,np.array(config.ROI_COND_COLORS)[self.checkedBoxesInd])
+            color = np.array(config.ROI_PLOT_COLORS)[self.checkedBoxesInd]
+            color = np.append(color,np.array(config.ROI_PLOT_COLORS)[self.checkedBoxesInd])
+            color = np.append(color,np.array(config.ROI_PLOT_COLORS)[self.checkedBoxesInd])
             style = [QtCore.Qt.SolidLine, QtCore.Qt.DashLine, QtCore.Qt.DashLine]
             self.plotStatValues(self.init, plotitem, data, color, style)
 
@@ -621,7 +621,7 @@ class RTQAWindow(QtWidgets.QWidget):
         for i in range(sz):
             cnt = cnt + np.count_nonzero(self.negSpikes[str(i)])
         names.append('<br>( Diamonds )<br>Negative spikes: ' + str(int(cnt)))
-        pens = [pg.mkPen(color=config.STAT_PLOT_COLORS[9], width=1.2), pg.mkPen(color=config.STAT_PLOT_COLORS[9], width=1.2)]
+        pens = [pg.mkPen(color=config.ROI_PLOT_COLORS[9], width=1.2), pg.mkPen(color=config.ROI_PLOT_COLORS[9], width=1.2)]
         self.makeTextValueLabel(self.spikesLabel, names, pens, lineBreak='<br>')
 
     # --------------------------------------------------------------------------
