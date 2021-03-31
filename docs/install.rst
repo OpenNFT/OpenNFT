@@ -167,6 +167,8 @@ Check the existence of ``matlabengineforpython`` and ``OpenNFT`` names. If the I
     OpenNFT               1.0.0   c:\workspace\projects\OpenNFT
     ...
 
+.. _run_application:
+
 Run Application
 ---------------
 
