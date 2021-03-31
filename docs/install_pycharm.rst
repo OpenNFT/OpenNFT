@@ -93,17 +93,17 @@ Run Application
 
 Before run you need to create Run Configuration
 
-.. image:: _static/pycharminstall_6.png
+.. image:: _static/pycharminstall_5.png
 
-.. image:: _static/pycharminstall_7.png
+.. image:: _static/pycharminstall_6.png
 
 Specify Module name as "opennft" (NOT Script path) and Project interpreter according to your venv
 
-.. image:: _static/pycharminstall_8.png
+.. image:: _static/pycharminstall_7.png
 
 Sometimes you can't create configuration without 'Store as project file' enabled. :ref:`possible_error`
 
 And then press run
 
-.. image:: _static/pycharminstall_9.png
+.. image:: _static/pycharminstall_8.png
 
