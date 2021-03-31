@@ -123,30 +123,26 @@ For installing in `editable mode <https://pip.pypa.io/en/stable/reference/pip_in
 
     pip install -e /path/to/your/workspace/directory/OpenNFT/
 
-If the installer can't find MATLAB or there are several installed MATLAB versions, you can specify the ``MATLABROOT``:
+If there are several MATLAB versions, you have to install requirements and specify the MATLAB root directory during OpenNFT installation.
 
 .. code-block::
 
+    pip install -U pip setuptools wheel
+    pip install -U -r /path/to/your/workspace/directory/OpenNFT/requirements.txt
     pip install --install-option "--matlab-root=<MATLABROOT>" /path/to/your/workspace/directory/OpenNFT/
 
 You can use both ``-e/--editable`` and  ``--install-option "--matlab-root=<MATLABROOT>"`` options at the same time:
 
 .. code-block::
 
+    pip install -U pip setuptools wheel
+    pip install -U -r /path/to/your/workspace/directory/OpenNFT/requirements.txt
     pip install --install-option "--matlab-root=<MATLABROOT>" -e /path/to/your/workspace/directory/OpenNFT/
 
 .. note::
 
     If you do not have the write access to ``MATLABROOT``, the installer will try to
     install the "Matlab Engine for Python" with Administrator/root privileges, elevating privileges via UAC/sudo.
-
-Alternatively, you can specify and install the Matlab engine as:
-
-.. code-block::
-
-    cd /Path/To/Matlab/Root/extern/engines/python/
-    python setup.py build --build-base="C:\Path\To\Project\Directory\Venv_directory\Lib\site-packages\MatlabEngineBuild" install
-    cd /Path/To/Project/Directory/
 
 .. _check_installation:
 

@@ -72,40 +72,15 @@ MATLAB will be found automatically
     pip install -U pip setuptools wheel
     pip install -e .
 
-.. rubric:: Customized installation.
+.. rubric:: Customized installation
 
-If there are several MATLAB versions, you have to specify the MATLAB root directory
+If there are several MATLAB versions, you have to install requirements and specify the MATLAB root directory during OpenNFT installation.
 
 .. code-block::
 
     pip install -U pip setuptools wheel
     pip install -U -r requirements.txt
-
-To install ``matlabengineforpython`` you can use one of the following methods.
-
-If ...
-
-.. image:: _static/pycharminstall_5.png
-
-.. code-block::
-
     pip install --install-option "--matlab-root=<MATLABROOT>" -e .
-
-or, if ...
-
-.. code-block::
-
-    cd /Path/To/Matlab/Root/extern/engines/python/
-    python setup.py build --build-base="C:\Path\To\Project\Directory\Venv_directory\Lib\site-packages\MatlabEngineBuild" install
-    cd /Path/To/Project/Directory/
-
-Examples of MATLABROOT and build-base paths
-
-.. code-block::
-
-   pip install --install-option "--matlab-root=C:\Program Files\MATLAB\R2018b" -e .
-
-   python setup.py build --build-base="C:\OpenNFT\OpenNFT_venv_36\Lib\site-packages\MatlabEngineBuild" install
 
 Check Installation
 ------------------
