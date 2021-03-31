@@ -3,7 +3,7 @@
 Installation
 ============
 
-The installation process has been tested on three x86_64 platforms:
+The installation process is tested on three x86_64 platforms:
 
 * Linux (Ubuntu 18.04)
 * Mac OS (High Sierra 10.13.6)
@@ -12,9 +12,9 @@ The installation process has been tested on three x86_64 platforms:
 Prerequisites
 -------------
 
-Firstly, the following software should be installed:
+The following software should be installed:
 
-* `Git <https://git-scm.com/downloads>`_: for installing SPM, Psychtoolbox and OpenNFT
+* `Git <https://git-scm.com/downloads>`_: for installing OpenNFT and, optionally, for installing SPM and Psychtoolbox
 * MATLAB x86_64 R2017b or above
     - Image Processing Toolbox
     - Statistics and Machine Learning Toolbox
@@ -22,13 +22,13 @@ Firstly, the following software should be installed:
     - `Psychtoolbox 3 <https://github.com/Psychtoolbox-3/Psychtoolbox-3>`_
     - `JSONlab <https://github.com/fangq/jsonlab>`_
     - `prepNFB <https://github.com/lucp88/prepNFB>`_ (optional)
-* `Python <https://www.python.org/downloads/>`_ x86_64 3.6.0-3.8.6
+* `Python <https://www.python.org/downloads/>`_ x86_64 from 3.6.0 to 3.8.6
 
 
 Install OpenNFT
 ---------------
 
-We recommend using a virtual environment for installing OpenNFT.
+We recommend a virtual environment for installing OpenNFT.
 
 Creating Virtual Environment
 ++++++++++++++++++++++++++++
@@ -37,7 +37,7 @@ Creating Virtual Environment
 
 .. note::
 
-    In Linux system you might need to use following command first
+    For Linux system you may first need the following command:
 
     .. code-block::
 
@@ -75,19 +75,18 @@ Run the command:
 
 .. note::
 
-    If you do not have write access in ``MATLABROOT`` the installer will try to
-    install "Matlab Engine for Python" with Administrator/root privileges
-    (It elevates privileges via UAC/sudo).
+    If you do not have the write access in ``MATLABROOT``, the installer will try to
+    install "Matlab Engine for Python" with Administrator/root privileges, i.e., elevating privileges via UAC/sudo.
 
 Install from Project Directory
 ++++++++++++++++++++++++++++++
 
-Also you can install OpenNFT from your working directory (OpenNFT project root directory).
-It is convenient if you working on the project or you want to contribute.
+Alternatively, you can install OpenNFT from your working directory (OpenNFT project root directory).
+It is convenient if you are working on the project or want to contribute.
 
 .. rubric:: Cloning the project repository
 
-Firstly, the project repository (or its fork) should be cloned:
+First, the project repository (or its fork) is cloned:
 
 .. code-block::
 
@@ -95,6 +94,8 @@ Firstly, the project repository (or its fork) should be cloned:
     git clone --recurse-submodules https://github.com/OpenNFT/OpenNFT.git
 
 .. rubric:: Install the project dependencies
+
+Second, project dependencies are installed:
 
 .. note::
 
@@ -107,25 +108,28 @@ Firstly, the project repository (or its fork) should be cloned:
 
 .. rubric:: Install OpenNFT
 
+Third, OpenNFT is installed:
+
 .. code-block::
 
     pip install /path/to/your/workspace/directory/OpenNFT/
 
-Also you can use ``-e/--editable`` option for installing in `editable mode <https://pip.pypa.io/en/stable/reference/pip_install/#editable-installs>`_ (mode for development):
+Additional Notes
+++++++++++++++++
+
+For installing in `editable mode <https://pip.pypa.io/en/stable/reference/pip_install/#editable-installs>`_ (development mode), you can use the ``-e/--editable`` option:
 
 .. code-block::
 
     pip install -e /path/to/your/workspace/directory/OpenNFT/
 
-Also you can specify ``MATLABROOT`` if the installer can't find MATLAB or you have several installed MATLAB versions:
+If the installer can't find MATLAB or there are several installed MATLAB versions, you can specify the ``MATLABROOT``:
 
 .. code-block::
 
     pip install --install-option "--matlab-root=<MATLABROOT>" /path/to/your/workspace/directory/OpenNFT/
 
-Where ``MATLABROOT`` is a path to MATLAB root directory.
-
-You can use both ``-e/--editable`` and  ``--install-option "--matlab-root=<MATLABROOT>"`` options at the time.
+You can use both ``-e/--editable`` and  ``--install-option "--matlab-root=<MATLABROOT>"`` options at the same time:
 
 .. code-block::
 
@@ -133,11 +137,10 @@ You can use both ``-e/--editable`` and  ``--install-option "--matlab-root=<MATLA
 
 .. note::
 
-    If you do not have write access in ``MATLABROOT`` the installer will try to
-    install "Matlab Engine for Python" with Administrator/root privileges
-    (It elevates privileges via UAC/sudo).
+    If you do not have the write access to ``MATLABROOT``, the installer will try to
+    install the "Matlab Engine for Python" with Administrator/root privileges, elevating privileges via UAC/sudo.
 
-Or you can use the second way to specify and install Matlab engine
+Alternatively, you can specify and install the Matlab engine as:
 
 .. code-block::
 
@@ -156,7 +159,7 @@ Run the command:
 
     pip list
 
-If everything went well, you should see something like this:
+Check the existence of ``matlabengineforpython`` and ``OpenNFT`` names. If the Installation went well, you should see them as:
 
 .. code-block::
 
@@ -168,19 +171,19 @@ If everything went well, you should see something like this:
     OpenNFT               1.0.0   c:\workspace\projects\OpenNFT
     ...
 
-Check the existence of ``matlabengineforpython`` and ``OpenNFT`` names.
-
 Run Application
 ---------------
 
-You can now start OpenNFT. Run the command:
+To start OpenNFT, run the command in the Terminal:
 
 .. code-block::
 
     opennft
 
-Also you can run shared MATLAB sessions for reusing them before running OpenNFT in separated terminal:
+Shared MATLAB sessions can be started by pressing the Initialize button in the OpenNFT GUI and, alternatively, from a separate Terminal before starting OpenNFT and pressing the Initialize button:
 
 .. code-block::
 
     run_matlab
+
+If Matlab sessions are started separately, pressing the Initialize button acknowledges them automatically. This mode of shared Matlab sessions allows re-using them after closing and re-starting OpenNFT, which is of benefit for software developments and debugging.

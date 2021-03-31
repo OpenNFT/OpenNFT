@@ -1,9 +1,9 @@
 .. _install_pycharm:
 
-PyCharm based Installation
-==========================
+Installation via PyCharm
+========================
 
-The installation process has been tested on three x86_64 platforms:
+The installation process is tested on three x86_64 platforms:
 
 * Linux (Ubuntu 18.04)
 * Mac OS (High Sierra 10.13.6)
@@ -12,7 +12,7 @@ The installation process has been tested on three x86_64 platforms:
 Prerequisites
 -------------
 
-Firstly, the following software should be installed:
+The following software should be installed:
 
 * `Git <https://git-scm.com/downloads>`_: for installing SPM, Psychtoolbox and OpenNFT
 * PyCharm `Professional or Community <https://www.jetbrains.com/pycharm/download/>`_
@@ -29,18 +29,18 @@ Firstly, the following software should be installed:
 Install OpenNFT
 ---------------
 
-Creating Project by cloning from GitHub repository
+Create Project by cloning from GitHub repository
 ++++++++++++++++++++++++++++++++++++++++++++++++++
 
 .. image:: _static/pycharminstall_1.png
 
-You can use link of the main repository
+Use the link to the main repository,
 
 .. code-block::
 
     https://github.com/OpenNFT/OpenNFT.git
 
-Or if you want to contribute to the project - create fork repository and use your link
+or, if you plan to contribute to the project, create the fork repository and use your own link
 
 .. code-block::
 
@@ -48,14 +48,14 @@ Or if you want to contribute to the project - create fork repository and use you
 
 .. image:: _static/pycharminstall_2.png
 
-Creating Virtual Environment
+Create Virtual Environment
 ++++++++++++++++++++++++++++
 
-To create virtual environment go to File -> Settings -> Project Interpreter
+To create virtual environment, go to File -> Settings -> Project Interpreter
 
 .. image:: _static/pycharminstall_3.png
 
-Setup location of a new virtual envirnment and choose python version
+Set the new virtual environment location and choose the interpreter
 
 .. image:: _static/pycharminstall_4.png
 
@@ -74,15 +74,16 @@ MATLAB will be found automatically
 
 .. rubric:: Customized installation.
 
-If you have several MATLAB versions and you need to specify MATLAB root directory
+If there are several MATLAB versions, you have to specify the MATLAB root directory
 
 .. code-block::
 
     pip install -U pip setuptools wheel
     pip install -U -r requirements.txt
 
-To install ``matlabengineforpython`` you can use one of these methods
+To install ``matlabengineforpython`` you can use one of the following methods.
 
+If ...
 
 .. image:: _static/pycharminstall_5.png
 
@@ -90,7 +91,7 @@ To install ``matlabengineforpython`` you can use one of these methods
 
     pip install --install-option "--matlab-root=<MATLABROOT>" -e .
 
-Or
+or, if ...
 
 .. code-block::
 
@@ -98,7 +99,7 @@ Or
     python setup.py build --build-base="C:\Path\To\Project\Directory\Venv_directory\Lib\site-packages\MatlabEngineBuild" install
     cd /Path/To/Project/Directory/
 
-Example of MATLABROOT and build-base paths
+Examples of MATLABROOT and build-base paths
 
 .. code-block::
 
