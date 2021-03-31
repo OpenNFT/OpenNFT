@@ -1117,23 +1117,14 @@ class OpenNFT(QWidget):
     def basicSetupPlot(self, plotitem, grid=True):
         #        creating muster info must be optimized. Its not very flexible in its current form
         #        this works around the x-length issue for the ContTask condition only!
-        if self.P['Prot'] == 'ContTask':
-            xmax = max(self.musterInfo['tmpCond1'][-1][1],
-                       self.musterInfo['tmpCond2'][-1][1],
-                       self.musterInfo['tmpCond3'][-1][1])
-        elif self.P['Prot'] == 'Inter':
-            xmax = max(self.musterInfo['tmpCond1'][-1][1],
-                       self.musterInfo['tmpCond2'][-1][1],
-                       self.musterInfo['tmpCond3'][-1][1],
-                       self.musterInfo['tmpCond4'][-1][1],
-                       self.musterInfo['tmpCond5'][-1][1],
-                       self.musterInfo['tmpCond6'][-1][1])
+        lastInds = np.zeros((self.musterInfo['condTotal'],))
+        for i in range(self.musterInfo['condTotal']):
+            lastInds[i] = self.musterInfo['tmpCond'+str(i+1)][-1][1]
+
+        if not self.P['isRestingState']:
+            xmax = max(lastInds)
         else:
-            if not self.P['isRestingState']:
-                xmax = max(self.musterInfo['tmpCond1'][-1][1],
-                           self.musterInfo['tmpCond2'][-1][1])
-            else:
-                xmax = (self.P['NrOfVolumes'] - self.P['nrSkipVol'])
+            xmax = (self.P['NrOfVolumes'] - self.P['nrSkipVol'])
 
         plotitem.disableAutoRange(axis=pg.ViewBox.XAxis)
         plotitem.setXRange(1, xmax, padding=0.0)
@@ -2186,11 +2177,12 @@ class OpenNFT(QWidget):
             removeIntervals(tmpCond[0], remCond)
             removeIntervals(tmpCond[1], remCond)
 
-        tmpCondStr = ['tmpCond{:d}'.format(x + 1) for x in range(len(tmpCond))]
-        nrCondStr = ['nrCond{:d}'.format(x + 1) for x in range(len(nrCond))]
+        condTotal = 2 if self.P['Prot'] == 'InterBlock' else len(tmpCond)
+        tmpCondStr = ['tmpCond{:d}'.format(x + 1) for x in range(condTotal)]
+        nrCondStr = ['nrCond{:d}'.format(x + 1) for x in range(condTotal)]
         self.musterInfo = dict.fromkeys(tmpCondStr + nrCondStr)
-        self.musterInfo['condTotal'] = len(nrCond)
-        for condNumber in range(len(tmpCond)):
+        self.musterInfo['condTotal'] = condTotal
+        for condNumber in range(condTotal):
             self.musterInfo[tmpCondStr[condNumber]] = tmpCond[condNumber]
             self.musterInfo[nrCondStr[condNumber]] = nrCond[condNumber]
         self.musterInfo['blockLength'] = blockLength
@@ -2222,24 +2214,6 @@ class OpenNFT(QWidget):
                                         self.musterInfo['tmpCond' + str(cond + 1)])
             self.musterInfo['xCond' + str(cond + 1)] = xCond
             self.musterInfo['yCond' + str(cond + 1)] = yCond
-
-        # xCond1, yCond1 = computeConds(
-        #     self.musterInfo['nrCond1'], self.musterInfo['tmpCond1'])
-        #
-        # xCond2, yCond2 = computeConds(
-        #     self.musterInfo['nrCond2'], self.musterInfo['tmpCond2'])
-        #
-        # self.musterInfo['xCond1'] = xCond1
-        # self.musterInfo['yCond1'] = yCond1
-        # self.musterInfo['xCond2'] = xCond2
-        # self.musterInfo['yCond2'] = yCond2
-        #
-        # if self.P['Prot'] != 'InterBlock':
-        #     xCond3, yCond3 = computeConds(
-        #         self.musterInfo['nrCond3'], self.musterInfo['tmpCond3'])
-        #
-        #     self.musterInfo['xCond3'] = xCond3
-        #     self.musterInfo['yCond3'] = yCond3
 
     # --------------------------------------------------------------------------
     def drawRoiPlots(self, init):
@@ -2314,10 +2288,8 @@ class OpenNFT(QWidget):
             muster = []
 
             for i in range(self.musterInfo['condTotal']):
-
-                if self.P['Prot'] == 'InterBlock' and i == 2:
-                    break
-
+                # if self.P['Prot'] == 'InterBlock' and i == 2:
+                #     break
                 muster.append(
                     plotitem.plot(x=self.musterInfo['xCond' + str(i + 1)],
                                   y=self.musterInfo['yCond' + str(i + 1)],
