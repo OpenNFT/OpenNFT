@@ -103,7 +103,7 @@ Specify Module name as "opennft" (NOT Script path) and Project interpreter accor
 
 Here, to create the configuration the checkbox 'Store as project file' may be required. :ref:`possible_error`
 
-Now you can press the Run button, or run commands in the Terminal: : :ref:`run_application`
+Now you can press the Run button, or run commands in the Terminal: :ref:`run_application`
 
 .. image:: _static/pycharminstall_8.png
 
