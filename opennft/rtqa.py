@@ -26,17 +26,23 @@ class RTQAWindow(QtWidgets.QWidget):
 
         # parent data transfer block
         sz = int(parent.P['NrROIs'])
+        self.musterInfo = parent.musterInfo
+
         if parent.P['isRestingState']:
             xrange = (parent.P['NrOfVolumes'] - parent.P['nrSkipVol'])
             self.comboBox.model().item(2).setEnabled(False)
             self.indBas = 0
             self.indCond = 0
         else:
+            lastInds = np.zeros((self.musterInfo['condTotal'],))
+            for i in range(self.musterInfo['condTotal']):
+                lastInds[i] = self.musterInfo['tmpCond' + str(i + 1)][-1][1]
             parent.computeMusterPlotData(config.MUSTER_Y_LIMITS)
-            xrange = max(parent.musterInfo['tmpCond1'][-1][1],
-                         parent.musterInfo['tmpCond2'][-1][1])
+            xrange = max(lastInds)
             self.indBas = np.array(parent.P['inds'][0]) - 1
             self.indCond = np.array(parent.P['inds'][1]) - 1
+
+        xrange = int(xrange)
 
         # main class data initialization block
         self.prot = parent.P['Prot']
@@ -77,7 +83,6 @@ class RTQAWindow(QtWidgets.QWidget):
             checkbox.stateChanged.connect(self.roiCheckBoxStateChanged)
             groupBoxLayout.addWidget(checkbox)
         self.roiCheckBoxes = self.roiGroupBox.findChildren(QtWidgets.QCheckBox)
-        self.musterInfo = parent.musterInfo
         self.mcrRadioButton.toggled.connect(self.onRadioButtonStateChanged)
 
         # Plots initialization
@@ -313,8 +318,6 @@ class RTQAWindow(QtWidgets.QWidget):
 
             for i in range(self.musterInfo['condTotal']):
 
-                if self.prot == 'InterBlock' and i == 2:
-                    break
                 muster.append(
                     plotitem.plot(x=self.musterInfo['xCond' + str(i + 1)],
                                   y=self.musterInfo['yCond' + str(i + 1)],
