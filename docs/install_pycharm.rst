@@ -63,7 +63,7 @@ Set the new virtual environment location and choose the interpreter
 Install from Project Directory
 ++++++++++++++++++++++++++++++
 
-.. rubric:: Default installation.
+.. rubric:: Default installation
 
 MATLAB will be found automatically
 
@@ -85,25 +85,25 @@ If there are several MATLAB versions, you have to install requirements and speci
 Check Installation
 ------------------
 
-Check the installation before run: :ref:`check_installation`
+Check the installation: :ref:`check_installation`
 
 
 Run Application
 ---------------
 
-Before run you need to create Run Configuration
+Create Run Configuration to run OpenNFT:
 
 .. image:: _static/pycharminstall_5.png
 
 .. image:: _static/pycharminstall_6.png
 
-Specify Module name as "opennft" (NOT Script path) and Project interpreter according to your venv
+Specify Module name as "opennft" (NOT Script path) and Project interpreter according to your Virtual Environment:
 
 .. image:: _static/pycharminstall_7.png
 
-Sometimes you can't create configuration without 'Store as project file' enabled. :ref:`possible_error`
+Here, to create the configuration the checkbox 'Store as project file' may be required. :ref:`possible_error`
 
-And then press run
+Now you can press the Run button, or run commands in the Terminal: : :ref:`run_application`
 
 .. image:: _static/pycharminstall_8.png
 
