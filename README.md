@@ -11,7 +11,8 @@ Refer to www.OpenNFT.org and to our
 and ["Koush et al., Data in Brief 2017. Real-time fMRI data for testing OpenNFT functionality"](https://www.sciencedirect.com/science/article/pii/S2352340917303517) manuscripts for further descriptions.
 Please check the Project updates regularly, we are actively developing.
 
-## [Manual](https://opennft.readthedocs.io/en/docs/install.html#)
+## Documentation
+https://opennft.readthedocs.io/en/latest
 
 ## Demo Configuration and Protocol files
 https://github.com/OpenNFT/OpenNFT/tree/master/opennft/configs
