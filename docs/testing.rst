@@ -22,3 +22,17 @@ Offline OpenNFT mode using already acquired fMRI data
 -----------------------------------------------------
 
 * Launch OpenNFT, review the parameters and, in particular, check the ``Offline mode`` checkbox before pressing Setup. Press the Start button. OpenNFT is now processing the data in the ``MRI Watch folder`` as fast as possible.
+
+Running and debugging OpenNFT from VSCode
+-----------------------------------------------------
+
+If you want to run the program from VSCode run/debug configuration, you should add the followings to launch.json configuration:
+
+.. code-block::
+
+    {
+        "name": "Python: Module",
+        "type": "python",
+        "request": "launch",
+        "module": "opennft"
+    }
