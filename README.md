@@ -6,7 +6,7 @@ OpenNFT includes, but is not limited to, the functionality of SPM, PsychoPy and 
 synchronization module and multi-processing core are implemented in Python, whilst computational modules for real-time data processing 
 and neurofeedback are implemented in Matlab. 
 
-Refer to www.OpenNFT.org and to our 
+Refer to OpenNFT.org and to our 
 ["Koush et al., Neuroimage 2017. OpenNFT: An open-source Python/Matlab framework for real-time fMRI neurofeedback training based on activity, connectivity and multivariate pattern analysis"](http://www.sciencedirect.com/science/article/pii/S1053811917305050) 
 and ["Koush et al., Data in Brief 2017. Real-time fMRI data for testing OpenNFT functionality"](https://www.sciencedirect.com/science/article/pii/S2352340917303517) manuscripts for further descriptions.
 Please check the Project updates regularly, we are actively developing.
