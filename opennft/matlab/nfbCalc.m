@@ -281,7 +281,7 @@ if isSVM
         end
 
         % compute average feedback value
-        tmp_fbVal = eval(P.RoiAnatOperation); 
+        tmp_fbVal = mean(norm_percValues);%eval(P.RoiAnatOperation); 
         dispValue = round(P.MaxFeedbackVal*tmp_fbVal, P.FeedbackValDec); 
 
         mainLoopData.norm_percValues(indVolNorm,:) = norm_percValues;

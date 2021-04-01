@@ -1,0 +1,74 @@
+2020-11-04T10:35:44,440 Using pip 20.2.4 from d:\opennft_workspace\opennft_venv\lib\site-packages\pip (python 3.8)
+2020-11-04T10:35:44,464 Non-user install because user site-packages disabled
+2020-11-04T10:35:44,474 Created temporary directory: C:\Users\Yury\AppData\Local\Temp\pip-ephem-wheel-cache-lrar7uoa
+2020-11-04T10:35:44,475 Created temporary directory: C:\Users\Yury\AppData\Local\Temp\pip-req-tracker-9mi0lcn7
+2020-11-04T10:35:44,475 Initialized build tracking at C:\Users\Yury\AppData\Local\Temp\pip-req-tracker-9mi0lcn7
+2020-11-04T10:35:44,475 Created build tracker: C:\Users\Yury\AppData\Local\Temp\pip-req-tracker-9mi0lcn7
+2020-11-04T10:35:44,475 Entered build tracker: C:\Users\Yury\AppData\Local\Temp\pip-req-tracker-9mi0lcn7
+2020-11-04T10:35:44,477 Created temporary directory: C:\Users\Yury\AppData\Local\Temp\pip-install-niu5fzle
+2020-11-04T10:35:44,482 Obtaining file:///D:/OpenNFT_Workspace/OpenNFT_Code
+2020-11-04T10:35:44,484   Added file:///D:/OpenNFT_Workspace/OpenNFT_Code to build tracker 'C:\\Users\\Yury\\AppData\\Local\\Temp\\pip-req-tracker-9mi0lcn7'
+2020-11-04T10:35:44,484     Running setup.py (path:D:\OpenNFT_Workspace\OpenNFT_Code\setup.py) egg_info for package from file:///D:/OpenNFT_Workspace/OpenNFT_Code
+2020-11-04T10:35:44,485     Created temporary directory: C:\Users\Yury\AppData\Local\Temp\pip-pip-egg-info-50t3y8hh
+2020-11-04T10:35:44,485     Running command python setup.py egg_info
+2020-11-04T10:35:44,858     running egg_info
+2020-11-04T10:35:44,858     creating C:\Users\Yury\AppData\Local\Temp\pip-pip-egg-info-50t3y8hh\OpenNFT.egg-info
+2020-11-04T10:35:44,859     writing C:\Users\Yury\AppData\Local\Temp\pip-pip-egg-info-50t3y8hh\OpenNFT.egg-info\PKG-INFO
+2020-11-04T10:35:44,860     writing dependency_links to C:\Users\Yury\AppData\Local\Temp\pip-pip-egg-info-50t3y8hh\OpenNFT.egg-info\dependency_links.txt
+2020-11-04T10:35:44,861     writing entry points to C:\Users\Yury\AppData\Local\Temp\pip-pip-egg-info-50t3y8hh\OpenNFT.egg-info\entry_points.txt
+2020-11-04T10:35:44,884     writing requirements to C:\Users\Yury\AppData\Local\Temp\pip-pip-egg-info-50t3y8hh\OpenNFT.egg-info\requires.txt
+2020-11-04T10:35:44,885     writing top-level names to C:\Users\Yury\AppData\Local\Temp\pip-pip-egg-info-50t3y8hh\OpenNFT.egg-info\top_level.txt
+2020-11-04T10:35:44,885     writing manifest file 'C:\Users\Yury\AppData\Local\Temp\pip-pip-egg-info-50t3y8hh\OpenNFT.egg-info\SOURCES.txt'
+2020-11-04T10:35:44,906     reading manifest file 'C:\Users\Yury\AppData\Local\Temp\pip-pip-egg-info-50t3y8hh\OpenNFT.egg-info\SOURCES.txt'
+2020-11-04T10:35:44,909     writing manifest file 'C:\Users\Yury\AppData\Local\Temp\pip-pip-egg-info-50t3y8hh\OpenNFT.egg-info\SOURCES.txt'
+2020-11-04T10:35:44,934   Source in d:\opennft_workspace\opennft_code has version 1.0.0rc0, which satisfies requirement OpenNFT==1.0.0rc0 from file:///D:/OpenNFT_Workspace/OpenNFT_Code
+2020-11-04T10:35:44,934   Removed OpenNFT==1.0.0rc0 from file:///D:/OpenNFT_Workspace/OpenNFT_Code from build tracker 'C:\\Users\\Yury\\AppData\\Local\\Temp\\pip-req-tracker-9mi0lcn7'
+2020-11-04T10:35:44,952 Requirement already satisfied: PyQt5>=5.12.0 in d:\opennft_workspace\opennft_venv\lib\site-packages (from OpenNFT==1.0.0rc0) (5.15.1)
+2020-11-04T10:35:44,954 Requirement already satisfied: numpy>=1.13.1,>=1.13.1+mkl in d:\opennft_workspace\opennft_venv\lib\site-packages (from OpenNFT==1.0.0rc0) (1.19.4)
+2020-11-04T10:35:44,955 Requirement already satisfied: pyqtgraph@ https://github.com/pyqtgraph/pyqtgraph/tarball/master from https://github.com/pyqtgraph/pyqtgraph/tarball/master in d:\opennft_workspace\opennft_venv\lib\site-packages (from OpenNFT==1.0.0rc0) (0.11.0)
+2020-11-04T10:35:44,957 Requirement already satisfied: pyniexp@ https://github.com/tiborauer/pyniexp/tarball/master from https://github.com/tiborauer/pyniexp/tarball/master in d:\opennft_workspace\opennft_venv\lib\site-packages (from OpenNFT==1.0.0rc0) (0.26.2)
+2020-11-04T10:35:44,961 Requirement already satisfied: watchdog>=0.9.0 in d:\opennft_workspace\opennft_venv\lib\site-packages (from OpenNFT==1.0.0rc0) (0.10.3)
+2020-11-04T10:35:44,965 Requirement already satisfied: loguru>=0.2.5 in d:\opennft_workspace\opennft_venv\lib\site-packages (from OpenNFT==1.0.0rc0) (0.5.3)
+2020-11-04T10:35:44,981 Requirement already satisfied: scipy>=1.3.1 in d:\opennft_workspace\opennft_venv\lib\site-packages (from OpenNFT==1.0.0rc0) (1.5.3)
+2020-11-04T10:35:44,983 Requirement already satisfied: pywin32>=224 in d:\opennft_workspace\opennft_venv\lib\site-packages (from OpenNFT==1.0.0rc0) (228)
+2020-11-04T10:35:44,985 Requirement already satisfied: PyQt5-sip<13,>=12.8 in d:\opennft_workspace\opennft_venv\lib\site-packages (from PyQt5>=5.12.0->OpenNFT==1.0.0rc0) (12.8.1)
+2020-11-04T10:35:44,986 Requirement already satisfied: nidaqmx in d:\opennft_workspace\opennft_venv\lib\site-packages (from pyniexp@ https://github.com/tiborauer/pyniexp/tarball/master->OpenNFT==1.0.0rc0) (0.5.7)
+2020-11-04T10:35:44,989 Requirement already satisfied: matplotlib in d:\opennft_workspace\opennft_venv\lib\site-packages (from pyniexp@ https://github.com/tiborauer/pyniexp/tarball/master->OpenNFT==1.0.0rc0) (3.3.2)
+2020-11-04T10:35:44,996 Requirement already satisfied: pyserial in d:\opennft_workspace\opennft_venv\lib\site-packages (from pyniexp@ https://github.com/tiborauer/pyniexp/tarball/master->OpenNFT==1.0.0rc0) (3.4)
+2020-11-04T10:35:44,998 Requirement already satisfied: keyboard in d:\opennft_workspace\opennft_venv\lib\site-packages (from pyniexp@ https://github.com/tiborauer/pyniexp/tarball/master->OpenNFT==1.0.0rc0) (0.13.5)
+2020-11-04T10:35:44,1000 Requirement already satisfied: pathtools>=0.1.1 in d:\opennft_workspace\opennft_venv\lib\site-packages (from watchdog>=0.9.0->OpenNFT==1.0.0rc0) (0.1.2)
+2020-11-04T10:35:45,001 Requirement already satisfied: colorama>=0.3.4; sys_platform == "win32" in d:\opennft_workspace\opennft_venv\lib\site-packages (from loguru>=0.2.5->OpenNFT==1.0.0rc0) (0.4.4)
+2020-11-04T10:35:45,003 Requirement already satisfied: win32-setctime>=1.0.0; sys_platform == "win32" in d:\opennft_workspace\opennft_venv\lib\site-packages (from loguru>=0.2.5->OpenNFT==1.0.0rc0) (1.0.3)
+2020-11-04T10:35:45,006 Requirement already satisfied: six in d:\opennft_workspace\opennft_venv\lib\site-packages (from nidaqmx->pyniexp@ https://github.com/tiborauer/pyniexp/tarball/master->OpenNFT==1.0.0rc0) (1.15.0)
+2020-11-04T10:35:45,008 Requirement already satisfied: python-dateutil>=2.1 in d:\opennft_workspace\opennft_venv\lib\site-packages (from matplotlib->pyniexp@ https://github.com/tiborauer/pyniexp/tarball/master->OpenNFT==1.0.0rc0) (2.8.1)
+2020-11-04T10:35:45,010 Requirement already satisfied: kiwisolver>=1.0.1 in d:\opennft_workspace\opennft_venv\lib\site-packages (from matplotlib->pyniexp@ https://github.com/tiborauer/pyniexp/tarball/master->OpenNFT==1.0.0rc0) (1.3.1)
+2020-11-04T10:35:45,012 Requirement already satisfied: certifi>=2020.06.20 in d:\opennft_workspace\opennft_venv\lib\site-packages (from matplotlib->pyniexp@ https://github.com/tiborauer/pyniexp/tarball/master->OpenNFT==1.0.0rc0) (2020.6.20)
+2020-11-04T10:35:45,014 Requirement already satisfied: pillow>=6.2.0 in d:\opennft_workspace\opennft_venv\lib\site-packages (from matplotlib->pyniexp@ https://github.com/tiborauer/pyniexp/tarball/master->OpenNFT==1.0.0rc0) (8.0.1)
+2020-11-04T10:35:45,015 Requirement already satisfied: pyparsing!=2.0.4,!=2.1.2,!=2.1.6,>=2.0.3 in d:\opennft_workspace\opennft_venv\lib\site-packages (from matplotlib->pyniexp@ https://github.com/tiborauer/pyniexp/tarball/master->OpenNFT==1.0.0rc0) (2.4.7)
+2020-11-04T10:35:45,017 Requirement already satisfied: cycler>=0.10 in d:\opennft_workspace\opennft_venv\lib\site-packages (from matplotlib->pyniexp@ https://github.com/tiborauer/pyniexp/tarball/master->OpenNFT==1.0.0rc0) (0.10.0)
+2020-11-04T10:35:45,045 Installing collected packages: OpenNFT
+2020-11-04T10:35:45,049   Running setup.py develop for OpenNFT
+2020-11-04T10:35:45,049     Running command 'd:\opennft_workspace\opennft_venv\scripts\python.exe' -c 'import sys, setuptools, tokenize; sys.argv[0] = '"'"'D:\\OpenNFT_Workspace\\OpenNFT_Code\\setup.py'"'"'; __file__='"'"'D:\\OpenNFT_Workspace\\OpenNFT_Code\\setup.py'"'"';f=getattr(tokenize, '"'"'open'"'"', open)(__file__);code=f.read().replace('"'"'\r\n'"'"', '"'"'\n'"'"');f.close();exec(compile(code, __file__, '"'"'exec'"'"'))' develop --no-deps '--matlab-root=C:\Program Files\MATLAB\R2020b'
+2020-11-04T10:35:45,497     running develop
+2020-11-04T10:35:46,164     error: [WinError 2] The system cannot find the file specified
+2020-11-04T10:35:46,164     Installing "MATLAB engine for Python" from "C:\Program Files\MATLAB\R2020b\extern\engines\python"...
+2020-11-04T10:35:46,164     "Matlab Engine for Python" is successfully installed
+2020-11-04T10:35:46,186 ERROR: Command errored out with exit status 1: 'd:\opennft_workspace\opennft_venv\scripts\python.exe' -c 'import sys, setuptools, tokenize; sys.argv[0] = '"'"'D:\\OpenNFT_Workspace\\OpenNFT_Code\\setup.py'"'"'; __file__='"'"'D:\\OpenNFT_Workspace\\OpenNFT_Code\\setup.py'"'"';f=getattr(tokenize, '"'"'open'"'"', open)(__file__);code=f.read().replace('"'"'\r\n'"'"', '"'"'\n'"'"');f.close();exec(compile(code, __file__, '"'"'exec'"'"'))' develop --no-deps '--matlab-root=C:\Program Files\MATLAB\R2020b' Check the logs for full command output.
+2020-11-04T10:35:46,187 Exception information:
+2020-11-04T10:35:46,187 Traceback (most recent call last):
+2020-11-04T10:35:46,187   File "d:\opennft_workspace\opennft_venv\lib\site-packages\pip\_internal\cli\base_command.py", line 228, in _main
+2020-11-04T10:35:46,187     status = self.run(options, args)
+2020-11-04T10:35:46,187   File "d:\opennft_workspace\opennft_venv\lib\site-packages\pip\_internal\cli\req_command.py", line 182, in wrapper
+2020-11-04T10:35:46,187     return func(self, options, args)
+2020-11-04T10:35:46,187   File "d:\opennft_workspace\opennft_venv\lib\site-packages\pip\_internal\commands\install.py", line 397, in run
+2020-11-04T10:35:46,187     installed = install_given_reqs(
+2020-11-04T10:35:46,187   File "d:\opennft_workspace\opennft_venv\lib\site-packages\pip\_internal\req\__init__.py", line 82, in install_given_reqs
+2020-11-04T10:35:46,187     requirement.install(
+2020-11-04T10:35:46,187   File "d:\opennft_workspace\opennft_venv\lib\site-packages\pip\_internal\req\req_install.py", line 790, in install
+2020-11-04T10:35:46,187     install_editable_legacy(
+2020-11-04T10:35:46,187   File "d:\opennft_workspace\opennft_venv\lib\site-packages\pip\_internal\operations\install\editable_legacy.py", line 49, in install_editable
+2020-11-04T10:35:46,187     call_subprocess(
+2020-11-04T10:35:46,187   File "d:\opennft_workspace\opennft_venv\lib\site-packages\pip\_internal\utils\subprocess.py", line 242, in call_subprocess
+2020-11-04T10:35:46,187     raise InstallationError(exc_msg)
+2020-11-04T10:35:46,187 pip._internal.exceptions.InstallationError: Command errored out with exit status 1: 'd:\opennft_workspace\opennft_venv\scripts\python.exe' -c 'import sys, setuptools, tokenize; sys.argv[0] = '"'"'D:\\OpenNFT_Workspace\\OpenNFT_Code\\setup.py'"'"'; __file__='"'"'D:\\OpenNFT_Workspace\\OpenNFT_Code\\setup.py'"'"';f=getattr(tokenize, '"'"'open'"'"', open)(__file__);code=f.read().replace('"'"'\r\n'"'"', '"'"'\n'"'"');f.close();exec(compile(code, __file__, '"'"'exec'"'"'))' develop --no-deps '--matlab-root=C:\Program Files\MATLAB\R2020b' Check the logs for full command output.
+2020-11-04T10:35:46,417 Removed build tracker: 'C:\\Users\\Yury\\AppData\\Local\\Temp\\pip-req-tracker-9mi0lcn7'
