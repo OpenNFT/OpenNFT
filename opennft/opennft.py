@@ -1115,8 +1115,6 @@ class OpenNFT(QWidget):
 
     # --------------------------------------------------------------------------
     def basicSetupPlot(self, plotitem, grid=True):
-        #        creating muster info must be optimized. Its not very flexible in its current form
-        #        this works around the x-length issue for the ContTask condition only!
         if not self.P['isRestingState']:
             lastInds = np.zeros((self.musterInfo['condTotal'],))
             for i in range(self.musterInfo['condTotal']):
