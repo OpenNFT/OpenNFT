@@ -6,8 +6,8 @@ Troubleshooting
 Caveats
 -------
 
-Python Installation
-+++++++++++++++++++
+Python Installations
+++++++++++++++++++++
 
 Python installations may require forced installations/upgrades using the following commands
 
@@ -29,7 +29,7 @@ and for ``wheel``:
 Paths in the Configuration files
 ++++++++++++++++++++++++++++++++
 
-All settings and path definitions in the ``*.ini`` files follow conventions of your host operating system, e.g., use '\' as file separator in Windows and '/' in Unix-based systems.
+All settings and path definitions in the ``*.ini`` files follow conventions of your host operating system, e.g., use '\\' as file separator in Windows and '/' in Unix-based systems.
 
 DCM-based neurofeedback is based on DCM10
 +++++++++++++++++++++++++++++++++++++++++
