@@ -1,9 +1,15 @@
 # OpenNFT
-OpenNFT is an integrated software package designed for neurofeedback training. It constitutes the core technical framework for developments in this exciting new field of neuroimaging. OpenNFT is based on best practices of Python and Matlab software and incorporates, but is not limited to, the functionality of the SPM and Psychtoolbox software suits. An integrated Python/Matlab framework is specifically selected to address the needs of neurofeedback developers and users with different background, which allows for flexibility in developments and implementations without compromising for speed and functionality. More specifically, the OpenNFT’s GUI, synchronization module, and multi-processing core are implemented in Python, whilst computational modules for neurofeedback are implemented in Matlab.
+OpenNFT is a GUI-based multi-processing open-source software package for real-time fMRI neurofeedback training and quality assessment. 
+This package is based on best practices of the platform-independent interpreted programming languages Python and Matlab to facilitate 
+concurrent functionality, high modularity, and the ability to extend the software in Python or Matlab depending on end-user preferences. 
+OpenNFT includes, but is not limited to, the functionality of SPM, PsychoPy and Psychtoolbox software suits. The OpenNFT’s GUI, 
+synchronization module and multi-processing core are implemented in Python, whilst computational modules for real-time data processing 
+and neurofeedback are implemented in Matlab. 
 
-Refer to www.OpenNFT.org and to our Neuroimage manuscript ["OpenNFT: An open-source Python/Matlab framework for real-time fMRI neurofeedback training based on activity, connectivity and multivariate pattern analysis"](http://www.sciencedirect.com/science/article/pii/S1053811917305050) for further description.
-Direct link to [OpenNFT manual](https://github.com/OpenNFT/opennft.github.io/blob/master/OpenNFT_Manual_v1.0.pdf), to be updated.
-Note, we are still tuning our pre-release version. Please check the updates regularly.
+Refer to www.OpenNFT.org and to our 
+["Koush et al., Neuroimage 2017. OpenNFT: An open-source Python/Matlab framework for real-time fMRI neurofeedback training based on activity, connectivity and multivariate pattern analysis"](http://www.sciencedirect.com/science/article/pii/S1053811917305050) 
+and ["Koush et al., Data in Brief 2017. Real-time fMRI data for testing OpenNFT functionality"](https://www.sciencedirect.com/science/article/pii/S2352340917303517) manuscripts for further descriptions.
+Please check the Project updates regularly, we are actively developing.
 
 ## [Manual](https://opennft.readthedocs.io/en/docs/install.html#)
 
