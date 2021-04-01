@@ -26,19 +26,26 @@ class RTQAWindow(QtWidgets.QWidget):
 
         # parent data transfer block
         sz = int(parent.P['NrROIs'])
+        self.musterInfo = parent.musterInfo
+
         if parent.P['isRestingState']:
             xrange = (parent.P['NrOfVolumes'] - parent.P['nrSkipVol'])
             self.comboBox.model().item(2).setEnabled(False)
             self.indBas = 0
             self.indCond = 0
         else:
+            lastInds = np.zeros((self.musterInfo['condTotal'],))
+            for i in range(self.musterInfo['condTotal']):
+                lastInds[i] = self.musterInfo['tmpCond' + str(i + 1)][-1][1]
             parent.computeMusterPlotData(config.MUSTER_Y_LIMITS)
-            xrange = max(parent.musterInfo['tmpCond1'][-1][1],
-                         parent.musterInfo['tmpCond2'][-1][1])
+            xrange = max(lastInds)
             self.indBas = np.array(parent.P['inds'][0]) - 1
             self.indCond = np.array(parent.P['inds'][1]) - 1
 
+        xrange = int(xrange)
+
         # main class data initialization block
+        self.prot = parent.P['Prot']
         self._fd = FD(xrange)
         self.names = ['X', 'Y', 'Z', 'Pitch', 'Roll', 'Yaw', 'FD']
         self.iterBas = 0
@@ -76,7 +83,6 @@ class RTQAWindow(QtWidgets.QWidget):
             checkbox.stateChanged.connect(self.roiCheckBoxStateChanged)
             groupBoxLayout.addWidget(checkbox)
         self.roiCheckBoxes = self.roiGroupBox.findChildren(QtWidgets.QCheckBox)
-        self.musterInfo = parent.musterInfo
         self.mcrRadioButton.toggled.connect(self.onRadioButtonStateChanged)
 
         # Plots initialization
@@ -158,12 +164,12 @@ class RTQAWindow(QtWidgets.QWidget):
             p.setYRange(-1, 1, padding=0.0)
 
             names = ['ROI_1 rMean', ' bas', ' cond']
-            color = [config.STAT_PLOT_COLORS[0], config.ROI_BAS_COLORS[0], config.ROI_COND_COLORS[0]]
+            color = [config.ROI_PLOT_COLORS[0], config.ROI_PLOT_COLORS[0], config.ROI_PLOT_COLORS[0]]
             for i in range(sz-1):
                 names.append('ROI_' + str(i + 2) + ' rMean')
                 names.append(' bas')
                 names.append(' cond')
-                color = color + [config.STAT_PLOT_COLORS[i + 1]] + [config.ROI_BAS_COLORS[i + 1]] + [config.ROI_COND_COLORS[i + 1]]
+                color = color + [config.ROI_PLOT_COLORS[i + 1]] + [config.ROI_PLOT_COLORS[i + 1]] + [config.ROI_PLOT_COLORS[i + 1]]
             pens = []
             for i in range(sz*3):
                 pens = pens + [pg.mkPen(color[i], width=1.2)]
@@ -307,35 +313,27 @@ class RTQAWindow(QtWidgets.QWidget):
         ylim = config.MUSTER_Y_LIMITS
 
         if self.comboBox.model().item(2).isEnabled():
-            muster = [
-                plotitem.plot(x=self.musterInfo['xCond1'],
-                              y=self.musterInfo['yCond1'],
-                              fillLevel=ylim[0],
-                              pen=config.MUSTER_PEN_COLORS[0],
-                              brush=config.MUSTER_BRUSH_COLORS[0]),
 
-                plotitem.plot(x=self.musterInfo['xCond2'],
-                              y=self.musterInfo['yCond2'],
-                              fillLevel=ylim[0],
-                              pen=config.MUSTER_PEN_COLORS[1],
-                              brush=config.MUSTER_BRUSH_COLORS[1]),
-            ]
+            muster = []
 
-            if ("xCond3" in self.musterInfo) and (self.musterInfo['xCond3'][0] != -1):
+            for i in range(self.musterInfo['condTotal']):
+
                 muster.append(
-                    plotitem.plot(x=self.musterInfo['xCond3'],
-                                  y=self.musterInfo['yCond3'],
+                    plotitem.plot(x=self.musterInfo['xCond' + str(i + 1)],
+                                  y=self.musterInfo['yCond' + str(i + 1)],
                                   fillLevel=ylim[0],
-                                  pen=config.MUSTER_PEN_COLORS[2],
-                                  brush=config.MUSTER_BRUSH_COLORS[2])
+                                  pen=config.MUSTER_PEN_COLORS[i],
+                                  brush=config.MUSTER_BRUSH_COLORS[i])
                 )
+
+
         else:
             muster = [
                 plotitem.plot(x=[1, self._fd.xmax],
                               y=[-1000, 1000],
                               fillLevel=ylim[0],
-                              pen=config.MUSTER_PEN_COLORS[3],
-                              brush=config.MUSTER_BRUSH_COLORS[3])
+                              pen=config.MUSTER_PEN_COLORS[9],
+                              brush=config.MUSTER_BRUSH_COLORS[9])
             ]
 
         return muster
@@ -413,9 +411,9 @@ class RTQAWindow(QtWidgets.QWidget):
             plotitem = self.meanPlot.getPlotItem()
             data = np.append(self.rMean[self.checkedBoxesInd, 0:n], self.meanBas[self.checkedBoxesInd, 0:n], axis=0)
             data = np.append(data, self.meanCond[self.checkedBoxesInd, 0:n], axis=0)
-            color = np.array(config.STAT_PLOT_COLORS)[self.checkedBoxesInd]
-            color = np.append(color,np.array(config.ROI_BAS_COLORS)[self.checkedBoxesInd])
-            color = np.append(color,np.array(config.ROI_COND_COLORS)[self.checkedBoxesInd])
+            color = np.array(config.ROI_PLOT_COLORS)[self.checkedBoxesInd]
+            color = np.append(color,np.array(config.ROI_PLOT_COLORS)[self.checkedBoxesInd])
+            color = np.append(color,np.array(config.ROI_PLOT_COLORS)[self.checkedBoxesInd])
             style = [QtCore.Qt.SolidLine, QtCore.Qt.DashLine, QtCore.Qt.DashLine]
             self.plotStatValues(self.init, plotitem, data, color, style)
 
@@ -621,7 +619,7 @@ class RTQAWindow(QtWidgets.QWidget):
         for i in range(sz):
             cnt = cnt + np.count_nonzero(self.negSpikes[str(i)])
         names.append('<br>( Diamonds )<br>Negative spikes: ' + str(int(cnt)))
-        pens = [pg.mkPen(color=config.STAT_PLOT_COLORS[9], width=1.2), pg.mkPen(color=config.STAT_PLOT_COLORS[9], width=1.2)]
+        pens = [pg.mkPen(color=config.ROI_PLOT_COLORS[9], width=1.2), pg.mkPen(color=config.ROI_PLOT_COLORS[9], width=1.2)]
         self.makeTextValueLabel(self.spikesLabel, names, pens, lineBreak='<br>')
 
     # --------------------------------------------------------------------------
