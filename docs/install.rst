@@ -177,11 +177,3 @@ To start OpenNFT, run the command in the Terminal:
 .. code-block::
 
     opennft
-
-Shared MATLAB sessions can be started by pressing the Initialize button in the OpenNFT GUI and, alternatively, from a separate Terminal before starting OpenNFT and pressing the Initialize button:
-
-.. code-block::
-
-    run_matlab
-
-If Matlab sessions are started separately, pressing the Initialize button acknowledges them automatically. This mode of shared Matlab sessions allows re-using them after closing and re-starting OpenNFT, which is of benefit for software developments and debugging.

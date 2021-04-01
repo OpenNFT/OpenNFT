@@ -6,15 +6,33 @@ Troubleshooting
 Caveats
 -------
 
-Configuration files (ini files) as operating system dependent
-+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+Python Installation
++++++++++++++++++++
 
-All settings in the ini files, for example and most importantly the path definitions follow the conventions of your host operating system. E.g., use \ as file separator in Windows and / in a Unix-based system such as macOS.
+Python installation may require forced installations/upgrades using the following commands
+
+for ``pip``:
+
+.. code-block::
+    python -m pip install --upgrade pip
+    python -m pip install --upgrade --force-reinstall pip
+
+and for ``wheel``:
+
+.. code-block::
+    python -m pip install --upgrade pip setuptools wheel
+    python -m pip install --upgrade --force-reinstall pip setuptools wheel
+
+
+Paths in the Configuration files
+++++++++++++++++++++++++++++++++
+
+All settings and path definitions in the ``*.ini`` files follow conventions of your host operating system, e.g., use '\' as file separator in Windows and '/' in Unix-based systems.
 
 DCM-based neurofeedback is based on DCM10
 +++++++++++++++++++++++++++++++++++++++++
 
-The currently implemented version of DCM neurofeedback is based on Koush et al., 2013 and 2015 publications where DCM10 as implemented in SPM8 (``spm_dcm_estimate_rt()``, ``spm_nlsi_GN_rt()``) was used. Other versions of DCM use different estimation methods and might fail to reproduce the same results and would require an additional testing.
+The currently implemented version of DCM neurofeedback is based on Koush et al., 2013 and 2015 publications where DCM10 is used (``spm_dcm_estimate_rt()``, ``spm_nlsi_GN_rt()``). Other versions of DCM may use different estimation methods and require additional testings.
 
 SPM preprocessing is optimized for real-time applications
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -29,12 +47,12 @@ Generally, you are advised to carefully check the spatial orientation of all the
 Optimize signal processing settings
 +++++++++++++++++++++++++++++++++++
 
-The configuration of the optimal signal processing settings depends on the experimental design and acquisition parameters. E.g., see Koush et al. 2012 for the setup of a Kalman filter.
+The configuration of the optimal signal processing settings depends on the experimental design and acquisition parameters, see Koush et al. 2012 for the setup of a Kalman filter.
 
 Possible Matlab engine startup failure
 ++++++++++++++++++++++++++++++++++++++
 
-Normally, pressing Initialize button we obtain one Matlab session running in desktop mode (with visible GUI) and two or three running without GUI. If you get a problem with Matlab startup after pressing Initialize, you could use ``run_matlab`` command in terminal.
+If you get a problem with Matlab startup after pressing Initialize, you could use ``run_matlab`` command in terminal and/or contact developers via GitHub.
 
 Runtime errors and troubleshooting
 ----------------------------------
@@ -42,9 +60,9 @@ Runtime errors and troubleshooting
 Real-time exported files not found in watch folder
 ++++++++++++++++++++++++++++++++++++++++++++++++++
 
-Please check that the real-time export is properly set up on your scanner and the host computer that is used for OpenNFT. If files are exported correctly, review if First File Path is set to the correct destination and the MRI Watch Folder is accessible.
+Please check that the real-time data export is properly set up on your scanner and the host computer that is used for OpenNFT. If files are exported correctly, review if the First File Path is set to the correct destination and the MRI Watch Folder is accessible.
 
-- Press 'Review Parameters' and check the status of First File Path. If you pressed the Setup button and the field is empty indicates that you might have used an invalid syntax to specify the First File Name. Valid formats are:
+- Press 'Review Parameters' and check the status of the First File Path. If you pressed the Setup button and the field is empty indicates that you might have used an invalid syntax to specify the First File Name. Valid formats are:
     - Explicit file names that indicate the first file of the real-time export. Examples:
         - `001_000007_000001.dcm`
         - `001_000007_000001` (file extension will be added based on the MRI Data Type)
@@ -52,7 +70,7 @@ Please check that the real-time export is properly set up on your scanner and th
         - `001_{Image Series No:06}_{#:06}.dcm`
         - `{Project Name}/{Subject ID}/{NR Run No:03}_{Image Series No:06}_{#:06}.dcm`
 
-This means users can easily adapt the file locations / file names to their scanner environment
+This means users can easily adapt the file locations and file names to their scanner environment.
 
 - Check the status feedback:
     - `MRI Watch folder` exists indicates that the MRI watch folder was found. `MRI Watch folder does not exist` might indicate an error. However, this is not necessarily always the case, given that the folder will be created during image export in certain real-time setups (e.g., Philips DRIN dumper creates a run folder for each new export, e.g., c:\drin\0001, 0002, etc.)
@@ -77,7 +95,7 @@ Make sure that you have installed MATLAB’s Statistics and Machine Learning too
 Error when loading DICOM files
 ++++++++++++++++++++++++++++++
 
-There is a known bug in the current implementation of MATLAB’s dicominfo.m. We used the following modifications to fix the problem:
+There is a known bug in some implementations of MATLAB’s dicominfo.m. This modification can be used to fix it:
 
 Line #336
 

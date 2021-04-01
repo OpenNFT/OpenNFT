@@ -34,13 +34,13 @@ Create Project by cloning from GitHub repository
 
 .. image:: _static/pycharminstall_1.png
 
-Use the link to the main repository,
+Link to the main repository,
 
 .. code-block::
 
     https://github.com/OpenNFT/OpenNFT.git
 
-or, if you plan to contribute to the project, create the fork repository and use your own link
+or, if you plan to contribute to the project, create the fork repository and use your own link:
 
 .. code-block::
 
@@ -51,11 +51,11 @@ or, if you plan to contribute to the project, create the fork repository and use
 Create Virtual Environment
 ++++++++++++++++++++++++++++
 
-To create virtual environment, go to File -> Settings -> Project Interpreter
+To create the virtual environment, go to File -> Settings -> Project Interpreter
 
 .. image:: _static/pycharminstall_3.png
 
-Set the new virtual environment location and choose the interpreter
+Set the new virtual environment location and choose the interpreter:
 
 .. image:: _static/pycharminstall_4.png
 
@@ -87,9 +87,10 @@ Check Installation
 
 Check the installation: :ref:`check_installation`
 
+.. _run_application_pycharm:
 
-Run Application
----------------
+Run Application from PyCharm
+----------------------------
 
 Create Run Configuration to run OpenNFT:
 
@@ -97,13 +98,19 @@ Create Run Configuration to run OpenNFT:
 
 .. image:: _static/pycharminstall_6.png
 
-Specify Module name as "opennft" (NOT Script path) and Project interpreter according to your Virtual Environment:
+Specify the Module name as "opennft" (NOT Script path) and Project interpreter according to the created Virtual Environment:
 
 .. image:: _static/pycharminstall_7.png
 
-Here, to create the configuration the checkbox 'Store as project file' may be required. :ref:`possible_error`
+To create the configuration, the checkbox ``Store as project file`` may be required: :ref:`possible_error`.
 
-Now you can press the Run button, or run commands in the Terminal: :ref:`run_application`
+Press the ``Run`` button,
 
 .. image:: _static/pycharminstall_8.png
+
+or run the command in the Terminal:
+
+.. code-block::
+
+    opennft
 

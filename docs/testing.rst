@@ -9,7 +9,7 @@ Online OpenNFT mode using simulated fMRI data export
 ----------------------------------------------------
 
 * Open ``testRTexp.py`` and set the source and destination data folders to perform the delayed copying of the fMRI data files. The simulated TR can be specified by the ``sleep()`` function in seconds.
-* Launch OpenNFT, review the parameters and, in particular, uncheck the ``Offline mode`` checkbox before pressing Setup. Start the framework. It is now waiting for the first data file in the specified destination folder, i.e., the ``MRI Watch Folder``.
+* Launch OpenNFT, review the parameters and, in particular, uncheck the ``Offline mode`` checkbox before pressing ``Setup``. Start the framework. It is now waiting for the first data file in the specified destination folder, i.e., the ``MRI Watch Folder``.
 * Launch the testRTexp.py using
 
 .. code-block::
