@@ -14,12 +14,14 @@ Python installation may require forced installations/upgrades using the followin
 for ``pip``:
 
 .. code-block::
+
     python -m pip install --upgrade pip
     python -m pip install --upgrade --force-reinstall pip
 
 and for ``wheel``:
 
 .. code-block::
+
     python -m pip install --upgrade pip setuptools wheel
     python -m pip install --upgrade --force-reinstall pip setuptools wheel
 
