@@ -9,9 +9,8 @@ and neurofeedback are implemented in Matlab.
 Refer to OpenNFT.org and to our 
 ["Koush et al., Neuroimage 2017. OpenNFT: An open-source Python/Matlab framework for real-time fMRI neurofeedback training based on activity, connectivity and multivariate pattern analysis"](http://www.sciencedirect.com/science/article/pii/S1053811917305050) 
 and ["Koush et al., Data in Brief 2017. Real-time fMRI data for testing OpenNFT functionality"](https://www.sciencedirect.com/science/article/pii/S2352340917303517) manuscripts for further descriptions.
-Please check the Project updates regularly, we are actively developing.
 
-## Documentation
+## Installation and Documentation
 https://opennft.readthedocs.io/en/latest
 
 ## Demo Configuration and Protocol files
