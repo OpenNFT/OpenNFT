@@ -2176,7 +2176,10 @@ class OpenNFT(QWidget):
             removeIntervals(tmpCond[0], remCond)
             removeIntervals(tmpCond[1], remCond)
 
+        # To break drawMusterPlot() at given length of conditions,
+        # i.e., to avoid plotting some of them as for DCM feedback type
         condTotal = 2 if self.P['Prot'] == 'InterBlock' else len(tmpCond)
+
         tmpCondStr = ['tmpCond{:d}'.format(x + 1) for x in range(condTotal)]
         nrCondStr = ['nrCond{:d}'.format(x + 1) for x in range(condTotal)]
         self.musterInfo = dict.fromkeys(tmpCondStr + nrCondStr)
