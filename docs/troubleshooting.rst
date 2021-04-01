@@ -9,7 +9,7 @@ Caveats
 Python Installation
 +++++++++++++++++++
 
-Python installation may require forced installations/upgrades using the following commands
+Python installations may require forced installations/upgrades using the following commands
 
 for ``pip``:
 
