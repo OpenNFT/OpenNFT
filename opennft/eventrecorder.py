@@ -4,7 +4,7 @@
 Event recorder class for performance estimation
 
 __________________________________________________________________________
-Copyright (C) 2016-2019 OpenNFT.org
+Copyright (C) 2016-2021 OpenNFT.org
 
 Written by Artem Nikonorov, Yury Koush
 

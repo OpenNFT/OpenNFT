@@ -37,7 +37,7 @@ function [outData, tmp_posMin, tmp_posMax] = ...
 % Improving visual perception through neurofeedback. JofNeurosci,
 % 32(49), 17830-17841. 
 %__________________________________________________________________________
-% Copyright (C) 2016-2019 OpenNFT.org
+% Copyright (C) 2016-2021 OpenNFT.org
 %
 % Written by Yury Koush
 
