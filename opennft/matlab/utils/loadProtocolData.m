@@ -22,16 +22,47 @@ nrSkipVol = P.nrSkipVol;
    
 prt = loadjson(jsonFile);
 
+% -- remove dcmdef field -- %
+if isDCM
+    prt = rmfield(prt, 'dcmdef');
+end
+
 if ~P.isRestingState  
     
-    P.CondName = prt.RegulationName;
-
+    lCond = length(prt.Cond);
+    protFieldNames = fieldnames(prt);
+    protFieldNames = protFieldNames(1:lCond);
+    protNames = struct2cell(prt);
+    protNames = protNames(1:lCond);
+    
     P.vectEncCond = ones(1,NrOfVolumes-nrSkipVol);
+    tempP.vectEncCond = ones(1,NrOfVolumes-nrSkipVol);
+    P.basBlockLength = prt.Cond{1}.OnOffsets(1,2);
+    
+    tempP.protNames = [];
+    for x=1:lCond
+        tempP.protNames.(protFieldNames{x}) = protNames{x};
+        for k = 1:length(prt.Cond{x}.OnOffsets(:,1))
+            unitBlock = prt.Cond{x}.OnOffsets(k,1) : prt.Cond{x}.OnOffsets(k,2); 
+            tempP.vectEncCond(unitBlock) = x;
+            tempP.(prt.Cond{x}.ConditionName)(k,:) = {unitBlock};
+        end
+    end
+        
+    P.CondName = prt.RegulationName;
     P.ProtNF = {};
     P.ProtTask = {};
-
-    P.basBlockLength = prt.Cond{1}.OnOffsets(1,2);
-    lCond = length(prt.Cond);
+    
+    P.CondNames = {P.CondName};
+    if isPSC
+        if strcmp(P.Prot, 'ContTask')
+            
+        elseif strcmp(P.Prot, 'Inter')
+            
+        end
+    elseif isDCM
+        
+    end
 
     %% PSC
     if strcmp(P.Prot, 'Cont') && isPSC
@@ -115,15 +146,15 @@ if ~P.isRestingState
             end
         end
     end
-
-    % -- remove dcmdef field -- %
-    if isDCM
-        prt = rmfield(prt, 'dcmdef');
-    end
     
     %% Implicit baseline
     BasInd = find(P.vectEncCond == 1);
     P.ProtBAS = accumarray( cumsum([1, diff(BasInd) ~= 1]).', BasInd, [], @(x){x'} )';
+    if ~isempty(find(contains(fieldnames(prt),'BaselineName')))
+        tempP.(prt.Cond{1}.ConditionName) = accumarray( cumsum([1, diff(BasInd) ~= 1]).', BasInd, [], @(x){x'} );
+    else
+        tempP.BAS = accumarray( cumsum([1, diff(BasInd) ~= 1]).', BasInd, [], @(x){x'} );
+    end
 end
 
 %% Contrast
