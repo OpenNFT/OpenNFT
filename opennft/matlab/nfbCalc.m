@@ -29,6 +29,8 @@ indVolNorm = mainLoopData.indVolNorm;
 condition = mainLoopData.condition;
 
 [isPSC, isDCM, isSVM, isIGLM] = getFlagsType(P);
+ProtBAS = 'BAS';
+ProtNF = P.protNames.RegulationName;
 
 %% Continuous PSC NF
 if isPSC && (strcmp(P.Prot, 'Cont') || strcmp(P.Prot, 'ContTask'))
@@ -39,7 +41,7 @@ if isPSC && (strcmp(P.Prot, 'Cont') || strcmp(P.Prot, 'ContTask'))
     if condition == 2
 
         % count NF regulation blocks
-        k = cellfun(@(x) x(1) == indVolNorm, P.ProtNF);
+        k = cellfun(@(x) x(1) == indVolNorm, P.(ProtNF));
         if any(k)
             blockNF = find(k);
             firstNF = indVolNorm;
@@ -49,10 +51,10 @@ if isPSC && (strcmp(P.Prot, 'Cont') || strcmp(P.Prot, 'ContTask'))
         % or any other fashion
         i_blockBAS = [];
         if blockNF<2
-            i_blockBAS = P.ProtBAS{blockNF}(end-6:end);
+            i_blockBAS = P.(ProtBAS){blockNF}(end-6:end);
         else            
             for iBas = 1:blockNF
-                i_blockBAS = [i_blockBAS P.ProtBAS{iBas}(3:end)]; 
+                i_blockBAS = [i_blockBAS P.(ProtBAS){iBas}(3:end)]; 
                 % ignore 2 scans for HRF shift, e.g. if TR = 2sec
             end
         end
@@ -112,7 +114,7 @@ if isPSC && strcmp(P.Prot, 'Inter')
     % NF estimation condition
     if condition == 2             
         % count NF regulation blocks
-        k = cellfun(@(x) x(end) == indVolNorm, P.ProtNF);
+        k = cellfun(@(x) x(end) == indVolNorm, P(ProtNF));
         if any(k)
             blockNF = find(k);
             firstNF = indVolNorm;
@@ -124,12 +126,12 @@ if isPSC && strcmp(P.Prot, 'Inter')
             % expected when assigning volumes for averaging, take HRF delay
             % into account
             if blockNF<2
-                i_blockNF = P.ProtNF{blockNF}(end-6:end); 
-                i_blockBAS = P.ProtBAS{blockNF}(end-6:end);
+                i_blockNF = P.(ProtNF){blockNF}(end-6:end); 
+                i_blockBAS = P.(ProtBAS){blockNF}(end-6:end);
             else
-                i_blockNF = P.ProtNF{blockNF}(end-6:end);
-                i_blockBAS = [P.ProtBAS{blockNF}(end-5:end) ...
-                              P.ProtBAS{blockNF}(end)+1];
+                i_blockNF = P.(ProtNF){blockNF}(end-6:end);
+                i_blockBAS = [P.(ProtBAS){blockNF}(end-5:end) ...
+                              P.(ProtBAS){blockNF}(end)+1];
             end
 
             for indRoi = 1:P.NrROIs
@@ -269,7 +271,7 @@ if isSVM
 
     if condition == 2
         % count NF regulation blocks
-        k = cellfun(@(x) x(end) == indVolNorm, P.ProtNF);
+        k = cellfun(@(x) x(end) == indVolNorm, P(ProtNF));
         if any(k)
             blockNF = find(k);
             firstNF = indVolNorm;

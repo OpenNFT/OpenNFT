@@ -1231,6 +1231,7 @@ class OpenNFT(QWidget):
             self.orthViewInitialize = True
 
             # for multiply setup
+            # TODO: Is this flag necessary?
             if not self.resetDone:
                 self.reset()
             # -self.chooseSetFile(self.leSetFile.text())
@@ -2126,7 +2127,8 @@ class OpenNFT(QWidget):
             nrCond.append(tmpCond[-1].shape[0])
 
         if not ('BaselineName' in self.P['Protocol']):  # implicit baseline
-            tmpCond.insert(0, np.array([np.array(t).astype(np.int32)[0, [0, -1]] for t in self.P['ProtBAS']]))
+            # tmpCond.insert(0, np.array([np.array(t).astype(np.int32)[0, [0, -1]] for t in self.P['ProtBAS']]))
+            tmpCond.insert(0, np.array([np.array(t).astype(np.int32)[0, [0, -1]] for t in self.P['BAS']]))
             nrCond.insert(0, tmpCond[0].shape[0])
 
         c = 1
