@@ -26,11 +26,7 @@ class RTQAWindow(QtWidgets.QWidget):
 
         # parent data transfer block
         sz = int(parent.P['NrROIs'])
-
         self.musterInfo = parent.musterInfo
-        lastInds = np.zeros((self.musterInfo['condTotal'],))
-        for i in range(self.musterInfo['condTotal']):
-            lastInds[i] = self.musterInfo['tmpCond' + str(i + 1)][-1][1]
 
         if parent.P['isRestingState']:
             xrange = (parent.P['NrOfVolumes'] - parent.P['nrSkipVol'])
@@ -38,6 +34,9 @@ class RTQAWindow(QtWidgets.QWidget):
             self.indBas = 0
             self.indCond = 0
         else:
+            lastInds = np.zeros((self.musterInfo['condTotal'],))
+            for i in range(self.musterInfo['condTotal']):
+                lastInds[i] = self.musterInfo['tmpCond' + str(i + 1)][-1][1]
             parent.computeMusterPlotData(config.MUSTER_Y_LIMITS)
             xrange = max(lastInds)
             self.indBas = np.array(parent.P['inds'][0]) - 1

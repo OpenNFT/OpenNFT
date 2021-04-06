@@ -121,7 +121,7 @@ class OpenNFT(QWidget):
         self.udpSender.sending_time_stamp = True
 
         self.udpCondNames = self.P['CondNames']
-        if not ('BaselineName' in self.P['Protocol']): self.udpCondNames.insert(0, 'BAS')
+        if not ('BAS' in self.P['CondIndexNames']): self.udpCondNames.insert(0, 'BAS')
 
     # --------------------------------------------------------------------------
     def finalizeUdpSender(self):
@@ -1115,13 +1115,10 @@ class OpenNFT(QWidget):
 
     # --------------------------------------------------------------------------
     def basicSetupPlot(self, plotitem, grid=True):
-        #        creating muster info must be optimized. Its not very flexible in its current form
-        #        this works around the x-length issue for the ContTask condition only!
-        lastInds = np.zeros((self.musterInfo['condTotal'],))
-        for i in range(self.musterInfo['condTotal']):
-            lastInds[i] = self.musterInfo['tmpCond'+str(i+1)][-1][1]
-
         if not self.P['isRestingState']:
+            lastInds = np.zeros((self.musterInfo['condTotal'],))
+            for i in range(self.musterInfo['condTotal']):
+                lastInds[i] = self.musterInfo['tmpCond' + str(i + 1)][-1][1]
             xmax = max(lastInds)
         else:
             xmax = (self.P['NrOfVolumes'] - self.P['nrSkipVol'])
@@ -1234,6 +1231,7 @@ class OpenNFT(QWidget):
             self.orthViewInitialize = True
 
             # for multiply setup
+            # TODO: Is this flag necessary?
             if not self.resetDone:
                 self.reset()
             # -self.chooseSetFile(self.leSetFile.text())
@@ -2124,12 +2122,13 @@ class OpenNFT(QWidget):
         # TODO: More general way to use any protocol
         tmpCond = list()
         nrCond = list()
-        for c in self.P['Protocol']['Cond']:
+        for c in self.P['Protocol']['ConditionIndex']:
             tmpCond.append(np.array(c['OnOffsets']).astype(np.int32))
             nrCond.append(tmpCond[-1].shape[0])
 
-        if not ('BaselineName' in self.P['Protocol']):  # implicit baseline
-            tmpCond.insert(0, np.array([np.array(t).astype(np.int32)[0, [0, -1]] for t in self.P['ProtBAS']]))
+        if not ('BAS' in self.P['CondIndexNames']):  # implicit baseline
+            # self.P['ProtCond'][0] - 0 is for Baseline indexes
+            tmpCond.insert(0, np.array([np.array(t).astype(np.int32)[0, [0, -1]] for t in self.P['ProtCond'][0]]))
             nrCond.insert(0, tmpCond[0].shape[0])
 
         c = 1
@@ -2177,7 +2176,10 @@ class OpenNFT(QWidget):
             removeIntervals(tmpCond[0], remCond)
             removeIntervals(tmpCond[1], remCond)
 
+        # To break drawMusterPlot() at given length of conditions,
+        # i.e., to avoid plotting some of them as for DCM feedback type
         condTotal = 2 if self.P['Prot'] == 'InterBlock' else len(tmpCond)
+
         tmpCondStr = ['tmpCond{:d}'.format(x + 1) for x in range(condTotal)]
         nrCondStr = ['nrCond{:d}'.format(x + 1) for x in range(condTotal)]
         self.musterInfo = dict.fromkeys(tmpCondStr + nrCondStr)
@@ -2288,8 +2290,7 @@ class OpenNFT(QWidget):
             muster = []
 
             for i in range(self.musterInfo['condTotal']):
-                # if self.P['Prot'] == 'InterBlock' and i == 2:
-                #     break
+
                 muster.append(
                     plotitem.plot(x=self.musterInfo['xCond' + str(i + 1)],
                                   y=self.musterInfo['yCond' + str(i + 1)],

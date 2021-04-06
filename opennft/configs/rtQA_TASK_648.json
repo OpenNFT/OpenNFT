@@ -1,7 +1,6 @@
 {
-	"RegulationName": "TASK",
 	"Contrast": "+1*TASK",
-	"Cond": [
+	"ConditionIndex": [
 		{
 			"ConditionName": "TASK",
 			"OnOffsets": [

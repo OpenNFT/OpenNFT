@@ -22,134 +22,63 @@ nrSkipVol = P.nrSkipVol;
    
 prt = loadjson(jsonFile);
 
-if ~P.isRestingState  
+% -- remove dcmdef field -- %
+if isDCM
+    prt = rmfield(prt, 'dcmdef');
+end
+
+if ~P.isRestingState
+    
+    lCond = length(prt.ConditionIndex);
+    for x=1:lCond
+        protNames{x} = prt.ConditionIndex{x}.ConditionName;
+    end
 
     P.vectEncCond = ones(1,NrOfVolumes-nrSkipVol);
-    P.ProtNF = {};
-    P.ProtTask = {};
-    P.ProtTask1 = {};
-    P.ProtTask2 = {};
-    P.ProtTask3 = {};
-    P.ProtREST = {};
 
-    P.basBlockLength = prt.Cond{1}.OnOffsets(1,2);
-    lCond = length(prt.Cond);
+    % check if baseline field already exists in protocol
+    % and protocol reading presets
+    % 1 is for Baseline
+    if any(contains(protNames,'BAS'))
+        P.basBlockLength = prt.ConditionIndex{ 1 }.OnOffsets(1,2);
+        inc = 0;
+    else
+        inc = 1;
+    end
 
-    %% PSC
-    if strcmp(P.Prot, 'Cont') && isPSC
-        P.CondName = prt.RegulationName;
-        P.CondNames = {P.CondName};
-        for x = 1:lCond
-            for k = 1:length(prt.Cond{x}.OnOffsets(:,1)) 
-                unitBlock = prt.Cond{x}.OnOffsets(k,1) : prt.Cond{x}.OnOffsets(k,2); 
-                if strcmpi(prt.Cond{x}.ConditionName, P.CondName) 
-                    P.vectEncCond(unitBlock) = 2;
-                    P.ProtNF(k,:) = {unitBlock};                
-                end
-            end
+    P.CondIndexNames = protNames;
+    for x=1:lCond
+        P.ProtCond{x} = {};
+        for k = 1:length(prt.ConditionIndex{x}.OnOffsets(:,1))
+            unitBlock = prt.ConditionIndex{x}.OnOffsets(k,1) : prt.ConditionIndex{x}.OnOffsets(k,2);
+            P.vectEncCond(unitBlock) = x+inc;
+            P.ProtCond{x}(k,:) = {unitBlock};
         end
     end
 
-    if strcmp(P.Prot, 'ContTask') && isPSC
-        P.CondName = prt.RegulationName;
-        P.TaskName = prt.TaskName;
-        P.TaskFirstVol = zeros(1,P.NrOfVolumes+P.nrSkipVol);
+    P.CondNames = P.CondIndexNames;
 
-        P.TaskFirstVol(1,(prt.Cond{end}.OnOffsets(:,1)+double(P.nrSkipVol))')=1;
-        P.CondNames = {P.CondName, P.TaskName};
-        for x = 1:lCond
-            for k = 1:length(prt.Cond{x}.OnOffsets(:,1)) 
-                unitBlock = prt.Cond{x}.OnOffsets(k,1) : prt.Cond{x}.OnOffsets(k,2); 
-                if strcmpi(prt.Cond{x}.ConditionName, 'NFBREG') 
-                    P.vectEncCond(unitBlock) = 2;
-                    P.ProtNF(k,:) = {unitBlock};  
-                elseif strcmpi(prt.Cond{x}.ConditionName, 'TASK') 
-                    P.vectEncCond(unitBlock) = 3;
-                    P.ProtTask(k,:) = {unitBlock};  
-                end
-            end
-        end 
-    end
-
-    if strcmp(P.Prot, 'Inter') && isPSC
-        P.DispName = prt.nfbDisplayName;
-        P.CondName = prt.RegulationName;
-        P.Task2Name = prt.Task2Name;
-        P.Task3Name = prt.Task3Name;
-        P.RestName = prt.RestName;
-        P.CondNames = {P.CondName, P.Task2Name, P.Task3Name, P.DispName}; 
-        for x = 1:lCond
-            for k = 1:length(prt.Cond{x}.OnOffsets(:,1))
-                unitBlock = prt.Cond{x}.OnOffsets(k,1) : prt.Cond{x}.OnOffsets(k,2);
-                if strcmpi(prt.Cond{x}.ConditionName, P.CondName)
-                    P.ProtTask1(k,:) = {unitBlock};
-                    P.vectEncCond(unitBlock) = 2;
-                elseif strcmpi(prt.Cond{x}.ConditionName, P.Task2Name)
-                    P.ProtTask2(k,:) = {unitBlock};
-                    P.vectEncCond(unitBlock) = 3;  
-                elseif strcmpi(prt.Cond{x}.ConditionName, P.Task3Name)
-                    P.ProtTask3(k,:) = {unitBlock};
-                    P.vectEncCond(unitBlock) = 4;   
-                elseif strcmpi(prt.Cond{x}.ConditionName, P.RestName)
-                    P.ProtREST(k,:) = {unitBlock};
-                    P.vectEncCond(unitBlock) = 5;                     
-                elseif strcmpi(prt.Cond{x}.ConditionName, P.DispName)
-                    P.ProtNF(k,:) = {unitBlock};
-                    P.vectEncCond(unitBlock) = 6;
-                end
-            end
-        end
-    end
-
-    %% DCM
-    if strcmp(P.Prot, 'InterBlock') && isDCM
-        P.CondName = prt.RegulationName;
-        P.DispName = prt.nfbDisplayName;
-        P.RestName = prt.RestName;
-        P.CondNames = {prt.BaselineName, P.CondName}; 
-        for x = 1:lCond
-            for k = 1:length(prt.Cond{x}.OnOffsets(:,1))
-                unitBlock = prt.Cond{x}.OnOffsets(k,1) : prt.Cond{x}.OnOffsets(k,2);
-                if strcmpi(prt.Cond{x}.ConditionName, P.CondName)
-                    P.vectEncCond(unitBlock) = 2;
-                elseif strcmpi(prt.Cond{x}.ConditionName, P.RestName)
-                    P.vectEncCond(unitBlock) = 3;
-                elseif strcmpi(prt.Cond{x}.ConditionName, P.DispName)
-                    P.vectEncCond(unitBlock) = 4;
-                end
-            end
-        end
-    end
-
-    %% SVM
-    if strcmp(P.Prot, 'Cont') && isSVM
-        P.CondName = prt.RegulationName;
-        P.CondNames = {P.CondName};
-        for x = 1:lCond
-            for k = 1:length(prt.Cond{x}.OnOffsets(:,1)) 
-                unitBlock = prt.Cond{x}.OnOffsets(k,1) : prt.Cond{x}.OnOffsets(k,2); 
-                if strcmpi(prt.Cond{x}.ConditionName, P.CondName) 
-                    P.vectEncCond(unitBlock) = 2;
-                    P.ProtNF(k,:) = {unitBlock};                
-                end
-            end
-        end
-    end
-
-    % -- remove dcmdef field -- %
     if isDCM
-        prt = rmfield(prt, 'dcmdef');
+        % Baseline index == 1; Regulation block index == 2
+        P.CondNames = [P.CondIndexNames(1), P.CondIndexNames(2)];
+
     end
     
     %% Implicit baseline
     BasInd = find(P.vectEncCond == 1);
-    P.ProtBAS = accumarray( cumsum([1, diff(BasInd) ~= 1]).', BasInd, [], @(x){x'} )';
+    ProtCondBas = accumarray( cumsum([1, diff(BasInd) ~= 1]).', BasInd, [], @(x){x'} );
+    if ~any(contains(P.CondIndexNames,'BAS'))
+        P.ProtCond = [ {ProtCondBas} P.ProtCond ];
+        P.CondIndexNames = [ {''} P.CondIndexNames ];
+        P.basBlockLength = ProtCondBas{1}(end);
+    end
+
 end
 
 %% Contrast
 if isfield(prt,'Contrast')
     if ~P.isRestingState
-        condNames = cellfun(@(x) x.ConditionName, prt.Cond, 'UniformOutput',false);
+        condNames = cellfun(@(x) x.ConditionName, prt.ConditionIndex, 'UniformOutput',false);
         con = textscan(prt.Contrast,'%d*%s','Delimiter',';');
 %         if length(condNames)>length(con{1})
 %             condNames = condNames(1,1:end-length(con{1}));
