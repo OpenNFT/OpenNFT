@@ -120,14 +120,16 @@ if isPSC && strcmp(P.Prot, 'Inter')
     % count blocks
     if condition == 3 || condition == 4
         % Task2 block
-        iTask2 = cellfun(@(x) x(end) == indVolNorm, P.ProtTask2);
+        % Task2 block index == 3
+        iTask2 = cellfun(@(x) x(end) == indVolNorm, P.ProtCond{ 3 });
         if any(iTask2)
             blockTask2 = find(iTask2);
             lastTask2 = indVolNorm;
             mainLoopData.flagEndPSC = 1;
         end
         % Task3 block
-        iTask3 = cellfun(@(x) x(end) == indVolNorm, P.ProtTask3);
+        % Task3 block index == 4
+        iTask3 = cellfun(@(x) x(end) == indVolNorm, P.ProtCond{ 4 });
         if any(iTask3)
             blockTask3 = find(iTask3);
             lastTask3 = indVolNorm;
@@ -138,15 +140,16 @@ if isPSC && strcmp(P.Prot, 'Inter')
     % NF estimation condition
     if condition == 5
         % count Rest blocks
-        k = cellfun(@(x) x(end) == indVolNorm, P.ProtREST);
+        % Rest block index == 5
+        k = cellfun(@(x) x(end) == indVolNorm, P.ProtCond{ 5 });
         if any(k)
             blockNF = find(k);
             firstNF = indVolNorm;
             mainLoopData.flagEndPSC = 1;
-            if (P.ProtTask1{blockNF}(end)+4) == (P.ProtTask2{blockTask2}(1))
+            if (P.ProtCond{ 2 }{blockNF}(end)+4) == ( P.ProtCond{ 3 }{blockTask2}(1))
                 isTask2 = 1;
                 isTask3 = 0;
-            elseif (P.ProtTask1{blockNF}(end)+4) == (P.ProtTask3{blockTask3}(1))
+            elseif (P.ProtCond{ 2 }{blockNF}(end)+4) == ( P.ProtCond{ 4 }{blockTask3}(1))
                 isTask2 = 0;
                 isTask3 = 1;
             end
@@ -157,9 +160,9 @@ if isPSC && strcmp(P.Prot, 'Inter')
         % simplicity
         isMixedBaseline = 1;
         if ~isMixedBaseline
-            indxAllBAS = 1:1:length(P.ProtBAS);
+            indxAllBAS = 1:1:length(P.ProtCond{ 1 }); % Baseline block index == 1
         else
-            indxAllBAS = 1:2:length(P.ProtBAS);
+            indxAllBAS = 1:2:length(P.ProtCond{ 1 }); % Baseline block index == 1
         end
 
         isTakePreviousBlockBAS = 0;
@@ -168,10 +171,10 @@ if isPSC && strcmp(P.Prot, 'Inter')
         if ~isTakePreviousBlockBAS
             i_blockBAS = [];
             if blockNF==1
-                i_blockBAS = P.ProtBAS{indxAllBAS(blockNF)}(3:end);
+                i_blockBAS = P.ProtCond{ 1 }{indxAllBAS(blockNF)}(3:end);  % Baseline block index == 1
             elseif blockNF>1
                 for iBas = 1:blockNF
-                    i_blockBAS = [i_blockBAS P.ProtBAS{indxAllBAS(iBas)}(4:end)];
+                    i_blockBAS = [i_blockBAS P.ProtCond{ 1 }{indxAllBAS(iBas)}(4:end)];  % Baseline block index == 1
                     % ignore 2 scans for HRF shift, e.g. if TR = 2sec
                 end
             end
@@ -183,27 +186,28 @@ if isPSC && strcmp(P.Prot, 'Inter')
             % into account
             if blockNF==1
                 if isTask2
-                    i_blockNF = [P.ProtTask1{blockNF}(4:end) P.ProtTask2{blockTask2}(4:end)];
+                    i_blockNF = [P.ProtCond{ 2 }{blockNF}(4:end) P.ProtCond{ 3 }{blockTask2}(4:end)]; % Task1 block index == 3; Task2 block index == 3; Task3 block index == 4
                 elseif isTask3
-                    i_blockNF = [P.ProtTask1{blockNF}(4:end) P.ProtTask3{blockTask3}(4:end)];
+                    i_blockNF = [P.ProtCond{ 2 }{blockNF}(4:end) P.ProtCond{ 4 }{blockTask3}(4:end)];
                 end
                 if isTakePreviousBlockBAS
                     i_blockBAS = [];
-                    i_blockBAS = P.ProtBAS{indxAllBAS(blockNF)}(3:end);
+                    i_blockBAS = P.ProtCond{ 1 }{indxAllBAS(blockNF)}(3:end);
                 end
             elseif blockNF>1
                 if isTask2
-                    i_blockNF = [P.ProtTask1{blockNF}(4:end) P.ProtTask2{blockTask2}(4:end)];
+                    i_blockNF = [P.ProtCond{ 2 }{blockNF}(4:end) P.ProtCond{ 3 }{blockTask2}(4:end)];
                 elseif isTask3
-                    i_blockNF = [P.ProtTask1{blockNF}(4:end) P.ProtTask3{blockTask3}(4:end)];
+                    i_blockNF = [P.ProtCond{ 2 }{blockNF}(4:end) P.ProtCond{ 4 }{blockTask3}(4:end)];
                 end
 
                 if isTakePreviousBlockBAS
                     % take just previous block and an extra point from the
                     % next condition given hrf delay
                     i_blockBAS = [];
-                    i_blockBAS = [P.ProtBAS{indxAllBAS(blockNF)}(4:end) ...
-                                  P.ProtBAS{indxAllBAS(blockNF)}(end)+1];
+                    i_blockBAS = [];
+                    i_blockBAS = [P.ProtCond{ 1 }{indxAllBAS(blockNF)}(4:end) ...
+                                  P.ProtCond{ 1 }{indxAllBAS(blockNF)}(end)+1];
                 end
             end
 

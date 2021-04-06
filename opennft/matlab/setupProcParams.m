@@ -223,7 +223,8 @@ if ~P.isRestingState
         tmpSpmDesign = SPM.xX.X(1:P.NrOfVolumes-P.nrSkipVol,contains(SPM.xX.name, P.CondIndexNames( 2 ))); % Index for Regulation block == 2
     end
     if isPSC && strcmp(P.Prot, 'Inter')
-        tmpSpmDesign = SPM.xX.X(1:P.NrOfVolumes-P.nrSkipVol,contains(SPM.xX.name, [string(P.CondName),string(P.Task2Name),string(P.Task3Name),P.DispName]));
+        % Index for Regulation block == 2; READW block == 3; READNW block == 2; Display block == 2;
+        tmpSpmDesign = SPM.xX.X(1:P.NrOfVolumes-P.nrSkipVol,contains(SPM.xX.name, [string(P.CondIndexNames( 2 )),string(P.CondIndexNames( 3 )),string(P.CondIndexNames( 4 )),P.CondIndexNames( 6 )]));
     end
 
     % DCM
