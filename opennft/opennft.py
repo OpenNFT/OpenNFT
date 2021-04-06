@@ -121,7 +121,7 @@ class OpenNFT(QWidget):
         self.udpSender.sending_time_stamp = True
 
         self.udpCondNames = self.P['CondNames']
-        if not ('BaselineName' in self.P['Protocol']): self.udpCondNames.insert(0, 'BAS')
+        if not ('BAS' in self.P['CondIndexNames']): self.udpCondNames.insert(0, 'BAS')
 
     # --------------------------------------------------------------------------
     def finalizeUdpSender(self):
@@ -2122,13 +2122,13 @@ class OpenNFT(QWidget):
         # TODO: More general way to use any protocol
         tmpCond = list()
         nrCond = list()
-        for c in self.P['Protocol']['Cond']:
+        for c in self.P['Protocol']['ConditionIndex']:
             tmpCond.append(np.array(c['OnOffsets']).astype(np.int32))
             nrCond.append(tmpCond[-1].shape[0])
 
-        if not ('BaselineName' in self.P['Protocol']):  # implicit baseline
-            # tmpCond.insert(0, np.array([np.array(t).astype(np.int32)[0, [0, -1]] for t in self.P['ProtBAS']]))
-            tmpCond.insert(0, np.array([np.array(t).astype(np.int32)[0, [0, -1]] for t in self.P['BAS']]))
+        if not ('BAS' in self.P['CondIndexNames']):  # implicit baseline
+            # self.P['ProtCond'][0] - 0 is for Baseline indexes
+            tmpCond.insert(0, np.array([np.array(t).astype(np.int32)[0, [0, -1]] for t in self.P['ProtCond'][0]]))
             nrCond.insert(0, tmpCond[0].shape[0])
 
         c = 1

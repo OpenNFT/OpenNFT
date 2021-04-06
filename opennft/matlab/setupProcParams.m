@@ -199,6 +199,7 @@ if isfield(P,'Contrast')
     mainLoopData.tContr.neg = -P.Contrast; 
 end
 
+
 if ~P.isRestingState
     
     if ~P.iglmAR1
@@ -216,7 +217,7 @@ if ~P.isRestingState
 
     % PSC
     if isPSC && (strcmp(P.Prot, 'Cont') || strcmp(P.Prot, 'ContTask') || strcmp(P.Prot, 'Inter'))
-        tmpSpmDesign = SPM.xX.X(1:P.NrOfVolumes-P.nrSkipVol,contains(SPM.xX.name, P.protNames.RegulationName));
+        tmpSpmDesign = SPM.xX.X(1:P.NrOfVolumes-P.nrSkipVol,contains(SPM.xX.name, P.CondIndexNames( 2 ))); % Index for Regulation block == 2
     end
 
     % DCM
@@ -229,10 +230,10 @@ if ~P.isRestingState
 
     % SVM
     if isSVM && strcmp(P.Prot, 'Cont')
-        mainLoopData.basFct = mainLoopData.basFct(:,find(contains(SPM.xX.name, P.protNames.RegulationName)));
+        mainLoopData.basFct = mainLoopData.basFct(:,find(contains(SPM.xX.name, P.CondIndexNames( 2 )))); % Index for Regulation block == 2
         mainLoopData.nrBasFct = 1;
         % this contrast does not count constant term
-        tmpSpmDesign = SPM.xX.X(1:P.NrOfVolumes-P.nrSkipVol,contains(SPM.xX.name, P.protNames.RegulationName));
+        tmpSpmDesign = SPM.xX.X(1:P.NrOfVolumes-P.nrSkipVol,contains(SPM.xX.name, P.CondIndexNames( 2 ))); % Index for Regulation block == 2
     end
         
     %% High-pass filter for iGLM given by SPM
@@ -324,8 +325,8 @@ if P.isRTQA
         rtQA_matlab.cnrData.condData.iteration = 1;
 
         % indexes of baseline and condition for CNR calculation
-        tmpindexesCond = find(SPM.xX.X(:,contains(SPM.xX.name, P.protNames.RegulationName))>0.6);
-        tmpindexesBas = find(SPM.xX.X(:,contains(SPM.xX.name, P.protNames.RegulationName))<0.1);
+        tmpindexesCond = find(SPM.xX.X(:,contains(SPM.xX.name, P.CondIndexNames( 2 )))>0.6); % Index for Regulation block == 2
+        tmpindexesBas = find(SPM.xX.X(:,contains(SPM.xX.name, P.CondIndexNames( 2 )))<0.1); % Index for Regulation block == 2
         if isDCM
             tmpindexesBas = tmpindexesBas(1:end-1)+1;
             tmpindexesCond = tmpindexesCond-1;

@@ -1,8 +1,6 @@
 {
-"RegulationName": "NFBREG",
-"TaskName": "TASK",
 "Contrast": "+1*NFBREG;-1*TASK",
-"Cond": [
+"ConditionIndex": [
 	{
 
 		"ConditionName": "NFBREG",
