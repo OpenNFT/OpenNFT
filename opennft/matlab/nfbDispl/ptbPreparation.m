@@ -15,7 +15,7 @@ function ptbPreparation(screenId, workFolder, protName)
 % End-user is adviced to configure the use of PTB on their own workstation
 % and justify more advanced configuration for PTB.
 %__________________________________________________________________________
-% Copyright (C) 2016-2019 OpenNFT.org
+% Copyright (C) 2016-2021 OpenNFT.org
 %
 % Written by Yury Koush
 

@@ -42,7 +42,7 @@ function [tv, ts] = analyzeEventRecords(eventrecordsFileName, paramsFileName, st
 %
 %   Note that for simplicity, the time events t6 - t12 are named differently in the manuscript 
 %__________________________________________________________________________
-% Copyright (C) 2016-2020 OpenNFT.org
+% Copyright (C) 2016-2021 OpenNFT.org
 %
 % Written by Yury Koush, Artem Nikonorov
 

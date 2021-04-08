@@ -16,7 +16,7 @@ function setupProcParams()
 % An end-user needs to set and justify their own parameter
 % files and contrasts.
 %__________________________________________________________________________
-% Copyright (C) 2016-2019 OpenNFT.org
+% Copyright (C) 2016-2021 OpenNFT.org
 %
 % Written by Yury Koush
 

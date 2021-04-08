@@ -12,7 +12,7 @@ function vol3D = img2Dvol3D(img2D, slNrImg2DdimX, slNrImg2DdimY, dim3D)
 % output: 
 % vol3D         - 3D image volume
 %__________________________________________________________________________
-% Copyright (C) 2016-2019 OpenNFT.org
+% Copyright (C) 2016-2021 OpenNFT.org
 %
 % Written by Yury Koush
 

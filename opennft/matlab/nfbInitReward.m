@@ -6,7 +6,7 @@ function nfbInitReward()
 % output:
 % Output is assigned to workspace variables.
 %__________________________________________________________________________
-% Copyright (C) 2016-2019 OpenNFT.org
+% Copyright (C) 2016-2021 OpenNFT.org
 %
 % Written by Yury Koush, Artem Nikonorov
 

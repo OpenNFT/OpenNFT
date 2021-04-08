@@ -99,7 +99,7 @@ function [P, A0, x1, x2, x3, wt, deg, b, nrIter] = ...
 %__________________________________________________________________________
 
 % Adopted for OpenNFT by Yury Koush and John Ashburner. 
-% Copyright (C) 2016-2019 OpenNFT.org
+% Copyright (C) 2016-2021 OpenNFT.org
 
 %
 % Real-time computational modifications. 

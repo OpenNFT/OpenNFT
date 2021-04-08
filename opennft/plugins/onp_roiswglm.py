@@ -21,7 +21,7 @@ commands, in which case, the first is run to create the object, and the rest are
 This plugin demonstrates how to add you own approach (this one is a step-wise addition of each block) for ROI analysis.
 
 __________________________________________________________________________
-Copyright (C) 2016-2019 OpenNFT.org
+Copyright (C) 2016-2021 OpenNFT.org
 
 Written by Tibor Auer
 

@@ -15,7 +15,7 @@ function displayData = nfbCalc(indVol, displayData, ...
 % Note, DCM feedback estimates are hardcorded separately as function input.
 % Generalizations are planned.
 %__________________________________________________________________________
-% Copyright (C) 2016-2019 OpenNFT.org
+% Copyright (C) 2016-2021 OpenNFT.org
 %
 % Written by Yury Koush
 
@@ -383,7 +383,7 @@ if isSVM
         end
 
         % compute average feedback value
-        tmp_fbVal = eval(P.RoiAnatOperation); 
+        tmp_fbVal = mean(norm_percValues);%eval(P.RoiAnatOperation); 
         dispValue = round(P.MaxFeedbackVal*tmp_fbVal, P.FeedbackValDec); 
 
         mainLoopData.norm_percValues(indVolNorm,:) = norm_percValues;
