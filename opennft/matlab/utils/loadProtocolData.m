@@ -57,11 +57,15 @@ if ~P.isRestingState
     end
 
     P.CondNames = P.CondIndexNames;
+    
+    if strcmp(P.Prot, 'Inter') && isPSC
+        % NFBREG block index == 2; Task1 block index == 3; Task1 block index == 4; NFBDISP block index == 6
+        P.CondNames = [P.CondIndexNames(2), P.CondIndexNames(3), P.CondIndexNames(4), P.CondIndexNames(6)];
+    end
 
     if isDCM
         % Baseline index == 1; Regulation block index == 2
         P.CondNames = [P.CondIndexNames(1), P.CondIndexNames(2)];
-
     end
     
     %% Implicit baseline

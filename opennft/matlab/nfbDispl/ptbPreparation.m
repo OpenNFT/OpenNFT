@@ -229,8 +229,8 @@ if strcmp(protName, 'Inter')
     load([workFolder filesep 'Settings' filesep 'NOWORDS_Run_' sprintf('%d',P.NFRunNr) '.mat']);
 
     for i = 1:6
-        tmpOnstes = prt.Cond{i}.OnOffsets;
-        tmpName = prt.Cond{i}.ConditionName;
+        tmpOnstes = prt.ConditionIndex{i}.OnOffsets;
+        tmpName = prt.ConditionIndex{i}.ConditionName;
         lOnsets = size(tmpOnstes,1);
         kW = 0; kNW = 0;
         for iOn = 1:lOnsets

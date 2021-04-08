@@ -109,30 +109,28 @@ end
 if isPSC && strcmp(P.Prot, 'Inter')
     blockNF = mainLoopData.blockNF;
     firstNF = mainLoopData.firstNF;
+    blockTask1 = mainLoopData.blockTask1;
+    lastTask1 = mainLoopData.lastTask1;
     blockTask2 = mainLoopData.blockTask2;
     lastTask2 = mainLoopData.lastTask2;
-    blockTask3 = mainLoopData.blockTask3;
-    lastTask3 = mainLoopData.lastTask3;
 
     dispValue = mainLoopData.dispValue;
     Reward = mainLoopData.Reward;
 
     % count blocks
     if condition == 3 || condition == 4
-        % Task2 block
-        % Task2 block index == 3
-        iTask2 = cellfun(@(x) x(end) == indVolNorm, P.ProtCond{ 3 });
+        % Task1 block index == 3
+        iTask1 = cellfun(@(x) x(end) == indVolNorm, P.ProtCond{ 3 });
+        if any(iTask1)
+            blockTask1 = find(iTask1);
+            lastTask1 = indVolNorm;
+            mainLoopData.flagEndPSC = 1;
+        end
+        % Task2 block index == 4
+        iTask2 = cellfun(@(x) x(end) == indVolNorm, P.ProtCond{ 4 });
         if any(iTask2)
             blockTask2 = find(iTask2);
             lastTask2 = indVolNorm;
-            mainLoopData.flagEndPSC = 1;
-        end
-        % Task3 block
-        % Task3 block index == 4
-        iTask3 = cellfun(@(x) x(end) == indVolNorm, P.ProtCond{ 4 });
-        if any(iTask3)
-            blockTask3 = find(iTask3);
-            lastTask3 = indVolNorm;
             mainLoopData.flagEndPSC = 1;
         end
     end
@@ -146,12 +144,12 @@ if isPSC && strcmp(P.Prot, 'Inter')
             blockNF = find(k);
             firstNF = indVolNorm;
             mainLoopData.flagEndPSC = 1;
-            if (P.ProtCond{ 2 }{blockNF}(end)+4) == ( P.ProtCond{ 3 }{blockTask2}(1))
-                isTask2 = 1;
-                isTask3 = 0;
-            elseif (P.ProtCond{ 2 }{blockNF}(end)+4) == ( P.ProtCond{ 4 }{blockTask3}(1))
+            if (P.ProtCond{ 2 }{blockNF}(end)+4) == ( P.ProtCond{ 3 }{blockTask1}(1))
+                isTask1 = 1;
                 isTask2 = 0;
-                isTask3 = 1;
+            elseif (P.ProtCond{ 2 }{blockNF}(end)+4) == ( P.ProtCond{ 4 }{blockTask2}(1))
+                isTask1 = 0;
+                isTask2 = 1;
             end
         end
 
@@ -185,20 +183,20 @@ if isPSC && strcmp(P.Prot, 'Inter')
             % expected when assigning volumes for averaging, take HRF delay
             % into account
             if blockNF==1
-                if isTask2
-                    i_blockNF = [P.ProtCond{ 2 }{blockNF}(4:end) P.ProtCond{ 3 }{blockTask2}(4:end)]; % Task1 block index == 3; Task2 block index == 3; Task3 block index == 4
-                elseif isTask3
-                    i_blockNF = [P.ProtCond{ 2 }{blockNF}(4:end) P.ProtCond{ 4 }{blockTask3}(4:end)];
+                if isTask1
+                    i_blockNF = [P.ProtCond{ 2 }{blockNF}(4:end) P.ProtCond{ 3 }{blockTask1}(4:end)]; % NFBREG block index == 2; Task1 block index == 3; Task1 block index == 4
+                elseif isTask2
+                    i_blockNF = [P.ProtCond{ 2 }{blockNF}(4:end) P.ProtCond{ 4 }{blockTask2}(4:end)];
                 end
                 if isTakePreviousBlockBAS
                     i_blockBAS = [];
                     i_blockBAS = P.ProtCond{ 1 }{indxAllBAS(blockNF)}(3:end);
                 end
             elseif blockNF>1
-                if isTask2
-                    i_blockNF = [P.ProtCond{ 2 }{blockNF}(4:end) P.ProtCond{ 3 }{blockTask2}(4:end)];
-                elseif isTask3
-                    i_blockNF = [P.ProtCond{ 2 }{blockNF}(4:end) P.ProtCond{ 4 }{blockTask3}(4:end)];
+                if isTask1
+                    i_blockNF = [P.ProtCond{ 2 }{blockNF}(4:end) P.ProtCond{ 3 }{blockTask1}(4:end)];
+                elseif isTask2
+                    i_blockNF = [P.ProtCond{ 2 }{blockNF}(4:end) P.ProtCond{ 4 }{blockTask2}(4:end)];
                 end
 
                 if isTakePreviousBlockBAS
@@ -313,10 +311,10 @@ if isPSC && strcmp(P.Prot, 'Inter')
     mainLoopData.vectNFBs(indVolNorm) = tmp_fbVal;    
     mainLoopData.blockNF = blockNF;
     mainLoopData.firstNF = firstNF;
+    mainLoopData.blockTask1 = blockTask1;
+    mainLoopData.lastTask1 = lastTask1;
     mainLoopData.blockTask2 = blockTask2;
     mainLoopData.lastTask2 = lastTask2;
-    mainLoopData.blockTask3 = blockTask3;
-    mainLoopData.lastTask3 = lastTask3;
 
     mainLoopData.Reward = '';
 
