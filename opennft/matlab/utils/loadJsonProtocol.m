@@ -1,4 +1,4 @@
-function loadProtocolData()
+function loadJsonProtocol()
 % Function to load experimental protocol stored in json format.
 % Note, to work with json files, use jsonlab toolbox.
 %
@@ -56,18 +56,6 @@ if ~P.isRestingState
         end
     end
 
-    P.CondNames = P.CondIndexNames;
-    
-    if strcmp(P.Prot, 'Inter') && isPSC
-        % NFBREG block index == 2; Task1 block index == 3; Task1 block index == 4; NFBDISP block index == 6
-        P.CondNames = [P.CondIndexNames(2), P.CondIndexNames(3), P.CondIndexNames(4), P.CondIndexNames(6)];
-    end
-
-    if isDCM
-        % Baseline index == 1; Regulation block index == 2
-        P.CondNames = [P.CondIndexNames(1), P.CondIndexNames(2)];
-    end
-    
     %% Implicit baseline
     BasInd = find(P.vectEncCond == 1);
     ProtCondBas = accumarray( cumsum([1, diff(BasInd) ~= 1]).', BasInd, [], @(x){x'} );
@@ -84,18 +72,22 @@ if isfield(prt,'Contrast')
     if ~P.isRestingState
         condNames = cellfun(@(x) x.ConditionName, prt.ConditionIndex, 'UniformOutput',false);
         con = textscan(prt.Contrast,'%d*%s','Delimiter',';');
-%         if length(condNames)>length(con{1})
-%             condNames = condNames(1,1:end-length(con{1}));
-%         end
+        P.CondForContrast = con{2};
+        if length(condNames)>length(con{1})
+            condNames = intersect(con{2},condNames)';
+        end
         conVect = [];
         for ci = cellfun(@(x) find(strcmp(x,con{2})),condNames,'UniformOutput',false)
-            if ~isempty(ci{1}), conVect(end+1) = con{1}(ci{1}); else conVect(end+1) = 0; end
+            if ~isempty(ci{1})
+                conVect(end+1) = con{1}(ci{1}); 
+            else
+                conVect(end+1) = 0;
+            end
         end
     else
         conVect = double(cell2mat(textscan(prt.Contrast,'%d','Delimiter',';'))');
     end
-    %P.Contrast = [1 0 0 0]';%conVect';
-    P.Contrast = [0 1 1 0]';%conVect';
+    P.Contrast = conVect';
 end
 
 %% Save

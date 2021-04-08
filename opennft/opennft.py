@@ -120,8 +120,8 @@ class OpenNFT(QWidget):
         self.udpSender.connect_for_sending()
         self.udpSender.sending_time_stamp = True
 
-        self.udpCondNames = self.P['CondNames']
-        if not ('BAS' in self.P['CondIndexNames']): self.udpCondNames.insert(0, 'BAS')
+        self.udpCondForContrast = self.P['CondForContrast']
+        if not ('BAS' in self.P['CondIndexNames']): self.udpCondForContrast.insert(0, 'BAS')
 
     # --------------------------------------------------------------------------
     def finalizeUdpSender(self):
@@ -672,7 +672,7 @@ class OpenNFT(QWidget):
 
                 if self.iteration > self.P['nrSkipVol'] and config.UDP_SEND_CONDITION:
                     self.udpSender.send_data(
-                        self.udpCondNames[int(self.eng.evalin('base', 'mainLoopData.condition')) - 1])
+                        self.udpCondForContrast[int(self.eng.evalin('base', 'mainLoopData.condition')) - 1])
 
             elif self.P['Type'] == 'DCM':
                 if not self.isCalculateDcm and config.USE_PTB:
@@ -1249,7 +1249,7 @@ class OpenNFT(QWidget):
             self.previousIterStartTime = 0
 
             with utils.timeit("  Load protocol data:"):
-                self.loadProtocolData()
+                self.loadJsonProtocol()
 
             with utils.timeit("  Selecting ROI:"):
                 self.selectRoi()
@@ -1831,8 +1831,8 @@ class OpenNFT(QWidget):
         self.actualize
 
     # --------------------------------------------------------------------------
-    def loadProtocolData(self):
-        self.eng.loadProtocolData(nargout=0)
+    def loadJsonProtocol(self):
+        self.eng.loadJsonProtocol(nargout=0)
 
     # --------------------------------------------------------------------------
     def selectRoi(self):
