@@ -53,8 +53,12 @@
 	},
 
 
+	"BaselineName": "BAS",
+	"RegulationName": "NFBREG",
+	"RestName": "REST",
+	"nfbDisplayName": "NFBDISP",
 	"Contrast": "+1*NFBREG;-1*BAS",
-	"ConditionIndex": [
+	"Cond": [
 		{
 			"ConditionName": "BAS",
 			"OnOffsets": [

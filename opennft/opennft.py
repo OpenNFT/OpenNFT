@@ -120,8 +120,8 @@ class OpenNFT(QWidget):
         self.udpSender.connect_for_sending()
         self.udpSender.sending_time_stamp = True
 
-        self.udpCondForContrast = self.P['CondForContrast']
-        if not ('BAS' in self.P['CondIndexNames']): self.udpCondForContrast.insert(0, 'BAS')
+        self.udpCondNames = self.P['CondNames']
+        if not ('BaselineName' in self.P['Protocol']): self.udpCondNames.insert(0, 'BAS')
 
     # --------------------------------------------------------------------------
     def finalizeUdpSender(self):
@@ -672,7 +672,7 @@ class OpenNFT(QWidget):
 
                 if self.iteration > self.P['nrSkipVol'] and config.UDP_SEND_CONDITION:
                     self.udpSender.send_data(
-                        self.udpCondForContrast[int(self.eng.evalin('base', 'mainLoopData.condition')) - 1])
+                        self.udpCondNames[int(self.eng.evalin('base', 'mainLoopData.condition')) - 1])
 
             elif self.P['Type'] == 'DCM':
                 if not self.isCalculateDcm and config.USE_PTB:
@@ -1231,7 +1231,6 @@ class OpenNFT(QWidget):
             self.orthViewInitialize = True
 
             # for multiply setup
-            # TODO: Is this flag necessary?
             if not self.resetDone:
                 self.reset()
             # -self.chooseSetFile(self.leSetFile.text())
@@ -1249,7 +1248,7 @@ class OpenNFT(QWidget):
             self.previousIterStartTime = 0
 
             with utils.timeit("  Load protocol data:"):
-                self.loadJsonProtocol()
+                self.loadProtocolData()
 
             with utils.timeit("  Selecting ROI:"):
                 self.selectRoi()
@@ -1831,8 +1830,8 @@ class OpenNFT(QWidget):
         self.actualize
 
     # --------------------------------------------------------------------------
-    def loadJsonProtocol(self):
-        self.eng.loadJsonProtocol(nargout=0)
+    def loadProtocolData(self):
+        self.eng.loadProtocolData(nargout=0)
 
     # --------------------------------------------------------------------------
     def selectRoi(self):
@@ -2122,13 +2121,12 @@ class OpenNFT(QWidget):
         # TODO: More general way to use any protocol
         tmpCond = list()
         nrCond = list()
-        for c in self.P['Protocol']['ConditionIndex']:
+        for c in self.P['Protocol']['Cond']:
             tmpCond.append(np.array(c['OnOffsets']).astype(np.int32))
             nrCond.append(tmpCond[-1].shape[0])
 
-        if not ('BAS' in self.P['CondIndexNames']):  # implicit baseline
-            # self.P['ProtCond'][0] - 0 is for Baseline indexes
-            tmpCond.insert(0, np.array([np.array(t).astype(np.int32)[0, [0, -1]] for t in self.P['ProtCond'][0]]))
+        if not ('BaselineName' in self.P['Protocol']):  # implicit baseline
+            tmpCond.insert(0, np.array([np.array(t).astype(np.int32)[0, [0, -1]] for t in self.P['ProtBAS']]))
             nrCond.insert(0, tmpCond[0].shape[0])
 
         c = 1

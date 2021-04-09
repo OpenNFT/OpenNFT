@@ -25,7 +25,7 @@ eval(varsFromStruct(displayData, fieldNames, defaultFields))
 
 if ~strcmp(feedbackType, 'DCM')
     dispColor = [255, 255, 255];
-    instrColor = [155, 150, 150];
+    instrColor = [200, 200, 200];
 end
 
 switch feedbackType    
@@ -104,7 +104,7 @@ switch feedbackType
         end
         
     %% Intermittent PSC
-case 'value_fixation'
+    case 'value_fixation'
         indexSmiley = round(dispValue);
         if indexSmiley == 0
             indexSmiley = 1;
