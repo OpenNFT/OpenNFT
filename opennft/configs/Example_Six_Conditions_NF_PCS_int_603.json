@@ -1,5 +1,5 @@
 {
-	"Contrast": "+1*NFBREG;0*READW;0*READNW;0*NFBDISP",
+	"Contrast": "+1*NFBREG;0*TASK1;0*TASK2;0*NFBDISP",
 	"ConditionIndex": [
 		{
 			"ConditionName": "BAS",
@@ -39,7 +39,7 @@
 			]
 		},
 		{
-			"ConditionName": "READW",
+			"ConditionName": "TASK1",
 			"OnOffsets": [
 				[32,48],
 				[99,115],
@@ -49,7 +49,7 @@
 			]
 		},
 		{
-			"ConditionName": "READNW",
+			"ConditionName": "TASK2",
 			"OnOffsets": [
 				[166,182],
 				[300,316],
