@@ -38,7 +38,7 @@ SPM.xX.K.HParam = 128;
 % protocol
 if ~P.isRestingState
     % make sure that the order of regressor matches the order of CondNames
-    [junk,regrInd] = ismember(P.CondForContrast,cellfun(@(x) x.ConditionName, P.Protocol.ConditionIndex, 'UniformOutput', false));
+    [junk,regrInd] = ismember(P.ConditionForContrast,cellfun(@(x) x.ConditionName, P.Protocol.ConditionIndex, 'UniformOutput', false));
 else
     regrInd = [];
 end

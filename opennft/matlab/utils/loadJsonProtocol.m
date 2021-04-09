@@ -67,27 +67,27 @@ if ~P.isRestingState
 
 end
 
-%% Contrast
+%% Contrast and Conditions For Contrast encoding from .json Contrast specification
 if isfield(prt,'Contrast')
     if ~P.isRestingState
-        condNames = cellfun(@(x) x.ConditionName, prt.ConditionIndex, 'UniformOutput',false);
-        con = textscan(prt.Contrast,'%d*%s','Delimiter',';');
-        P.CondForContrast = con{2};
-        if length(condNames)>length(con{1})
-            condNames = intersect(con{2},condNames)';
+        conditionNames = cellfun(@(x) x.ConditionName, prt.ConditionIndex, 'UniformOutput',false);
+        contrastString = textscan(prt.Contrast,'%d*%s','Delimiter',';');
+        P.ConditionForContrast = contrastString{2};
+        if length(conditionNames)>length(contrastString{1})
+            conditionNames = intersect(contrastString{2},conditionNames)';
         end
-        conVect = [];
-        for ci = cellfun(@(x) find(strcmp(x,con{2})),condNames,'UniformOutput',false)
-            if ~isempty(ci{1})
-                conVect(end+1) = con{1}(ci{1}); 
+        contrastVect = [];
+        for contrastIndex = cellfun(@(x) find(strcmp(x,contrastString{2})),conditionNames,'UniformOutput',false)
+            if ~isempty(contrastIndex{1})
+                contrastVect(end+1) = contrastString{1}(contrastIndex{1});
             else
-                conVect(end+1) = 0;
+                contrastVect(end+1) = 0;
             end
         end
     else
-        conVect = double(cell2mat(textscan(prt.Contrast,'%d','Delimiter',';'))');
+        contrastVect = double(cell2mat(textscan(prt.Contrast,'%d','Delimiter',';'))');
     end
-    P.Contrast = conVect';
+    P.Contrast = contrastVect';
 end
 
 %% Save
