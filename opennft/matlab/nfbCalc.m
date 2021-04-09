@@ -109,149 +109,55 @@ end
 if isPSC && strcmp(P.Prot, 'Inter')
     blockNF = mainLoopData.blockNF;
     firstNF = mainLoopData.firstNF;
-    blockTask1 = mainLoopData.blockTask1;
-    lastTask1 = mainLoopData.lastTask1;
-    blockTask2 = mainLoopData.blockTask2;
-    lastTask2 = mainLoopData.lastTask2;
-
     dispValue = mainLoopData.dispValue;
     Reward = mainLoopData.Reward;
 
-    % count blocks
-    if condition == 3 || condition == 4
-        % Task1 block index == 3
-        iTask1 = cellfun(@(x) x(end) == indVolNorm, P.ProtCond{ 3 });
-        if any(iTask1)
-            blockTask1 = find(iTask1);
-            lastTask1 = indVolNorm;
-            mainLoopData.flagEndPSC = 1;
-        end
-        % Task2 block index == 4
-        iTask2 = cellfun(@(x) x(end) == indVolNorm, P.ProtCond{ 4 });
-        if any(iTask2)
-            blockTask2 = find(iTask2);
-            lastTask2 = indVolNorm;
-            mainLoopData.flagEndPSC = 1;
-        end
-    end
-
     % NF estimation condition
-    if condition == 5
-        % count Rest blocks
-        % Rest block index == 5
-        k = cellfun(@(x) x(end) == indVolNorm, P.ProtCond{ 5 });
+    if condition == 2
+        % count NF regulation blocks
+        k = cellfun(@(x) x(end) == indVolNorm, P.ProtCond{ 2 });
         if any(k)
             blockNF = find(k);
             firstNF = indVolNorm;
             mainLoopData.flagEndPSC = 1;
-            if (P.ProtCond{ 2 }{blockNF}(end)+4) == ( P.ProtCond{ 3 }{blockTask1}(1))
-                isTask1 = 1;
-                isTask2 = 0;
-            elseif (P.ProtCond{ 2 }{blockNF}(end)+4) == ( P.ProtCond{ 4 }{blockTask2}(1))
-                isTask1 = 0;
-                isTask2 = 1;
-            end
-        end
-
-        % assign baseline indexes, for complications in fixation condition
-        % number of indxAllBAS should be equal to number of blockNF for
-        % simplicity
-        isMixedBaseline = 1;
-        if ~isMixedBaseline
-            indxAllBAS = 1:1:length(P.ProtCond{ 1 }); % Baseline block index == 1
-        else
-            indxAllBAS = 1:2:length(P.ProtCond{ 1 }); % Baseline block index == 1
-        end
-
-        isTakePreviousBlockBAS = 0;
-        % Get reference baseline in cumulated way across the RUN,
-        % or any other fashion
-        if ~isTakePreviousBlockBAS
-            i_blockBAS = [];
-            if blockNF==1
-                i_blockBAS = P.ProtCond{ 1 }{indxAllBAS(blockNF)}(3:end);  % Baseline block index == 1
-            elseif blockNF>1
-                for iBas = 1:blockNF
-                    i_blockBAS = [i_blockBAS P.ProtCond{ 1 }{indxAllBAS(iBas)}(4:end)];  % Baseline block index == 1
-                    % ignore 2 scans for HRF shift, e.g. if TR = 2sec
-                end
-            end
         end
 
         regSuccess = 0;
-        if firstNF == indVolNorm % the first volume of the NF block is 
+        if firstNF == indVolNorm % the first volume of the NF block is
             % expected when assigning volumes for averaging, take HRF delay
             % into account
-            if blockNF==1
-                if isTask1
-                    i_blockNF = [P.ProtCond{ 2 }{blockNF}(4:end) P.ProtCond{ 3 }{blockTask1}(4:end)]; % NFBREG block index == 2; Task1 block index == 3; Task1 block index == 4
-                elseif isTask2
-                    i_blockNF = [P.ProtCond{ 2 }{blockNF}(4:end) P.ProtCond{ 4 }{blockTask2}(4:end)];
-                end
-                if isTakePreviousBlockBAS
-                    i_blockBAS = [];
-                    i_blockBAS = P.ProtCond{ 1 }{indxAllBAS(blockNF)}(3:end);
-                end
-            elseif blockNF>1
-                if isTask1
-                    i_blockNF = [P.ProtCond{ 2 }{blockNF}(4:end) P.ProtCond{ 3 }{blockTask1}(4:end)];
-                elseif isTask2
-                    i_blockNF = [P.ProtCond{ 2 }{blockNF}(4:end) P.ProtCond{ 4 }{blockTask2}(4:end)];
-                end
-
-                if isTakePreviousBlockBAS
-                    % take just previous block and an extra point from the
-                    % next condition given hrf delay
-                    i_blockBAS = [];
-                    i_blockBAS = [];
-                    i_blockBAS = [P.ProtCond{ 1 }{indxAllBAS(blockNF)}(4:end) ...
-                                  P.ProtCond{ 1 }{indxAllBAS(blockNF)}(end)+1];
-                end
+            if blockNF<2
+                i_blockNF = P.ProtCond{ 2 }{blockNF}(end-6:end);
+                i_blockBAS = P.ProtCond{ 1 }{blockNF}(end-6:end);
+            else
+                i_blockNF = P.ProtCond{ 2 }{blockNF}(end-6:end);
+                i_blockBAS = [P.ProtCond{ 1 }{blockNF}(end-5:end) ...
+                              P.ProtCond{ 1 }{blockNF}(end)+1];
             end
 
             for indRoi = 1:P.NrROIs
-                isFeedbackPSC = 1;
-                if ~isFeedbackPSC
-                    % Common range Scaling was recommneded/tested for
-                    % bilateral co-activation only. Separarte range scaling
-                    % should be also used with caution because signals
-                    % may have reasonably different ranges and separate
-                    % scaling would neutralize it.
+                % Averaging across blocks
+                mBas  = median(mainLoopData.kalmanProcTimeSeries(indRoi,...
+                                                              i_blockBAS));
+                mCond = median(mainLoopData.kalmanProcTimeSeries(indRoi,...
+                                                               i_blockNF));
 
-                    % Averaging across blocks
-                    mBas  = median(mainLoopData.kalmanProcTimeSeries(indRoi,...
-                                                                  i_blockBAS));
-                    mCond = median(mainLoopData.kalmanProcTimeSeries(indRoi,...
-                                                                   i_blockNF));
-
-                    % Scaling
-                    mBasScaled  = (mBas - mainLoopData.mposMin(indVolNorm)) / ...
-                                            (mainLoopData.mposMax(indVolNorm) - ...
-                                             mainLoopData.mposMin(indVolNorm));
-                    mCondScaled = (mCond - mainLoopData.mposMin(indVolNorm)) / ...
-                                            (mainLoopData.mposMax(indVolNorm) - ...
-                                             mainLoopData.mposMin(indVolNorm));
-                    norm_percValues(indRoi) = mCondScaled - mBasScaled;
-                else
-                    % PSC estimation
-                    mBasPSC  = median(mainLoopData.constProcTimeSeries(indRoi,...
-                        i_blockBAS));
-                    mCondPSC = median(mainLoopData.constProcTimeSeries(indRoi,...
-                        i_blockNF));
-                    norm_percValues(indRoi) = 100*(mCondPSC - mBasPSC)/mBasPSC;
-                end
+                % Scaling
+                mBasScaled  = (mBas - mainLoopData.mposMin(indVolNorm)) / ...
+                                        (mainLoopData.mposMax(indVolNorm) - ...
+                                         mainLoopData.mposMin(indVolNorm));
+                mCondScaled = (mCond - mainLoopData.mposMin(indVolNorm)) / ...
+                                        (mainLoopData.mposMax(indVolNorm) - ...
+                                         mainLoopData.mposMin(indVolNorm));
+                norm_percValues(indRoi) = mCondScaled - mBasScaled;
             end
 
-            % compute feedback based on two ROIs average or difference
-            if ~isFeedbackPSC && P.NrROIs == 2
-                tmp_fbVal = eval(P.RoiAnatOperation);
-            elseif isFeedbackPSC && P.NrROIs == 2
-                tmp_fbVal = norm_percValues(2) - norm_percValues(1);
-            end
+            % compute average %SC feedback value
+            tmp_fbVal = eval(P.RoiAnatOperation);
             mainLoopData.vectNFBs(indVolNorm) = tmp_fbVal;
-            dispValue = round(P.MaxFeedbackVal*tmp_fbVal, P.FeedbackValDec); 
+            dispValue = round(P.MaxFeedbackVal*tmp_fbVal, P.FeedbackValDec);
 
-            % display feedback value and threshold overheads
+            % [0...P.MaxFeedbackVal], for Display
             if ~P.NegFeedback && dispValue < 0
                 dispValue = 0;
             elseif P.NegFeedback && dispValue < P.MinFeedbackVal
@@ -261,14 +167,14 @@ if isPSC && strcmp(P.Prot, 'Inter')
                 dispValue = P.MaxFeedbackVal;
             end
 
-            % regSuccess and shaping
+            % regSuccess and Shaping
             P.actValue(blockNF) = tmp_fbVal;
             if P.NFRunNr == 1
-                if blockNF==1
+                if blockNF == 1
                     if P.actValue(blockNF) > 0.5
                         regSuccess = 1;
                     end
-                elseif blockNF>1
+                else
                     if blockNF == 2
                         tmp_Prev = P.actValue(blockNF-1);
                     elseif blockNF == 3
@@ -281,10 +187,10 @@ if isPSC && strcmp(P.Prot, 'Inter')
                     end
                 end
             elseif P.NFRunNr>1
-                tmp_actValue = [P.prev_actValue P.actValue]; 
+                tmp_actValue = [P.prev_actValue P.actValue];
                 % creates a vector from previous run and current run
                 lactVal = length(tmp_actValue);
-                tmp_Prev = median(tmp_actValue(lactVal-3:lactVal-1)); 
+                tmp_Prev = median(tmp_actValue(lactVal-3:lactVal-1));
                 % takes 3 last, except for current
                 if  (0.9 * P.actValue(blockNF) >= tmp_Prev)  % 10% larger
                     regSuccess = 1;
@@ -300,22 +206,17 @@ if isPSC && strcmp(P.Prot, 'Inter')
         tmp_fbVal = 0;
     end
 
-    if mainLoopData.flagEndPSC 
+    if mainLoopData.flagEndPSC
         mainLoopData.dispValues(indVolNorm) = dispValue;
         mainLoopData.dispValue = dispValue;
     else
         mainLoopData.dispValues(indVolNorm) = 0;
-        mainLoopData.dispValue = 0;                                    
+        mainLoopData.dispValue = 0;
     end
 
-    mainLoopData.vectNFBs(indVolNorm) = tmp_fbVal;    
+    mainLoopData.vectNFBs(indVolNorm) = tmp_fbVal;
     mainLoopData.blockNF = blockNF;
     mainLoopData.firstNF = firstNF;
-    mainLoopData.blockTask1 = blockTask1;
-    mainLoopData.lastTask1 = lastTask1;
-    mainLoopData.blockTask2 = blockTask2;
-    mainLoopData.lastTask2 = lastTask2;
-
     mainLoopData.Reward = '';
 
     displayData.Reward = mainLoopData.Reward;

@@ -219,12 +219,8 @@ if ~P.isRestingState
     mainLoopData.statMap3D_iGLM = [];
 
     % PSC
-    if isPSC && (strcmp(P.Prot, 'Cont') || strcmp(P.Prot, 'ContTask'))
+    if isPSC && (strcmp(P.Prot, 'Cont') || strcmp(P.Prot, 'ContTask') || strcmp(P.Prot, 'Inter'))
         tmpSpmDesign = SPM.xX.X(1:P.NrOfVolumes-P.nrSkipVol,contains(SPM.xX.name, P.CondIndexNames( 2 ))); % Index for Regulation block == 2
-    end
-    if isPSC && strcmp(P.Prot, 'Inter')
-        % Index for Regulation block == 2; READW block == 3; READNW block == 2; Display block == 2;
-        tmpSpmDesign = SPM.xX.X(1:P.NrOfVolumes-P.nrSkipVol,contains(SPM.xX.name, [string(P.CondIndexNames( 2 )),string(P.CondIndexNames( 3 )),string(P.CondIndexNames( 4 )),P.CondIndexNames( 6 )]));
     end
 
     % DCM
