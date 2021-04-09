@@ -1,8 +1,6 @@
 {
-	"RegulationName": "NFBREG",
-	"nfbDisplayName": "NFBDISP",
 	"Contrast": "+1*NFBREG;0*NFBDISP",
-	"Cond": [
+	"ConditionIndex": [
 		{
 			"ConditionName": "NFBREG",
 			"OnOffsets": [

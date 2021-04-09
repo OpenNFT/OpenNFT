@@ -122,6 +122,10 @@ mainLoopData.mposMin = [];
 
 mainLoopData.blockNF = 0;
 mainLoopData.firstNF = 0;
+mainLoopData.blockTask1 = 0;
+mainLoopData.lastTask1 = 0;
+mainLoopData.blockTask2 = 0;
+mainLoopData.lastTask2 = 0;
 
 %% DCM Settings
 if isDCM
@@ -216,7 +220,7 @@ if ~P.isRestingState
 
     % PSC
     if isPSC && (strcmp(P.Prot, 'Cont') || strcmp(P.Prot, 'ContTask') || strcmp(P.Prot, 'Inter'))
-        tmpSpmDesign = SPM.xX.X(1:P.NrOfVolumes-P.nrSkipVol,contains(SPM.xX.name, P.CondName));
+        tmpSpmDesign = SPM.xX.X(1:P.NrOfVolumes-P.nrSkipVol,contains(SPM.xX.name, P.CondIndexNames( 2 ))); % Index for Regulation block == 2
     end
 
     % DCM
@@ -229,10 +233,10 @@ if ~P.isRestingState
 
     % SVM
     if isSVM && strcmp(P.Prot, 'Cont')
-        mainLoopData.basFct = mainLoopData.basFct(:,find(contains(SPM.xX.name, P.CondName)));
+        mainLoopData.basFct = mainLoopData.basFct(:,find(contains(SPM.xX.name, P.CondIndexNames( 2 )))); % Index for Regulation block == 2
         mainLoopData.nrBasFct = 1;
         % this contrast does not count constant term
-        tmpSpmDesign = SPM.xX.X(1:P.NrOfVolumes-P.nrSkipVol,contains(SPM.xX.name, P.CondName));
+        tmpSpmDesign = SPM.xX.X(1:P.NrOfVolumes-P.nrSkipVol,contains(SPM.xX.name, P.CondIndexNames( 2 ))); % Index for Regulation block == 2
     end
         
     %% High-pass filter for iGLM given by SPM
@@ -244,6 +248,29 @@ if ~P.isRestingState
     else
         P.spmDesign = arRegr(P.aAR1, tmpSpmDesign);
     end
+
+    % PSC
+    if isPSC && (strcmp(P.Prot, 'Cont') || strcmp(P.Prot, 'ContTask') || strcmp(P.Prot, 'Inter'))
+
+        if P.NFRunNr > 1
+            lSpmDesign = size(tmpSpmDesign,1);
+            P.prevNfbDataFolder = fullfile(P.WorkFolder,['NF_Data_' sprintf('%d',P.NFRunNr-1)]);
+            % get motion correction parameters
+            pathPrevP = dir(fullfile(P.prevNfbDataFolder,'*_P.mat'));
+            prevP = load(fullfile(P.prevNfbDataFolder,pathPrevP.name));
+            % get time-series
+            pathPrevTS = dir(fullfile(P.prevNfbDataFolder,'*_raw_tsROIs.mat'));
+            mainLoopData.prevTS = load(fullfile(P.prevNfbDataFolder,pathPrevTS.name));
+            % construct regressors
+            tmpRegr = [ones(lSpmDesign,1) P.linRegr zscore(prevP.motCorrParam)];
+            if P.cglmAR1
+                mainLoopData.prev_cX0 = arRegr(P.aAR1,tmpRegr);
+            end
+            mainLoopData.prev_cX0 = [tmpRegr, P.spmDesign];
+        end
+
+    end
+
 else
     mainLoopData.basFct = [];
     mainLoopData.nrBasFct = 6; % size of motion regressors, P.motCorrParam
@@ -253,6 +280,14 @@ else
     mainLoopData.spmMaskTh = mean(SPM.xM.TH)*ones(size(SPM.xM.TH));
     mainLoopData.pVal = .1;
     mainLoopData.statMap3D_iGLM = [];
+end
+
+%% rGLM beta init
+mainLoopData.betRegr = cell(P.NrROIs,1);
+for i=1:P.NrROIs
+    % TODO:
+    % 2 - linear trend and constant; 6 - motion regressors
+    mainLoopData.betRegr{i} = zeros(P.NrOfVolumes-P.nrSkipVol, 2+6+size(P.spmDesign,2));
 end
 
 %% rtQA init
@@ -296,12 +331,7 @@ if P.isRTQA
     rtQA_matlab.snrData.m2NonSmoothed = [];
     rtQA_matlab.snrData.iteration = 1;
 
-    rtQA_matlab.betRegr = cell(P.NrROIs,1);
-    for i=1:P.NrROIs
-        % TODO:
-        % 2 - linear trend and constant; 6 - motion regressors
-        rtQA_matlab.betRegr{i} = zeros(P.NrOfVolumes-P.nrSkipVol, 2+6+size(P.spmDesign,2));
-    end
+    rtQA_matlab.betRegr = mainLoopData.betRegr;
     
     rtQA_matlab.Bn = cell(P.NrROIs,1);
     rtQA_matlab.var = cell(P.NrROIs,1);
@@ -324,8 +354,8 @@ if P.isRTQA
         rtQA_matlab.cnrData.condData.iteration = 1;
 
         % indexes of baseline and condition for CNR calculation
-        tmpindexesCond = find(SPM.xX.X(:,contains(SPM.xX.name, P.CondName))>0.6);
-        tmpindexesBas = find(SPM.xX.X(:,contains(SPM.xX.name, P.CondName))<0.1);
+        tmpindexesCond = find(SPM.xX.X(:,contains(SPM.xX.name, P.CondIndexNames( 2 )))>0.6); % Index for Regulation block == 2
+        tmpindexesBas = find(SPM.xX.X(:,contains(SPM.xX.name, P.CondIndexNames( 2 )))<0.1); % Index for Regulation block == 2
         if isDCM
             tmpindexesBas = tmpindexesBas(1:end-1)+1;
             tmpindexesCond = tmpindexesCond-1;
