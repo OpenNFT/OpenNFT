@@ -72,7 +72,7 @@ if isfield(prt,'Contrast')
     if ~P.isRestingState
         conditionNames = cellfun(@(x) x.ConditionName, prt.ConditionIndex, 'UniformOutput',false);
         contrastString = textscan(prt.Contrast,'%d*%s','Delimiter',';');
-        P.ConditionForContrast = contrastString{2};
+        P.ConditionForContrast = contrastString{2}';
         if length(conditionNames)>length(contrastString{1})
             conditionNames = intersect(contrastString{2},conditionNames)';
         end
