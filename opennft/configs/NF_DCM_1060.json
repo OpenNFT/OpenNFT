@@ -53,7 +53,8 @@
 	},
 
 
-	"Contrast": "+1*NFBREG;-1*BAS",
+	"ContrastActivation": "+1*NFBREG;-1*BAS",
+	"SignalPreprocessingBasis": "NFBREG",
 	"ConditionIndex": [
 		{
 			"ConditionName": "BAS",

@@ -1,5 +1,6 @@
 {
-	"Contrast": "+1*TASK",
+	"ContrastActivation": "+1*TASK",
+	"SignalPreprocessingBasis": "TASK",
 	"ConditionIndex": [
 		{
 			"ConditionName": "TASK",
