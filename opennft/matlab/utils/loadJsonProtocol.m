@@ -46,6 +46,8 @@ if ~P.isRestingState
         inc = 1;
     end
 
+    tmpSignalPreprocessingBasis = textscan(prt.SignalPreprocessingBasis,'%s','Delimiter',';');
+    P.SignalPreprocessingBasis = tmpSignalPreprocessingBasis{:};
     P.CondIndexNames = protNames;
     for x=1:lCond
         P.ProtCond{x} = {};
@@ -68,10 +70,10 @@ if ~P.isRestingState
 end
 
 %% Contrast and Conditions For Contrast encoding from .json Contrast specification
-if isfield(prt,'Contrast')
+if isfield(prt,'ContrastActivation')
     if ~P.isRestingState
         conditionNames = cellfun(@(x) x.ConditionName, prt.ConditionIndex, 'UniformOutput',false);
-        contrastString = textscan(prt.Contrast,'%d*%s','Delimiter',';');
+        contrastString = textscan(prt.ContrastActivation,'%d*%s','Delimiter',';');
         P.ConditionForContrast = contrastString{2}';
         if length(conditionNames)>length(contrastString{1})
             conditionNames = intersect(contrastString{2},conditionNames)';
@@ -85,9 +87,9 @@ if isfield(prt,'Contrast')
             end
         end
     else
-        contrastVect = double(cell2mat(textscan(prt.Contrast,'%d','Delimiter',';'))');
+        contrastVect = double(cell2mat(textscan(prt.ContrastActivation,'%d','Delimiter',';'))');
     end
-    P.Contrast = contrastVect';
+    P.ContrastActivation = contrastVect';
 end
 
 %% Save

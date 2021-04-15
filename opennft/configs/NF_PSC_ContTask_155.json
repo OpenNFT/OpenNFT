@@ -1,5 +1,6 @@
 {
-"Contrast": "+1*NFBREG;-1*TASK",
+"ContrastActivation": "+1*NFBREG;-1*TASK",
+"SignalPreprocessingBasis": "NFBREG",
 "ConditionIndex": [
 	{
 

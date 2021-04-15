@@ -194,9 +194,9 @@ SPM = setupSPM(P);
 mainLoopData.K.X0 = SPM.xX.K.X0;
 
 %% Explicit contrasts (optional)
-if isfield(P,'Contrast')
-    mainLoopData.tContr.pos = P.Contrast; 
-    mainLoopData.tContr.neg = -P.Contrast; 
+if isfield(P,'ContrastActivation')
+    mainLoopData.tContr.pos = P.ContrastActivation;
+    mainLoopData.tContr.neg = -P.ContrastActivation;
 end
 
 if ~P.isRestingState
@@ -214,58 +214,17 @@ if ~P.isRestingState
     mainLoopData.pVal = .01;
     mainLoopData.statMap3D_iGLM = [];
 
-    % PSC
-    if isPSC && (strcmp(P.Prot, 'Cont') || strcmp(P.Prot, 'ContTask') || strcmp(P.Prot, 'Inter'))
-        tmpSpmDesign = SPM.xX.X(1:P.NrOfVolumes-P.nrSkipVol,contains(SPM.xX.name, P.CondIndexNames( 2 ))); % Index for Regulation block == 2
-    end
+    mainLoopData.signalPreprocGlmDesign = mainLoopData.basFct(:,contains(SPM.xX.name, P.SignalPreprocessingBasis));
+    mainLoopData.nrSignalPreprocGlmDesign = size(mainLoopData.signalPreprocGlmDesign,2);
 
     % DCM
     if isDCM && strcmp(P.Prot, 'InterBlock')
-        % this contrast does not count constant term
-        tmpSpmDesign = SPM.xX.X(1:P.lengthDCMTrial,2);
         [mainLoopData.DCM_EN, mainLoopData.dcmParTag, ...
             mainLoopData.dcmParOpp] = dcmPrep(SPM);
     end
 
-    % SVM
-    if isSVM && strcmp(P.Prot, 'Cont')
-        mainLoopData.basFct = mainLoopData.basFct(:,find(contains(SPM.xX.name, P.CondIndexNames( 2 )))); % Index for Regulation block == 2
-        mainLoopData.nrBasFct = 1;
-        % this contrast does not count constant term
-        tmpSpmDesign = SPM.xX.X(1:P.NrOfVolumes-P.nrSkipVol,contains(SPM.xX.name, P.CondIndexNames( 2 ))); % Index for Regulation block == 2
-    end
-        
     %% High-pass filter for iGLM given by SPM
     mainLoopData.K = SPM.xX.K;
-
-    %% AR(1) for cGLM in signal preproessing
-    if ~P.iglmAR1
-        P.spmDesign = tmpSpmDesign;
-    else
-        P.spmDesign = arRegr(P.aAR1, tmpSpmDesign);
-    end
-
-    % PSC
-    if isPSC && (strcmp(P.Prot, 'Cont') || strcmp(P.Prot, 'ContTask') || strcmp(P.Prot, 'Inter'))
-
-        if P.NFRunNr > 1
-            lSpmDesign = size(tmpSpmDesign,1);
-            P.prevNfbDataFolder = fullfile(P.WorkFolder,['NF_Data_' sprintf('%d',P.NFRunNr-1)]);
-            % get motion correction parameters
-            pathPrevP = dir(fullfile(P.prevNfbDataFolder,'*_P.mat'));
-            prevP = load(fullfile(P.prevNfbDataFolder,pathPrevP.name));
-            % get time-series
-            pathPrevTS = dir(fullfile(P.prevNfbDataFolder,'*_raw_tsROIs.mat'));
-            mainLoopData.prevTS = load(fullfile(P.prevNfbDataFolder,pathPrevTS.name));
-            % construct regressors
-            tmpRegr = [ones(lSpmDesign,1) P.linRegr zscore(prevP.motCorrParam)];
-            if P.cglmAR1
-                mainLoopData.prev_cX0 = arRegr(P.aAR1,tmpRegr);
-            end
-            mainLoopData.prev_cX0 = [tmpRegr, P.spmDesign];
-        end
-
-    end
 
 else
     mainLoopData.basFct = [];
@@ -276,14 +235,6 @@ else
     mainLoopData.spmMaskTh = mean(SPM.xM.TH)*ones(size(SPM.xM.TH));
     mainLoopData.pVal = .1;
     mainLoopData.statMap3D_iGLM = [];
-end
-
-%% rGLM beta init
-mainLoopData.betRegr = cell(P.NrROIs,1);
-for i=1:P.NrROIs
-    % TODO:
-    % 2 - linear trend and constant; 6 - motion regressors
-    mainLoopData.betRegr{i} = zeros(P.NrOfVolumes-P.nrSkipVol, 2+6+size(P.spmDesign,2));
 end
 
 %% rtQA init
@@ -327,8 +278,8 @@ if P.isRTQA
     rtQA_matlab.snrData.m2NonSmoothed = [];
     rtQA_matlab.snrData.iteration = 1;
 
-    rtQA_matlab.betRegr = mainLoopData.betRegr;
-    
+    rtQA_matlab.betRegr = cell(P.NrROIs,1);
+
     rtQA_matlab.Bn = cell(P.NrROIs,1);
     rtQA_matlab.var = cell(P.NrROIs,1);
     rtQA_matlab.tn.pos = cell(P.NrROIs,1);

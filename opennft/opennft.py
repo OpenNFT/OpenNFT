@@ -924,8 +924,13 @@ class OpenNFT(QWidget):
             dataMC = np.array(self.outputSamples['motCorrParam'], ndmin=2)
             n = len(dataRealRaw[0, :]) - 1
             data = dataRealRaw[:, n]
-            betaCoeff = np.array(
-                self.eng.evalin('base', 'cellfun(@(a)a(mainLoopData.indVolNorm,2),rtQA_matlab.betRegr)'), ndmin=2)
+
+            if self.P['Type'] != 'DCM':
+                betaCoeff = np.array(
+                    self.eng.evalin('base', 'cellfun(@(a)a(mainLoopData.indVolNorm,2),rtQA_matlab.betRegr)'), ndmin=2)
+            else:
+                betaCoeff = np.zeros((int(self.P['NrROIs']),1))
+
 
             for i in range(int(self.P['NrROIs'])):
                 self.windowRTQA.linTrendCoeff[i, n] = betaCoeff[i]
