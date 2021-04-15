@@ -248,8 +248,14 @@ for indRoi = 1:P.NrROIs
             tContr.neg = [ zeros(length(betaReg)-length(tContr.neg),1); tContr.neg ];
             
             if (tmp_ind_end >= 3*regrStep)
-                rtQA_matlab.tGlmProcTimeSeries.pos(indRoi,tmp_ind_end) = tContr.pos'*betaReg /sqrt(rtQA_matlab.varErGlmProcTimeSeries(indRoi,tmp_ind_end)*tContr.pos'*inv(cX0'*cX0)*tContr.pos);
-                rtQA_matlab.tGlmProcTimeSeries.neg(indRoi,tmp_ind_end) = tContr.neg'*betaReg /sqrt(rtQA_matlab.varErGlmProcTimeSeries(indRoi,tmp_ind_end)*tContr.neg'*inv(cX0'*cX0)*tContr.neg);
+
+                invCX0 = inv(cX0'*cX0);
+                pos_invCX0 = tContr.pos'*invCX0*tContr.pos;
+                neg_invCX0 = tContr.neg'*invCX0*tContr.neg;
+
+                rtQA_matlab.tGlmProcTimeSeries.pos(indRoi,tmp_ind_end) = tContr.pos'*betaReg /sqrt(rtQA_matlab.varErGlmProcTimeSeries(indRoi,tmp_ind_end)*pos_invCX0);
+                rtQA_matlab.tGlmProcTimeSeries.neg(indRoi,tmp_ind_end) = tContr.neg'*betaReg /sqrt(rtQA_matlab.varErGlmProcTimeSeries(indRoi,tmp_ind_end)*neg_invCX0);
+
             end
         end
 
