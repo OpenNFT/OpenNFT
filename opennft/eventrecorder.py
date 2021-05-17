@@ -51,14 +51,14 @@ class EventRecorder(object):
     def __init__(self):
         # TODO: change to dataframe
         timeVectorLength = len(list(Times))
-        self.records = np.zeros((1, timeVectorLength), dtype=np.dtype('Float64'))
+        self.records = np.zeros((1, timeVectorLength), dtype=np.float64)
 
     # --------------------------------------------------------------------------
     def initialize(self, NrOfVolumes):
         """
         """
         timeVectorLength = len(list(Times))
-        self.records = np.zeros((NrOfVolumes + 1, timeVectorLength), dtype=np.dtype('Float64'))
+        self.records = np.zeros((NrOfVolumes + 1, timeVectorLength), dtype=np.float64)
 
     # --------------------------------------------------------------------------
     def recordEvent(self, position: Times, eventNumber, value=None):
