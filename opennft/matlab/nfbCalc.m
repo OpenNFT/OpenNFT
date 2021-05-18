@@ -15,7 +15,7 @@ function displayData = nfbCalc(indVol, displayData, ...
 % Note, DCM feedback estimates are hardcorded separately as function input.
 % Generalizations are planned.
 %__________________________________________________________________________
-% Copyright (C) 2016-2019 OpenNFT.org
+% Copyright (C) 2016-2021 OpenNFT.org
 %
 % Written by Yury Koush
 
@@ -39,7 +39,8 @@ if isPSC && (strcmp(P.Prot, 'Cont') || strcmp(P.Prot, 'ContTask'))
     if condition == 2
 
         % count NF regulation blocks
-        k = cellfun(@(x) x(1) == indVolNorm, P.ProtNF);
+        % index for Regulation block == 2
+        k = cellfun(@(x) x(1) == indVolNorm, P.ProtCond{ 2 });
         if any(k)
             blockNF = find(k);
             firstNF = indVolNorm;
@@ -49,10 +50,12 @@ if isPSC && (strcmp(P.Prot, 'Cont') || strcmp(P.Prot, 'ContTask'))
         % or any other fashion
         i_blockBAS = [];
         if blockNF<2
-            i_blockBAS = P.ProtBAS{blockNF}(end-6:end);
+            % according to json protocol
+            % index for Baseline == 1
+            i_blockBAS = P.ProtCond{ 1 }{blockNF}(end-6:end);
         else            
             for iBas = 1:blockNF
-                i_blockBAS = [i_blockBAS P.ProtBAS{iBas}(3:end)]; 
+                i_blockBAS = [i_blockBAS P.ProtCond{ 1 }{iBas}(3:end)];
                 % ignore 2 scans for HRF shift, e.g. if TR = 2sec
             end
         end
@@ -110,9 +113,9 @@ if isPSC && strcmp(P.Prot, 'Inter')
     Reward = mainLoopData.Reward;
 
     % NF estimation condition
-    if condition == 2             
+    if condition == 2
         % count NF regulation blocks
-        k = cellfun(@(x) x(end) == indVolNorm, P.ProtNF);
+        k = cellfun(@(x) x(end) == indVolNorm, P.ProtCond{ 2 });
         if any(k)
             blockNF = find(k);
             firstNF = indVolNorm;
@@ -120,16 +123,16 @@ if isPSC && strcmp(P.Prot, 'Inter')
         end
 
         regSuccess = 0;
-        if firstNF == indVolNorm % the first volume of the NF block is 
+        if firstNF == indVolNorm % the first volume of the NF block is
             % expected when assigning volumes for averaging, take HRF delay
             % into account
             if blockNF<2
-                i_blockNF = P.ProtNF{blockNF}(end-6:end); 
-                i_blockBAS = P.ProtBAS{blockNF}(end-6:end);
+                i_blockNF = P.ProtCond{ 2 }{blockNF}(end-6:end);
+                i_blockBAS = P.ProtCond{ 1 }{blockNF}(end-6:end);
             else
-                i_blockNF = P.ProtNF{blockNF}(end-6:end);
-                i_blockBAS = [P.ProtBAS{blockNF}(end-5:end) ...
-                              P.ProtBAS{blockNF}(end)+1];
+                i_blockNF = P.ProtCond{ 2 }{blockNF}(end-6:end);
+                i_blockBAS = [P.ProtCond{ 1 }{blockNF}(end-5:end) ...
+                              P.ProtCond{ 1 }{blockNF}(end)+1];
             end
 
             for indRoi = 1:P.NrROIs
@@ -145,14 +148,14 @@ if isPSC && strcmp(P.Prot, 'Inter')
                                          mainLoopData.mposMin(indVolNorm));
                 mCondScaled = (mCond - mainLoopData.mposMin(indVolNorm)) / ...
                                         (mainLoopData.mposMax(indVolNorm) - ...
-                                         mainLoopData.mposMin(indVolNorm));                   
-                norm_percValues(indRoi) = mCondScaled - mBasScaled;               
+                                         mainLoopData.mposMin(indVolNorm));
+                norm_percValues(indRoi) = mCondScaled - mBasScaled;
             end
 
             % compute average %SC feedback value
-            tmp_fbVal = eval(P.RoiAnatOperation); 
+            tmp_fbVal = eval(P.RoiAnatOperation);
             mainLoopData.vectNFBs(indVolNorm) = tmp_fbVal;
-            dispValue = round(P.MaxFeedbackVal*tmp_fbVal, P.FeedbackValDec); 
+            dispValue = round(P.MaxFeedbackVal*tmp_fbVal, P.FeedbackValDec);
 
             % [0...P.MaxFeedbackVal], for Display
             if ~P.NegFeedback && dispValue < 0
@@ -164,7 +167,7 @@ if isPSC && strcmp(P.Prot, 'Inter')
                 dispValue = P.MaxFeedbackVal;
             end
 
-            % regSuccess and Shaping 
+            % regSuccess and Shaping
             P.actValue(blockNF) = tmp_fbVal;
             if P.NFRunNr == 1
                 if blockNF == 1
@@ -184,10 +187,10 @@ if isPSC && strcmp(P.Prot, 'Inter')
                     end
                 end
             elseif P.NFRunNr>1
-                tmp_actValue = [P.prev_actValue P.actValue]; 
+                tmp_actValue = [P.prev_actValue P.actValue];
                 % creates a vector from previous run and current run
                 lactVal = length(tmp_actValue);
-                tmp_Prev = median(tmp_actValue(lactVal-3:lactVal-1)); 
+                tmp_Prev = median(tmp_actValue(lactVal-3:lactVal-1));
                 % takes 3 last, except for current
                 if  (0.9 * P.actValue(blockNF) >= tmp_Prev)  % 10% larger
                     regSuccess = 1;
@@ -203,15 +206,15 @@ if isPSC && strcmp(P.Prot, 'Inter')
         tmp_fbVal = 0;
     end
 
-    if mainLoopData.flagEndPSC 
+    if mainLoopData.flagEndPSC
         mainLoopData.dispValues(indVolNorm) = dispValue;
         mainLoopData.dispValue = dispValue;
     else
         mainLoopData.dispValues(indVolNorm) = 0;
-        mainLoopData.dispValue = 0;                                    
+        mainLoopData.dispValue = 0;
     end
 
-    mainLoopData.vectNFBs(indVolNorm) = tmp_fbVal;    
+    mainLoopData.vectNFBs(indVolNorm) = tmp_fbVal;
     mainLoopData.blockNF = blockNF;
     mainLoopData.firstNF = firstNF;
     mainLoopData.Reward = '';
@@ -269,7 +272,7 @@ if isSVM
 
     if condition == 2
         % count NF regulation blocks
-        k = cellfun(@(x) x(end) == indVolNorm, P.ProtNF);
+        k = cellfun(@(x) x(end) == indVolNorm, P.ProtCond{ 2 });
         if any(k)
             blockNF = find(k);
             firstNF = indVolNorm;
@@ -281,7 +284,7 @@ if isSVM
         end
 
         % compute average feedback value
-        tmp_fbVal = eval(P.RoiAnatOperation); 
+        tmp_fbVal = mean(norm_percValues);%eval(P.RoiAnatOperation); 
         dispValue = round(P.MaxFeedbackVal*tmp_fbVal, P.FeedbackValDec); 
 
         mainLoopData.norm_percValues(indVolNorm,:) = norm_percValues;

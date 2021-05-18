@@ -16,7 +16,7 @@ computational modules for neurofeedback are implemented in Matlab.
 
 http://www.OpenNFT.org
 
-Copyright (C) 2016-2019 OpenNFT.org
+Copyright (C) 2016-2021 OpenNFT.org
 
 """
 

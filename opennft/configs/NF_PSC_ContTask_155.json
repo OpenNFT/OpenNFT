@@ -1,8 +1,7 @@
 {
-"RegulationName": "NFBREG",
-"TaskName": "TASK",
-"Contrast": "+1*NFBREG;-1*TASK",
-"Cond": [
+"ContrastActivation": "+1*NFBREG;-1*TASK",
+"SignalPreprocessingBasis": "NFBREG",
+"ConditionIndex": [
 	{
 
 		"ConditionName": "NFBREG",

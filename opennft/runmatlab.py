@@ -71,7 +71,7 @@ def connect_to_matlab(start=True) -> bool:
 
     for name, helper in helpers.items():
         if not helper.connect(start=start, name_prefix=name):
-            logger.error('Cannot connect to Matlab "{}"'.format(name))
+            logger.warning('Cannot connect to Matlab "{}"'.format(name))
             return False
 
     return True

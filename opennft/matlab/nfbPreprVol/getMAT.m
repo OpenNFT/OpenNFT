@@ -7,7 +7,7 @@ function mat = getMAT(hdr,dim)
 % of their real-time data.
 %
 %__________________________________________________________________________
-% Copyright (C) 2016-2019 OpenNFT.org
+% Copyright (C) 2016-2021 OpenNFT.org
 %
 % Exemplified by Yury Koush and John Ashburner 
 % (see spm_dicom_convert.m)

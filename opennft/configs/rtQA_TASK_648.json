@@ -1,7 +1,7 @@
 {
-	"RegulationName": "TASK",
-	"Contrast": "+1*TASK",
-	"Cond": [
+	"ContrastActivation": "+1*TASK",
+	"SignalPreprocessingBasis": "TASK",
+	"ConditionIndex": [
 		{
 			"ConditionName": "TASK",
 			"OnOffsets": [

@@ -4,7 +4,7 @@
 Event recorder class for performance estimation
 
 __________________________________________________________________________
-Copyright (C) 2016-2019 OpenNFT.org
+Copyright (C) 2016-2021 OpenNFT.org
 
 Written by Artem Nikonorov, Yury Koush
 
@@ -51,14 +51,14 @@ class EventRecorder(object):
     def __init__(self):
         # TODO: change to dataframe
         timeVectorLength = len(list(Times))
-        self.records = np.zeros((1, timeVectorLength), dtype=np.dtype('Float64'))
+        self.records = np.zeros((1, timeVectorLength), dtype=np.float64)
 
     # --------------------------------------------------------------------------
     def initialize(self, NrOfVolumes):
         """
         """
         timeVectorLength = len(list(Times))
-        self.records = np.zeros((NrOfVolumes + 1, timeVectorLength), dtype=np.dtype('Float64'))
+        self.records = np.zeros((NrOfVolumes + 1, timeVectorLength), dtype=np.float64)
 
     # --------------------------------------------------------------------------
     def recordEvent(self, position: Times, eventNumber, value=None):

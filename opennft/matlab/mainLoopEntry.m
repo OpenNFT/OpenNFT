@@ -9,7 +9,7 @@ function mainLoopEntry(indVol)
 % output:
 % Output is assigned to workspace variables.
 %__________________________________________________________________________
-% Copyright (C) 2016-2019 OpenNFT.org
+% Copyright (C) 2016-2021 OpenNFT.org
 %
 % Written by Yury Koush, Artem Nikonorov
 
@@ -88,6 +88,21 @@ if (strcmp(P.Prot, 'Inter') ||  strcmp(P.Prot, 'Cont') || strcmp(P.Prot, 'ContTa
                 mainLoopData.Reward = '';
                 displayData.displayStage = 'instruction';
             case 3
+                mainLoopData.flagEndPSC = 0;
+                mainLoopData.dispValue = 0;
+                mainLoopData.Reward = '';
+                displayData.displayStage = 'instruction';
+            case 4
+                mainLoopData.flagEndPSC = 0;
+                mainLoopData.dispValue = 0;
+                mainLoopData.Reward = '';
+                displayData.displayStage = 'instruction';
+            case 5
+                mainLoopData.flagEndPSC = 0;
+                mainLoopData.dispValue = 0;
+                mainLoopData.Reward = '';
+                displayData.displayStage = 'instruction';
+            case 6
                 mainLoopData.flagEndPSC = 1;
                 displayData.displayStage = 'feedback';
         end

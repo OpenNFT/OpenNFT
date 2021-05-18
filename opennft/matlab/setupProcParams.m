@@ -16,7 +16,7 @@ function setupProcParams()
 % An end-user needs to set and justify their own parameter
 % files and contrasts.
 %__________________________________________________________________________
-% Copyright (C) 2016-2019 OpenNFT.org
+% Copyright (C) 2016-2021 OpenNFT.org
 %
 % Written by Yury Koush
 
@@ -194,9 +194,9 @@ SPM = setupSPM(P);
 mainLoopData.K.X0 = SPM.xX.K.X0;
 
 %% Explicit contrasts (optional)
-if isfield(P,'Contrast')
-    mainLoopData.tContr.pos = P.Contrast; 
-    mainLoopData.tContr.neg = -P.Contrast; 
+if isfield(P,'ContrastActivation')
+    mainLoopData.tContr.pos = P.ContrastActivation;
+    mainLoopData.tContr.neg = -P.ContrastActivation;
 end
 
 if ~P.isRestingState
@@ -214,36 +214,18 @@ if ~P.isRestingState
     mainLoopData.pVal = .01;
     mainLoopData.statMap3D_iGLM = [];
 
-    % PSC
-    if isPSC && (strcmp(P.Prot, 'Cont') || strcmp(P.Prot, 'ContTask') || strcmp(P.Prot, 'Inter'))
-        tmpSpmDesign = SPM.xX.X(1:P.NrOfVolumes-P.nrSkipVol,contains(SPM.xX.name, P.CondName));
-    end
+    mainLoopData.signalPreprocGlmDesign = mainLoopData.basFct(:,contains(SPM.xX.name, P.SignalPreprocessingBasis));
+    mainLoopData.nrSignalPreprocGlmDesign = size(mainLoopData.signalPreprocGlmDesign,2);
 
     % DCM
     if isDCM && strcmp(P.Prot, 'InterBlock')
-        % this contrast does not count constant term
-        tmpSpmDesign = SPM.xX.X(1:P.lengthDCMTrial,2);
         [mainLoopData.DCM_EN, mainLoopData.dcmParTag, ...
             mainLoopData.dcmParOpp] = dcmPrep(SPM);
     end
 
-    % SVM
-    if isSVM && strcmp(P.Prot, 'Cont')
-        mainLoopData.basFct = mainLoopData.basFct(:,find(contains(SPM.xX.name, P.CondName)));
-        mainLoopData.nrBasFct = 1;
-        % this contrast does not count constant term
-        tmpSpmDesign = SPM.xX.X(1:P.NrOfVolumes-P.nrSkipVol,contains(SPM.xX.name, P.CondName));
-    end
-        
     %% High-pass filter for iGLM given by SPM
     mainLoopData.K = SPM.xX.K;
 
-    %% AR(1) for cGLM in signal preproessing
-    if ~P.iglmAR1
-        P.spmDesign = tmpSpmDesign;
-    else
-        P.spmDesign = arRegr(P.aAR1, tmpSpmDesign);
-    end
 else
     mainLoopData.basFct = [];
     mainLoopData.nrBasFct = 6; % size of motion regressors, P.motCorrParam
@@ -297,12 +279,7 @@ if P.isRTQA
     rtQA_matlab.snrData.iteration = 1;
 
     rtQA_matlab.betRegr = cell(P.NrROIs,1);
-    for i=1:P.NrROIs
-        % TODO:
-        % 2 - linear trend and constant; 6 - motion regressors
-        rtQA_matlab.betRegr{i} = zeros(P.NrOfVolumes-P.nrSkipVol, 2+6+size(P.spmDesign,2));
-    end
-    
+
     rtQA_matlab.Bn = cell(P.NrROIs,1);
     rtQA_matlab.var = cell(P.NrROIs,1);
     rtQA_matlab.tn.pos = cell(P.NrROIs,1);
@@ -324,8 +301,8 @@ if P.isRTQA
         rtQA_matlab.cnrData.condData.iteration = 1;
 
         % indexes of baseline and condition for CNR calculation
-        tmpindexesCond = find(SPM.xX.X(:,contains(SPM.xX.name, P.CondName))>0.6);
-        tmpindexesBas = find(SPM.xX.X(:,contains(SPM.xX.name, P.CondName))<0.1);
+        tmpindexesCond = find(SPM.xX.X(:,contains(SPM.xX.name, P.CondIndexNames( 2 )))>0.6); % Index for Regulation block == 2
+        tmpindexesBas = find(SPM.xX.X(:,contains(SPM.xX.name, P.CondIndexNames( 2 )))<0.1); % Index for Regulation block == 2
         if isDCM
             tmpindexesBas = tmpindexesBas(1:end-1)+1;
             tmpindexesCond = tmpindexesCond-1;
@@ -364,7 +341,6 @@ if isZeroPadVol
     zeroPadVol = zeros(dimTemplMotCorr(1),dimTemplMotCorr(2),nrZeroPadVol);
     dimTemplMotCorr(3) = dimTemplMotCorr(3)+nrZeroPadVol*2;
     imgVolTempl = cat(3, cat(3, zeroPadVol, tmp_imgVolTempl), zeroPadVol);
-%     clear tmp_imgVolTempl
 end
 
 mainLoopData.dimTemplMotCorr = dimTemplMotCorr;

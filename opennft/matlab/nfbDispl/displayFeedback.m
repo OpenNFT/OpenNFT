@@ -8,7 +8,7 @@ function displayFeedback(displayData)
 % End-user is adviced to configure the use of PTB on their own workstation
 % and justify more advanced configuration for PTB.
 %__________________________________________________________________________
-% Copyright (C) 2016-2020 OpenNFT.org
+% Copyright (C) 2016-2021 OpenNFT.org
 %
 % Written by Yury Koush, Artem Nikonorov
 
@@ -25,7 +25,7 @@ eval(varsFromStruct(displayData, fieldNames, defaultFields))
 
 if ~strcmp(feedbackType, 'DCM')
     dispColor = [255, 255, 255];
-    instrColor = [200, 200, 200];
+    instrColor = [155, 150, 150];
 end
 
 switch feedbackType    
@@ -104,7 +104,7 @@ switch feedbackType
         end
         
     %% Intermittent PSC
-    case 'value_fixation'
+case 'value_fixation'
         indexSmiley = round(dispValue);
         if indexSmiley == 0
             indexSmiley = 1;

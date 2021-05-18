@@ -20,7 +20,7 @@ Each plugin has to be a subclass of *Process class specified in pyniexp.mlplugin
 This plugin demonstrates how volume-wise iGLM infomration for the ROIs can be extracted.
 
 __________________________________________________________________________
-Copyright (C) 2016-2019 OpenNFT.org
+Copyright (C) 2016-2021 OpenNFT.org
 
 Written by Tibor Auer
 

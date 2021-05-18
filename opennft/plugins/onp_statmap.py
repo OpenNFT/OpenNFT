@@ -23,7 +23,7 @@ Its process method converts the 3D map into 2D mosaic for visualization, and if 
 N.B.: Displaying the activation map can significantly slows down plugin and OpenNFT!
 
 __________________________________________________________________________
-Copyright (C) 2016-2019 OpenNFT.org
+Copyright (C) 2016-2021 OpenNFT.org
 
 Written by Tibor Auer
 

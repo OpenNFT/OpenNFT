@@ -1,7 +1,7 @@
 {
-	"RegulationName": "NFBREG",
-	"Contrast": "+1*NFBREG",
-	"Cond": [
+	"ContrastActivation": "+1*NFBREG",
+	"SignalPreprocessingBasis": "NFBREG",
+	"ConditionIndex": [
 		{
 			"ConditionName": "NFBREG",
 			"OnOffsets": [
