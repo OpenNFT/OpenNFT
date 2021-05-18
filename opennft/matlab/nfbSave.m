@@ -23,7 +23,7 @@ if P.UseTCPData
     tcp.CloseConnection;
 end
 
-[isPSC, isDCM, isSVM, isIGLM] = getFlagsType(P);
+flags = getFlagsType(P);
 
 folder = P.nfbDataFolder;
 
@@ -96,7 +96,7 @@ if mainLoopData.statMapCreated
             varianceBas = rtQA_matlab.cnrData.basData.m2Smoothed / (rtQA_matlab.cnrData.basData.iteration - 1);
             varianceCond = rtQA_matlab.cnrData.condData.m2Smoothed / (rtQA_matlab.cnrData.condData.iteration - 1);
             rtQA_matlab.cnrData.cnrVol = (meanCond - meanBas) ./ ((varianceBas + varianceCond).^.5);
-        end;
+        end
 
         assignin('base', 'rtQA_matlab', rtQA_matlab);
      end
@@ -131,10 +131,10 @@ save([folder filesep P.SubjectID '_' ...
     num2str(P.NFRunNr) '_P' '.mat'], '-struct', 'P');
 
 % save ROIs
-if isPSC || isSVM
+if flags.isPSC || flags.isSVM || flags.isCorr
     roiData.ROIs = evalin('base', 'ROIs');
 end
-if isDCM
+if flags.isDCM
     roiData.ROIsAnat = evalin('base', 'ROIsAnat');
     roiData.ROIsGroup = evalin('base', 'ROIsGroup');
     roiData.ROIsGlmAnat = evalin('base', 'ROIsGlmAnat');
@@ -179,7 +179,7 @@ if isfield(mainLoopData, 'vectNFBs')
     % save activation map(s)
     folder = [P.WorkFolder filesep 'NF_Data_' num2str(P.NFRunNr)];
     if ~isempty(mainLoopData.statMap3D_iGLM)
-        if ~isDCM
+        if ~flags.isDCM
             statVolData = mainLoopData.statMap3D_iGLM;
             save([folder filesep 'statVolData_' ...
                 sprintf('%02d',P.NFRunNr) '.mat'], 'statVolData');
@@ -197,7 +197,7 @@ if isfield(mainLoopData, 'vectNFBs')
     fileTimeVectors_display = [folder filesep 'TimeVectors_display_' ...
         sprintf('%02d', P.NFRunNr) '.txt'];
     
-    if ~isSVM && exist(fileTimeVectors_display, 'file')
+    if ~flags.isSVM && exist(fileTimeVectors_display, 'file')
         recs = load([folder filesep 'TimeVectors_' ...
             sprintf('%02d', P.NFRunNr) '.txt']);
         recsDisplay = load(fileTimeVectors_display);

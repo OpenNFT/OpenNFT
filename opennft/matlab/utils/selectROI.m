@@ -18,7 +18,7 @@ function selectROI(pathName)
 
 P = evalin('base', 'P');
 
-[isPSC, isDCM, isSVM, isIGLM] = getFlagsType(P);
+flags = getFlagsType(P);
 
 if strcmp(P.DataType, 'DICOM')
     fDICOM = true;
@@ -34,7 +34,7 @@ end
 P.DynROI = false;
 
 %% ROIs in a single folder
-if isPSC || P.isRestingState
+if flags.isPSC || flags.isSVM || flags.isCorr || P.isRestingState
     roiDir = pathName;
     roiNames = {};
     roiNames = cellstr([spm_select('FPList', roiDir, '^.*.img$'); ...
@@ -58,30 +58,7 @@ if isPSC || P.isRestingState
     assignin('base', 'ROIs', ROIs);    
 end
 
-%% ROIs in single folder
-if isSVM
-    
-    %% ROIs
-    roiDir = pathName;
-    roiNames = {};
-    roiNames = cellstr([spm_select('FPList', roiDir, '^.*.img$'); ...
-                        spm_select('FPList', roiDir, '^.*.nii$')]);
-
-    P.NrROIs = length(roiNames);
-    P.ROINames = roiNames;
-    
-    for iFile = 1:P.NrROIs
-        [ROIs(iFile).voxelCoord, ROIs(iFile).voxelIntens, ...
-         ROIs(iFile).voxelIndex, ROIs(iFile).mat, ...
-         ROIs(iFile).dim, ROIs(iFile).vol] = readVol(roiNames{iFile});
-        [slNrImg2DdimX, slNrImg2DdimY, img2DdimX, img2DdimY] = ...
-                                             getMosaicDim(ROIs(iFile).dim);   
-        ROIs(iFile).vol(ROIs(iFile).vol < 0.5) = 0;
-        ROIs(iFile).vol(ROIs(iFile).vol >= 0.5) = 1;
-        ROIs(iFile).mask2D = vol3Dimg2D(ROIs(iFile).vol, slNrImg2DdimX, ...
-                     slNrImg2DdimY, img2DdimX, img2DdimY, ROIs(iFile).dim);
-    end
-   
+if flags.isSVM
     %% Weights   
     weightDir = P.WeightsFileName;
     weightNames = {};
@@ -100,14 +77,13 @@ if isSVM
                                   slNrImg2DdimX, slNrImg2DdimY, img2DdimX, ...
                                     img2DdimY, WEIGHTs(iFile).dim);
     end
-    
-    assignin('base', 'ROIs', ROIs); 
+
     assignin('base', 'WEIGHTs', WEIGHTs);            
 end
 
 
 %% Anatomy & group ROIs
-if isDCM
+if flags.isDCM
     %% Anat
     roiDirAnat = pathName{1};
     roiNamesAnat = {};

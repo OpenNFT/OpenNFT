@@ -17,7 +17,7 @@ P.tRoiBoundaries = {};
 P.cRoiBoundaries = {};
 P.sRoiBoundaries = {};
 
-[isPSC, isDCM, isSVM, isIGLM] = getFlagsType(P);
+flags = getFlagsType(P);
 
 %% Background: EPI template or Anatomy
 displayBgStructName = P.StructBgFile;
@@ -38,11 +38,11 @@ else
 end    
 
 %% ROIs
-if isDCM
+if flags.isDCM
     ROIsAnat = evalin('base', 'ROIsAnat');
     ROIsOverlay = ROIsAnat;
 end
-if isPSC || isSVM || P.isRestingState
+if flags.isPSC || flags.isSVM || flags.isCorr || P.isRestingState
     ROIs = evalin('base', 'ROIs');
     ROIsOverlay = ROIs;
 end
@@ -66,7 +66,7 @@ strParam.centre    = mmcentre(1:3);
 % Display modes: [Background+Stat+ROIs, Background+Stat, Background+ROIs]
 strParam.modeDispl = [0 0 1]; 
 displStat = [];
-if isDCM
+if flags.isDCM
     [imgt, imgc, imgs] = redrawall(displBackgr.vol, displBackgr.mat, ...
         ROIsAnat, displStat); % ?imgs/imgc names under spm
 else

@@ -28,14 +28,17 @@ mainLoopData = evalin('base', 'mainLoopData');
 % functions could deal with time-referencing issues between 2 parallel Matlab
 % processes, i.e. core process and PTB helper.
 if indVol == double(P.nrSkipVol)+1
-    P.expOns_t6 = GetSecs;
+    if ~isempty(which('GetSecs')), P.expOns_t6 = GetSecs; % PTB may not be installed
+    else, P.expOns_t6 = cputime; end
     fprintf('\n\n=============')
     fprintf('\nMatlab time stamp t6!')
     fprintf('\n=============\n\n')
 end
 
+flags = getFlagsType(P);
+
 if (strcmp(P.Prot, 'Inter') ||  strcmp(P.Prot, 'Cont') || strcmp(P.Prot, 'ContTask') || strcmp(P.Prot, 'Rest'))  && ...
-        (strcmp(P.Type, 'PSC')   ||  strcmp(P.Type, 'SVM') ||  strcmp(P.Type, 'None') )
+        (flags.isPSC ||  flags.isSVM || flags.isCorr || flags.isNone)
     
     mainLoopData.indVolNorm = indVol - P.nrSkipVol;
     
@@ -121,7 +124,7 @@ if (strcmp(P.Prot, 'Inter') ||  strcmp(P.Prot, 'Cont') || strcmp(P.Prot, 'ContTa
 end
 
 %% DCM
-if strcmp(P.Prot, 'InterBlock') && strcmp(P.Type, 'DCM')
+if strcmp(P.Prot, 'InterBlock') && flags.isDCM
     
     if ~isempty(find(P.beginDCMblock == indVol-P.nrSkipVol,1))
         mainLoopData.NrDCMblocks = mainLoopData.NrDCMblocks + 1;

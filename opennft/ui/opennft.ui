@@ -1555,6 +1555,11 @@
                                                                                                     </item>
                                                                                                     <item>
                                                                                                          <property name="text">
+                                                                                                              <string>Corr</string>
+                                                                                                         </property>
+                                                                                                    </item>
+                                                                                                    <item>
+                                                                                                         <property name="text">
                                                                                                               <string>None</string>
                                                                                                          </property>
                                                                                                     </item>

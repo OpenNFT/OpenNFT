@@ -1,0 +1,18 @@
+{
+	"ContrastActivation": "+1*NFBREG",
+	"SignalPreprocessingBasis": "NFBREG",
+	"ConditionIndex": [
+		{
+			"ConditionName": "NFBREG",
+			"OnOffsets": [
+				[11,20],
+				[31,40],
+				[51,60],
+				[71,80],
+				[91,100],
+				[111,120],
+				[131,140]
+			]
+		}
+	]
+}
