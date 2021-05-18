@@ -34,7 +34,7 @@ evalin('base', 'clear mmOrthView;');
 
 if ~exist(fullfile(P.WorkFolder,'Settings')), mkdir(fullfile(P.WorkFolder,'Settings')); end
 
-[isPSC, isDCM, isSVM, isIGLM] = getFlagsType(P);
+flags = getFlagsType(P);
 
 if strcmp(P.DataType, 'DICOM')
     fDICOM = true;
@@ -124,7 +124,7 @@ mainLoopData.blockNF = 0;
 mainLoopData.firstNF = 0;
 
 %% DCM Settings
-if isDCM
+if flags.isDCM
     % This is to simplify the P.Protocol parameter listings for DCM,
     
     % -- read timing parameters from JSON file ----------------------------
@@ -152,7 +152,7 @@ if isDCM
 end
 
 %% AR(1)
-if ~isDCM
+if ~flags.isDCM
     % AR(1) for cGLM, i.e. nfb signal processing
     P.cglmAR1 = true;
     % AR(1) for iGLM
@@ -218,7 +218,7 @@ if ~P.isRestingState
     mainLoopData.nrSignalPreprocGlmDesign = size(mainLoopData.signalPreprocGlmDesign,2);
 
     % DCM
-    if isDCM && strcmp(P.Prot, 'InterBlock')
+    if flags.isDCM && strcmp(P.Prot, 'InterBlock')
         [mainLoopData.DCM_EN, mainLoopData.dcmParTag, ...
             mainLoopData.dcmParOpp] = dcmPrep(SPM);
     end
@@ -257,7 +257,7 @@ if P.isRTQA
     rtQA_python.rMSE = [];
 
     % rtQA matlab part structure preparation
-    if isDCM
+    if flags.isDCM
         rtQA_matlab.kalmanSpikesPos = zeros(P.NrROIs,P.lengthDCMTrial*P.nrNFtrials);
         rtQA_matlab.kalmanSpikesNeg = zeros(P.NrROIs,P.lengthDCMTrial*P.nrNFtrials);        
         rtQA_matlab.varErGlmProcTimeSeries = zeros(P.NrROIs,P.lengthDCMTrial*P.nrNFtrials);
@@ -303,7 +303,7 @@ if P.isRTQA
         % indexes of baseline and condition for CNR calculation
         tmpindexesCond = find(SPM.xX.X(:,contains(SPM.xX.name, P.CondIndexNames( 2 )))>0.6); % Index for Regulation block == 2
         tmpindexesBas = find(SPM.xX.X(:,contains(SPM.xX.name, P.CondIndexNames( 2 )))<0.1); % Index for Regulation block == 2
-        if isDCM
+        if flags.isDCM
             tmpindexesBas = tmpindexesBas(1:end-1)+1;
             tmpindexesCond = tmpindexesCond-1;
             indexesBas = [];

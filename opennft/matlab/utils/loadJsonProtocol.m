@@ -14,7 +14,7 @@ function loadJsonProtocol()
 
 P = evalin('base', 'P');
 
-[isPSC, isDCM, isSVM, isIGLM] = getFlagsType(P);
+flags = getFlagsType(P);
 
 jsonFile = P.ProtocolFile;
 NrOfVolumes = P.NrOfVolumes;
@@ -23,7 +23,7 @@ nrSkipVol = P.nrSkipVol;
 prt = loadjson(jsonFile);
 
 % -- remove dcmdef field -- %
-if isDCM
+if flags.isDCM
     prt = rmfield(prt, 'dcmdef');
 end
 
