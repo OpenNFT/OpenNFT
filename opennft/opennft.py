@@ -209,6 +209,7 @@ class OpenNFT(QWidget):
         self.fFinNFB = False
         self.orthViewUpdateInProgress = False
         self.outputSamples = {}
+        self.displaySamples = []
         self.musterInfo = {}
 
         # Core Matlab helper process
@@ -910,6 +911,7 @@ class OpenNFT(QWidget):
             if config.USE_UDP_FEEDBACK:
                 logger.info('Sending by UDP - dispValue = {}', self.displayData['dispValue'])
                 self.udpSender.send_data(self.displayData['dispValue'])
+            self.displaySamples.append(self.displayData['dispValue'])
 
         # main logic end
 
@@ -2227,6 +2229,8 @@ class OpenNFT(QWidget):
         dataRaw = np.array(self.outputSamples[key], ndmin=2)
         dataProc = np.array(self.outputSamples['kalmanProcTimeSeries'], ndmin=2)
         dataNorm = np.array(self.outputSamples['scalProcTimeSeries'], ndmin=2)
+        if config.PLOT_DISPLAYVALUE:
+            dataNorm = np.concatenate((dataNorm,np.array([self.displaySamples])/self.P['MaxFeedbackVal']))
 
         self.drawGivenRoiPlot(init, self.rawRoiPlot, dataRaw)
         self.drawGivenRoiPlot(init, self.procRoiPlot, dataProc)
