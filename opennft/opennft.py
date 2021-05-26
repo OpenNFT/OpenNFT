@@ -1799,6 +1799,7 @@ class OpenNFT(QWidget):
         self.leMinFeedbackVal.setText(str(self.settings.value('MinFeedbackVal', '-100')))
         self.sbFeedbackValDec.setValue(int(self.settings.value('FeedbackValDec', '0')))  # FixMe
         self.cbNegFeedback.setChecked(str(self.settings.value('NegFeedback', 'false')).lower() == 'true')
+        self.cbFeedbackPlot.setChecked(str(self.settings.value('PlotFeedback', 'true')).lower() == 'true')        
 
         self.leShamFile.setText(self.settings.value('ShamFile', ''))
 
@@ -1923,6 +1924,7 @@ class OpenNFT(QWidget):
         self.P['MinFeedbackVal'] = float(self.leMinFeedbackVal.text())
         self.P['FeedbackValDec'] = self.sbFeedbackValDec.value()
         self.P['NegFeedback'] = self.cbNegFeedback.isChecked()
+        self.P['PlotFeedback'] = self.cbFeedbackPlot.isChecked()
 
         self.P['ShamFile'] = self.leShamFile.text()
 
@@ -2011,6 +2013,7 @@ class OpenNFT(QWidget):
         self.settings.setValue('MinFeedbackVal', self.P['MinFeedbackVal'])
         self.settings.setValue('FeedbackValDec', self.P['FeedbackValDec'])
         self.settings.setValue('NegFeedback', self.P['NegFeedback'])
+        self.settings.setValue('PlotFeedback', self.P['PlotFeedback'])
 
         self.settings.setValue('ShamFile', self.P['ShamFile'])
 
@@ -2229,7 +2232,7 @@ class OpenNFT(QWidget):
         dataRaw = np.array(self.outputSamples[key], ndmin=2)
         dataProc = np.array(self.outputSamples['kalmanProcTimeSeries'], ndmin=2)
         dataNorm = np.array(self.outputSamples['scalProcTimeSeries'], ndmin=2)
-        if config.PLOT_DISPLAYVALUE:
+        if self.P['PlotFeedback']:
             dataNorm = np.concatenate((dataNorm,np.array([self.displaySamples])/self.P['MaxFeedbackVal']))
 
         self.drawGivenRoiPlot(init, self.rawRoiPlot, dataRaw)
