@@ -120,8 +120,8 @@ class OpenNFT(QWidget):
         self.udpSender.connect_for_sending()
         self.udpSender.sending_time_stamp = True
 
-        self.udpCondForContrast = self.P['CondForContrast']
-        if not ('BAS' in self.P['CondIndexNames']): self.udpCondForContrast.insert(0, 'BAS')
+        self.udpCondForContrast = self.P['CondIndexNames']
+        if type(self.udpCondForContrast[0]) != str: self.udpCondForContrast[0] = 'BAS'
 
     # --------------------------------------------------------------------------
     def finalizeUdpSender(self):
@@ -208,7 +208,7 @@ class OpenNFT(QWidget):
 
         self.fFinNFB = False
         self.orthViewUpdateInProgress = False
-        self.outputSamples = {}
+        self.outputSamples = {}        
         self.musterInfo = {}
 
         # Core Matlab helper process
@@ -665,7 +665,7 @@ class OpenNFT(QWidget):
             self.recorder.recordEvent(erd.Times.t6, self.iteration)
 
             # display instruction prior to data acquisition for current iteration
-            if self.P['Type'] == 'PSC':
+            if self.P['Type'] in ['PSC', 'Corr']:
                 if config.USE_PTB:
                     logger.info('instruction + {}', self.iteration)
                     self.displayScreen()
@@ -872,7 +872,7 @@ class OpenNFT(QWidget):
             # t5
             self.recorder.recordEvent(erd.Times.t5, self.iteration, time.time())
 
-        elif self.P['Type'] == 'PSC':
+        elif self.P['Type'] in ['PSC','Corr']:
             self.displayData = self.eng.nfbCalc(self.iteration, self.displayData, nargout=1)
 
             # t5
@@ -910,6 +910,7 @@ class OpenNFT(QWidget):
             if config.USE_UDP_FEEDBACK:
                 logger.info('Sending by UDP - dispValue = {}', self.displayData['dispValue'])
                 self.udpSender.send_data(self.displayData['dispValue'])
+            self.displaySamples.append(self.displayData['dispValue'])
 
         # main logic end
 
@@ -1252,6 +1253,7 @@ class OpenNFT(QWidget):
             self.eng.workspace['P'] = self.P
             self.engSPM.workspace['P'] = self.P
             self.previousIterStartTime = 0
+            self.displaySamples = []
 
             with utils.timeit("  Load protocol data:"):
                 self.loadJsonProtocol()
@@ -1797,6 +1799,7 @@ class OpenNFT(QWidget):
         self.leMinFeedbackVal.setText(str(self.settings.value('MinFeedbackVal', '-100')))
         self.sbFeedbackValDec.setValue(int(self.settings.value('FeedbackValDec', '0')))  # FixMe
         self.cbNegFeedback.setChecked(str(self.settings.value('NegFeedback', 'false')).lower() == 'true')
+        self.cbFeedbackPlot.setChecked(str(self.settings.value('PlotFeedback', 'true')).lower() == 'true')        
 
         self.leShamFile.setText(self.settings.value('ShamFile', ''))
 
@@ -1842,7 +1845,7 @@ class OpenNFT(QWidget):
     # --------------------------------------------------------------------------
     def selectRoi(self):
 
-        if self.P['Type'] == 'PSC':
+        if self.P['Type'] in ['PSC','SVM','Corr','None']:
             if not os.path.isdir(self.P['RoiFilesFolder']):
                 logger.error("Couldn't find: " + self.P['RoiFilesFolder'])
                 return
@@ -1850,26 +1853,18 @@ class OpenNFT(QWidget):
             self.eng.selectROI(self.P['RoiFilesFolder'], nargout=0)
             self.engSPM.selectROI(self.P['RoiFilesFolder'], nargout=0)
 
-        elif self.P['Type'] == 'SVM':
-
-            if not os.path.isdir(self.P['RoiFilesFolder']):
-                logger.error("Couldn't find: " + self.P['RoiFilesFolder'])
-                return
-
-            self.eng.selectROI(self.P['RoiFilesFolder'], nargout=0)
-            self.engSPM.selectROI(self.P['RoiFilesFolder'], nargout=0)
+            if self.P['Type'] == 'Corr':
+                if int(self.eng.evalin('base','P.NrROIs')) < 2:
+                    logger.error("More than 1 ROI is required for Correlations")
+                    return
+                if int(self.eng.evalin('base','P.NrROIs')) > 2:
+                    logger.error("Correlations between more than 2 ROI is not yet implemented")
+                    return
 
         elif self.P['Type'] == 'DCM':
             p = [self.P['RoiAnatFolder'], self.P['RoiGroupFolder']]
             self.eng.selectROI(p, nargout=0)
             self.engSPM.selectROI(p, nargout=0)
-        elif self.P['Type'] == 'None':
-            if not os.path.isdir(self.P['RoiFilesFolder']):
-                logger.error("Couldn't find: " + self.P['RoiFilesFolder'])
-                return
-
-            self.eng.selectROI(self.P['RoiFilesFolder'], nargout=0)
-            self.engSPM.selectROI(self.P['RoiFilesFolder'], nargout=0)
 
     # --------------------------------------------------------------------------
     def actualize(self):
@@ -1929,6 +1924,7 @@ class OpenNFT(QWidget):
         self.P['MinFeedbackVal'] = float(self.leMinFeedbackVal.text())
         self.P['FeedbackValDec'] = self.sbFeedbackValDec.value()
         self.P['NegFeedback'] = self.cbNegFeedback.isChecked()
+        self.P['PlotFeedback'] = self.cbFeedbackPlot.isChecked()
 
         self.P['ShamFile'] = self.leShamFile.text()
 
@@ -2017,6 +2013,7 @@ class OpenNFT(QWidget):
         self.settings.setValue('MinFeedbackVal', self.P['MinFeedbackVal'])
         self.settings.setValue('FeedbackValDec', self.P['FeedbackValDec'])
         self.settings.setValue('NegFeedback', self.P['NegFeedback'])
+        self.settings.setValue('PlotFeedback', self.P['PlotFeedback'])
 
         self.settings.setValue('ShamFile', self.P['ShamFile'])
 
@@ -2235,6 +2232,8 @@ class OpenNFT(QWidget):
         dataRaw = np.array(self.outputSamples[key], ndmin=2)
         dataProc = np.array(self.outputSamples['kalmanProcTimeSeries'], ndmin=2)
         dataNorm = np.array(self.outputSamples['scalProcTimeSeries'], ndmin=2)
+        if self.P['PlotFeedback']:
+            dataNorm = np.concatenate((dataNorm,np.array([self.displaySamples])/self.P['MaxFeedbackVal']))
 
         self.drawGivenRoiPlot(init, self.rawRoiPlot, dataRaw)
         self.drawGivenRoiPlot(init, self.procRoiPlot, dataProc)

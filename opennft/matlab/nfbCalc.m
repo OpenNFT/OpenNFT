@@ -28,10 +28,10 @@ end
 indVolNorm = mainLoopData.indVolNorm;
 condition = mainLoopData.condition;
 
-[isPSC, isDCM, isSVM, isIGLM] = getFlagsType(P);
+flags = getFlagsType(P);
 
 %% Continuous PSC NF
-if isPSC && (strcmp(P.Prot, 'Cont') || strcmp(P.Prot, 'ContTask'))
+if flags.isPSC && (strcmp(P.Prot, 'Cont') || strcmp(P.Prot, 'ContTask'))
     blockNF = mainLoopData.blockNF;
     firstNF = mainLoopData.firstNF;
 
@@ -106,7 +106,7 @@ if isPSC && (strcmp(P.Prot, 'Cont') || strcmp(P.Prot, 'ContTask'))
 end
 
 %% Intermittent PSC NF
-if isPSC && strcmp(P.Prot, 'Inter')
+if  strcmp(P.Prot, 'Inter') && (flags.isPSC || flags.isCorr)
     blockNF = mainLoopData.blockNF;
     firstNF = mainLoopData.firstNF;
     dispValue = mainLoopData.dispValue;
@@ -134,26 +134,34 @@ if isPSC && strcmp(P.Prot, 'Inter')
                 i_blockBAS = [P.ProtCond{ 1 }{blockNF}(end-5:end) ...
                               P.ProtCond{ 1 }{blockNF}(end)+1];
             end
-
-            for indRoi = 1:P.NrROIs
-                % Averaging across blocks
-                mBas  = median(mainLoopData.kalmanProcTimeSeries(indRoi,...
-                                                              i_blockBAS));
-                mCond = median(mainLoopData.kalmanProcTimeSeries(indRoi,...
-                                                               i_blockNF));
-
-                % Scaling
-                mBasScaled  = (mBas - mainLoopData.mposMin(indVolNorm)) / ...
-                                        (mainLoopData.mposMax(indVolNorm) - ...
-                                         mainLoopData.mposMin(indVolNorm));
-                mCondScaled = (mCond - mainLoopData.mposMin(indVolNorm)) / ...
-                                        (mainLoopData.mposMax(indVolNorm) - ...
-                                         mainLoopData.mposMin(indVolNorm));
-                norm_percValues(indRoi) = mCondScaled - mBasScaled;
+    
+            if flags.isPSC
+                for indRoi = 1:P.NrROIs
+                    % Averaging across blocks
+                    mBas  = median(mainLoopData.scalProcTimeSeries(indRoi,...
+                        i_blockBAS));
+                    mCond = median(mainLoopData.scalProcTimeSeries(indRoi,...
+                        i_blockNF));
+                    
+                    % Scaling
+                    mBasScaled  = (mBas - mainLoopData.mposMin(indVolNorm)) / ...
+                        (mainLoopData.mposMax(indVolNorm) - ...
+                        mainLoopData.mposMin(indVolNorm));
+                    mCondScaled = (mCond - mainLoopData.mposMin(indVolNorm)) / ...
+                        (mainLoopData.mposMax(indVolNorm) - ...
+                        mainLoopData.mposMin(indVolNorm));
+                    norm_percValues(indRoi) = mCondScaled - mBasScaled;
+                end
+                
+                % compute average %SC feedback value
+                tmp_fbVal = eval(P.RoiAnatOperation);
+            elseif flags.isCorr
+                rho = corrcoef(mainLoopData.scalProcTimeSeries(:,i_blockNF)'); rho = rho(1,2);
+                norm_percValues(1:P.NrROIs) = rho;
+                
+                % compute average %SC feedback value
+                tmp_fbVal = rho;
             end
-
-            % compute average %SC feedback value
-            tmp_fbVal = eval(P.RoiAnatOperation);
             mainLoopData.vectNFBs(indVolNorm) = tmp_fbVal;
             dispValue = round(P.MaxFeedbackVal*tmp_fbVal, P.FeedbackValDec);
 
@@ -224,7 +232,7 @@ if isPSC && strcmp(P.Prot, 'Inter')
 end
 
 %% trial-based DCM NF
-if isDCM
+if flags.isDCM
     indNFTrial  = P.indNFTrial;
 
     %isDcmCalculated = ~isempty(find(P.endDCMblock==indVol-P.nrSkipVol,1));
@@ -265,7 +273,7 @@ if isDCM
 end
 
 %% continuous SVM NF
-if isSVM
+if flags.isSVM
     blockNF = mainLoopData.blockNF;
     firstNF = mainLoopData.firstNF;    
     dispValue = mainLoopData.dispValue;
@@ -305,6 +313,7 @@ if isSVM
 
 end
 
+%%
 assignin('base', 'P', P);
 assignin('base', 'mainLoopData', mainLoopData);
 

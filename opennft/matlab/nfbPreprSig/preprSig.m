@@ -23,21 +23,20 @@ if indVol <= P.nrSkipVol
     return
 end
 
-[isPSC, isDCM, isSVM, isIGLM] = getFlagsType(P);
+flags = getFlagsType(P);
 
 % Get ROI masks from workspace
-if isDCM
+if flags.isDCM
     % skip processing for rest epoch and NF display
     if mainLoopData.flagEndDCM
         return
     end
     ROIsGroup = evalin('base', 'ROIsGroup');
 end
-if isPSC || P.isRestingState
+if flags.isPSC || flags.isSVM || flags.isCorr || P.isRestingState
     ROIs = evalin('base', 'ROIs');
 end
-if isSVM
-    ROIs = evalin('base', 'ROIs');
+if flags.isSVM
     WEIGHTs = evalin('base', 'WEIGHTs');
 end
 
@@ -55,18 +54,18 @@ nrRegrToCorrect = 8; % 6 MC regressors, linear trend, constant
 for indRoi = 1:P.NrROIs
     
     %% Get Raw time-series
-    if isPSC || P.isRestingState
+    if flags.isPSC || flags.isCorr || P.isRestingState
         rawTimeSeries(indRoi, indVolNorm) = mean(...
             mainLoopData.smReslVol_2D(ROIs(indRoi).mask2D>0));
     end
     
-    if isSVM
+    if flags.isSVM
         roiVect = mainLoopData.smReslVol_2D(ROIs(indRoi).mask2D>0);
         weightVect = WEIGHTs.mask2D(ROIs(indRoi).mask2D>0);
         rawTimeSeries(indRoi, indVolNorm) = dot(roiVect,weightVect);
     end
     
-    if isDCM
+    if flags.isDCM
         indNFTrial = P.indNFTrial;
         
         % manual set of ROI adaptation scheme
@@ -140,7 +139,7 @@ for indRoi = 1:P.NrROIs
     
     %% Signal Processing
     % 1. Limits for scaling
-    if isDCM
+    if flags.isDCM
         mainLoopData.initLim(indRoi) = 0.01*mean(rawTimeSeries(indRoi, :));
     else
         mainLoopData.initLim(indRoi) = 0.005*mean(rawTimeSeries(indRoi,:));
@@ -153,12 +152,12 @@ for indRoi = 1:P.NrROIs
     % to avoid NaNs given algnment to zero, see preprVol()    
     P.motCorrParam(1,:) = 0.00001; 
     
-    if isPSC || isSVM || P.isRestingState
+    if flags.isPSC || flags.isSVM || flags.isCorr || P.isRestingState
         % continuous cGLM corrections
         tmp_ind_end = indVolNorm;
         tmp_begin = 1;
     end
-    if isDCM
+    if flags.isDCM
         % trial-based cGLM corrections
         lTrial = P.lengthDCMTrial * P.indNFTrial;
         tmp_ind_end = indVolNorm - lTrial;
@@ -186,7 +185,7 @@ for indRoi = 1:P.NrROIs
     % 2.2. exemplary step-wise addition of regressors, step = total nr of
     % Regressors, which may require a justification for particular project
     regrStep = mainLoopData.nrBasFct + nrRegrToCorrect;
-    if isPSC || isSVM || P.isRestingState
+    if flags.isPSC || flags.isSVM || flags.isCorr || P.isRestingState
         if (tmp_ind_end < regrStep)
             tmpRegr = ones(tmp_ind_end,1);
             if P.cglmAR1
@@ -271,7 +270,7 @@ for indRoi = 1:P.NrROIs
     % not necessary to be added cumulatively here. They could be added 
     % when DCM needs to be computed, i.e. at the end of the entire trial, 
     % as it is currently implmented (dcmBegin.m).
-    if isDCM
+    if flags.isDCM
         % subtract the absolute value of the trial
         cX0 = ones(tmp_ind_end,1);
         betaReg = pinv(cX0)*tmp_rawTimeSeries;
@@ -306,14 +305,14 @@ end
 for indRoi = 1:P.NrROIs
 
     % 3. modified Kalman low-pass filter + spike identification & correction
-    if isPSC || isSVM || isDCM || P.isRestingState
+    if flags.isPSC || flags.isSVM || flags.isDCM || flags.isCorr || P.isRestingState
         tmpStd = std(mainLoopData.glmProcTimeSeries(indRoi,:));
     end
-    if isDCM
+    if flags.isDCM
         mainLoopData.S(indRoi).Q = .25*tmpStd^2;
         mainLoopData.S(indRoi).R = tmpStd^2;
     end
-    if isPSC || isSVM || P.isRestingState
+    if flags.isPSC || flags.isSVM || flags.isCorr || P.isRestingState
         % See Koush 2012 for setting the constants
         mainLoopData.S(indRoi).Q = .25*tmpStd^2;
         mainLoopData.S(indRoi).R = tmpStd^2;
@@ -345,7 +344,7 @@ for indRoi = 1:P.NrROIs
     mainLoopData.posMax(indRoi,indVolNorm)=mainLoopData.tmp_posMax(indRoi);
 
     % 5. z-scoring and sigmoidal transform
-    if isSVM
+    if flags.isSVM
         zcoredVal = ...
             zscore(mainLoopData.scalProcTimeSeries(indRoi, 1:indVolNorm));
         mainLoopData.scalProcTimeSeries(indRoi, indVolNorm) = ...

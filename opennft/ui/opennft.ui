@@ -1555,6 +1555,11 @@
                                                                                                     </item>
                                                                                                     <item>
                                                                                                          <property name="text">
+                                                                                                              <string>Corr</string>
+                                                                                                         </property>
+                                                                                                    </item>
+                                                                                                    <item>
+                                                                                                         <property name="text">
                                                                                                               <string>None</string>
                                                                                                          </property>
                                                                                                     </item>
@@ -1632,10 +1637,20 @@
                                                                                           <item>
                                                                                                <widget class="QCheckBox" name="cbNegFeedback">
                                                                                                     <property name="text">
-                                                                                                         <string>Allow negative PSC</string>
+                                                                                                         <string>Allow Negative Feedback</string>
                                                                                                     </property>
                                                                                                     <property name="checked">
                                                                                                          <bool>false</bool>
+                                                                                                    </property>
+                                                                                               </widget>
+                                                                                          </item>
+                                                                                          <item>
+                                                                                               <widget class="QCheckBox" name="cbFeedbackPlot">
+                                                                                                    <property name="text">
+                                                                                                         <string>Plot Feedback</string>
+                                                                                                    </property>
+                                                                                                    <property name="checked">
+                                                                                                         <bool>true</bool>
                                                                                                     </property>
                                                                                                </widget>
                                                                                           </item>

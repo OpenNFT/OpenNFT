@@ -1,4 +1,4 @@
-function [isPSC, isDCM, isSVM, isIGLM] = getFlagsType(P)
+function flags = getFlagsType(P)
 % Function to set feedback type and iGLM flags.
 %
 % input:
@@ -11,18 +11,12 @@ function [isPSC, isDCM, isSVM, isIGLM] = getFlagsType(P)
 %
 % Written by Artem Nikonorov, Yury Koush
 
-isIGLM = false;
-isSVM = false;
-isPSC = false;
-isDCM = false;
+flags.isDCM = strcmp(P.Type, 'DCM');
+flags.isPSC = strcmp(P.Type, 'PSC');
+flags.isSVM = strcmp(P.Type, 'SVM');
+flags.isCorr = strcmp(P.Type, 'Corr');
 
-if strcmp(P.Type, 'DCM')
-    isDCM = true;
-elseif strcmp(P.Type, 'PSC')
-    isPSC = true;
-elseif strcmp(P.Type, 'SVM')
-    isSVM = true;
-end
+flags.isNone = strcmp(P.Type, 'None');
 
-isIGLM = P.isIGLM;
+flags.isIGLM = isfield(P,'isIGLM') && P.isIGLM;
 

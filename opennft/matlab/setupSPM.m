@@ -17,7 +17,7 @@ function SPM = setupSPM(P)
 
 THR = 0.5;
 
-[isPSC, isDCM, isSVM, isIGLM] = getFlagsType(P);
+flags = getFlagsType(P);
 
 %% Construct SPM and set parameters for iGLM & cGLM corrections
 SPM.xY.RT = double(P.TR)/1000;
@@ -43,7 +43,7 @@ else
     regrInd = [];
 end
 
-if isDCM && strcmp(P.Prot, 'InterBlock')
+if flags.isDCM && strcmp(P.Prot, 'InterBlock')
     SPM.nscan = P.lengthDCMTrial;
 end
 
