@@ -208,8 +208,7 @@ class OpenNFT(QWidget):
 
         self.fFinNFB = False
         self.orthViewUpdateInProgress = False
-        self.outputSamples = {}
-        self.displaySamples = []
+        self.outputSamples = {}        
         self.musterInfo = {}
 
         # Core Matlab helper process
@@ -1254,6 +1253,7 @@ class OpenNFT(QWidget):
             self.eng.workspace['P'] = self.P
             self.engSPM.workspace['P'] = self.P
             self.previousIterStartTime = 0
+            self.displaySamples = []
 
             with utils.timeit("  Load protocol data:"):
                 self.loadJsonProtocol()
