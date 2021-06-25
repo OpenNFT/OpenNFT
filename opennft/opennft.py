@@ -683,9 +683,9 @@ class OpenNFT(QWidget):
                     logger.info('Sending by UDP - instrValue = ')  # + str(self.displayData['instrValue'])
                     # self.udpSender.send_data(self.displayData['instrValue'])
 
-        if self.cbUseTCPData.isChecked() and self.eng.evalin('base', 'tcp.BytesAvailable'):
+        if self.cbUseTCPData.isChecked():
             fname = os.path.join(self.P['WatchFolder'],
-                                 self.P['FirstFileName'])  # first file is required for initialization
+                                 self.P['FirstFileNameTxt'].replace('Image Series No','ImgSerNr').replace('#','iter').format(**(self.P),iter=self.iteration))
         else:
             try:
                 fname = self.files_queue.get_nowait()
@@ -709,7 +709,7 @@ class OpenNFT(QWidget):
         # data acquisition
         if fname is not None:
             path = os.path.join(self.P['WatchFolder'], fname)
-            if (not (self.cbUseTCPData.isChecked()) or not (self.reachedFirstFile)) and not self.isOffline:
+            if (not self.isOffline) and (not self.cbUseTCPData.isChecked()) and self.reachedFirstFile:
                 if not self.checkFileIsReady(path, fname):
                     self.isMainLoopEntered = False
                     return
@@ -717,7 +717,7 @@ class OpenNFT(QWidget):
             self.files_exported.append(fname)
 
         # check file sequence
-        if (not self.isOffline) and (len(self.files_processed) > 0):
+        if (not self.isOffline) and (not self.cbUseTCPData.isChecked()) and (len(self.files_processed) > 0):
 
             last_fname = self.files_processed[-1]
             r = re.findall(r'\D(\d+).\w+$', last_fname)
