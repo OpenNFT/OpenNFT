@@ -28,7 +28,7 @@ end
 if P.UseTCPData, tcp = evalin('base', 'tcp'); end
 
 if indVol <= P.nrSkipVol
-    if P.UseTCPData, [~, ~] = tcp.ReceiveScan; end
+    if P.UseTCPData && (indVol > 1), [~, ~] = tcp.ReceiveScan; end
     return;
 end
 
@@ -79,7 +79,7 @@ end
 % Read Data in real-time and update paremeters
 switch P.DataType
     case 'DICOM'
-        if P.UseTCPData
+        if P.UseTCPData && (indVol > 1)
             [~, dcmData] = tcp.ReceiveScan;
         else
             dcmData = double(dicomread(inpFileName));
