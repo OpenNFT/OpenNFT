@@ -53,8 +53,8 @@ or, if you plan to contribute to the project, create the fork repository and use
 
 .. image:: _static/pycharminstall_2.png
 
-Create Virtual Environment
-++++++++++++++++++++++++++++
+Create and Activate Virtual Environment
+++++++++++++++++++++++++++++++++++++++++
 
 To create the virtual environment, go to File -> Settings -> Project Interpreter
 
@@ -64,6 +64,9 @@ Set the new virtual environment location and choose the interpreter:
 
 .. image:: _static/pycharminstall_4.png
 
+To activate virtual environment, close (click cross near Local) and re-open (click Terminal button) Terminal window.
+
+.. image:: _static/pycharminstall_4_1.png
 
 Install from Project Directory
 ++++++++++++++++++++++++++++++
