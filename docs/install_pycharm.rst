@@ -53,8 +53,8 @@ or, if you plan to contribute to the project, create the fork repository and use
 
 .. image:: _static/pycharminstall_2.png
 
-Create Virtual Environment
-++++++++++++++++++++++++++++
+Create and Activate Virtual Environment
+++++++++++++++++++++++++++++++++++++++++
 
 To create the virtual environment, go to File -> Settings -> Project Interpreter
 
@@ -64,6 +64,9 @@ Set the new virtual environment location and choose the interpreter:
 
 .. image:: _static/pycharminstall_4.png
 
+To activate virtual environment, close (click cross near Local) and re-open (click Terminal button) Terminal window.
+
+.. image:: _static/pycharminstall_5.png
 
 Install from Project Directory
 ++++++++++++++++++++++++++++++
@@ -99,19 +102,19 @@ Run Application from PyCharm
 
 Create Run Configuration to run OpenNFT:
 
-.. image:: _static/pycharminstall_5.png
-
 .. image:: _static/pycharminstall_6.png
+
+.. image:: _static/pycharminstall_7.png
 
 Specify the Module name as "opennft" (NOT Script path) and Project interpreter according to the created Virtual Environment:
 
-.. image:: _static/pycharminstall_7.png
+.. image:: _static/pycharminstall_8.png
 
 To create the configuration, the checkbox ``Store as project file`` may be required: :ref:`possible_error`.
 
 Press the ``Run`` button,
 
-.. image:: _static/pycharminstall_8.png
+.. image:: _static/pycharminstall_9.png
 
 or run the command in the Terminal:
 

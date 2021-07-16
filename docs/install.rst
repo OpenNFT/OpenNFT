@@ -35,7 +35,7 @@ Install OpenNFT
 
 We recommend a virtual environment for installing OpenNFT.
 
-Creating Virtual Environment
+Create and Activate Virtual Environment
 ++++++++++++++++++++++++++++
 
 .. rubric:: Unix (Linux, MacOS)
