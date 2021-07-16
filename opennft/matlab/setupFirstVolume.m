@@ -23,6 +23,7 @@ disp(inpFileName)
 % if used, TCP must be called first to allow standard rt export
 if P.UseTCPData
     tcp = evalin('base', 'tcp');
+    while ~tcp.BytesAvailable, pause(0.01); end
     [hdr, ~] = tcp.ReceiveScan;
     dimVol = hdr.Dimensions;
     matVol = hdr.mat;
