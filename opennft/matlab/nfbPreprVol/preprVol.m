@@ -28,7 +28,7 @@ end
 if P.UseTCPData, tcp = evalin('base', 'tcp'); end
 
 if indVol <= P.nrSkipVol
-    if P.UseTCPData && (indVol > 1), [~, ~] = tcp.ReceiveScan; end
+    if P.UseTCPData && (indVol > 1), while ~tcp.BytesAvailable, pause(0.01); end; [~, ~] = tcp.ReceiveScan; end
     return;
 end
 
@@ -80,28 +80,22 @@ end
 switch P.DataType
     case 'DICOM'
         if P.UseTCPData && (indVol > 1)
+            while ~tcp.BytesAvailable, pause(0.01); end
             [~, dcmData] = tcp.ReceiveScan;
         else
-            dcmData = double(dicomread(inpFileName));
+            dcmData = [];
+            while isempty(dcmData) || contains(lastwarn,'Suspicious fragmentary file')
+                dcmData = double(dicomread(inpFileName));
+            end
+            dcmData = img2Dvol3D(dcmData, slNrImg2DdimX, slNrImg2DdimY, dimVol);
         end
         R(2,1).mat = matVol;
-        if P.UseTCPData
-            if P.isZeroPadding
-                zeroPadVol = zeros(dimVol(1),dimVol(2),P.nrZeroPadVol);
-                dimVol(3) = dimVol(3)+P.nrZeroPadVol*2;
-                R(2,1).Vol = cat(3, cat(3, zeroPadVol, dcmData), zeroPadVol);
-            else
-                R(2,1).Vol = dcmData;
-            end
+        if P.isZeroPadding
+            zeroPadVol = zeros(dimVol(1),dimVol(2),P.nrZeroPadVol);
+            dimVol(3) = dimVol(3)+P.nrZeroPadVol*2;
+            R(2,1).Vol = cat(3, cat(3, zeroPadVol, dcmData), zeroPadVol);
         else
-            tmpVol = img2Dvol3D(dcmData, slNrImg2DdimX, slNrImg2DdimY, dimVol);
-            if P.isZeroPadding
-                zeroPadVol = zeros(dimVol(1),dimVol(2),P.nrZeroPadVol);
-                dimVol(3) = dimVol(3)+P.nrZeroPadVol*2;
-                R(2,1).Vol = cat(3, cat(3, zeroPadVol, tmpVol), zeroPadVol);
-            else
-                R(2,1).Vol = tmpVol;
-            end
+            R(2,1).Vol = dcmData;
         end
         R(2,1).dim = dimVol;
     case 'IMAPH'

@@ -28,11 +28,11 @@ sender.info()
 cond = 'C'
 while not(keyboard.is_pressed('q')):
     if keyboard.is_pressed('b'): 
-        cond = 'Bas'
+        cond = 'BAS'
     if keyboard.is_pressed('n'): 
-        cond = 'NF'
+        cond = 'NFBREG'
     if keyboard.is_pressed('f'): 
-        cond = 'FB'
+        cond = 'NFBDISP'
 
     sender.send_data(cond)
     val = float(uniform(-100,100))
