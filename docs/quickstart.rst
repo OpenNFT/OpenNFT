@@ -35,7 +35,7 @@ This mode of shared Matlab sessions allows re-using them after closing and re-st
 Setup
 ------------------
 
-After the Initialization you can choose the Configuration file (*.ini) of the Experiment. This file contains editable parameters, which you need to justify before pressing the ``Setup`` button.
+After the Initialization you can choose the Configuration file (\*.ini) of the Experiment. This file contains editable parameters, which you need to justify before pressing the ``Setup`` button.
 
 .. image:: _static/quickstart_2.png
 
