@@ -139,7 +139,7 @@ class InstallMatlabEngineMixin:
 
 class InstallGitSubmodulesMixin:
     def _install_git_submodules(self):
-        if os.path.exists('.git'):
+        if pathlib.Path('.git').exists():
             run(['git', 'submodule', 'update', '--init', '--recursive'])
 
 
