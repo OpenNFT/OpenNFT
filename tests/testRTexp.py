@@ -13,7 +13,6 @@ Written by Artem Nikonorov, Yury Koush
 import shutil
 from time import sleep
 from pathlib import Path
-from pathlib import PurePath
 
 delete_files = True
 
@@ -64,8 +63,8 @@ else:
 
 for filename in sorted(filelist):
     src = filename
-    if Path.is_file(src) & (not str(filename).startswith(".")):
-        dst = PurePath(dstpath).joinpath(filename.name)
+    if Path.is_file(src) and (not str(filename).startswith(".")):
+        dst = Path(dstpath,filename.name)
         shutil.copy(src, dst)
         print(filename)
         sleep(pause_in_sec)  # seconds

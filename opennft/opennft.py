@@ -530,7 +530,7 @@ class OpenNFT(QWidget):
     # --------------------------------------------------------------------------
     def getFreeMemmapFilename(self):
         path = Path(self.P['WorkFolder'])
-        fname = path.joinpath('OrthView.dat')
+        fname = path / 'OrthView.dat'
         if not fname.exists():
             return str(fname)
 
@@ -539,7 +539,7 @@ class OpenNFT(QWidget):
             f.close()
             return str(fname)
         except IOError as e:
-            fname = path.joinpath('OrthView1.dat')
+            fname = path / 'OrthView1.dat'
 
         if not fname.exists():
             return str(fname)
@@ -684,8 +684,8 @@ class OpenNFT(QWidget):
                     # self.udpSender.send_data(self.displayData['instrValue'])
 
         if self.cbUseTCPData.isChecked():
-            fname = str(Path(self.P['WatchFolder']).joinpath(
-                                 self.P['FirstFileNameTxt'].replace('Image Series No','ImgSerNr').replace('#','iter').format(**(self.P),iter=self.iteration)))
+            fname = str(Path(self.P['WatchFolder']) /
+                                 self.P['FirstFileNameTxt'].replace('Image Series No','ImgSerNr').replace('#','iter').format(**(self.P),iter=self.iteration))
         else:
             try:
                 fname = self.files_queue.get_nowait()
@@ -708,7 +708,7 @@ class OpenNFT(QWidget):
 
         # data acquisition
         if fname is not None:
-            path = str(Path(self.P['WatchFolder']).joinpath(fname))
+            path = str(Path(self.P['WatchFolder'],fname))
             if (not self.isOffline) and (not self.cbUseTCPData.isChecked()) and self.reachedFirstFile:
                 if not self.checkFileIsReady(path, fname):
                     self.isMainLoopEntered = False
@@ -1001,7 +1001,7 @@ class OpenNFT(QWidget):
 
     # --------------------------------------------------------------------------
     def startInOfflineMode(self):
-        path = Path(self.P['WatchFolder']).joinpath(self.P['FirstFileName'])
+        path = Path(self.P['WatchFolder'],self.P['FirstFileName'])
         ext = re.findall(r"\.\w*$", str(path))
         if not ext:
             if self.P['DataType'] == 'IMAPH':
@@ -1012,7 +1012,7 @@ class OpenNFT(QWidget):
             ext = ext[-1]
 
         searchString = self.getFileSearchString(self.P['FirstFileNameTxt'], path, ext)
-        path = path.parent.joinpath(searchString)
+        path = path.parent / searchString
 
         files = sorted(glob.glob(str(path)))
 
@@ -1032,7 +1032,7 @@ class OpenNFT(QWidget):
     def startFilesystemWatching(self):
         self.files_queue = queue.Queue()
 
-        path = Path(self.P['WatchFolder']).joinpath(self.P['FirstFileName'])
+        path = Path(self.P['WatchFolder'],self.P['FirstFileName'])
 
         ext = re.findall(r"\.\w*$", str(path))
         if not ext:
@@ -1046,7 +1046,7 @@ class OpenNFT(QWidget):
         searchString = self.getFileSearchString(self.P['FirstFileNameTxt'], path, ext)
         path = path.parent
 
-        logger.info('Searching for {} in {}', searchString, str(path))
+        logger.info('Searching for {} in {}', searchString, path)
 
         event_handler = CreateFileEventHandler(
             searchString, self.files_queue, self.recorder)
@@ -1298,7 +1298,7 @@ class OpenNFT(QWidget):
                 with utils.timeit("  Preparation of PTB Screen:"):
                     sid = self.cbScreenId.currentIndex() + 1
                     path = Path(self.P['nfbDataFolder'])
-                    eventRecordsPath = path.joinpath('TimeVectors_display_' + str(self.P['NFRunNr']).zfill(2) + '.txt')
+                    eventRecordsPath = path / ('TimeVectors_display_' + str(self.P['NFRunNr']).zfill(2) + '.txt')
 
                     ptbP = {}
                     ptbP['eventRecordsPath'] = str(eventRecordsPath)
@@ -1438,7 +1438,7 @@ class OpenNFT(QWidget):
 
         if self.iteration > 1 and self.P.get('nfbDataFolder'):
             path = Path(self.P['nfbDataFolder'])
-            fname = path.joinpath('TimeVectors_' + str(self.P['NFRunNr']).zfill(2) + '.txt')
+            fname = path / ('TimeVectors_' + str(self.P['NFRunNr']).zfill(2) + '.txt')
             self.recorder.savetxt(str(fname))
 
         if self.fFinNFB:
@@ -1507,12 +1507,8 @@ class OpenNFT(QWidget):
         if not fname:
             return
 
-        fname = Path(fname)
-
-        if not fname.is_file():
+        if not Path(fname).is_file():
             return
-
-        fname = str(fname)
 
         self.settingFileName = fname
 
@@ -1543,12 +1539,8 @@ class OpenNFT(QWidget):
         if not fname:
             return
 
-        fname = Path(fname)
-
-        if not fname.is_file():
+        if not Path(fname).is_file():
             return
-
-        fname = str(fname)
 
         self.leWeightsFile.setText(fname)
         self.P['WeightsFileName'] = fname

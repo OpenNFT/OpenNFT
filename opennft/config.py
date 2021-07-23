@@ -14,10 +14,10 @@ import pyqtgraph as pg
 LOG_LEVEL = 'DEBUG'
 
 ROOT_PATH = Path(__file__).absolute().resolve().parent
-UI_PATH = ROOT_PATH.joinpath('ui')
-PLUGIN_PATH = ROOT_PATH.joinpath('plugins')
-OpenNFT_ICON = ROOT_PATH.joinpath('ui','images','appicon.png')
-MATLAB_FUNCTIONS_PATH = ROOT_PATH.joinpath('matlab')
+UI_PATH = ROOT_PATH / 'ui'
+PLUGIN_PATH = ROOT_PATH / 'plugins'
+OpenNFT_ICON = ROOT_PATH / 'ui' / 'images' / 'appicon.png'
+MATLAB_FUNCTIONS_PATH = ROOT_PATH / 'matlab'
 
 # Matlab sessions
 MAIN_MATLAB_NAME = 'MATLAB_NFB_MAIN'

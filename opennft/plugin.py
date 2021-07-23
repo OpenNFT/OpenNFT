@@ -20,7 +20,7 @@ class PluginWindow(QDialog):
         self.setWindowModality(Qt.ApplicationModal)
 
         model = QStandardItemModel(self.lvPlugins)
-        for p in [f.name for f in config.PLUGIN_PATH.iterdir() if f.suffix == '.py']:
+        for p in [f.name for f in config.PLUGIN_PATH.glob('*.py')]:
             plMod = 'opennft.' + config.PLUGIN_PATH.name.lower() + '.' + p[:-3]
             self.plugins += [importlib.import_module(plMod)]
             plName = self.plugins[-1].META['plugin_name']
