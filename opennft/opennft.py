@@ -33,7 +33,6 @@ The module bellow is written by Artem Nikonorov, Evgeny Prilepin, Yury Koush, Ro
 
 """
 
-import os
 import time
 import glob
 import queue
@@ -43,6 +42,7 @@ import fnmatch
 import threading
 import multiprocessing
 
+from pathlib import Path
 from loguru import logger
 
 import numpy as np
@@ -95,7 +95,7 @@ class CreateFileEventHandler(FileSystemEventHandler):
 
     def on_created(self, event):
         # if not event.is_directory and event.src_path.endswith(self.filepat):
-        if not event.is_directory and fnmatch.fnmatch(os.path.basename(event.src_path), self.filepat):
+        if not event.is_directory and fnmatch.fnmatch(Path(event.src_path).name, self.filepat):
             # t1
             self.recorder.recordEvent(erd.Times.t1, 0, time.time())
             self.fq.put(event.src_path)
@@ -135,7 +135,7 @@ class OpenNFT(QWidget):
 
         loadUi(utils.get_ui_file('opennft.ui'), self)
 
-        self.setWindowIcon(QIcon(config.OpenNFT_ICON))
+        self.setWindowIcon(QIcon(str(config.OpenNFT_ICON)))
         self.displayEvent = multiprocessing.Event()
         self.endDisplayEvent = multiprocessing.Event()
 
@@ -529,28 +529,28 @@ class OpenNFT(QWidget):
 
     # --------------------------------------------------------------------------
     def getFreeMemmapFilename(self):
-        path = os.path.normpath(self.P['WorkFolder'])
-        fname = os.path.join(path, 'OrthView.dat')
-        if not os.path.exists(fname):
-            return fname
+        path = Path(self.P['WorkFolder'])
+        fname = path / 'OrthView.dat'
+        if not fname.exists():
+            return str(fname)
 
         try:
             f = open(fname, 'w+')
             f.close()
-            return fname
+            return str(fname)
         except IOError as e:
-            fname = os.path.join(path, 'OrthView1.dat')
+            fname = path / 'OrthView1.dat'
 
-        if not os.path.exists(fname):
-            return fname
+        if not fname.exists():
+            return str(fname)
 
         try:
             f = open(fname, 'w+')
             f.close()
-            return fname
+            return str(fname)
         except IOError as e:
             logger.info('POSSIBLE PROBLEMS WITH MEMMAP ACCESS!')
-            return fname
+            return str(fname)
 
     # --------------------------------------------------------------------------
     def initMainLoopData(self):
@@ -569,8 +569,8 @@ class OpenNFT(QWidget):
         # init OrthoView in helper
         self.spmHelperP = {
             'Type': self.P['Type'],
-            'StructBgFile': os.path.normpath(self.P['StructBgFile']),
-            'MCTempl': os.path.normpath(self.P['MCTempl']),
+            'StructBgFile': str(Path(self.P['StructBgFile'])),
+            'MCTempl': str(Path(self.P['MCTempl'])),
             'memMapFile': self.eng.evalin('base', 'P.memMapFile'),
             'tRoiBoundaries': [],
             'cRoiBoundaries': [],
@@ -620,10 +620,10 @@ class OpenNFT(QWidget):
     # --------------------------------------------------------------------------
     def checkFileIsReady(self, path, fname):
         acquisitionFinished = True
-        filesize = os.path.getsize(path)
+        filesize = Path(path).stat().st_size
         if self.typicalFileSize <= 0:
             time.sleep(0.050)
-            if filesize < os.path.getsize(path):
+            if filesize < Path(path).stat().st_size:
                 acquisitionFinished = False
 
         else:
@@ -638,7 +638,7 @@ class OpenNFT(QWidget):
             self.files_queue.put_nowait(fname)
             self.isMainLoopEntered = False
         else:
-            self.typicalFileSize = os.path.getsize(path)
+            self.typicalFileSize = Path(path).stat().st_size
 
         return acquisitionFinished
 
@@ -684,7 +684,7 @@ class OpenNFT(QWidget):
                     # self.udpSender.send_data(self.displayData['instrValue'])
 
         if self.cbUseTCPData.isChecked():
-            fname = os.path.join(self.P['WatchFolder'],
+            fname = str(Path(self.P['WatchFolder']) /
                                  self.P['FirstFileNameTxt'].replace('Image Series No','ImgSerNr').replace('#','iter').format(**(self.P),iter=self.iteration))
         else:
             try:
@@ -708,7 +708,7 @@ class OpenNFT(QWidget):
 
         # data acquisition
         if fname is not None:
-            path = os.path.join(self.P['WatchFolder'], fname)
+            path = str(Path(self.P['WatchFolder'],fname))
             if (not self.isOffline) and (not self.cbUseTCPData.isChecked()) and self.reachedFirstFile:
                 if not self.checkFileIsReady(path, fname):
                     self.isMainLoopEntered = False
@@ -757,7 +757,7 @@ class OpenNFT(QWidget):
             self.isMainLoopEntered = False
             return
 
-        logger.info('Call iteration for file "{}"', os.path.basename(fname))
+        logger.info('Call iteration for file "{}"', Path(fname).name)
 
         # Start elapsed time
         startingTime = time.time()
@@ -989,7 +989,7 @@ class OpenNFT(QWidget):
         file_num_part = re.findall(r"_\d+_(\d+.\w+)", file_name_template)
         if len(file_series_part) > 0:
             file_series_len = int(file_series_part[0])
-            fname = os.path.splitext(os.path.basename(path))[0][:-file_series_len]
+            fname = path.stem[:-file_series_len]
             search_string = '%s*%s' % (fname, ext)
         elif len(file_num_part) > 0:
             fname = file_name_template.replace(file_num_part[0], "*")
@@ -1001,7 +1001,7 @@ class OpenNFT(QWidget):
 
     # --------------------------------------------------------------------------
     def startInOfflineMode(self):
-        path = os.path.join(self.P['WatchFolder'], self.P['FirstFileName'])
+        path = Path(self.P['WatchFolder'],self.P['FirstFileName'])
         ext = re.findall(r"\.\w*$", str(path))
         if not ext:
             if self.P['DataType'] == 'IMAPH':
@@ -1012,9 +1012,9 @@ class OpenNFT(QWidget):
             ext = ext[-1]
 
         searchString = self.getFileSearchString(self.P['FirstFileNameTxt'], path, ext)
-        path = os.path.join(os.path.dirname(path), searchString)
+        path = path.parent / searchString
 
-        files = sorted(glob.glob(path))
+        files = sorted(glob.glob(str(path)))
 
         if not files:
             logger.info("No files found in offline mode. Check WatchFolder settings!")
@@ -1032,7 +1032,7 @@ class OpenNFT(QWidget):
     def startFilesystemWatching(self):
         self.files_queue = queue.Queue()
 
-        path = os.path.join(self.P['WatchFolder'], self.P['FirstFileName'])
+        path = Path(self.P['WatchFolder'],self.P['FirstFileName'])
 
         ext = re.findall(r"\.\w*$", str(path))
         if not ext:
@@ -1044,7 +1044,7 @@ class OpenNFT(QWidget):
             ext = ext[-1]
 
         searchString = self.getFileSearchString(self.P['FirstFileNameTxt'], path, ext)
-        path = os.path.dirname(path)
+        path = path.parent
 
         logger.info('Searching for {} in {}', searchString, path)
 
@@ -1053,7 +1053,7 @@ class OpenNFT(QWidget):
 
         self.fs_observer = Observer()
         self.fs_observer.schedule(
-            event_handler, path, recursive=True)
+            event_handler, str(path), recursive=True)
 
         self.call_timer.start()
         self.fs_observer.start()
@@ -1064,7 +1064,7 @@ class OpenNFT(QWidget):
         dyn = ' dyn' if self.P['DynROI'] else ''
 
         for roiName in self.P['ROINames']:
-            roiName, _ = os.path.splitext(os.path.basename(roiName))
+            roiName = Path(roiName).stem
             if len(roiName) > config.MAX_ROI_NAME_LENGTH:
                 roiName = roiName[:2] + '..' + roiName[-2:] + dyn
             roiNames.append(roiName)
@@ -1275,7 +1275,7 @@ class OpenNFT(QWidget):
 
             if config.USE_SHAM:
                 logger.warning("Sham feedback has been selected")
-                fext = os.path.splitext(self.P['ShamFile'])[1]
+                fext = Path(self.P['ShamFile']).suffix
                 if fext == '.txt':  # expect a textfile with float numbers in a single  column or row
                     NFBdata = np.loadtxt(self.P['ShamFile'], unpack=False)
                 elif fext == '.mat':  # expect "mainLoopData"
@@ -1297,12 +1297,11 @@ class OpenNFT(QWidget):
 
                 with utils.timeit("  Preparation of PTB Screen:"):
                     sid = self.cbScreenId.currentIndex() + 1
-                    path = os.path.normpath(self.P['nfbDataFolder'])
-                    eventRecordsPath = os.path.join(path,
-                                                    'TimeVectors_display_' + str(self.P['NFRunNr']).zfill(2) + '.txt')
+                    path = Path(self.P['nfbDataFolder'])
+                    eventRecordsPath = path / ('TimeVectors_display_' + str(self.P['NFRunNr']).zfill(2) + '.txt')
 
                     ptbP = {}
-                    ptbP['eventRecordsPath'] = eventRecordsPath
+                    ptbP['eventRecordsPath'] = str(eventRecordsPath)
                     ptbP['TargDIAM'] = self.P['TargDIAM']
                     ptbP['TargRAD'] = self.P['TargRAD']
                     ptbP['TargANG'] = self.P['TargANG']
@@ -1438,9 +1437,9 @@ class OpenNFT(QWidget):
             self.pulseProc.terminate()
 
         if self.iteration > 1 and self.P.get('nfbDataFolder'):
-            path = os.path.normpath(self.P['nfbDataFolder'])
-            fname = os.path.join(path, 'TimeVectors_' + str(self.P['NFRunNr']).zfill(2) + '.txt')
-            self.recorder.savetxt(fname)
+            path = Path(self.P['nfbDataFolder'])
+            fname = path / ('TimeVectors_' + str(self.P['NFRunNr']).zfill(2) + '.txt')
+            self.recorder.savetxt(str(fname))
 
         if self.fFinNFB:
             for i in range(len(self.plugins)): self.plugins[i].finalize()
@@ -1500,7 +1499,7 @@ class OpenNFT(QWidget):
             fname = QFileDialog.getOpenFileName(
                 self, "Select 'SET File'", self.settingFileName, 'ini files (*.ini)')[0]
 
-        fname = fname.replace('/', os.path.sep)
+        fname = str(Path(fname))
         self.chooseSetFile(fname)
 
     # --------------------------------------------------------------------------
@@ -1508,10 +1507,8 @@ class OpenNFT(QWidget):
         if not fname:
             return
 
-        if not os.path.isfile(fname):
+        if not Path(fname).is_file():
             return
-
-        fname = fname.replace('/', os.path.sep)
 
         self.settingFileName = fname
 
@@ -1534,7 +1531,7 @@ class OpenNFT(QWidget):
             fname = QFileDialog.getOpenFileName(
                 self, "Select 'Weights File'", self.leWeightsFile.text(), 'all files (*.*)')[0]
 
-        fname = fname.replace('/', os.path.sep)
+        fname = str(Path(fname))
         self.chooseWeightsFile(fname)
 
     # --------------------------------------------------------------------------
@@ -1542,9 +1539,9 @@ class OpenNFT(QWidget):
         if not fname:
             return
 
-        if not os.path.isfile(fname):
+        if not Path(fname).is_file():
             return
-        fname = fname.replace('/', os.path.sep)
+
         self.leWeightsFile.setText(fname)
         self.P['WeightsFileName'] = fname
 
@@ -1558,7 +1555,7 @@ class OpenNFT(QWidget):
             fname = QFileDialog.getOpenFileName(
                 self, "Select Protocol File", fname, 'JPRT files (*.*)')[0]
 
-        fname = fname.replace('/', os.path.sep)
+        fname = str(Path(fname))
         if fname:
             self.leProtocolFile.setText(fname)
             self.P['ProtocolFile'] = fname
@@ -1573,7 +1570,7 @@ class OpenNFT(QWidget):
             fname = QFileDialog.getOpenFileName(
                 self, "Select Structural File", config.ROOT_PATH, 'Template files (*.nii)')[0]
 
-        fname = fname.replace('/', os.path.sep)
+        fname = str(Path(fname))
         if fname:
             self.leStructBgFile.setText(fname)
             self.P['StructBgFile'] = fname
@@ -1588,7 +1585,7 @@ class OpenNFT(QWidget):
             fname = QFileDialog.getOpenFileName(
                 self, "Select MCTempl File", config.ROOT_PATH, 'Template files (*.nii)')[0]
 
-        fname = fname.replace('/', os.path.sep)
+        fname = str(Path(fname))
         if fname:
             self.leMCTempl.setText(fname)
             self.P['MCTempl'] = fname
@@ -1597,7 +1594,7 @@ class OpenNFT(QWidget):
     def onChooseFolder(self, name, le):
         dname = QFileDialog.getExistingDirectory(
             self, "Select '{}' directory".format(name), config.ROOT_PATH)
-        dname = dname.replace('/', os.path.sep)
+        dname = str(Path(dname))
         if dname:
             le.setText(dname)
             self.P[name] = dname
@@ -1612,7 +1609,7 @@ class OpenNFT(QWidget):
             fname = QFileDialog.getOpenFileName(
                 self, "Select '{}' directory".format(name), config.ROOT_PATH, 'Any file (*.*)')[0]
 
-        fname = fname.replace('/', os.path.sep)
+        fname = str(Path(fname))
         if fname:
             le.setText(fname)
             self.P[name] = fname
@@ -1846,7 +1843,7 @@ class OpenNFT(QWidget):
     def selectRoi(self):
 
         if self.P['Type'] in ['PSC','SVM','Corr','None']:
-            if not os.path.isdir(self.P['RoiFilesFolder']):
+            if not Path(self.P['RoiFilesFolder']).is_dir():
                 logger.error("Couldn't find: " + self.P['RoiFilesFolder'])
                 return
 
@@ -1954,19 +1951,19 @@ class OpenNFT(QWidget):
 
         # Update GUI information
         self.leCurrentVolume.setText('%d' % self.iteration)
-        self.leFirstFilePath.setText('%s%s%s' % (self.P['WatchFolder'], os.path.sep, self.P['FirstFileName']))
+        self.leFirstFilePath.setText(str(Path(self.P['WatchFolder'],self.P['FirstFileName'])))
 
         filePathStatus = ""
-        if os.path.isdir(self.P['WatchFolder']):
+        if Path(self.P['WatchFolder']).is_dir():
             filePathStatus += "MRI Watch Folder exists. "
         else:
             filePathStatus += "MRI Watch Folder does not exists. "
-        if os.path.isfile(self.leFirstFilePath.text()):
+        if Path(self.leFirstFilePath.text()).is_file():
             filePathStatus += "First file exists. "
         else:
             filePathStatus += "First file does not exist. "
 
-        # if os.path.isdir( self.P['WatchFolder'],os.path.sep,self.P['FirstFileName'] )
+        # if Path(self.P['WatchFolder'],self.P['FirstFileName']).is_dir()
         self.lbFilePathStatus.setText(filePathStatus)
 
         # Update settings file
