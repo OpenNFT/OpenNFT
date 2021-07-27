@@ -1564,11 +1564,11 @@ class OpenNFT(QWidget):
     def onChooseStructBgFile(self):
         if config.DONOT_USE_QFILE_NATIVE_DIALOG:
             fname = QFileDialog.getOpenFileName(
-                self, "Select Structural File", config.ROOT_PATH, 'Template files (*.nii)',
+                self, "Select Structural File", str(config.ROOT_PATH), 'Template files (*.nii)',
                 options=QFileDialog.DontUseNativeDialog)[0]
         else:
             fname = QFileDialog.getOpenFileName(
-                self, "Select Structural File", config.ROOT_PATH, 'Template files (*.nii)')[0]
+                self, "Select Structural File", str(config.ROOT_PATH), 'Template files (*.nii)')[0]
 
         fname = str(Path(fname))
         if fname:
@@ -1579,11 +1579,11 @@ class OpenNFT(QWidget):
     def onChooseMCTemplFile(self):
         if config.DONOT_USE_QFILE_NATIVE_DIALOG:
             fname = QFileDialog.getOpenFileName(
-                self, "Select MCTempl File", config.ROOT_PATH, 'Template files (*.nii)',
+                self, "Select MCTempl File", str(config.ROOT_PATH), 'Template files (*.nii)',
                 options=QFileDialog.DontUseNativeDialog)[0]
         else:
             fname = QFileDialog.getOpenFileName(
-                self, "Select MCTempl File", config.ROOT_PATH, 'Template files (*.nii)')[0]
+                self, "Select MCTempl File", str(config.ROOT_PATH), 'Template files (*.nii)')[0]
 
         fname = str(Path(fname))
         if fname:
@@ -1593,7 +1593,7 @@ class OpenNFT(QWidget):
     # --------------------------------------------------------------------------
     def onChooseFolder(self, name, le):
         dname = QFileDialog.getExistingDirectory(
-            self, "Select '{}' directory".format(name), config.ROOT_PATH)
+            self, "Select '{}' directory".format(name), str(config.ROOT_PATH))
         dname = str(Path(dname))
         if dname:
             le.setText(dname)
@@ -1603,11 +1603,11 @@ class OpenNFT(QWidget):
     def onChooseFile(self, name, le):
         if config.DONOT_USE_QFILE_NATIVE_DIALOG:
             fname = QFileDialog.getOpenFileName(
-                self, "Select '{}' directory".format(name), config.ROOT_PATH, 'Any file (*.*)',
+                self, "Select '{}' directory".format(name), str(config.ROOT_PATH), 'Any file (*.*)',
                 options=QFileDialog.DontUseNativeDialog)[0]
         else:
             fname = QFileDialog.getOpenFileName(
-                self, "Select '{}' directory".format(name), config.ROOT_PATH, 'Any file (*.*)')[0]
+                self, "Select '{}' directory".format(name), str(config.ROOT_PATH), 'Any file (*.*)')[0]
 
         fname = str(Path(fname))
         if fname:
