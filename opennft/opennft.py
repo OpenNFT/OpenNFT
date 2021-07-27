@@ -1493,11 +1493,11 @@ class OpenNFT(QWidget):
     def onChooseSetFile(self):
         if config.DONOT_USE_QFILE_NATIVE_DIALOG:
             fname = QFileDialog.getOpenFileName(
-                self, "Select 'SET File'", self.settingFileName, 'ini files (*.ini)',
+                self, "Select 'SET File'", str(self.settingFileName), 'ini files (*.ini)',
                 options=QFileDialog.DontUseNativeDialog)[0]
         else:
             fname = QFileDialog.getOpenFileName(
-                self, "Select 'SET File'", self.settingFileName, 'ini files (*.ini)')[0]
+                self, "Select 'SET File'", str(self.settingFileName), 'ini files (*.ini)')[0]
 
         fname = str(Path(fname))
         self.chooseSetFile(fname)
