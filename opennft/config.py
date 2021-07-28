@@ -11,6 +11,7 @@ from pathlib import Path
 import pyqtgraph as pg
 
 
+APP_NAME = 'OpenNFT'
 LOG_LEVEL = 'DEBUG'
 
 ROOT_PATH = Path(__file__).absolute().resolve().parent
