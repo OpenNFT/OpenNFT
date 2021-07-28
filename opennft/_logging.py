@@ -14,7 +14,6 @@ def logging_setup():
         sys.stdout = open(os.devnull, "w")
         sys.stderr = sys.stdout
     else:
-        print(get_app_config_dir() / f'{config.APP_NAME}.log')
         log_file = sys.stdout
 
     logger.remove()
