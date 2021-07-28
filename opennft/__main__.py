@@ -16,6 +16,7 @@ from opennft import excepthook, utils
 from opennft import config
 from opennft import opennft
 from opennft import __version__
+from opennft._logging import logging_setup
 
 
 def main():
@@ -31,6 +32,8 @@ def main():
     app.setApplicationVersion(__version__)
 
     config.MATLAB_NAME_SUFFIX = '_{}'.format(utils.generate_random_number_string())
+
+    logging_setup()
 
     nft = opennft.OpenNFT()
     nft.show()

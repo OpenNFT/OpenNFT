@@ -12,6 +12,7 @@ import pyqtgraph as pg
 from PyQt5.QtCore import QStandardPaths
 
 
+APP_NAME = 'OpenNFT'
 LOG_LEVEL = 'DEBUG'
 
 ROOT_PATH = Path(__file__).absolute().resolve().parent
@@ -147,6 +148,3 @@ PLOT_PEN_COLORS = [
     pg.mkPen(pg.mkColor(145, 130, 43), width=1.2),
     pg.mkPen(pg.mkColor(0, 0, 0), width=1.2)
 ]
-
-APP_NAME = 'OpenNFT'
-APP_DATA_DIR = Path(QStandardPaths.standardLocations(QStandardPaths.AppLocalDataLocation)[0]) / APP_NAME

@@ -5,14 +5,16 @@ import os
 from loguru import logger
 
 from opennft import config
+from opennft.utils import get_app_config_dir
 
 
 def logging_setup():
     if sys.platform == 'win32' and sys.executable.lower().endswith('pythonw.exe'):
-        log_file = config.APP_DATA_DIR / f'{config.APP_NAME}.log'
+        log_file = get_app_config_dir() / f'{config.APP_NAME}.log'
         sys.stdout = open(os.devnull, "w")
         sys.stderr = sys.stdout
     else:
+        print(get_app_config_dir() / f'{config.APP_NAME}.log')
         log_file = sys.stdout
 
     logger.remove()
