@@ -9,7 +9,6 @@ Copyright (C) 2016-2021 OpenNFT.org
 
 from pathlib import Path
 import pyqtgraph as pg
-from PyQt5.QtCore import QStandardPaths
 
 
 APP_NAME = 'OpenNFT'
