@@ -39,10 +39,33 @@ Resolving conflicts via PyCharm
 In case if you faced conflicts which you can not resolve using GitHub, you can do following steps to resolve them manually
 
 1. Go to Git -> Manage remotes and add OpenNFT original repository as remote branch
+
+.. image:: _static/updates_4.png
+
+.. image:: _static/updates_5.png
+
 2. Use Git menu in the bottom right part of your screen to checkout to master branch of original OpenNFT
+
+.. image:: _static/updates_6.png
+
 3. Return to your master branch and using the same Git menu press "Merge into current" on original master branch
 
-After that you wil be able to resolve all conflicts manually.
+.. image:: _static/updates_7.png
+
+After that you wil be able to resolve all conflicts manually and push all changes to your fork.
+
+Pushing changes from your local repository to GitHub
+----------------------------------------------------
+
+When you completed changes in your local repository, you can share them via commit and push.
+
+1. Press ''Ctrl+K'' or green check mark on the top menu of PyCharm
+2. Check necessary files, which you want to commit, and fill commit message field
+3. You can push your commit from that window, by pushing green arrow (to the right of check mark) or pressing ''Ctrl+Shift+K'' after commit is done.
+
+.. image:: _static/updates_8.png
+
+Finally, if push succeeded, you will see it in you GitHub repository.
 
 Checking pull requests locally
 ------------------------------
