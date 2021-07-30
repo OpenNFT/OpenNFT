@@ -3,7 +3,7 @@
 Updates and Development using Fork
 ==================================
 
-Updating required packages
+Update required packages
 --------------------------
 
 If you need to upgrade required packages for OpenNFT, use following command in terminal
@@ -18,7 +18,7 @@ If you need to downgrade a specific package due to its unstable work
 
     pip install <PACKAGE_NAME>==<VERSION>
 
-Updating your Fork from OpenNFT repository
+Update your Fork from OpenNFT repository
 ------------------------------------------
 
 If you have your own repository forked from original OpenNFT, you can update it in the following way
@@ -33,7 +33,7 @@ Otherwise, if there is no conflicts, you can press ''Fetch and merge'' to update
 
 .. image:: _static/updates_3.png
 
-Resolving conflicts via PyCharm
+Resolve conflicts via PyCharm
 -------------------------------
 
 In case if you faced conflicts which you can not resolve using GitHub, you can do following steps to resolve them manually
@@ -52,22 +52,28 @@ In case if you faced conflicts which you can not resolve using GitHub, you can d
 
 .. image:: _static/updates_7.png
 
-After that you wil be able to resolve all conflicts manually and push all changes to your fork.
+After that you will be able to resolve all conflicts manually and push all changes to your fork.
 
-Pushing changes from your local repository to GitHub
+Push changes from your local repository to GitHub
 ----------------------------------------------------
 
 When you completed changes in your local repository, you can share them via commit and push.
 
 1. Press ''Ctrl+K'' or green check mark on the top menu of PyCharm
 2. Check necessary files, which you want to commit, and fill commit message field
-3. You can push your commit from that window, by pushing green arrow (to the right of check mark) or pressing ''Ctrl+Shift+K'' after commit is done.
+3. You can push your commit from that window, by pushing green arrow (to the right of check mark) or pressing ‘’Ctrl+Shift+K’’ after commit is done.
 
 .. image:: _static/updates_8.png
 
+4. Make sure that destination of your push is correct ( <local_repository_name> -> <remote_repository_name:branch_name> ). You can check remote repository name and URL in Git -> Manage remotes menu.
+
+.. image:: _static/updates_9.png
+
 Finally, if push succeeded, you will see it in you GitHub repository.
 
-Checking pull requests locally
+However, if you have troubles when pushing to your fork, check these :ref:`settings <fork_problem>`.
+
+Check pull requests locally
 ------------------------------
 
 Following command in terminal will help if you want to check pull request to your fork locally

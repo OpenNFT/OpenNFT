@@ -124,3 +124,14 @@ Run configuration problem
 +++++++++++++++++++++++++
 
 Sometimes it is necessary to select 'Store as project file'. Double-check if PyCharm switches to newly configured venv in the Terminal command line, if not you have to try to close and open the Terminal window.
+
+.. _fork_problem:
+
+Push from local repository to fork problem
+++++++++++++++++++++++++++++++++++++++++++
+
+Check following permission and branch settings if you faced problems during push to your fork.
+
+.. image:: _static/troubles_1.png
+
+.. image:: _static/troubles_2.png
