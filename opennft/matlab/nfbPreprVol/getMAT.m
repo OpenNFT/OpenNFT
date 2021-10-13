@@ -3,7 +3,7 @@ function mat = getMAT(hdr,dim)
 % Function to format brain volume orientation information.
 % Note, it is currently disabled in OpenNFT, due to large heterogenity of
 % real-time export configurations.
-% Note, an end-user is adviced to carefully ensure the spatial orientation 
+% Note, an end-user is advised to carefully ensure the spatial orientation 
 % of their real-time data.
 %
 %__________________________________________________________________________
@@ -14,17 +14,17 @@ function mat = getMAT(hdr,dim)
 
 % Orientation information
 %-------------------------------------------------------------------
-% Axial Analyze voxel co-ordinate system:
+% Axial Analyze voxel coordinate system:
 % x increases     right to left
 % y increases posterior to anterior
 % z increases  inferior to superior
 
-% DICOM patient co-ordinate system:
+% DICOM patient coordinate system:
 % x increases     right to left
 % y increases  anterior to posterior
 % z increases  inferior to superior
 
-% T&T co-ordinate system:
+% T&T coordinate system:
 % x increases      left to right
 % y increases posterior to anterior
 % z increases  inferior to superior

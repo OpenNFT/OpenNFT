@@ -104,11 +104,11 @@ function [P, A0, x1, x2, x3, wt, deg, b, nrIter] = ...
 %
 % Real-time computational modifications. 
 % Note, to speed up the computations,
-% 'Coef' are transferred to the spm_reslice_rt, whcih implies
+% 'Coef' are transferred to the spm_reslice_rt, which implies
 % 1) that exactly the same step in reslice is disabled, and
 % 2) that interpolation specified in realign will be 'used'
 % by default for the same step of Coef estimation during reslice
-% (see smooth_vol() occurences).
+% (see smooth_vol() occurrences).
 % We recommend using the same interpolation for real-time adaptations of
 % the realign and reslice functions.
 
@@ -218,7 +218,7 @@ if fNFB
     thAcc = 0.01;
     nrIter = 10;
 else
-    % SPM defualt:
+    % SPM default:
     thAcc = 1e-8;
     nrIter = 64;
 end

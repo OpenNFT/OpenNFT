@@ -50,7 +50,7 @@ end
 Ft = basFct(n,:)'; % basis function vector at time n
 Dn = Dn + Yn * Ft'; % Eq. (17)
 Cn = (n - 1) / n * Cn  + Ft * Ft' / n; % Eq. (18)
-sigma2n = sigma2n + Yn .* Yn; % Eq. (9), without factor 1/n, see bellow
+sigma2n = sigma2n + Yn .* Yn; % Eq. (9), without factor 1/n, see below
 Bn = zeros(size(Dn));
 e2n = zeros(size(sigma2n));
 

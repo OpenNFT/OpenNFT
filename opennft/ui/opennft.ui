@@ -901,7 +901,7 @@
                                                                                           <item>
                                                                                                <widget class="QLineEdit" name="leRoiAnatOperation">
                                                                                                     <property name="toolTip">
-                                                                                                         <string>MATLAB expression. It must cointain 'X', which represents the row vector of activations for each ROI</string>
+                                                                                                         <string>MATLAB expression. It must contain 'X', which represents the row vector of activations for each ROI</string>
                                                                                                     </property>
                                                                                                     <property name="text">
                                                                                                          <string>median(X)</string>

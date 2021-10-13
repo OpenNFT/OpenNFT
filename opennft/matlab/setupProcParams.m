@@ -161,17 +161,17 @@ else
     % For DCM:
     % use smoothing for DCM (optional, to explore the differences)
     P.smForDCM = true;
-    % not implmented for cGLM
+    % not implemented for cGLM
     P.cglmAR1 = false;
     % AR(1) for iGLM (optional, to explore the differences)
     P.iglmAR1 = true;
 end
 P.aAR1 = 0.2; % default SPM value
 
-%% adding nuissance regressors to iGLM
+%% adding nuisance regressors to iGLM
 P.isRegrIGLM = true;
 
-%% adding nuissance regressors to iGLM
+%% adding nuisance regressors to iGLM
 % Note, less efficient regressing out of the motion-related regressors than
 % offline GLM given the whole motion regressors at once.
 if ~P.isRestingState

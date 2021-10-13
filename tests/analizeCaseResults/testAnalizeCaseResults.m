@@ -11,7 +11,7 @@
 % Note, the vectors of feedback values are specific to the feedback type.
 %
 % Usage: 
-% Unpack .zip folders with data structures and corrsponding reference .mat
+% Unpack .zip folders with data structures and corresponding reference .mat
 % files.
 % Copy-paste your test NF_Data_* time-series and feedback values, i.e.
 %  *_proc_tsROIs.mat and *_NFBs.mat into the corresponding nfData folder. 

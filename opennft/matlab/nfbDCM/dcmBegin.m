@@ -67,9 +67,9 @@ function calculateDcm = dcmBegin(indVol)
             dcmInputData.dcmParTag = mainLoopData.dcmParTag;
             dcmInputData.dcmParOpp = mainLoopData.dcmParOpp;
             
-            % For now, this storage is a simplification of the proble that
+            % For now, this storage is a simplification of the problem that
             % dcmInputData structure contains Python-unsupported data type
-            % that returne from MATLAB.
+            % that returned from MATLAB.
             save([tempdir, 'dcmInputData.mat'], 'dcmInputData');
         end
         

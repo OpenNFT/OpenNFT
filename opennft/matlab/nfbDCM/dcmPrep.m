@@ -38,7 +38,7 @@ function [DCM_EN, dcmParTag, dcmParOpp] = dcmPrep(SPM)
     DCM_EN.n        = length(dcmDef.target.a); % number of ROIs in a single DCM model
     DCM_EN.delays   = repmat(SPM.xY.RT,DCM_EN.n,1);
     DCM_EN.d        = zeros(DCM_EN.n,DCM_EN.n,0);
-    DCM_EN.Y.X0     = []; % intializing regressors for DCM model
+    DCM_EN.Y.X0     = []; % initializing regressors for DCM model
     DCM_EN.roiNames = dcmDef.roiNames;
     
     end

@@ -70,7 +70,7 @@ Install from GitHub
 .. note::
 
     It is assumed that the virtual environment has been created and activated.
-    Please see above how to create and activate the virual environment on your platform.
+    Please see above how to create and activate the virtual environment on your platform.
 
 Run the command:
 

@@ -29,7 +29,7 @@ Contact
 opennft@gmail.com
 _________________________________________________________________________
 
-The module bellow is written by Artem Nikonorov, Evgeny Prilepin, Yury Koush, Ronald Sladky
+The module below is written by Artem Nikonorov, Evgeny Prilepin, Yury Koush, Ronald Sladky
 
 """
 
@@ -655,7 +655,7 @@ class OpenNFT(QWidget):
         self.mainLoopLock.release()
 
         if self.preiteration < self.iteration:
-            # this code is executed before file is aquired
+            # this code is executed before file is acquired
 
             self.eng.mainLoopEntry(self.iteration, nargout=0)
 
@@ -744,7 +744,7 @@ class OpenNFT(QWidget):
 
         if not self.reachedFirstFile:
             if not self.P['FirstFileName'] in fname:
-                logger.info('Volume skiped, waiting for first file')
+                logger.info('Volume skipped, waiting for first file')
                 self.isMainLoopEntered = False
                 return
             else:
@@ -883,7 +883,7 @@ class OpenNFT(QWidget):
                     if self.displayData:
                         if self.P['Prot'] == 'ContTask':
                             #                       Here task condition is evaluated: if condition is 3 (task) and the current
-                            #                       itteration corresponds with the onset of a task block (kept in TaskFirstVol)
+                            #                       iteration corresponds with the onset of a task block (kept in TaskFirstVol)
                             #                       taskseq is set to one. While set to 1, Display  in ptbScreen.py
                             #                       will use the taskse flag to call the ptbTask function.
                             # cond = self.eng.evalin('base', 'mainLoopData.displayData.condition')

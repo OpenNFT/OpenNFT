@@ -167,7 +167,7 @@ for indRoi = 1:P.NrROIs
     
     % 2.1. time-series AR(1) filtering
     if P.cglmAR1
-        % initalize first AR(1) value
+        % initialize first AR(1) value
         if tmp_ind_end == 1
             mainLoopData.tmp_rawTimeSeriesAR1(indRoi,tmp_ind_end) = ...
                 (1 - P.aAR1) * tmp_rawTimeSeries(tmp_ind_end);
@@ -269,7 +269,7 @@ for indRoi = 1:P.NrROIs
     % processing. Hence, motion and the linear trend regressors are
     % not necessary to be added cumulatively here. They could be added 
     % when DCM needs to be computed, i.e. at the end of the entire trial, 
-    % as it is currently implmented (dcmBegin.m).
+    % as it is currently implemented (dcmBegin.m).
     if flags.isDCM
         % subtract the absolute value of the trial
         cX0 = ones(tmp_ind_end,1);
@@ -356,7 +356,7 @@ end
 % update main loop variable
 mainLoopData.rawTimeSeries = rawTimeSeries;
 
-% calcualte average limits for 2 ROIs, e.g. for bilateral NF
+% calculate average limits for 2 ROIs, e.g. for bilateral NF
 % NF extensions with >2 ROIs requires an additional justification
 mainLoopData.mposMax(indVolNorm)= mean(mainLoopData.posMax(:, indVolNorm));
 mainLoopData.mposMin(indVolNorm)= mean(mainLoopData.posMin(:, indVolNorm));
