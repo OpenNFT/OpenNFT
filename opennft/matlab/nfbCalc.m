@@ -156,11 +156,12 @@ if  strcmp(P.Prot, 'Inter') && (flags.isPSC || flags.isCorr)
                 % compute average %SC feedback value
                 tmp_fbVal = eval(P.RoiAnatOperation);
             elseif flags.isCorr
-                rho = corrcoef(mainLoopData.scalProcTimeSeries(:,i_blockNF)'); rho = rho(1,2);
-                norm_percValues(1:P.NrROIs) = rho;
+                rhoBas = corrcoef(mainLoopData.scalProcTimeSeries(:,i_blockBAS)'); rhoBas = rhoBas(1,2);
+                rhoCond = corrcoef(mainLoopData.scalProcTimeSeries(:,i_blockNF)'); rhoCond = rhoCond(1,2);
+                norm_percValues(1:P.NrROIs) = rhoCond - rhoBas;
                 
                 % compute average %SC feedback value
-                tmp_fbVal = rho;
+                tmp_fbVal = rhoCond - rhoBas;
             end
             mainLoopData.vectNFBs(indVolNorm) = tmp_fbVal;
             dispValue = round(P.MaxFeedbackVal*tmp_fbVal, P.FeedbackValDec);
