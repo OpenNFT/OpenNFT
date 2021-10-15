@@ -8,7 +8,7 @@ and they can be switched on and off according to the user's need.
 Each plugin has to be a subclass of *Process class specified in pyniexp.mlplugins. It has to contain a header in a format of dictionary (called META) with prespecified keys:
 - plugin_name: It is a freeform text which will be displayed in the plugin dialog and in the logs.
 - plugin_time: It is a event timestamp as specified in opennft.eventrecorder. Times, and it determines the execution time of the plugin (so far only t3 is implemented)
-- plugin_init: It is the initialization code of the plugin. "{}" can be used to refer to OpenNFT parameters as specified in the P paremeter dictionary. It can be a list of 
+- plugin_init: It is the initialization code of the plugin. "{}" can be used to refer to OpenNFT parameters as specified in the P parameter dictionary. It can be a list of 
 commands, in which case, the first is run to create the object, and the rest are executed afterwards.
 - plugin_signal: It is an expression returning to logical value, and it speicies the condition when the plugin can be executed.
 - plugin_exec: It is the execution code of the plugin, and it is usually calls the plugin's load_data method to transfer some data to the plugin.

@@ -5,7 +5,7 @@ function displayFeedback(displayData)
 % displayData - input data structure
 %
 % Note, synchronization issues are simplified, e.g. sync tests are skipped.
-% End-user is adviced to configure the use of PTB on their own workstation
+% End-user is advised to configure the use of PTB on their own workstation
 % and justify more advanced configuration for PTB.
 %__________________________________________________________________________
 % Copyright (C) 2016-2021 OpenNFT.org

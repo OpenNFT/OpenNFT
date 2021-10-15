@@ -76,7 +76,7 @@ if flags.isDCM
 end
 
 %% EPI Data Preprocessing
-% Read Data in real-time and update paremeters
+% Read Data in real-time and update parameters
 switch P.DataType
     case 'DICOM'
         if P.UseTCPData && (indVol > 1)
@@ -261,7 +261,7 @@ basFct = mainLoopData.basFct;
 %% AR(1) iGLM, i.e. after assigning _2D matrices used for ROI's extractions
 if P.iglmAR1
     if indVolNorm == 1
-        % initalize first AR(1) volume
+        % initialize first AR(1) volume
         mainLoopData.smReslVolAR1_1 = (1 - P.aAR1) * smReslVol;
     else
         mainLoopData.smReslVolAR1_1 = smReslVol - ...
@@ -303,7 +303,7 @@ if flags.isIGLM
         tempStatMap2D = mainLoopData.statMap2D; % this structure is set with 0
         
         if ~fLockedTempl
-            % assign Tempalte
+            % assign Template
             max_smReslVol = max(smReslVol(:));
             min_smReslVol = min(smReslVol(:));
             normSmReslVol = (smReslVol-min_smReslVol) / ...
@@ -319,7 +319,7 @@ if flags.isIGLM
         
     else
         %% Initialize variables
-        % assign Tempalte
+        % assign Template
         max_smReslVol = max(smReslVol(:));
         min_smReslVol = min(smReslVol(:));
         normSmReslVol = (smReslVol-min_smReslVol) / ...

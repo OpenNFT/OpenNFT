@@ -39,10 +39,10 @@ classdef mutableClass < dynamicprops
             % propname is a string specifying property name
             % val is a cell of property value at each stage
             
-            assert(iscell(val), '"%s": propery value has to be a cell of values', propname)
-            assert(numel(val) >= numel(obj.switchIndices), '"%s": propery must have value for each %d stages', propname, numel(obj.switchIndices))
+            assert(iscell(val), '"%s": property value has to be a cell of values', propname)
+            assert(numel(val) >= numel(obj.switchIndices), '"%s": property must have value for each %d stages', propname, numel(obj.switchIndices))
             if numel(val) > numel(obj.switchIndices)
-                warning('"%s": propery have more then %d values. Some values will not be used', propname, numel(obj.switchIndices)); 
+                warning('"%s": property have more then %d values. Some values will not be used', propname, numel(obj.switchIndices)); 
             end
             
             function val = getProp(obj)

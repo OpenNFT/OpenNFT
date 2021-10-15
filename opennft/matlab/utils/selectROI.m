@@ -3,7 +3,7 @@ function selectROI(pathName)
 % ROI information structures.
 % Note, Phillips data could be corrupted, e.g. without hearder info, 
 % flipped, etc. 
-% End user is adviced to check ROIs, EPI template and rt time-series for 
+% End user is advised to check ROIs, EPI template and rt time-series for 
 % spatial orientation.
 %
 % input:

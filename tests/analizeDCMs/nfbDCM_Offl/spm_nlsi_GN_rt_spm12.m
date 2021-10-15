@@ -86,7 +86,7 @@ function [Ep,Cp,Eh,F,RT,L,dFdp,dFdpp] = spm_nlsi_GN_rt_spm12(M,U,Y)
 % Variational free energy and the Laplace approximation.
 % NeuroImage. 2007 Jan 1;34(1):220-34.
 %
-% This scheme handels complex data along the lines originally described in:
+% This scheme handles complex data along the lines originally described in:
 %
 % Sehpard RJ, Lordan BP, and Grant EH.
 % Least squares analysis of complex data with applications to permittivity
@@ -168,7 +168,7 @@ end
 %--------------------------------------------------------------------------
 IS  = spm_funcheck(IS);
 
-% paramter update eqation
+% parameter update eqation
 %--------------------------------------------------------------------------
 if isfield(M,'f'), M.f = spm_funcheck(M.f);  end
 if isfield(M,'g'), M.g = spm_funcheck(M.g);  end
@@ -234,7 +234,7 @@ nh    = length(Q);                  % number of precision components
 nq    = ny/length(Q{1});            % for compact Kronecker form of M-step
 
 
-% prior moments (assume uninformative priors if not specifed)
+% prior moments (assume uninformative priors if not specified)
 %--------------------------------------------------------------------------
 pE       = M.pE;
 try

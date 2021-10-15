@@ -279,7 +279,7 @@ for j=1:3
             case 2 % click was on Saggital: t and c need to change
                 cent([1 3])=[cp(1) + strParam.bb(1,1) - 1 ...
                              cp(2) + strParam.bb(1,3) - 1];
-            case 3 % click was on Coronal: t ans s need to change
+            case 3 % click was on Coronal: t and s need to change
                 if strParam.mode == 0
                     cent([3 2])=[cp(1) + strParam.bb(1,3) - 1 ...
                                  cp(2) + strParam.bb(1,2) - 1];

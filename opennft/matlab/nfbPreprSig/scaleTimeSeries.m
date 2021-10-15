@@ -21,7 +21,7 @@ function [outData, tmp_posMin, tmp_posMax] = ...
 % Note, scaling based on sliding window is disabled using a very big 
 % number of inclusive points, i.e. it is larger than a run. For algorithms
 % involving sliding-window, the simulations and clear hypothesis are
-% adviced, because of the very high influence on operant conditioning.
+% advised, because of the very high influence on operant conditioning.
 %
 % For generic aspects see: 
 % Koush Y., Ashburner J., Prilepin E., Ronald S., Zeidman P., Bibikov S., 

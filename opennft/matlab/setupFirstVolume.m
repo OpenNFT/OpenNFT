@@ -48,7 +48,7 @@ else
                 dicomInfoVox   = sqrt(sum(matTemplMotCorr(1:3,1:3).^2));
             end
         case 'IMAPH'
-            % get MC tempalte settings for Phillips in case of no proper header
+            % get MC template settings for Phillips in case of no proper header
             % of the rt export files
             dimTemplMotCorr = mainLoopData.dimTemplMotCorr;
             dicomInfoVox   = sqrt(sum(matTemplMotCorr(1:3,1:3).^2));
