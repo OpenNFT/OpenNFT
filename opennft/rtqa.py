@@ -292,7 +292,7 @@ class RTQAWindow(QtWidgets.QWidget):
         for n, c in zip(names, pens):
             cname = c.color().name()
             legendText += (
-                    '<span style="font-weight:600;color:{};">'.format(cname) + '{}</span>' .format(n)+ lineBreak)
+                    '<span style="font-weight:600;color:{};">'.format(cname) + '{}</span>'.format(n) + lineBreak)
 
         legendText += '</p></body></html>'
 
@@ -325,7 +325,6 @@ class RTQAWindow(QtWidgets.QWidget):
                                   pen=config.MUSTER_PEN_COLORS[i],
                                   brush=config.MUSTER_BRUSH_COLORS[i])
                 )
-
 
         else:
             muster = [
@@ -391,7 +390,7 @@ class RTQAWindow(QtWidgets.QWidget):
 
         # The set of active ROIs changing
         if self.init:
-            sz, l =  self.rSNR.shape
+            sz, l = self.rSNR.shape
             checkedBoxes = [self.roiCheckBoxes[i].isChecked() for i in range(sz)]
             self.checkedBoxesInd = [j for j, val in enumerate(checkedBoxes) if val]
 
@@ -634,12 +633,12 @@ class RTQAWindow(QtWidgets.QWidget):
 
         sz = data.size
         if isNewDCMBlock:
-            self.blockIter=0;
+            self.blockIter=0
 
         if self.blockIter:
 
             for i in range(sz):
-                self.rMean[i, indexVolume] = self.rMean[i, indexVolume- 1] + (data[i] - self.rMean[i, indexVolume- 1]) / ( self.blockIter + 1 )
+                self.rMean[i, indexVolume] = self.rMean[i, indexVolume- 1] + (data[i] - self.rMean[i, indexVolume- 1]) / (self.blockIter + 1)
                 self.m2[i] = self.m2[i] + (data[i] - self.rMean[i, indexVolume- 1]) * (data[i] - self.rMean[i, indexVolume])
                 self.rVar[i, indexVolume] = self.m2[i] / self.blockIter
                 self.rSNR[i, indexVolume] = self.rMean[i, indexVolume] / (self.rVar[i, indexVolume] ** (.5))
@@ -651,7 +650,7 @@ class RTQAWindow(QtWidgets.QWidget):
             self.rVar[:, indexVolume] = np.zeros((sz,))
             self.m2 = np.zeros((sz,))
             self.rMean[:, indexVolume] = data
-            self.blockIter = 1;
+            self.blockIter = 1
 
         if self.blockIter < 8:
             self.rSNR[:, indexVolume] = np.zeros((sz,))
@@ -666,7 +665,7 @@ class RTQAWindow(QtWidgets.QWidget):
 
             self.makeTextValueLabel(self.valuesLabel, names, pens, lineBreak='<br>')
 
-        self.iteration = indexVolume;
+        self.iteration = indexVolume
 
     # --------------------------------------------------------------------------
     def calculateCNR(self, data, indexVolume, isNewDCMBlock):
@@ -779,9 +778,9 @@ class RTQAWindow(QtWidgets.QWidget):
         """
 
         sz = inputSignal.size
-        n = self.blockIter-1;
+        n = self.blockIter-1
 
-        for i in range (sz):
+        for i in range(sz):
             self.rMSE[i,indexVolume] = (n/(n+1)) * self.rMSE[i,indexVolume-1] + ((inputSignal[i]-outputSignal[i])**2)/(n+1)
 
         if self.comboBox.currentIndex() == 4:

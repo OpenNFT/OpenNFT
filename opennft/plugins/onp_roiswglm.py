@@ -31,13 +31,12 @@ from pyniexp.mlplugins import dataProcess, SIG_NOTSTARTED, SIG_RUNNING, SIG_STOP
 from loguru import logger
 from multiprocessing import Value, RawArray
 from numpy import array, meshgrid, savetxt
-from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.pyplot as plt
 from os import path
 
 META = {
     "plugin_name": "ROI step-wise GLM",
-    "plugin_time": "t4", # according to opennft.eventrecorder.Times
+    "plugin_time": "t4",  # according to opennft.eventrecorder.Times
     "plugin_init": [
         "ROIswGLM(int({NrROIs}),len({ProtNF}),r'{nfbDataFolder}')",
         "self.parent.eng.evalin('base','onp_roiswglm')"
@@ -45,6 +44,7 @@ META = {
     "plugin_signal": "self.parent.eng.evalin('base','isfield(mainLoopData,\\\'tmp_rawTimeSeriesAR1\\\')')",
     "plugin_exec": "load_data(self.parent.eng.evalin('base','onp_roiswglm'))",
 }
+
 
 class ROIswGLM(dataProcess):
     def __init__(self,nROIs,nBlocks,nfbDataFolder):
@@ -72,7 +72,6 @@ class ROIswGLM(dataProcess):
         for b in range(0,self.nBlocks):
             fname = path.join(path.normpath(self.nfbDataFolder), 'ROIswGLM_{:02d}.txt'.format(b+1))
             savetxt(fname=fname, X=dat[b,:,0:b+1].transpose(), fmt='%.3f', delimiter=',')
-
 
         X,Y = meshgrid(self.nBlocks,self.nBlocks)
         for r in range(0,self.nROIs):

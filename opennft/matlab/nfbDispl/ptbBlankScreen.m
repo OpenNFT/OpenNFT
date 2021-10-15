@@ -15,4 +15,3 @@ Screen(P.Screen.wPtr, 'FillRect', [0 0 0]);
 P.Screen.vbl = Screen('Flip', P.Screen.wPtr, P.Screen.vbl+P.Screen.ifi/2);
 
 assignin('base', 'P', P);
-

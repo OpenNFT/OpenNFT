@@ -82,4 +82,3 @@ Following command in terminal will help if you want to check pull request to you
 
     git fetch origin pull/<ID>/head:<BRANCHNAME>
     git checkout <BRANCHNAME>
-

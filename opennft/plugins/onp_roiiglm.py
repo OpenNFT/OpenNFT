@@ -35,11 +35,12 @@ from os import path
 
 META = {
     "plugin_name": "ROI iGLM",
-    "plugin_time": "t3", # according to opennft.eventrecorder.Times
+    "plugin_time": "t3",  # according to opennft.eventrecorder.Times
     "plugin_init": "ROIiGLM(int({NrROIs}),int({NrOfVolumes}),int({nrSkipVol}),r'{nfbDataFolder}')",
     "plugin_signal": "self.parent.eng.evalin('base','isfield(mainLoopData,\\\'tn\\\')')",
     "plugin_exec": "load_data(self.parent.eng.evalin('base','onp_extract_rois'))"
 }
+
 
 class ROIiGLM(dataProcess):
     def __init__(self,nROIs,nVols, nSkipVols, nfbDataFolder):

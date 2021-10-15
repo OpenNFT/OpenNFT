@@ -12,9 +12,11 @@ Written by Artem Nikonorov
 
 from loguru import logger
 
-import pythoncom, pyHook
+import pythoncom
+import pyHook
 import sys
-import multiprocessing as mp, time
+import time
+import multiprocessing as mp
 import numpy as np
 from opennft.eventrecorder import Times
 
@@ -59,7 +61,7 @@ def keypressed(event):
         #np_arr[counter] = tmp
 
         logger.debug('arr {}', np_arr)
-    elif event.Ascii == 35: # it is # sign
+    elif event.Ascii == 35:  # it is # sign
         recordPulseEvent()
         #displayEvent.set()
 
@@ -70,7 +72,7 @@ def keypressed(event):
         keys='<ESC>'
         sys.exit(0)
     else:
-        #keys=chr(event.Ascii)
+        #keys = chr(event.Ascii)
         keys = str(event.Ascii)
 
 

@@ -42,6 +42,7 @@ class Times(enum.IntEnum):
     # Events durations
     d0 = 13     # elapsed time per iteration
 
+
 # ==============================================================================
 class EventRecorder(object):
     """Recording events in time-vectors matrix

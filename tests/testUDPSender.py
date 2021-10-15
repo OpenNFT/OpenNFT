@@ -38,7 +38,7 @@ while not(keyboard.is_pressed('q')):
     val = float(uniform(-100,100))
     sender.send_data(val)
     print(cond,val)
-    
+
     sleep(1)
 
 sender.close()

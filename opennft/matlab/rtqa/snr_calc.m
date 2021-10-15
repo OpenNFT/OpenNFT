@@ -56,4 +56,3 @@ function [ snrData ] = snr_calc( iteration, vol, volSmoothed, snrData, isSmoothe
     snrData.m2NonSmoothed = m2NonSmoothed;
 
 end
-

@@ -18,6 +18,7 @@ from opennft.eventrecorder import Times as Times
 import multiprocessing as mp
 import threading
 
+
 # ==============================================================================
 class PtbScreen(object):
     """Asynchronous PTB display
@@ -59,7 +60,7 @@ class PtbScreen(object):
 
         try:
             self.eng.Screen('CloseAll', nargout=0)
-        except:
+        except Exception:
             pass
 
     # --------------------------------------------------------------------------

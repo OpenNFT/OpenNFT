@@ -20,4 +20,3 @@ if isfield(mainLoopData, 'displayData')
 else
     displayData = struct;
 end
-

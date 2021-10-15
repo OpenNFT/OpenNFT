@@ -32,7 +32,6 @@ Written by Tibor Auer
 from pyniexp.mlplugins import imageProcess
 import matplotlib.pyplot as plt
 import numpy as np
-from functools import reduce
 
 META = {
     "plugin_name": "Stat Map",
@@ -41,6 +40,7 @@ META = {
     "plugin_signal": "self.parent.eng.evalin('base','isfield(mainLoopData,\\\'tn\\\')')",
     "plugin_exec": "load_data(self.parent.eng.evalin('base','mainLoopData.tn.pos'))"
 }
+
 
 class myImageProcess(imageProcess):
     def __init__(self,image_dimension,toDraw=False):
@@ -69,7 +69,8 @@ class myImageProcess(imageProcess):
         if self.toDraw:
             plt.close(self.figure)
 
-def getFactorPair(n): # retrieve the pair of factors with the smallest difference
+
+def getFactorPair(n):  # retrieve the pair of factors with the smallest difference
     factorPairs = [[i, n//i] for i in range(1, int(n**0.5) + 1) if n % i == 0]
     factorPairDiff = [int(np.diff(p)) for p in factorPairs]
     return sorted(factorPairs[factorPairDiff.index(min(factorPairDiff))])

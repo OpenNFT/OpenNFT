@@ -150,6 +150,3 @@ Screen('DrawLines', P.Screen.wPtr, P.Screen.allCoords,...
 Screen('Flip', P.Screen.wPtr);
 
 end
-
-
-

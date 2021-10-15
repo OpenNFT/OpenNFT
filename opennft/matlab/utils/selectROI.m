@@ -140,4 +140,3 @@ if flags.isDCM
 end
 
 assignin('base', 'P', P);
-

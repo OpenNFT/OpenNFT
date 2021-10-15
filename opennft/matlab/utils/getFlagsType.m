@@ -19,4 +19,3 @@ flags.isCorr = strcmp(P.Type, 'Corr');
 flags.isNone = strcmp(P.Type, 'None');
 
 flags.isIGLM = isfield(P,'isIGLM') && P.isIGLM;
-
