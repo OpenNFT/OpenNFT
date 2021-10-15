@@ -1,5 +1,5 @@
 function [DCM_EN, dcmParTag, dcmParOpp] = dcmPrep(SPM)
-    % Function to prepare initial DCM structure from parameters coded in the 
+    % Function to prepare initial DCM structure from parameters coded in the
     % protocol JSON file and the SPM structure.
     
     % input:

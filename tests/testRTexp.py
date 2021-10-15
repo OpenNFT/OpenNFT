@@ -32,17 +32,17 @@ elif testCase == 'SVM':
     dstpath = 'C:/_RT/rtData/NF_SVM/NF_Run_1'
     pause_in_sec = 1
 
-elif testCase == 'DCM': 
+elif testCase == 'DCM':
     srcpath = 'C:/_RT/rtData/NF_DCM/NF_Run_1_src'
     dstpath = 'C:/_RT/rtData/NF_DCM/NF_Run_1'
     pause_in_sec = 1
 
-elif testCase == 'REST': 
+elif testCase == 'REST':
     srcpath = 'C:/_RT/rtData/rtQA_REST/RS_Run_1_src'
     dstpath = 'C:/_RT/rtData/rtQA_REST/RS_Run_1'
     pause_in_sec = 1.97
 
-elif testCase == 'TASK': 
+elif testCase == 'TASK':
     srcpath = 'C:/_RT/rtData/rtQA_TASK/TASK_Run_1_src'
     dstpath = 'C:/_RT/rtData/rtQA_TASK/TASK_Run_1'
     pause_in_sec = 1.97

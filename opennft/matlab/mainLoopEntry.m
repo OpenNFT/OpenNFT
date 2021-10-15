@@ -116,7 +116,7 @@ if (strcmp(P.Prot, 'Inter') ||  strcmp(P.Prot, 'Cont') || strcmp(P.Prot, 'ContTa
     elseif strcmp(P.Prot, 'Cont')
         displayData.feedbackType = 'bar_count';
     elseif strcmp(P.Prot, 'ContTask')
-        displayData.feedbackType = 'bar_count_task';  
+        displayData.feedbackType = 'bar_count_task';
     end
     displayData.condition = condition;
     displayData.dispValue = mainLoopData.dispValue;

@@ -208,7 +208,7 @@ class OpenNFT(QWidget):
 
         self.fFinNFB = False
         self.orthViewUpdateInProgress = False
-        self.outputSamples = {}        
+        self.outputSamples = {}
         self.musterInfo = {}
 
         # Core Matlab helper process
@@ -1796,7 +1796,7 @@ class OpenNFT(QWidget):
         self.leMinFeedbackVal.setText(str(self.settings.value('MinFeedbackVal', '-100')))
         self.sbFeedbackValDec.setValue(int(self.settings.value('FeedbackValDec', '0')))  # FixMe
         self.cbNegFeedback.setChecked(str(self.settings.value('NegFeedback', 'false')).lower() == 'true')
-        self.cbFeedbackPlot.setChecked(str(self.settings.value('PlotFeedback', 'true')).lower() == 'true')        
+        self.cbFeedbackPlot.setChecked(str(self.settings.value('PlotFeedback', 'true')).lower() == 'true')
 
         self.leShamFile.setText(self.settings.value('ShamFile', ''))
 

@@ -1,6 +1,6 @@
 function nfbInitReward()
-% Function to initialize the reward vector. 
-% Note, the reward mechanism is exemplified for an Intermittent PSC 
+% Function to initialize the reward vector.
+% Note, the reward mechanism is exemplified for an Intermittent PSC
 % feedback only.
 %
 % output:

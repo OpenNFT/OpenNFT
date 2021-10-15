@@ -3,9 +3,9 @@ function [o] = matData2strData(x)
 % It is used to transfer medium-size data to Python.
 %
 % input:
-% x - input uint8 matrix 
+% x - input uint8 matrix
 %
-% output: 
+% output:
 % o - output string
 %__________________________________________________________________________
 % Copyright (C) 2016-2021 OpenNFT.org
@@ -22,4 +22,3 @@ end
 o = char(o + '0');
 o(:, required_digits + 1) = ';';
 o = reshape(o', 1, size(o, 1) * (required_digits + 1));
-

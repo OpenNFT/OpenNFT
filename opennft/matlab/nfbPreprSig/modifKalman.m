@@ -8,16 +8,16 @@ function [kalmOut, S, fPositDerivSpike, fNegatDerivSpike] = ...
 % S                - parameter structure
 % fPositDerivSpike - counter for spikes with positive derivative
 % fNegatDerivSpike - counter for spikes with negative derivative
-% 
-% output: 
+%
+% output:
 % kalmOut          - filtered otuput
 % S                - parameters structure
 % fPositDerivSpike - counter for spikes with positive derivative
 % fNegatDerivSpike - counter for spikes with negative derivative
 %
-% For generic aspects see: 
-% Koush Y., Zvyagintsev M., Dyck M., Mathiak K.A., Mathiak K. (2012): 
-% Signal quality and Bayesian signal processing in neurofeedback based on 
+% For generic aspects see:
+% Koush Y., Zvyagintsev M., Dyck M., Mathiak K.A., Mathiak K. (2012):
+% Signal quality and Bayesian signal processing in neurofeedback based on
 % real-time fMRI. Neuroimage 59:478-89.
 %__________________________________________________________________________
 % Copyright (C) 2016-2021 OpenNFT.org

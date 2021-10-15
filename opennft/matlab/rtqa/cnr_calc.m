@@ -78,7 +78,7 @@ function [ cnrData ] = cnr_calc( index, vol, volSmoothed, cnrData, isSmoothed )
             varianceCond = condData.m2 / (condData.iteration - 1);
         end
                
-        cnrData.cnrVol = (meanCond - meanBas) ./ ((varianceBas + varianceCond).^.5); 
+        cnrData.cnrVol = (meanCond - meanBas) ./ ((varianceBas + varianceCond).^.5);
         
     end
         
@@ -86,4 +86,3 @@ function [ cnrData ] = cnr_calc( index, vol, volSmoothed, cnrData, isSmoothed )
     cnrData.condData = condData;
     
 end
-

@@ -38,7 +38,7 @@ matTemplMotCorr = evalin('base', 'matTemplMotCorr');
 displBackgr = evalin('base', 'displBackgr');
 
 displayBgStruct = evalin('base', 'displayBgStruct');
-displayBgEpi = evalin('base', 'displayBgEpi');   
+displayBgEpi = evalin('base', 'displayBgEpi');
 
 if strcmpi(bgType, 'bgEPI')
     displBackgr = displayBgEpi;
@@ -47,7 +47,7 @@ else
 end
 
 strParam.centre = findcent(newCoord, flagsPlanes);
-% TODO GUI: Display modes: [Background + Stat + ROIs, 
+% TODO GUI: Display modes: [Background + Stat + ROIs,
 %                                     Background + Stat, Background + ROIs]
 strParam.modeDispl = [1 0 0];
 
@@ -61,9 +61,9 @@ else
    fname = strrep(P.memMapFile, 'shared', 'statVol');
    m_in = memmapfile(fname, 'Writable', false, 'Format',  {'double', displayBgEpi.dim, 'posStatVol'; 'double', displayBgEpi.dim, 'negStatVol'});
    displImg.vol = m_in.Data.posStatVol;
-   displImg.mat = matTemplMotCorr;   
+   displImg.mat = matTemplMotCorr;
    displImg_neg.vol = m_in.Data.negStatVol;
-   displImg_neg.mat = matTemplMotCorr; 
+   displImg_neg.mat = matTemplMotCorr;
 end
 
 [backg_imgt,backg_imgc,backg_imgs, stat_imgt, stat_imgc, stat_imgs, P] = redrawall(displBackgr.vol, displBackgr.mat, ROIsOverlay, displImg, P);
@@ -169,7 +169,7 @@ else
 end;
 
 % Template parameters, used for ROIs and Stat map
-coordParam.TM0 = TM0; coordParam.CM0 = CM0; coordParam.SM0 = SM0; 
+coordParam.TM0 = TM0; coordParam.CM0 = CM0; coordParam.SM0 = SM0;
 coordParam.TD  = TD;  coordParam.CD  = CD;  coordParam.SD = SD;
 
 try
@@ -266,7 +266,7 @@ cent   = [];
 cp     = [];
 for j=1:3
     if flagsPlanes(j) % new coordinates on Transverse
-        cp = CoordLoc(j,:);  
+        cp = CoordLoc(j,:);
     end
     if ~isempty(cp)
         cp   = cp(1,1:2);
@@ -292,6 +292,6 @@ for j=1:3
     end;
 end;
 if ~isempty(cent)
-    centre = strParam.Space(1:3,1:3)*cent(:) + strParam.Space(1:3,4); 
+    centre = strParam.Space(1:3,1:3)*cent(:) + strParam.Space(1:3,4);
 end;
 return;

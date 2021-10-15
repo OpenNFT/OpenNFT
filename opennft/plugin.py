@@ -41,7 +41,7 @@ class Plugin:
         if type(self.module.META['plugin_init']) == list: # post-initialization
             initcmd = self.module.META['plugin_init'][0]
             postinitcdm = self.module.META['plugin_init'][1:]
-        else: 
+        else:
             initcmd = self.module.META['plugin_init'] # no post-initialization
             postinitcdm = []
         self.object = eval("self.module." + initcmd.format(**self.parent.P))
@@ -53,6 +53,6 @@ class Plugin:
         m = self.module.META
         if (self.parent.recorder.getLastEvent() == eval("eventrecorder.Times." + m['plugin_time'])) and eval(m['plugin_signal']):
             exec("self.object." + m['plugin_exec'])
-    
+
     def finalize(self):
         self.object = None

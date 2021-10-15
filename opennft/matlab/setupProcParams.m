@@ -9,7 +9,7 @@ function setupProcParams()
 %
 % The iGLM estimations are used for visualizations, however, note that
 % negligible variations are possible in dynamic ROI update schemes or
-% feedback estimations based on iGLM. 
+% feedback estimations based on iGLM.
 %
 % Note, the iGLM/cGLM contrasts are hard-coded and user-/study- defined,
 % which is linked to the prepared SPM.mat structure.
@@ -128,13 +128,13 @@ if flags.isDCM
     % This is to simplify the P.Protocol parameter listings for DCM,
     
     % -- read timing parameters from JSON file ----------------------------
-    tim = loadTimings(P.ProtocolFile); 
+    tim = loadTimings(P.ProtocolFile);
     
     % in scans
     P.indNFTrial        = 0;
     P.lengthDCMTrial    = tim.trialLength;
     P.nrNFtrials        = tim.numberOfTrials;
-    P.nrDisplayScans    = tim.feedbackDisplayDurationInScans; 
+    P.nrDisplayScans    = tim.feedbackDisplayDurationInScans;
     P.nrBlankScans      = tim.feedbackEstimationDurationInScans;
     P.dcmRemoveInterval = P.nrBlankScans + P.nrDisplayScans;
     P.lengthDCMPeriod   = P.lengthDCMTrial + P.nrDisplayScans + P.nrBlankScans;
@@ -238,7 +238,7 @@ else
 end
 
 %% rtQA init
-rtQA_matlab.snrMapCreated = 0; 
+rtQA_matlab.snrMapCreated = 0;
 if P.isRTQA
     % rtQA python saving preparation
     rtQA_python.meanSNR = [];
@@ -259,7 +259,7 @@ if P.isRTQA
     % rtQA matlab part structure preparation
     if flags.isDCM
         rtQA_matlab.kalmanSpikesPos = zeros(P.NrROIs,P.lengthDCMTrial*P.nrNFtrials);
-        rtQA_matlab.kalmanSpikesNeg = zeros(P.NrROIs,P.lengthDCMTrial*P.nrNFtrials);        
+        rtQA_matlab.kalmanSpikesNeg = zeros(P.NrROIs,P.lengthDCMTrial*P.nrNFtrials);
         rtQA_matlab.varErGlmProcTimeSeries = zeros(P.NrROIs,P.lengthDCMTrial*P.nrNFtrials);
         rtQA_matlab.tGlmProcTimeSeries.pos = zeros(P.NrROIs,P.lengthDCMTrial*P.nrNFtrials);
         rtQA_matlab.tGlmProcTimeSeries.neg = zeros(P.NrROIs,P.lengthDCMTrial*P.nrNFtrials);
@@ -381,7 +381,7 @@ if P.UseTCPData, assignin('base', 'tcp', tcp); end
 end
 
 function tim = loadTimings(protocoFilePath)
-% Loads the DCM timings from the protocol JSON file. To be specified 
+% Loads the DCM timings from the protocol JSON file. To be specified
 % as follows: Within the key "dcmdef", insert a key "timings"
 %
 % "timings": {
@@ -390,8 +390,8 @@ function tim = loadTimings(protocoFilePath)
 %     "feedbackDisplayDurationInScans": 4,
 %     "feedbackEstimationDurationInScans": 38
 % }
-% 
-% This function will read those values and return an error if they are 
+%
+% This function will read those values and return an error if they are
 % misspecified.
 % --------------------------------------------------------------------------
 

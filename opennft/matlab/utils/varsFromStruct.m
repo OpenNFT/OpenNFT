@@ -5,8 +5,8 @@ function evals = varsFromStruct(S, fieldNames, defaultValues)
 % S - input structure
 % fieldNames - cell structure of variable names
 % defualtValues - default values for variables
-% 
-% output: 
+%
+% output:
 % evals - output structure with fieldNames
 %__________________________________________________________________________
 % Copyright (C) 2016-2021 OpenNFT.org
@@ -26,4 +26,3 @@ for i = 1:length(fieldNames)
     end
     evals = [evals [f, '=', num2str(val)] ';'];
 end
-

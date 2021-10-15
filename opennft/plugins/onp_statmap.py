@@ -2,7 +2,7 @@
 
 """
 # Plugins
-Plugins allow flexible modification and execution of OpenNFT without touching the core codebase. Plugins can access data, process them in a specific way, 
+Plugins allow flexible modification and execution of OpenNFT without touching the core codebase. Plugins can access data, process them in a specific way,
 and they can be switched on and off according to the user's need.
 
 Each plugin has to be a subclass of *Process class specified in pyniexp.mlplugins. It has to contain a header in a format of dictionary (called META) with prespecified keys:
@@ -17,7 +17,7 @@ Each plugin has to be a subclass of *Process class specified in pyniexp.mlplugin
 - the input to the process method of imageProcess (called image) is a multi-dimensional (usually 3D) numpy array as specified during initialization
 
 # Stat Map
-It is an example plugin, which demonstrates how one can access and process the activation map resulted from OpenNFT's iGLM. 
+It is an example plugin, which demonstrates how one can access and process the activation map resulted from OpenNFT's iGLM.
 Its process method converts the 3D map into 2D mosaic for visualization, and if toDraw is set to True during initialization, then it also displays it.
 
 N.B.: Displaying the activation map can significantly slows down plugin and OpenNFT!
@@ -45,7 +45,7 @@ META = {
 class myImageProcess(imageProcess):
     def __init__(self,image_dimension,toDraw=False):
         super().__init__(image_dimension,autostart=False)
-        
+
         self.toDraw = toDraw
         if self.toDraw:
             self.figure = plt.figure(figsize=(10,10))
@@ -68,8 +68,8 @@ class myImageProcess(imageProcess):
     def finalize_process(self):
         if self.toDraw:
             plt.close(self.figure)
-    
-def getFactorPair(n): # retrieve the pair of factors with the smallest difference   
+
+def getFactorPair(n): # retrieve the pair of factors with the smallest difference
     factorPairs = [[i, n//i] for i in range(1, int(n**0.5) + 1) if n % i == 0]
     factorPairDiff = [int(np.diff(p)) for p in factorPairs]
     return sorted(factorPairs[factorPairDiff.index(min(factorPairDiff))])

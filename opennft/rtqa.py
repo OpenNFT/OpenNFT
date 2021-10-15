@@ -504,7 +504,7 @@ class RTQAWindow(QtWidgets.QWidget):
         """
 
         self._fd.calc_mc_plots(data, isNewDCMBlock)
-        
+
         self._fd.draw_mc_plots(self.mcrRadioButton.isChecked(), self.translatPlot, self.rotatPlot, self.fdPlot)
 
         names = ['<u>FD</u> ']

@@ -149,8 +149,8 @@ for indRoi = 1:P.NrROIs
         rawTimeSeries(indRoi, indVolNorm)-rawTimeSeries(indRoi, 1);
     
     % 2. cumulative cGLM
-    % to avoid NaNs given algnment to zero, see preprVol()    
-    P.motCorrParam(1,:) = 0.00001; 
+    % to avoid NaNs given algnment to zero, see preprVol()
+    P.motCorrParam(1,:) = 0.00001;
     
     if flags.isPSC || flags.isSVM || flags.isCorr || P.isRestingState
         % continuous cGLM corrections
@@ -267,8 +267,8 @@ for indRoi = 1:P.NrROIs
     % 2.3.1 alternative processign for DCM, e.g. no motion and linear trend
     % regressors. Note, DCM could be very sensitive to cumulative signal
     % processing. Hence, motion and the linear trend regressors are
-    % not necessary to be added cumulatively here. They could be added 
-    % when DCM needs to be computed, i.e. at the end of the entire trial, 
+    % not necessary to be added cumulatively here. They could be added
+    % when DCM needs to be computed, i.e. at the end of the entire trial,
     % as it is currently implemented (dcmBegin.m).
     if flags.isDCM
         % subtract the absolute value of the trial

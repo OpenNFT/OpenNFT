@@ -53,7 +53,7 @@ function VO = spm_reslice_rt(P,flags)
 % relative displacement of the images is stored in their header.
 %
 % Outputs:
-% The routine uses information in their headers and writes the realigned 
+% The routine uses information in their headers and writes the realigned
 % image files to the same subdirectory with a prefix.
 %__________________________________________________________________________
 % Copyright (C) 1999-2011 Wellcome Trust Centre for Neuroimaging
@@ -61,7 +61,7 @@ function VO = spm_reslice_rt(P,flags)
 % John Ashburner
 % $Id: spm_reslice.m 5929 2014-03-27 14:47:40Z guillaume $
 %__________________________________________________________________________
-% Adopted for OpenNFT by Yury Koush and John Ashburner. 
+% Adopted for OpenNFT by Yury Koush and John Ashburner.
 % Copyright (C) 2016-2021 OpenNFT.org
 %
 %__________________________________________________________________________
@@ -69,7 +69,7 @@ function VO = spm_reslice_rt(P,flags)
 % The headers of the images contain a 4x4 affine transformation matrix 'M',
 % usually affected by the `realignment' and `coregistration' modules.
 % What these matrices contain is a mapping from the voxel coordinates
-% (x0,y0,z0) (where the first voxel is at coordinate (1,1,1)), to 
+% (x0,y0,z0) (where the first voxel is at coordinate (1,1,1)), to
 % coordinates in millimeters (x1,y1,z1).
 %
 % x1 = M(1,1)*x0 + M(1,2)*y0 + M(1,3)*z0 + M(1,4)
@@ -100,7 +100,7 @@ function VO = spm_reslice_rt(P,flags)
 
 
 % SVNid = '$Rev: 5929 $';
-%  
+%
 %==========================================================================
 %-function reslice_images(P,flags)
 %==========================================================================
@@ -273,14 +273,14 @@ if any(abs(svd(A0) - 1) > 1e-7), error('Can''t decompose matrix'); end
 t  = A0(2,3); if t==0, t=eps; end
 a0 = pinv(A0([1 2],[2 3])')*[(A0(3,2)-(A0(2,2)-1)/t) (A0(3,3)-1)]';
 S0 = [1 0 0; 0 1 0; a0(1) a0(2) 1];
-A1 = S0 \ A0;  
-a1 = pinv(A1([2 3],[2 3])')*A1(1,[2 3])';  
+A1 = S0 \ A0;
+a1 = pinv(A1([2 3],[2 3])')*A1(1,[2 3])';
 S1 = [1 a1(1) a1(2); 0 1 0; 0 0 1];
-A2 = S1 \ A1;  
-a2 = pinv(A2([1 3],[1 3])')*A2(2,[1 3])';  
+A2 = S1 \ A1;
+a2 = pinv(A2([1 3],[1 3])')*A2(2,[1 3])';
 S2 = [1 0 0; a2(1) 1 a2(2); 0 0 1];
-A3 = S2 \ A2;  
-a3 = pinv(A3([1 2],[1 2])')*A3(3,[1 2])';  
+A3 = S2 \ A2;
+a3 = pinv(A3([1 2],[1 2])')*A3(3,[1 2])';
 S3 = [1 0 0; 0 1 0; a3(1) a3(2) 1];
 
 s3 = A(3,4) - a0(1)*A(1,4) - a0(2)*A(2,4);

@@ -2,8 +2,8 @@ function [idxActVox, recTh, tTh, Cn, Dn, sigma2n, tn, neg_e2n, Bn, e2n] = ...
     iGlmVol(Cn, Dn, sigma2n, tn, Yn, n, nrBasFct, contr, basFct, ...
     pVal, recTh, tTh, spmMaskTh)
 % Core function to compute incemental GLM.
-% 
-% input: 
+%
+% input:
 % Cn         - matrix for Cholesky decomposition (Eq. 15)
 % Dn         - sum of (Yn * Ft') at time n-1
 % sigma2n    - reqursive sigma square estimate
@@ -16,7 +16,7 @@ function [idxActVox, recTh, tTh, Cn, Dn, sigma2n, tn, neg_e2n, Bn, e2n] = ...
 % pVal       - p-value
 % recTh      - recursive threshold
 % tTh        - t-variate estimate given p-value and df
-% spmMaskTh  - (SPM.xM.TH) nVar x nScan matrix of analysis thresholds, 
+% spmMaskTh  - (SPM.xM.TH) nVar x nScan matrix of analysis thresholds,
 %              one per image
 %
 % output:
@@ -43,8 +43,8 @@ function [idxActVox, recTh, tTh, Cn, Dn, sigma2n, tn, neg_e2n, Bn, e2n] = ...
 
 pTh = 1-pVal;
 df = n-nrBasFct; % degrees of freedom
-if n > nrBasFct+2 
-    tTh(n) = spm_invTcdf(pTh,df); 
+if n > nrBasFct+2
+    tTh(n) = spm_invTcdf(pTh,df);
 end
 
 Ft = basFct(n,:)'; % basis function vector at time n
@@ -74,9 +74,9 @@ if p == 0 && n > nrBasFct+2
     end
     
     eqContr = invNn * contr.pos; % equivalent positive contrast
-    tn.pos = (An*eqContr) ./ sqrt(e2n / n .* (eqContr' * eqContr)); % Eq. (23)    
+    tn.pos = (An*eqContr) ./ sqrt(e2n / n .* (eqContr' * eqContr)); % Eq. (23)
     eqContr = invNn * contr.neg; % negative contrast
-    tn.neg = (An*eqContr) ./ sqrt(e2n / n .* (eqContr' * eqContr)); % Eq. (23)    
+    tn.neg = (An*eqContr) ./ sqrt(e2n / n .* (eqContr' * eqContr)); % Eq. (23)
 else
     neg_e2n = [];
 end
@@ -92,8 +92,8 @@ spmActVox = sigma2n > recTh;
 idxSPMAct = find(spmActVox);
 
 % intersect of iGLM and SPM indexes
-tn.pos = tn.pos .* spmActVox; 
-tn.neg = tn.neg .* spmActVox; 
+tn.pos = tn.pos .* spmActVox;
+tn.neg = tn.neg .* spmActVox;
 idxActVox.pos = intersect(iglmActVox.pos, idxSPMAct);
 idxActVox.neg = intersect(iglmActVox.neg, idxSPMAct);
 clear iglmActVox spmActVox

@@ -116,7 +116,7 @@ if strcmp(protName, 'ContTask')
     P.Screen.black = BlackIndex(screenid);
     P.Screen.grey  = P.Screen.white / 2;
 
-    % response option coords on the x and y axis relative to center 
+    % response option coords on the x and y axis relative to center
     P.Screen.option_lx = -250;    % left option     x
     P.Screen.option_rx = 150;     % right option    x
     P.Screen.option_ly = 300;     % left option     y
@@ -139,7 +139,7 @@ if strcmp(protName, 'ContTask')
     P.Screen.nrims = 10;                % how many repetitions of an image
     Tex = zeros(sz,P.Screen.nrims);     % initialize pointer matrix
     for i = 1:sz
-        for j = 1:P.Screen.nrims 
+        for j = 1:P.Screen.nrims
             imgArr = imread([stimPath filesep stimNames{i} filesep num2str(j) '.png']);
             Tex(i,j) = Screen('MakeTexture', P.Screen.wPtr, imgArr);
             clear imgArr
@@ -169,7 +169,7 @@ if strcmp(protName, 'Inter')
     w_dispRect = round(P.Screen.rectSm(4)*1.5);
     w_offset_dispRect = 0;
     P.Screen.dispRect =[(w/2 - w_dispRect/2), ...
-        (h/2 + w_offset_dispRect), (w/2 + w_dispRect/2), ...        
+        (h/2 + w_offset_dispRect), (w/2 + w_dispRect/2), ...
         (h/2 + w_offset_dispRect+w_dispRect)];
     
     %% Dots
@@ -180,11 +180,11 @@ if strcmp(protName, 'Inter')
     % MRI screen scaling
     screenpix = [w h]; %pixel resolution
     screen_VA = [( 2 * atan(scrw_mri(1) / (2*dist_mri)) ), ...
-        ( 2 * atan(scrw_mri(2) / (2*dist_mri)) )]; % the screens visual 
+        ( 2 * atan(scrw_mri(2) / (2*dist_mri)) )]; % the screens visual
     % angle in radians
     screen_VA = screen_VA * 180/pi; % the screens visual angle in degrees
     degrees_per_pixel = screen_VA ./ screenpix; % degrees per pixel
-    degrees_per_pixel_mean = mean(degrees_per_pixel); % approximation of 
+    degrees_per_pixel_mean = mean(degrees_per_pixel); % approximation of
     % the average number of degrees per pixel
     pixels_per_degree = 1 ./ degrees_per_pixel;
     pixels_per_degree_mean = 1 ./ degrees_per_pixel_mean;
