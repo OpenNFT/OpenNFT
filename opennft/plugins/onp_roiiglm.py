@@ -2,7 +2,7 @@
 
 """
 # Plugins
-Plugins allow flexible modification and execution of OpenNFT without touching the core codebase. Plugins can access data, process them in a specific way, 
+Plugins allow flexible modification and execution of OpenNFT without touching the core codebase. Plugins can access data, process them in a specific way,
 and they can be switched on and off according to the user's need.
 
 Each plugin has to be a subclass of *Process class specified in pyniexp.mlplugins. It has to contain a header in a format of dictionary (called META) with prespecified keys:
@@ -35,11 +35,12 @@ from os import path
 
 META = {
     "plugin_name": "ROI iGLM",
-    "plugin_time": "t3", # according to opennft.eventrecorder.Times
+    "plugin_time": "t3",  # according to opennft.eventrecorder.Times
     "plugin_init": "ROIiGLM(int({NrROIs}),int({NrOfVolumes}),int({nrSkipVol}),r'{nfbDataFolder}')",
     "plugin_signal": "self.parent.eng.evalin('base','isfield(mainLoopData,\\\'tn\\\')')",
     "plugin_exec": "load_data(self.parent.eng.evalin('base','onp_extract_rois'))"
 }
+
 
 class ROIiGLM(dataProcess):
     def __init__(self,nROIs,nVols, nSkipVols, nfbDataFolder):

@@ -121,7 +121,8 @@ class OpenNFT(QWidget):
         self.udpSender.sending_time_stamp = True
 
         self.udpCondForContrast = self.P['CondIndexNames']
-        if type(self.udpCondForContrast[0]) != str: self.udpCondForContrast[0] = 'BAS'
+        if type(self.udpCondForContrast[0]) != str:
+            self.udpCondForContrast[0] = 'BAS'
 
     # --------------------------------------------------------------------------
     def finalizeUdpSender(self):
@@ -208,7 +209,7 @@ class OpenNFT(QWidget):
 
         self.fFinNFB = False
         self.orthViewUpdateInProgress = False
-        self.outputSamples = {}        
+        self.outputSamples = {}
         self.musterInfo = {}
 
         # Core Matlab helper process
@@ -494,7 +495,8 @@ class OpenNFT(QWidget):
 
     # --------------------------------------------------------------------------
     def updatePlugins(self):
-        for i in range(len(self.plugins)): self.plugins[i].update()
+        for i in range(len(self.plugins)):
+            self.plugins[i].update()
 
     # --------------------------------------------------------------------------
     def onChangeDataType(self):
@@ -538,7 +540,7 @@ class OpenNFT(QWidget):
             f = open(fname, 'w+')
             f.close()
             return str(fname)
-        except IOError as e:
+        except IOError:
             fname = path / 'OrthView1.dat'
 
         if not fname.exists():
@@ -548,7 +550,7 @@ class OpenNFT(QWidget):
             f = open(fname, 'w+')
             f.close()
             return str(fname)
-        except IOError as e:
+        except IOError:
             logger.info('POSSIBLE PROBLEMS WITH MEMMAP ACCESS!')
             return str(fname)
 
@@ -932,7 +934,6 @@ class OpenNFT(QWidget):
             else:
                 betaCoeff = np.zeros((int(self.P['NrROIs']),1))
 
-
             for i in range(int(self.P['NrROIs'])):
                 self.windowRTQA.linTrendCoeff[i, n] = betaCoeff[i]
 
@@ -1099,7 +1100,7 @@ class OpenNFT(QWidget):
         norm.clear()
 
         if self.P['isRestingState']:
-            grid = True;
+            grid = True
         else:
             grid = False
 
@@ -1356,7 +1357,7 @@ class OpenNFT(QWidget):
                 self.eng.assignin('base', 'isShowRtqaVol', self.windowRTQA.volumeCheckBox.isChecked(), nargout=0)
                 self.eng.assignin('base', 'isSmoothed', self.windowRTQA.smoothedCheckBox.isChecked(), nargout=0)
 
-                self.windowRTQA.isStopped = False;
+                self.windowRTQA.isStopped = False
 
             else:
                 self.eng.assignin('base', 'rtQAMode', False, nargout=0)
@@ -1402,7 +1403,7 @@ class OpenNFT(QWidget):
 
         self.isStopped = True
         if self.windowRTQA:
-            self.windowRTQA.isStopped = True;
+            self.windowRTQA.isStopped = True
             self.eng.workspace['rtQA_python'] = self.windowRTQA.dataPacking()
         self.btnStop.setEnabled(False)
         self.btnStart.setEnabled(False)
@@ -1442,7 +1443,8 @@ class OpenNFT(QWidget):
             self.recorder.savetxt(str(fname))
 
         if self.fFinNFB:
-            for i in range(len(self.plugins)): self.plugins[i].finalize()
+            for i in range(len(self.plugins)):
+                self.plugins[i].finalize()
             self.finalizeUdpSender()
             self.nfbFinStarted = self.eng.nfbSave(self.iteration, nargout=0, background=True)
             self.fFinNFB = False
@@ -1796,7 +1798,7 @@ class OpenNFT(QWidget):
         self.leMinFeedbackVal.setText(str(self.settings.value('MinFeedbackVal', '-100')))
         self.sbFeedbackValDec.setValue(int(self.settings.value('FeedbackValDec', '0')))  # FixMe
         self.cbNegFeedback.setChecked(str(self.settings.value('NegFeedback', 'false')).lower() == 'true')
-        self.cbFeedbackPlot.setChecked(str(self.settings.value('PlotFeedback', 'true')).lower() == 'true')        
+        self.cbFeedbackPlot.setChecked(str(self.settings.value('PlotFeedback', 'true')).lower() == 'true')
 
         self.leShamFile.setText(self.settings.value('ShamFile', ''))
 
@@ -1909,10 +1911,10 @@ class OpenNFT(QWidget):
         self.P['Prot'] = str(self.cbProt.currentText())
         self.P['Type'] = str(self.cbType.currentText())
         self.P['isRestingState'] = bool(self.cbProt.currentText() == "Rest")
-        self.P['isRTQA'] = config.USE_RTQA;
-        self.P['isIGLM'] = config.USE_IGLM;
-        self.P['isZeroPadding'] = config.zeroPaddingFlag;
-        self.P['nrZeroPadVol'] = config.nrZeroPadVol;
+        self.P['isRTQA'] = config.USE_RTQA
+        self.P['isIGLM'] = config.USE_IGLM
+        self.P['isZeroPadding'] = config.zeroPaddingFlag
+        self.P['nrZeroPadVol'] = config.nrZeroPadVol
 
         if self.P['Prot'] == 'ContTask':
             self.P['TaskFolder'] = self.leTaskFolder.text()
@@ -2277,7 +2279,7 @@ class OpenNFT(QWidget):
 
         plotitem.autoRange(items=items)
         if self.P['isRestingState']:
-            grid = True;
+            grid = True
         else:
             grid = False
         self.basicSetupPlot(plotitem, grid)

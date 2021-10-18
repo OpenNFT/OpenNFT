@@ -1,66 +1,66 @@
 function out = parseDCMdef(jsonfile)
 % usage DCM = parseDCMdef(jsonfile)
-% 
+%
 % Takes in the protocol JSON file, parses the a,b,c,d arrays that
 % specify the DCM topology and returns the DCM struct.
 %
 % EXPECTS: jsonfile {str} ..... path to JSON file containing a field named
 %                               "dcmdef" containing target and opposed model
-%                               definitions, roiNames and options 
+%                               definitions, roiNames and options
 %                               (see example below)
 %
-% RETURNS: out {struct} ....... with fields 'target' and 'opposed', which 
+% RETURNS: out {struct} ....... with fields 'target' and 'opposed', which
 %                               are structs containing a,b,c,d fields and
-%                               'roiNames' and 'options' 
+%                               'roiNames' and 'options'
 %                               (see example below)
 %
-% For information % on how a,b,c,d matrices encode topology, please consult 
+% For information % on how a,b,c,d matrices encode topology, please consult
 % DCM literature, e.g.,
-% 
-%   Stephan KE, Kasper L, Harrison LM, et al., Nonlinear dynamic causal 
+%
+%   Stephan KE, Kasper L, Harrison LM, et al., Nonlinear dynamic causal
 %   models for fMRI, Neuroimage 2008;42(2):649–662.
-% 
+%
 %   K.J. Friston et al., Dynamic Causal Modeling,
 %   NeuroImage 2003;19:1273–1302
 %
 %           ------------------------------------------------------
 %
 % Here is an example JSON definition of a set of two two-region DCMs.
-% 
-%   
+%
+%
 %     {
 %         "dcmdef": {
-% 
+%
 %             "target": {
-% 
-%             "a": [[1, 0], 
+%
+%             "a": [[1, 0],
 %                   [0,1]],
-% 
+%
 %             "b": [[[0,0],
 %                    [0,0]],
 %                   [[1,1],
-%                    [1,1]]],            
-% 
+%                    [1,1]]],
+%
 %             "c": [1,1],
-% 
+%
 %             "d": []
 %                      },
-% 
+%
 %             "opposed": {
-% 
-%                 "a": [[1, 1], 
+%
+%                 "a": [[1, 1],
 %                       [1,1]],
-% 
+%
 %                 "b": [[[1,1],
 %                        [1,1]],
 %                       [[0,0],
-%                        [0,0]]],            
-% 
+%                        [0,0]]],
+%
 %                 "c": [1,0],
-% 
+%
 %                 "d": []
 %                     },
-% 
+%
 %             "roiNames": ["L-SMA", "Precentral-G"],
 %
 %             "options": {
@@ -70,16 +70,16 @@ function out = parseDCMdef(jsonfile)
 %                 "nograph": 1,
 %                 "centre": 1
 %             }
-% 
+%
 %          }
 %     }
 %
 % This example JSON file will produce the following output:
-% 
-% out = 
-% 
+%
+% out =
+%
 %   struct with fields:
-% 
+%
 %      target: [1×1 struct]
 %     opposed: [1×1 struct]
 %    roiNames: {["L-SMA"]  ["Precentral-G"]}
@@ -88,7 +88,7 @@ function out = parseDCMdef(jsonfile)
 % Both structs contain a,b,c,d matrices as fields. If you wish, you can run
 % the function on the example JSON above to inspect the fields further.
 %
-% Note: This function requires 'loadjson', which is part of the JSONLab 
+% Note: This function requires 'loadjson', which is part of the JSONLab
 % toolbox (http://iso2mesh.sf.net/cgi-bin/index.cgi?jsonlab).
 %
 %
@@ -103,7 +103,7 @@ catch
 end
 
 % -- Get options if specified ---------------------------------------------
-try 
+try
     out.options = in.dcmdef.options;
 catch
     out.options = makeDefaultOptions();
@@ -116,7 +116,7 @@ for model = {'target','opposed'}
     fprintf('Parsing %s model definition...\n',model{:})
     
     % -- Get ABCD fields --------------------------------------------------
-    try 
+    try
         dcmdefRaw = in.dcmdef.(model{:});
     catch
         error(['The JSON file does not contain a field called dcmdef.%s. ' ...
@@ -132,7 +132,7 @@ for model = {'target','opposed'}
 
         if ~contains(fn,fnamesSorted)
             error('Field "%s" not specified.', fn{:})
-        end   
+        end
 
     end
 
@@ -192,7 +192,7 @@ end
 
 % -- Get ROI names if specified -------------------------------------------
 
-try 
+try
     out.roiNames = in.dcmdef.roiNames;
 catch
     warning('No ROI names specified. Creating default names.')
@@ -206,7 +206,7 @@ end
 function outstruct = makeFieldnamesLowercase(instruct)
 
 for fx = fieldnames(instruct)'
-    outstruct.(lower(fx{:})) = instruct.(fx{:});   
+    outstruct.(lower(fx{:})) = instruct.(fx{:});
 end
 
 end

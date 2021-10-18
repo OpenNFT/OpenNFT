@@ -121,4 +121,3 @@ or run the command in the Terminal:
 .. code-block::
 
     opennft
-

@@ -2,13 +2,13 @@
 
 """
 # Plugins
-Plugins allow flexible modification and execution of OpenNFT without touching the core codebase. Plugins can access data, process them in a specific way, 
+Plugins allow flexible modification and execution of OpenNFT without touching the core codebase. Plugins can access data, process them in a specific way,
 and they can be switched on and off according to the user's need.
 
 Each plugin has to be a subclass of *Process class specified in pyniexp.mlplugins. It has to contain a header in a format of dictionary (called META) with prespecified keys:
 - plugin_name: It is a freeform text which will be displayed in the plugin dialog and in the logs.
 - plugin_time: It is a event timestamp as specified in opennft.eventrecorder. Times, and it determines the execution time of the plugin (so far only t3 is implemented)
-- plugin_init: It is the initialization code of the plugin. "{}" can be used to refer to OpenNFT parameters as specified in the P parameter dictionary. It can be a list of 
+- plugin_init: It is the initialization code of the plugin. "{}" can be used to refer to OpenNFT parameters as specified in the P parameter dictionary. It can be a list of
 commands, in which case, the first is run to create the object, and the rest are executed afterwards.
 - plugin_signal: It is an expression returning to logical value, and it speicies the condition when the plugin can be executed.
 - plugin_exec: It is the execution code of the plugin, and it is usually calls the plugin's load_data method to transfer some data to the plugin.
@@ -31,13 +31,12 @@ from pyniexp.mlplugins import dataProcess, SIG_NOTSTARTED, SIG_RUNNING, SIG_STOP
 from loguru import logger
 from multiprocessing import Value, RawArray
 from numpy import array, meshgrid, savetxt
-from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.pyplot as plt
 from os import path
 
 META = {
     "plugin_name": "ROI step-wise GLM",
-    "plugin_time": "t4", # according to opennft.eventrecorder.Times
+    "plugin_time": "t4",  # according to opennft.eventrecorder.Times
     "plugin_init": [
         "ROIswGLM(int({NrROIs}),len({ProtNF}),r'{nfbDataFolder}')",
         "self.parent.eng.evalin('base','onp_roiswglm')"
@@ -45,6 +44,7 @@ META = {
     "plugin_signal": "self.parent.eng.evalin('base','isfield(mainLoopData,\\\'tmp_rawTimeSeriesAR1\\\')')",
     "plugin_exec": "load_data(self.parent.eng.evalin('base','onp_roiswglm'))",
 }
+
 
 class ROIswGLM(dataProcess):
     def __init__(self,nROIs,nBlocks,nfbDataFolder):
@@ -73,9 +73,8 @@ class ROIswGLM(dataProcess):
             fname = path.join(path.normpath(self.nfbDataFolder), 'ROIswGLM_{:02d}.txt'.format(b+1))
             savetxt(fname=fname, X=dat[b,:,0:b+1].transpose(), fmt='%.3f', delimiter=',')
 
-
-        X,Y = meshgrid(self.nBlocks,self.nBlocks) 
+        X,Y = meshgrid(self.nBlocks,self.nBlocks)
         for r in range(0,self.nROIs):
             ax = plt.subplot(120+(r+1),projection='3d')
-            ax.plot_surface(X,Y,dat[:,r,:])        
+            ax.plot_surface(X,Y,dat[:,r,:])
         plt.show()

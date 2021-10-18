@@ -1,9 +1,9 @@
 function selectROI(pathName)
 % Function to select ROIs given the specified ROI folder and assigns
 % ROI information structures.
-% Note, Phillips data could be corrupted, e.g. without hearder info, 
-% flipped, etc. 
-% End user is advised to check ROIs, EPI template and rt time-series for 
+% Note, Phillips data could be corrupted, e.g. without hearder info,
+% flipped, etc.
+% End user is advised to check ROIs, EPI template and rt time-series for
 % spatial orientation.
 %
 % input:
@@ -42,24 +42,24 @@ if flags.isPSC || flags.isSVM || flags.isCorr || P.isRestingState
 
     P.NrROIs = length(roiNames);
     P.ROINames = roiNames;
- 
+
     for iFile = 1:P.NrROIs
         [ROIs(iFile).voxelCoord, ROIs(iFile).voxelIntens, ...
          ROIs(iFile).voxelIndex, ROIs(iFile).mat, ...
-         ROIs(iFile).dim, ROIs(iFile).vol] = readVol(roiNames{iFile});   
+         ROIs(iFile).dim, ROIs(iFile).vol] = readVol(roiNames{iFile});
         [slNrImg2DdimX, slNrImg2DdimY, img2DdimX, img2DdimY] = ...
-                                             getMosaicDim(ROIs(iFile).dim);      
+                                             getMosaicDim(ROIs(iFile).dim);
         ROIs(iFile).vol(ROIs(iFile).vol < 0.5) = 0;
         ROIs(iFile).vol(ROIs(iFile).vol >= 0.5) = 1;
         ROIs(iFile).mask2D = vol3Dimg2D(ROIs(iFile).vol, slNrImg2DdimX, ...
                      slNrImg2DdimY, img2DdimX, img2DdimY, ROIs(iFile).dim);
     end
     
-    assignin('base', 'ROIs', ROIs);    
+    assignin('base', 'ROIs', ROIs);
 end
 
 if flags.isSVM
-    %% Weights   
+    %% Weights
     weightDir = P.WeightsFileName;
     weightNames = {};
     weightNames = cellstr([spm_select('FPList', weightDir, '^.*.img$'); ...
@@ -72,13 +72,13 @@ if flags.isSVM
          WEIGHTs(iFile).dim, WEIGHTs(iFile).vol] = ...
                                                readVol(weightNames{iFile});
         [slNrImg2DdimX, slNrImg2DdimY, img2DdimX, img2DdimY] = ...
-                                          getMosaicDim(WEIGHTs(iFile).dim);         
+                                          getMosaicDim(WEIGHTs(iFile).dim);
         WEIGHTs(iFile).mask2D = vol3Dimg2D(WEIGHTs(iFile).vol, ...
                                   slNrImg2DdimX, slNrImg2DdimY, img2DdimX, ...
                                     img2DdimY, WEIGHTs(iFile).dim);
     end
 
-    assignin('base', 'WEIGHTs', WEIGHTs);            
+    assignin('base', 'WEIGHTs', WEIGHTs);
 end
 
 
@@ -99,7 +99,7 @@ if flags.isDCM
          ROIsAnat(iFile).dim, ROIsAnat(iFile).vol] = ...
                                               readVol(roiNamesAnat{iFile});
         [slNrImg2DdimX, slNrImg2DdimY, img2DdimX, img2DdimY] = ...
-                                         getMosaicDim(ROIsAnat(iFile).dim);          
+                                         getMosaicDim(ROIsAnat(iFile).dim);
         ROIsAnat(iFile).vol(ROIsAnat(iFile).vol < 0.5) = 0;
         ROIsAnat(iFile).vol(ROIsAnat(iFile).vol >= 0.5) = 1;
         ROIsAnat(iFile).mask2D = vol3Dimg2D(ROIsAnat(iFile).vol, ...
@@ -125,7 +125,7 @@ if flags.isDCM
          ROIsGroup(iFile).dim, ROIsGroup(iFile).vol] = ...
                                              readVol(roiNamesGroup{iFile});
         [slNrImg2DdimX, slNrImg2DdimY, img2DdimX, img2DdimY] = ...
-                                        getMosaicDim(ROIsGroup(iFile).dim);           
+                                        getMosaicDim(ROIsGroup(iFile).dim);
         ROIsGroup(iFile).vol(ROIsGroup(iFile).vol < 0.5) = 0;
         ROIsGroup(iFile).vol(ROIsGroup(iFile).vol >= 0.5) = 1;
         ROIsGroup(iFile).mask2D = vol3Dimg2D(ROIsGroup(iFile).vol, ...
@@ -140,4 +140,3 @@ if flags.isDCM
 end
 
 assignin('base', 'P', P);
-

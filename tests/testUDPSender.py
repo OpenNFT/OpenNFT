@@ -27,18 +27,18 @@ sender.info()
 
 cond = 'C'
 while not(keyboard.is_pressed('q')):
-    if keyboard.is_pressed('b'): 
+    if keyboard.is_pressed('b'):
         cond = 'BAS'
-    if keyboard.is_pressed('n'): 
+    if keyboard.is_pressed('n'):
         cond = 'NFBREG'
-    if keyboard.is_pressed('f'): 
+    if keyboard.is_pressed('f'):
         cond = 'NFBDISP'
 
     sender.send_data(cond)
     val = float(uniform(-100,100))
     sender.send_data(val)
     print(cond,val)
-    
+
     sleep(1)
 
 sender.close()

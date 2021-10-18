@@ -8,9 +8,9 @@ function fileName = initMemmap(fileName, newName, initData, ...
 % dataType - date type
 % refName  - reference variable for memory mapped file
 % mmFormat - memory map file format
-% 
-% output: 
-% fileName - new memory map file name 
+%
+% output:
+% fileName - new memory map file name
 %__________________________________________________________________________
 % Copyright (C) 2016-2021 OpenNFT.org
 %

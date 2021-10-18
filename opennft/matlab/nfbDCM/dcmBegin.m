@@ -49,7 +49,7 @@ function calculateDcm = dcmBegin(indVol)
             end
             
             % Make time-series setting dynamic
-            for roi = 1:DCM_EN.n 
+            for roi = 1:DCM_EN.n
                 tmp.xY(roi).name   = DCM_EN.roiNames{roi};
                 DCM_EN.Y.name{roi} = DCM_EN.roiNames{roi};
                 tmp.xY(roi).u      = mainLoopData.kalmanProcTimeSeries(roi, vectDcmTrial)';
@@ -76,5 +76,3 @@ function calculateDcm = dcmBegin(indVol)
         assignin('base', 'mainLoopData', mainLoopData);
         assignin('base', 'P', P);
     end
-    
-    

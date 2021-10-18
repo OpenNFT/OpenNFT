@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 """
-Wrapper class for asynchronous display 
+Wrapper class for asynchronous display
 using Psychtoolbox Matlab helper process
 
 __________________________________________________________________________
@@ -17,6 +17,7 @@ from opennft import eventrecorder as erd, mlproc
 from opennft.eventrecorder import Times as Times
 import multiprocessing as mp
 import threading
+
 
 # ==============================================================================
 class PtbScreen(object):
@@ -59,7 +60,7 @@ class PtbScreen(object):
 
         try:
             self.eng.Screen('CloseAll', nargout=0)
-        except:
+        except Exception:
             pass
 
     # --------------------------------------------------------------------------
@@ -89,7 +90,7 @@ class PtbScreen(object):
             elif displayData['displayStage'] == 'feedback':
                 # t8
                 self.recorder.recordEvent(Times.t8, int(displayData['iteration']))
-            
+
             if displayData['taskseq'] > 0:
                 self.eng.ptbTask(nargout=0, background=True)
                 displayData['taskseq'] = 0
@@ -100,4 +101,3 @@ class PtbScreen(object):
 
         self.endEvent.set()
         self.displayLock.release()
-
