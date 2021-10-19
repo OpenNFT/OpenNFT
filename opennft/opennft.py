@@ -947,7 +947,13 @@ class OpenNFT(QWidget):
             else:
                 isNewDCMBlock = False
 
-            self.windowRTQA.calculateSNR(data, n, isNewDCMBlock)
+            if self.P['Type'] != 'DCM':
+                dataNoRegGLM = np.squeeze(np.array(
+                    self.eng.evalin('base', 'mainLoopData.noRegGlmProcTimeSeries(:,end)'), ndmin=2), axis=1)
+            else:
+                dataNoRegGLM = np.array([])
+
+            self.windowRTQA.calculateSNR(data, dataNoRegGLM, n, isNewDCMBlock)
             if not self.P['isRestingState']:
                 self.windowRTQA.calculateCNR(data, n, isNewDCMBlock)
             self.windowRTQA.calculateSpikes(dataGLM, n, posSpikes, negSpikes)

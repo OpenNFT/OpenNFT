@@ -227,6 +227,10 @@ for indRoi = 1:P.NrROIs
                 betaReg = pinv(cX0) * tmp_rawTimeSeries;
                 tmp_glmProcTimeSeries = (tmp_rawTimeSeries - ...
                     cX0 * [betaReg(1:end-mainLoopData.nrSignalPreprocGlmDesign); zeros(mainLoopData.nrSignalPreprocGlmDesign,1)])';
+                if P.isRTQA
+                    tmp_noRegGlmProcTimeSeries = (tmp_rawTimeSeries - ...
+                        cX0 * [zeros(length(betaReg)-mainLoopData.nrSignalPreprocGlmDesign,1); betaReg(end-mainLoopData.nrSignalPreprocGlmDesign+1:end)])';
+                end
             else
                 cX0 = tmpRegr;
                 betaReg = pinv(cX0) * tmp_rawTimeSeries;
@@ -256,9 +260,17 @@ for indRoi = 1:P.NrROIs
                 rtQA_matlab.tGlmProcTimeSeries.neg(indRoi,tmp_ind_end) = tContr.neg'*betaReg /sqrt(rtQA_matlab.varErGlmProcTimeSeries(indRoi,tmp_ind_end)*neg_invCX0);
 
             end
+
+            if tmp_ind_end < 3*regrStep
+                mainLoopData.noRegGlmProcTimeSeries(indRoi,indVolNorm) = ...
+                    tmp_rawTimeSeries(end);
+            else
+                mainLoopData.noRegGlmProcTimeSeries(indRoi,indVolNorm) = ...
+                    tmp_noRegGlmProcTimeSeries(end);
+            end
+
         end
 
-        
         mainLoopData.glmProcTimeSeries(indRoi,indVolNorm) = ...
                 tmp_glmProcTimeSeries(end);
 
