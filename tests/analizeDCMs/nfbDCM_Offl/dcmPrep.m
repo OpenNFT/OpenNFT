@@ -45,5 +45,4 @@ DCM_EN.TE      = 0.03;
 DCM_EN.n       = 3; % number of ROIs in a single DCM model
 DCM_EN.delays  = repmat(SPM.xY.RT,DCM_EN.n,1);
 DCM_EN.d       = zeros(DCM_EN.n,DCM_EN.n,0);
-DCM_EN.Y.X0    = []; % intializing regressors to the DCM model
-
+DCM_EN.Y.X0    = []; % initializing regressors to the DCM model

@@ -2,13 +2,13 @@ function SPM = setupSPM(P)
 
 % For now, note that spmMaskTh is assigned based on the EPI template/
 % background image, for simplicity; and a somewhat lower relative threshold
-% (see THR = 0.5 vs SPM default 0.8) aims to take the temporal variability 
+% (see THR = 0.5 vs SPM default 0.8) aims to take the temporal variability
 % (std ca. 0.5%) into account, see in code.
 % This is because SPM provides the TH value for each volume given the data,
-% which is not available in real-time in the current OpenNFT version. 
+% which is not available in real-time in the current OpenNFT version.
 % TH values could depend on the data acquisition setup, and could evtl. be
-% set as mean(SPM.xM.TH)*ones(size(SPM.xM.TH)), or zeros(size(SPM.xM.TH)) 
-% given masking threshold defined in SPM batch. 
+% set as mean(SPM.xM.TH)*ones(size(SPM.xM.TH)), or zeros(size(SPM.xM.TH))
+% given masking threshold defined in SPM batch.
 % T0 indicates the shift of onsets to correspond with the slice order. SPM
 % default T0 = 8 given T = 16. We assume T0=1 does not introduce shift.
 %__________________________________________________________________________
@@ -58,7 +58,7 @@ if ~isempty(regrInd)
             );
     end
 else
-   SPM.Sess.U = []; 
+   SPM.Sess.U = [];
 end
 SPM.Sess.C.C = [];
 SPM.Sess.C.name = {};

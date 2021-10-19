@@ -3,11 +3,11 @@ function [emaOut, filtInput] = emaFilt(a, emaIn, filtInput)
 % remove signal drift.
 %
 % input:
-% a         - alpha 
+% a         - alpha
 % emaIn     - current raw data
 % filtInput - previous filtered data
-% 
-% output: 
+%
+% output:
 % emaOut    - current filtered data
 % filtInput - updated filtered data
 %

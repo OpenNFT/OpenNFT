@@ -35,7 +35,7 @@ if ~strcmp(bgType, 'BgStruct')
     displBackgr = displayBgEpi;
 else
     displBackgr = displayBgStruct;
-end    
+end
 
 %% ROIs
 if flags.isDCM
@@ -51,12 +51,12 @@ end
 global strParam
 strParam = struct('n', 0, 'bb',[],'Space',eye(4),'centre',[0 0 0],'mode',1,...
     'area',[0 0 1 1],'premul',eye(4),'hld',1,'modeDispl',[0, 0, 0]);
-strParam.Space = spm_matrix([0 0 0  0 pi -pi/2])*strParam.Space;    
+strParam.Space = spm_matrix([0 0 0  0 pi -pi/2])*strParam.Space;
 
 %% get bounding box and resolution
-if isempty(strParam.bb), 
-     strParam.maxBB = maxbb(displayBgEpiName); 
-     strParam.bb = strParam.maxBB;    
+if isempty(strParam.bb),
+     strParam.maxBB = maxbb(displayBgEpiName);
+     strParam.bb = strParam.maxBB;
 end
 resolution(displBackgr.mat);
 
@@ -64,7 +64,7 @@ resolution(displBackgr.mat);
 mmcentre     = mean(strParam.Space*[strParam.maxBB';1 1],2)';
 strParam.centre    = mmcentre(1:3);
 % Display modes: [Background+Stat+ROIs, Background+Stat, Background+ROIs]
-strParam.modeDispl = [0 0 1]; 
+strParam.modeDispl = [0 0 1];
 displStat = [];
 if flags.isDCM
     [imgt, imgc, imgs] = redrawall(displBackgr.vol, displBackgr.mat, ...
@@ -89,11 +89,11 @@ assignin('base', 'imgt', imgt);
 assignin('base', 'imgc', imgc);
 assignin('base', 'imgs', imgs);
 
-assignin('base', 'displBackgr', displBackgr);   
+assignin('base', 'displBackgr', displBackgr);
 assignin('base', 'displayBgStruct', displayBgStruct);
-assignin('base', 'displayBgEpi', displayBgEpi);   
+assignin('base', 'displayBgEpi', displayBgEpi);
 
-assignin('base', 'ROIsOverlay', ROIsOverlay);   
+assignin('base', 'ROIsOverlay', ROIsOverlay);
 
 %% images for OrthView in GUI from helper matlab
 initMemmap(P.memMapFile, 'OrthView', data, 'uint8', 'mmOrthView', format);
@@ -190,7 +190,7 @@ else
 end
 
 % Template parameters, used for ROIs and Stat map
-coordParam.TM0 = TM0; coordParam.CM0 = CM0; coordParam.SM0 = SM0; 
+coordParam.TM0 = TM0; coordParam.CM0 = CM0; coordParam.SM0 = SM0;
 coordParam.TD  = TD;  coordParam.CD  = CD;  coordParam.SD  = SD;
 coordParam.mx  = mx;  coordParam.mn  = mn;  coordParam.eps = eps;
 
@@ -198,12 +198,12 @@ if ~isempty(Stat)
     % Calculate Stat
     [imgt, imgc, imgs, tmpt, tmpc, tmps, actc, actp, gryc] = ...
              getOrthStat(imgt, imgc, imgs, coordParam, Stat.vol, Stat.mat);
-    % Calculate ROIs    
+    % Calculate ROIs
     [drawRoiImgt, drawRoiImgc, drawRoiImgs, cimgt, cimgc, cimgs] = ...
-                           getOrthROIs(imgt, imgc, imgs, ROIs, coordParam);    
+                           getOrthROIs(imgt, imgc, imgs, ROIs, coordParam);
 else
     gryc = (0:63)' * ones(1,3) /63;
-    % Calculate ROIs      
+    % Calculate ROIs
     [drawRoiImgt, drawRoiImgc, drawRoiImgs, cimgt, cimgc, cimgs] = ...
                            getOrthROIs(imgt, imgc, imgs, ROIs, coordParam);
 end
@@ -224,7 +224,7 @@ if ~isempty(Stat)
     if strParam.modeDispl(2)
         %% Background + Stat
         % combine gray and blob data to truecolour
-        % imgt(gray) + tmpt(actc*actp) + cimgt(binary_blob)    
+        % imgt(gray) + tmpt(actc*actp) + cimgt(binary_blob)
         drawimgt = reshape(actc(tmpt(:),:)*actp+gryc(imgt(:),:)*(1-actp), ...
                                                            [size(imgt) 3]);
         drawimgc = reshape(actc(tmpc(:),:)*actp+gryc(imgc(:),:)*(1-actp), ...
@@ -241,7 +241,7 @@ else
     end
 end
 if strParam.modeDispl(3)
-    %% Background + ROIs   
+    %% Background + ROIs
     drawimgt = drawRoiImgt;
     drawimgc = drawRoiImgc;
     drawimgs = drawRoiImgs;
@@ -314,7 +314,7 @@ cimgs = zeros(size(imgs));
 
 for j=1:length(ROIs)
     mx = max([eps max(ROIs(j).vol(:))]);
-    ROIs(j).max = mx;    
+    ROIs(j).max = mx;
     mn = min([0 min(ROIs(j).vol(:))]);
     ROIs(j).min = mn;
        

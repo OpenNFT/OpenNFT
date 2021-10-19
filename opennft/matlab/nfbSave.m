@@ -76,7 +76,7 @@ if mainLoopData.statMapCreated
     mainLoopData.statMap2D_neg = statMap2D_neg;
 
     m = evalin('base', 'mmStatVol');
-    m.Data.posStatVol = statMap3D_pos;   
+    m.Data.posStatVol = statMap3D_pos;
     assignin('base', 'mainLoopData', mainLoopData);
     
     m_out =  evalin('base', 'mmStatMap');
@@ -219,5 +219,3 @@ disp('Saving done')
 evalin('base', 'clear mmImgViewTempl;');
 evalin('base', 'clear mmStatVol;');
 evalin('base', 'clear mmOrthView;');
-
-

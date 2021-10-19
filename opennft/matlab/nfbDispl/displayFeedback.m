@@ -5,7 +5,7 @@ function displayFeedback(displayData)
 % displayData - input data structure
 %
 % Note, synchronization issues are simplified, e.g. sync tests are skipped.
-% End-user is adviced to configure the use of PTB on their own workstation
+% End-user is advised to configure the use of PTB on their own workstation
 % and justify more advanced configuration for PTB.
 %__________________________________________________________________________
 % Copyright (C) 2016-2021 OpenNFT.org
@@ -28,7 +28,7 @@ if ~strcmp(feedbackType, 'DCM')
     instrColor = [155, 150, 150];
 end
 
-switch feedbackType    
+switch feedbackType
     %% Continuous PSC
     case 'bar_count'
         dispValue  = dispValue*(floor(P.Screen.h/2) - floor(P.Screen.h/10))/100;
@@ -91,14 +91,14 @@ switch feedbackType
                     P.Screen.lw, [255 0 0]);
                 % draw activity bar
                 Screen('DrawLines', P.Screen.wPtr, ...
-                    [floor(P.Screen.w/2-P.Screen.w/20), ... 
+                    [floor(P.Screen.w/2-P.Screen.w/20), ...
                     floor(P.Screen.w/2+P.Screen.w/20); ...
                     floor(P.Screen.h/2-dispValue), ...
                     floor(P.Screen.h/2-dispValue)], P.Screen.lw, [0 255 0]);
                 
                     P.Screen.vbl = Screen('Flip', P.Screen.wPtr, ...
                         P.Screen.vbl + P.Screen.ifi/2);
-            case 3  
+            case 3
                 % ptbTask sequence called seperetaly in python
                 
         end
@@ -171,7 +171,7 @@ case 'value_fixation'
         nrN = P.nrN;
         imgPNr = P.imgPNr;
         imgNNr = P.imgNNr;
-        switch condition           
+        switch condition
             case 1 % Neutral textures
                 % Define texture
                 nrP = 0;

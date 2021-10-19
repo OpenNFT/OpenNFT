@@ -339,7 +339,6 @@ class RTQAWindow(QtWidgets.QWidget):
                                   brush=config.MUSTER_BRUSH_COLORS[i])
                 )
 
-
         else:
             muster = [
                 plotitem.plot(x=[1, self._fd.xmax],
@@ -835,11 +834,10 @@ class RTQAWindow(QtWidgets.QWidget):
         """
 
         sz = inputSignal.size
-        n = self.blockIter - 1;
+        n = self.blockIter-1
 
         for i in range(sz):
-            self.rMSE[i, indexVolume] = (n / (n + 1)) * self.rMSE[i, indexVolume - 1] + (
-                        (inputSignal[i] - outputSignal[i]) ** 2) / (n + 1)
+            self.rMSE[i,indexVolume] = (n/(n+1)) * self.rMSE[i,indexVolume-1] + ((inputSignal[i]-outputSignal[i])**2)/(n+1)
 
         if self.comboBox.currentIndex() == 4:
 

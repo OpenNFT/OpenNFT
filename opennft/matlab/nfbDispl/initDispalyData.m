@@ -12,7 +12,7 @@ function displayData = initDispalyData(indVol)
 mainLoopData = evalin('base', 'mainLoopData');
 
 % displayData contains fields:
-% {'feedbackType', 'condition', 'dispValue', 'Reward', 
+% {'feedbackType', 'condition', 'dispValue', 'Reward',
 %  'displayStage','displayBlankScreen', 'iteration'};
 
 if isfield(mainLoopData, 'displayData')
@@ -20,4 +20,3 @@ if isfield(mainLoopData, 'displayData')
 else
     displayData = struct;
 end
-

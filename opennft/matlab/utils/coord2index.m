@@ -4,8 +4,8 @@ function index = coord2index(coord,dim)
 % input:
 % coord - voxel coordinates within 3D volume
 % dim   - 3D volume dimensions
-% 
-% output: 
+%
+% output:
 % index - voxel index within vecor
 %
 % Note,

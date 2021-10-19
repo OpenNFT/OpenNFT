@@ -2,17 +2,17 @@ function [dataOut] = arRegr(a, dataIn)
 % Function for AR(1) filtering.
 %
 % input:
-% a          - alpha 
+% a          - alpha
 % dataIn     - input matrix
-% 
-% output: 
+%
+% output:
 % dataOut    - output matrix
 %__________________________________________________________________________
 % Copyright (C) 2016-2021 OpenNFT.org
 %
 % Written by Yury Koush, Dimitri Van De Ville
 
-for col = 1:size(dataIn,2)   
+for col = 1:size(dataIn,2)
     for t = 1:size(dataIn,1)
         if t == 1
             dataOut(t,col) = (1-a) * dataIn(t,col);

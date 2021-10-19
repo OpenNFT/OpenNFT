@@ -115,12 +115,12 @@ MC_PLOT_COLORS = [
 
 PROJ_ROI_COLORS = ROI_PLOT_COLORS
 
-# debuging use only
+# debugging use only
 USE_SLEEP_IN_STOP = False
 HIDE_TEST_BTN = True
 
 # rtQA may cause linear performance loss on the big data
-# due to saving process of iGLM quality paramaters
+# due to saving process of iGLM quality parameters
 USE_RTQA = True
 USE_IGLM = True
 USE_ROI = True

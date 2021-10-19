@@ -59,5 +59,3 @@ end
 dcmInputData.DCM_EN = DCM_EN;
 dcmInputData.dcmParTag = dcmParTag;
 dcmInputData.dcmParOpp = dcmParOpp;
-
-

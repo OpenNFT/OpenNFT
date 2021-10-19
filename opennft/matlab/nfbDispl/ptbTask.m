@@ -4,13 +4,13 @@ function ptbTask()
 % implement a task condition in addition to the NFB (baseline and
 % feedback).It corresponds to condition 3 from the json file and is called
 % only once at the onset of a task block. In this sense ptbdisplay is
-% temporarily uncoupled from the incoming data which allows you to flip the 
-% screen many times and record subject responses without interruption. 
+% temporarily uncoupled from the incoming data which allows you to flip the
+% screen many times and record subject responses without interruption.
 
-% Below you  can implement any stimulation using psychtoolbox functions, 
-% just make sure that your parameters are defined in the ptbPreperation 
+% Below you  can implement any stimulation using psychtoolbox functions,
+% just make sure that your parameters are defined in the ptbPreperation
 % function and that the duration of your stimulation doesn't exceed the
-% time specified in your json file. 
+% time specified in your json file.
 %__________________________________________________________________________
 %
 % Written by Lucas Peek (lucaspeek@live.nl)
@@ -49,7 +49,7 @@ P.Screen.vbl = Screen('Flip', P.Screen.wPtr);
 
 % get trial onset
 P.trialOns(1,P.Task.trialCounter) = GetSecs;
-for ii = 1: P.Screen.nrims             
+for ii = 1: P.Screen.nrims
 
     waitframes = 1;
     for frame = 1:P.Screen.numFrames
@@ -66,7 +66,7 @@ for ii = 1: P.Screen.nrims
         P.Screen.vbl = Screen('Flip', P.Screen.wPtr, P.Screen.vbl + (waitframes - 0.5) * P.Screen.ifi);
     end
 
-    % Start recording and evalutating responses. In this example, responses
+    % Start recording and evaluating responses. In this example, responses
     % are evaluated after every image displayed. As this is a highly simplified
     % version of a real task it makes less sense in its current form.
     [pressed, firstPress]=KbQueueCheck();
@@ -103,7 +103,7 @@ for ii = 1: P.Screen.nrims
          % first response female
          elseif firstPress(P.Screen.rightKey) && resp_c == 1
              P.Task.responses.answer{1,P.Task.trialCounter} = 'female';
-             P.Task.responses.detection_frame(1,P.Task.trialCounter)=ii;                 
+             P.Task.responses.detection_frame(1,P.Task.trialCounter)=ii;
              P.Task.responses.timing(1,P.Task.trialCounter) = GetSecs;
 
              right_button_count = 1;
@@ -121,21 +121,21 @@ for ii = 1: P.Screen.nrims
              % second response sad (right)
              elseif firstPress(P.Screen.rightKey) && resp_c == 2
                  P.Task.responses.answer{2,P.Task.trialCounter} = 'sad';
-                 P.Task.responses.detection_frame(2,P.Task.trialCounter)=ii;                     
+                 P.Task.responses.detection_frame(2,P.Task.trialCounter)=ii;
                  P.Task.responses.timing(2,P.Task.trialCounter) = GetSecs;
 
                  task_text{qc}{1}{1} = '';
-                 resp_c = resp_c+1;         
+                 resp_c = resp_c+1;
 
          % if no response we break the loop after the last image of
          % the trial was displayed
          elseif ii == P.Screen.numFrames
                  P.Task.responses.answer{1,trial} = 'no resp';
                  P.Task.responses.detection_frame(1,P.Task.trialCounter)=NaN;
-                 P.Task.responses.detection_frame(2,P.Task.trialCounter)=NaN;          
+                 P.Task.responses.detection_frame(2,P.Task.trialCounter)=NaN;
                  P.Task.responses.timing(1,P.Task.trialCounter) = NaN;
                  P.Task.responses.timing(2,P.Task.trialCounter) = NaN;
-            break          
+            break
          end
     end
 end
@@ -150,6 +150,3 @@ Screen('DrawLines', P.Screen.wPtr, P.Screen.allCoords,...
 Screen('Flip', P.Screen.wPtr);
 
 end
-
-
-
