@@ -905,7 +905,7 @@ class OpenNFT(QWidget):
 
         if self.displayData:
             if config.USE_SHAM:
-                self.displayData['dispValue'] = self.shamData[self.iteration - 1]
+                self.displayData['dispValue'] = self.shamData[self.iteration - self.P['nrSkipVol'] - 1]
 
             if config.USE_UDP_FEEDBACK:
                 logger.info('Sending by UDP - dispValue = {}', self.displayData['dispValue'])
@@ -1282,10 +1282,10 @@ class OpenNFT(QWidget):
                     NFBdata = loadmat(self.P['ShamFile'])['dispValues']
 
                 dispValues = list(NFBdata.flatten())
-                if len(dispValues) != self.P['NrOfVolumes']:
+                if len(dispValues) != self.P['NrOfVolumes']-self.P['nrSkipVol']:
                     logger.error(
-                        "Number of display values ({:d}) in {} does not correspond to number of volumes ({:d}).\n SELECT ANOTHER SHAM FILE".format(
-                            len(dispValues), self.P['ShamFile'], self.P['NrOfVolumes']))
+                        "Number of display values ({:d}) in {} does not correspond to number of volumes ({:d} - {:d} skipped).\n SELECT ANOTHER SHAM FILE".format(
+                            len(dispValues), self.P['ShamFile'], self.P['NrOfVolumes'], self.P['nrSkipVol']))
                     return
                 self.shamData = [float(v) for v in dispValues]
                 logger.info("Sham data has been loaded")
