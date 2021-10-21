@@ -20,7 +20,7 @@ The following software should be installed:
     - Statistics and Machine Learning Toolbox
     - `SPM12 <https://github.com/spm/spm12>`_
     - `Psychtoolbox 3 <https://github.com/Psychtoolbox-3/Psychtoolbox-3>`_
-    - `JSONlab <https://github.com/fangq/jsonlab>`_
+    - `JSONlab <https://github.com/fangq/jsonlab/releases>`_
     - `prepNFB <https://github.com/lucp88/prepNFB>`_ (optional)
 * `Python <https://www.python.org/downloads/>`_ x86_64 from 3.6.0 to 3.8.6
 
@@ -36,7 +36,7 @@ Install OpenNFT
 We recommend a virtual environment for installing OpenNFT.
 
 Create and Activate Virtual Environment
-++++++++++++++++++++++++++++
+++++++++++++++++++++++++++++++++++++++++
 
 .. rubric:: Unix (Linux, MacOS)
 
@@ -70,7 +70,7 @@ Install from GitHub
 .. note::
 
     It is assumed that the virtual environment has been created and activated.
-    Please see above how to create and activate the virual environment on your platform.
+    Please see above how to create and activate the virtual environment on your platform.
 
 Run the command:
 

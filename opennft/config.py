@@ -7,17 +7,18 @@ Copyright (C) 2016-2021 OpenNFT.org
 
 """
 
-import os
+from pathlib import Path
 import pyqtgraph as pg
 
 
+APP_NAME = 'OpenNFT'
 LOG_LEVEL = 'DEBUG'
 
-ROOT_PATH = os.path.abspath(os.path.dirname(__file__))
-UI_PATH = os.path.join(ROOT_PATH, 'ui')
-PLUGIN_PATH = os.path.join(ROOT_PATH, 'plugins')
-OpenNFT_ICON = os.path.join(ROOT_PATH, 'ui', 'images', 'appicon.png')
-MATLAB_FUNCTIONS_PATH = os.path.join(ROOT_PATH, 'matlab')
+ROOT_PATH = Path(__file__).absolute().resolve().parent
+UI_PATH = ROOT_PATH / 'ui'
+PLUGIN_PATH = ROOT_PATH / 'plugins'
+OpenNFT_ICON = ROOT_PATH / 'ui' / 'images' / 'appicon.png'
+MATLAB_FUNCTIONS_PATH = ROOT_PATH / 'matlab'
 
 # Matlab sessions
 MAIN_MATLAB_NAME = 'MATLAB_NFB_MAIN'
@@ -114,12 +115,12 @@ MC_PLOT_COLORS = [
 
 PROJ_ROI_COLORS = ROI_PLOT_COLORS
 
-# debuging use only
+# debugging use only
 USE_SLEEP_IN_STOP = False
 HIDE_TEST_BTN = True
 
 # rtQA may cause linear performance loss on the big data
-# due to saving process of iGLM quality paramaters
+# due to saving process of iGLM quality parameters
 USE_RTQA = True
 USE_IGLM = True
 USE_ROI = True

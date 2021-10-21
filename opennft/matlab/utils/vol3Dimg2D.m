@@ -9,8 +9,8 @@ function img2D = vol3Dimg2D(vol3D, slNrImg2DdimX, slNrImg2DdimY, ...
 % img2DdimX     - 2D image columns
 % img2DdimY     - 2D image rows
 % dim3D         - 3D volume dimensions
-% 
-% output: 
+%
+% output:
 % img2D - 2D image matrix
 %__________________________________________________________________________
 % Copyright (C) 2016-2021 OpenNFT.org

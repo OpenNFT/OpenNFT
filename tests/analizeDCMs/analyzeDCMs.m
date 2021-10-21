@@ -46,4 +46,3 @@ for iTrial = idxTrials
     clear DCM_EN dcmInputData dcmParTag dcmParOpp ...
         idxTrial trialTimeSeries trialMotRegr
 end
-

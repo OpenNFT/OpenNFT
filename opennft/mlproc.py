@@ -72,7 +72,7 @@ class MatlabSharedEngineHelper:
         if not self.engine:
             return
 
-        self.engine.cd(config.MATLAB_FUNCTIONS_PATH)
+        self.engine.cd(str(config.MATLAB_FUNCTIONS_PATH))
         self.engine.addMatlabDirs(nargout=0)
         self.engine.clear('all', nargout=0)
 

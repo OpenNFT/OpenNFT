@@ -10,15 +10,14 @@ Written by Artem Nikonorov, Yury Koush
 """
 
 
-import os
 import shutil
 from time import sleep
-import glob
+from pathlib import Path
 
 delete_files = True
 
 mask = "001_000008_000"
-#fns = [1, 2, 3, 4, 6, 5, 7, 8]
+# fns = [1, 2, 3, 4, 6, 5, 7, 8]
 fns = None
 
 testCase = 'PSC'
@@ -33,38 +32,39 @@ elif testCase == 'SVM':
     dstpath = 'C:/_RT/rtData/NF_SVM/NF_Run_1'
     pause_in_sec = 1
 
-elif testCase == 'DCM': 
+elif testCase == 'DCM':
     srcpath = 'C:/_RT/rtData/NF_DCM/NF_Run_1_src'
     dstpath = 'C:/_RT/rtData/NF_DCM/NF_Run_1'
     pause_in_sec = 1
 
-elif testCase == 'REST': 
+elif testCase == 'REST':
     srcpath = 'C:/_RT/rtData/rtQA_REST/RS_Run_1_src'
     dstpath = 'C:/_RT/rtData/rtQA_REST/RS_Run_1'
     pause_in_sec = 1.97
 
-elif testCase == 'TASK': 
+elif testCase == 'TASK':
     srcpath = 'C:/_RT/rtData/rtQA_TASK/TASK_Run_1_src'
     dstpath = 'C:/_RT/rtData/rtQA_TASK/TASK_Run_1'
     pause_in_sec = 1.97
 
 if delete_files:
-    files = glob.glob(dstpath+'/*')
-    for f in files:
-        os.remove(f)
+    files = Path(dstpath)
+    for f in files.glob('*'):
+        f.unlink()
+
 
 if fns is None:
-    filelist = os.listdir(srcpath)
+    filelist = Path(srcpath).iterdir()
 else:
     filelist = []
     for fn in fns:
         fname = "{0}{1:03d}.dcm".format(mask, fn)
         filelist.append(fname)
 
-for filename in filelist:
-    src = os.path.join(srcpath, filename)
-    if os.path.isfile(src):
-        dst = os.path.join(dstpath, filename)
+for filename in sorted(filelist):
+    src = filename
+    if Path.is_file(src) and (not str(filename).startswith(".")):
+        dst = Path(dstpath,filename.name)
         shutil.copy(src, dst)
         print(filename)
-        sleep(pause_in_sec) # seconds
+        sleep(pause_in_sec)  # seconds

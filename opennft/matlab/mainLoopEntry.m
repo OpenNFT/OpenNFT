@@ -47,13 +47,13 @@ if (strcmp(P.Prot, 'Inter') ||  strcmp(P.Prot, 'Cont') || strcmp(P.Prot, 'ContTa
         return;
     end
     
-    % initalize relevant fields and a flag
+    % initialize relevant fields and a flag
     condition = P.vectEncCond(indVol - P.nrSkipVol);
     mainLoopData.condition = condition;
     
     if strcmp(P.Prot, 'Cont')
         % here 2nd and 3rd conditions are left for simplicity,
-        % otheriwse it could be just 2 conditions in all the settings
+        % otherwise it could be just 2 conditions in all the settings
         if condition == 1
             mainLoopData.flagEndPSC = 0;
             mainLoopData.dispValue = 0;
@@ -116,7 +116,7 @@ if (strcmp(P.Prot, 'Inter') ||  strcmp(P.Prot, 'Cont') || strcmp(P.Prot, 'ContTa
     elseif strcmp(P.Prot, 'Cont')
         displayData.feedbackType = 'bar_count';
     elseif strcmp(P.Prot, 'ContTask')
-        displayData.feedbackType = 'bar_count_task';  
+        displayData.feedbackType = 'bar_count_task';
     end
     displayData.condition = condition;
     displayData.dispValue = mainLoopData.dispValue;
@@ -132,7 +132,7 @@ if strcmp(P.Prot, 'InterBlock') && flags.isDCM
     mainLoopData.indVolNorm = indVol - P.nrSkipVol - ...
         P.dcmRemoveInterval * mainLoopData.NrDCMblocks;
     
-    % initalize relevant fields and a flag
+    % initialize relevant fields and a flag
     condition = P.vectEncCond(indVol - P.nrSkipVol);
     mainLoopData.condition = condition;
     switch condition

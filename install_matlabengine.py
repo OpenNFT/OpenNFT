@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import sys
-import os
+from pathlib import Path
 import subprocess
 
 sys.path = sys.argv[3:]
@@ -14,7 +14,7 @@ def main():
     engine_dir = sys.argv[1]
     ferr = sys.argv[2]
 
-    engine_setup = os.path.join(engine_dir, 'setup.py')
+    engine_setup = str(Path(engine_dir,'setup.py'))
     install_command = [sys.executable, engine_setup, 'install']
 
     p = subprocess.run(install_command,

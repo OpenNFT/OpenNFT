@@ -76,7 +76,7 @@ if flags.isDCM
 end
 
 %% EPI Data Preprocessing
-% Read Data in real-time and update paremeters
+% Read Data in real-time and update parameters
 switch P.DataType
     case 'DICOM'
         if P.UseTCPData && (indVol > 1)
@@ -112,7 +112,7 @@ switch P.DataType
             R(2,1).Vol = cat(3, cat(3, zeroPadVol, imgVol), zeroPadVol);
         else
             R(2,1).Vol = imgVol;
-        end        
+        end
         R(2,1).dim = dimTemplMotCorr;
         
     case 'NII'
@@ -124,7 +124,7 @@ switch P.DataType
             R(2,1).Vol = cat(3, cat(3, zeroPadVol, tmpVol), zeroPadVol);
         else
             R(2,1).Vol = tmpVol;
-        end        
+        end
         R(2,1).dim = dimVol;
 end
 tStartMotCorr = tic;
@@ -181,7 +181,7 @@ if P.isRTQA && indVolNorm > FIRST_SNR_VOLUME
     if flags.isDCM && ~isempty(find(P.beginDCMblock == indVol-P.nrSkipVol,1))
         rtQA_matlab.snrData.meanSmoothed = [];
         rtQA_matlab.cnrData.basData.mean = [];
-        rtQA_matlab.cnrData.condData.mean = [];        
+        rtQA_matlab.cnrData.condData.mean = [];
     end
     
     [ rtQA_matlab.snrData ] = snr_calc(indVolNorm, reslVol, smReslVol, rtQA_matlab.snrData, isSmoothed);
@@ -190,7 +190,7 @@ if P.isRTQA && indVolNorm > FIRST_SNR_VOLUME
         [ rtQA_matlab.cnrData ] = cnr_calc(indVolNorm, reslVol, smReslVol, rtQA_matlab.cnrData, isSmoothed);
     end
         
-    rtQA_matlab.snrMapCreated = 1; 
+    rtQA_matlab.snrMapCreated = 1;
 
     % Transfer data for following visualization
     if isShowRtqaVol
@@ -214,17 +214,17 @@ if P.isRTQA && indVolNorm > FIRST_SNR_VOLUME
             statMap2D_pos = statMap2D_pos-min(statMap2D_pos(:));
             statMap2D_pos = (statMap2D_pos / max(statMap2D_pos(:))) * 255;
             m = evalin('base', 'mmStatMap');
-            m.Data.statMap = uint8(statMap2D_pos);   
+            m.Data.statMap = uint8(statMap2D_pos);
             assignin('base', 'statMap', statMap2D_pos);
         
-        end              
+        end
         
         rtQA_matlab.snrMapCreated = 1;
            
     end
 else
     
-    rtQA_matlab.snrMapCreated = 0; 
+    rtQA_matlab.snrMapCreated = 0;
     
 end
     
@@ -261,7 +261,7 @@ basFct = mainLoopData.basFct;
 %% AR(1) iGLM, i.e. after assigning _2D matrices used for ROI's extractions
 if P.iglmAR1
     if indVolNorm == 1
-        % initalize first AR(1) volume
+        % initialize first AR(1) volume
         mainLoopData.smReslVolAR1_1 = (1 - P.aAR1) * smReslVol;
     else
         mainLoopData.smReslVolAR1_1 = smReslVol - ...
@@ -273,7 +273,7 @@ end
 tStopSm = toc(tStartMotCorr);
 indIglm = 1;
 
-%% iGLM 
+%% iGLM
 if flags.isDCM
     fIGLM_onset = isempty(find(P.beginDCMblock == indVol-P.nrSkipVol,1));
 else
@@ -303,7 +303,7 @@ if flags.isIGLM
         tempStatMap2D = mainLoopData.statMap2D; % this structure is set with 0
         
         if ~fLockedTempl
-            % assign Tempalte
+            % assign Template
             max_smReslVol = max(smReslVol(:));
             min_smReslVol = min(smReslVol(:));
             normSmReslVol = (smReslVol-min_smReslVol) / ...
@@ -319,7 +319,7 @@ if flags.isIGLM
         
     else
         %% Initialize variables
-        % assign Tempalte
+        % assign Template
         max_smReslVol = max(smReslVol(:));
         min_smReslVol = min(smReslVol(:));
         normSmReslVol = (smReslVol-min_smReslVol) / ...
@@ -463,16 +463,16 @@ if flags.isIGLM
         for i=1:P.NrROIs
             rtQA_matlab.Bn{i}(indIglm,:) = mean(Bn(ROIs(i).voxelIndex,:));
             inds = intersect(ROIs(i).voxelIndex,find(tn.pos>0));
-            if isempty(inds) 
-                rtQA_matlab.tn.pos{i}(indIglm,:) = 0; 
+            if isempty(inds)
+                rtQA_matlab.tn.pos{i}(indIglm,:) = 0;
             else
-                rtQA_matlab.tn.pos{i}(indIglm,:) = geomean(tn.pos(inds)); 
+                rtQA_matlab.tn.pos{i}(indIglm,:) = geomean(tn.pos(inds));
             end
-            inds = intersect(ROIs(i).voxelIndex,find(tn.neg>0));            
-            if isempty(inds) 
-                rtQA_matlab.tn.neg{i}(indIglm,:) = 0; 
+            inds = intersect(ROIs(i).voxelIndex,find(tn.neg>0));
+            if isempty(inds)
+                rtQA_matlab.tn.neg{i}(indIglm,:) = 0;
             else
-                rtQA_matlab.tn.neg{i}(indIglm,:) = geomean(tn.neg(inds)); 
+                rtQA_matlab.tn.neg{i}(indIglm,:) = geomean(tn.neg(inds));
             end
             rtQA_matlab.var{i}(indIglm,:) =  geomean(e2n(ROIs(i).voxelIndex,:));
         end
@@ -491,7 +491,7 @@ else
     idxActVoxIGLM.neg = [];
 end
 
-%% sharing iGLM results 
+%% sharing iGLM results
 mainLoopData.statMapCreated = 0;
 if ~isempty(idxActVoxIGLM.pos) && max(tn.pos) > 0 % handle empty activation map
     % and division by 0
@@ -519,7 +519,7 @@ if ~isempty(idxActVoxIGLM.pos) && max(tn.pos) > 0 % handle empty activation map
     % shared for SPM matlab helper
     m = evalin('base', 'mmStatVol');
     m.Data.posStatVol = statMap3D_pos;
-    mainLoopData.statMapCreated = 1;    
+    mainLoopData.statMapCreated = 1;
 end
 if ~isempty(idxActVoxIGLM.neg) && max(tn.neg) > 0
         
@@ -528,7 +528,7 @@ if ~isempty(idxActVoxIGLM.neg) && max(tn.neg) > 0
     statMapVect = maskedStatMapVect_neg;
     statMap3D_neg(idxActVoxIGLM.neg) = statMapVect;
     
-    clear idxActVoxIGLM    
+    clear idxActVoxIGLM
      
     statMap2D_neg = vol3Dimg2D(statMap3D_neg, slNrImg2DdimX, slNrImg2DdimY, ...
         img2DdimX, img2DdimY, dimVol) / maxTval_neg;
@@ -545,7 +545,7 @@ if ~isempty(idxActVoxIGLM.neg) && max(tn.neg) > 0
     % shared for SPM matlab helper
     m = evalin('base', 'mmStatVol');
     m.Data.negStatVol = statMap3D_neg;
-%     mainLoopData.statMapCreated = 1;            
+%     mainLoopData.statMapCreated = 1;
 
 end
 
@@ -617,4 +617,3 @@ assignin('base', 'mainLoopData', mainLoopData);
 assignin('base', 'P', P);
 
 end
-

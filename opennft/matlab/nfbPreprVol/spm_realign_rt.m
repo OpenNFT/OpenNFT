@@ -63,7 +63,7 @@ function [P, A0, x1, x2, x3, wt, deg, b, nrIter] = ...
 % modules.  What these matrices represent is a mapping from the voxel
 % coordinates (x0,y0,z0) (where the first voxel is at coordinate (1,1,1)),
 % to coordinates in millimeters (x1,y1,z1).
-%  
+%
 % x1 = M(1,1)*x0 + M(1,2)*y0 + M(1,3)*z0 + M(1,4)
 % y1 = M(2,1)*x0 + M(2,2)*y0 + M(2,3)*z0 + M(2,4)
 % z1 = M(3,1)*x0 + M(3,2)*y0 + M(3,3)*z0 + M(3,4)
@@ -90,7 +90,7 @@ function [P, A0, x1, x2, x3, wt, deg, b, nrIter] = ...
 % $Id: spm_realign.m 6070 2014-06-26 20:53:39Z guillaume $
 
 % SVNid = '$Rev: 6070 $';
- 
+
 % P  - a vector of volumes (see spm_vol)
 %--------------------------------------------------------------------------
 % P(i).mat is modified to reflect the modified position of the image i.
@@ -98,17 +98,17 @@ function [P, A0, x1, x2, x3, wt, deg, b, nrIter] = ...
 % optimum scaling required to match the images.
 %__________________________________________________________________________
 
-% Adopted for OpenNFT by Yury Koush and John Ashburner. 
+% Adopted for OpenNFT by Yury Koush and John Ashburner.
 % Copyright (C) 2016-2021 OpenNFT.org
 
 %
-% Real-time computational modifications. 
+% Real-time computational modifications.
 % Note, to speed up the computations,
-% 'Coef' are transferred to the spm_reslice_rt, whcih implies
+% 'Coef' are transferred to the spm_reslice_rt, which implies
 % 1) that exactly the same step in reslice is disabled, and
 % 2) that interpolation specified in realign will be 'used'
 % by default for the same step of Coef estimation during reslice
-% (see smooth_vol() occurences).
+% (see smooth_vol() occurrences).
 % We recommend using the same interpolation for real-time adaptations of
 % the realign and reslice functions.
 
@@ -118,15 +118,15 @@ function [P, A0, x1, x2, x3, wt, deg, b, nrIter] = ...
 % preprocessing time on each iteration. Relatively long processing of the
 % first volume may require a longer first baseline block or alternative
 % solutions when higher preprocessing speed is required, e.g. TR = 500ms.
-fNFB = true; 
+fNFB = true;
 
 lkp  = flags.lkp;
 if indVol == indFirstVol
     
     skip = sqrt( sum(P(1).mat(1:3,1:3) .^ 2) ) .^ (-1) * flags.sep;
-    d    = P(1).dim(1:3);                                                                                                                        
-    st   = rand('state'); 
-    rand('state',0); 
+    d    = P(1).dim(1:3);
+    st   = rand('state');
+    rand('state',0);
     if d(3) < 3
         lkp  = [1 2 6];
         [x1,x2,x3] = ndgrid(1:skip(1):d(1)-0.5, ...
@@ -140,7 +140,7 @@ if indVol == indFirstVol
                             1:skip(3):d(3)-0.5);
         x1   = x1 + rand(size(x1)) * 0.5;
         x2   = x2 + rand(size(x2)) * 0.5;
-        x3   = x3 + rand(size(x3)) * 0.5; 
+        x3   = x3 + rand(size(x3)) * 0.5;
     end
     rand('state',st); % rng(st);
 
@@ -206,7 +206,7 @@ if indVol == indFirstVol
             Alpha = [A0 b];
             Alpha = Alpha' * Alpha;
             det1  = det(Alpha);
-        end;    
+        end;
     end
     
 end
@@ -218,7 +218,7 @@ if fNFB
     thAcc = 0.01;
     nrIter = 10;
 else
-    % SPM defualt:
+    % SPM default:
     thAcc = 1e-8;
     nrIter = 64;
 end
@@ -301,7 +301,7 @@ j  = (length(y) - 1)/2;
 k  = (length(z) - 1)/2;
 d  = [hld*[1 1 1]' wrp(:)];
 
-Coef  = spm_bsplinc(P.Vol, d); 
+Coef  = spm_bsplinc(P.Vol, d);
 V = zeros(size(P.Vol));
 spm_conv_vol(Coef, V, x, y, z, -[i j k]);
 
@@ -320,7 +320,7 @@ for i=1:length(lkp)
     if ~isempty(wt)
         A(:,i) = tmp .* wt;
     else
-        A(:,i) = tmp; 
+        A(:,i) = tmp;
     end
 end
 
@@ -340,5 +340,3 @@ str = {'There is not enough overlap in the images to obtain a solution.',...
        'for SPM to find the optimal solution.'};
 spm('alert*',str,mfilename,sqrt(-1));
 error('Insufficient image overlap.');
-
-

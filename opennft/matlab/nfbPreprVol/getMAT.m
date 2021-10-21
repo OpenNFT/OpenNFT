@@ -3,28 +3,28 @@ function mat = getMAT(hdr,dim)
 % Function to format brain volume orientation information.
 % Note, it is currently disabled in OpenNFT, due to large heterogenity of
 % real-time export configurations.
-% Note, an end-user is adviced to carefully ensure the spatial orientation 
+% Note, an end-user is advised to carefully ensure the spatial orientation
 % of their real-time data.
 %
 %__________________________________________________________________________
 % Copyright (C) 2016-2021 OpenNFT.org
 %
-% Exemplified by Yury Koush, Tibor Auer, and John Ashburner 
+% Exemplified by Yury Koush, Tibor Auer, and John Ashburner
 % (see spm_dicom_header.m and spm_dicom_convert.m)
 
 % Orientation information
 %-------------------------------------------------------------------
-% Axial Analyze voxel co-ordinate system:
+% Axial Analyze voxel coordinate system:
 % x increases     right to left
 % y increases posterior to anterior
 % z increases  inferior to superior
 
-% DICOM patient co-ordinate system:
+% DICOM patient coordinate system:
 % x increases     right to left
 % y increases  anterior to posterior
 % z increases  inferior to superior
 
-% T&T co-ordinate system:
+% T&T coordinate system:
 % x increases      left to right
 % y increases posterior to anterior
 % z increases  inferior to superior
@@ -40,7 +40,7 @@ if det(orient) < 0, orient(:,3) = -orient(:,3); end
 
 % The image position vector is not correct. In dicom this vector points to
 % the upper left corner of the image. Perhaps it is unlucky that this is
-% calculated in the syngo software from the vector pointing to the center 
+% calculated in the syngo software from the vector pointing to the center
 % of the slice (keep in mind: upper left slice) with the enlarged FoV.
 dicom_to_patient = [orient*diag(vox) pos ; 0 0 0 1];
 truepos          = dicom_to_patient * ...

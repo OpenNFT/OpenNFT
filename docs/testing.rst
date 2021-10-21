@@ -26,7 +26,7 @@ Offline OpenNFT mode using already acquired fMRI data
 Running and debugging OpenNFT from VSCode
 -----------------------------------------------------
 
-If you want to run the program from VSCode run/debug configuration, you should add the followings to launch.json configuration:
+If you want to run the program from VSCode run/debug configuration, you should add the following to launch.json configuration:
 
 .. code-block::
 

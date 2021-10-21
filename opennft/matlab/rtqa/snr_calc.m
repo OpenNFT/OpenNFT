@@ -1,6 +1,6 @@
 function [ snrData ] = snr_calc( iteration, vol, volSmoothed, snrData, isSmoothed )
 % Function to calculate Signal-to-Noise Ratio for volume
-% 
+%
 % input:
 % iteration   - which volume is now processing
 % vol - the volume for processing
@@ -56,4 +56,3 @@ function [ snrData ] = snr_calc( iteration, vol, volSmoothed, snrData, isSmoothe
     snrData.m2NonSmoothed = m2NonSmoothed;
 
 end
-

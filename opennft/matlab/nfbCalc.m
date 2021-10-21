@@ -9,7 +9,7 @@ function displayData = nfbCalc(indVol, displayData, ...
 % dcmParOpp       - model-defining structure for an opposed model (model 2)
 % isDcmCalculated - flag for DCM estiamtion state
 %
-% output: 
+% output:
 % displayData - updated data structure for feedback presentation
 %
 % Note, DCM feedback estimates are hardcorded separately as function input.
@@ -46,14 +46,14 @@ if flags.isPSC && (strcmp(P.Prot, 'Cont') || strcmp(P.Prot, 'ContTask'))
             firstNF = indVolNorm;
         end
     
-        % Get reference baseline in cumulated way across the RUN, 
+        % Get reference baseline in cumulated way across the RUN,
         % or any other fashion
         i_blockBAS = [];
         if blockNF<2
             % according to json protocol
             % index for Baseline == 1
             i_blockBAS = P.ProtCond{ 1 }{blockNF}(end-6:end);
-        else            
+        else
             for iBas = 1:blockNF
                 i_blockBAS = [i_blockBAS P.ProtCond{ 1 }{iBas}(3:end)];
                 % ignore 2 scans for HRF shift, e.g. if TR = 2sec
@@ -67,8 +67,8 @@ if flags.isPSC && (strcmp(P.Prot, 'Cont') || strcmp(P.Prot, 'ContTask'))
         end
 
         % compute average %SC feedback value
-        tmp_fbVal = eval(P.RoiAnatOperation); 
-        dispValue = round(P.MaxFeedbackVal*tmp_fbVal, P.FeedbackValDec); 
+        tmp_fbVal = eval(P.RoiAnatOperation);
+        dispValue = round(P.MaxFeedbackVal*tmp_fbVal, P.FeedbackValDec);
 
         % [0...P.MaxFeedbackVal], for Display
         if ~P.NegFeedback && dispValue < 0
@@ -85,7 +85,7 @@ if flags.isPSC && (strcmp(P.Prot, 'Cont') || strcmp(P.Prot, 'ContTask'))
         mainLoopData.dispValue = dispValue;
     else
         tmp_fbVal = 0;
-        mainLoopData.dispValue = 0;                                    
+        mainLoopData.dispValue = 0;
     end
 
     mainLoopData.vectNFBs(indVolNorm) = tmp_fbVal;
@@ -100,7 +100,7 @@ if flags.isPSC && (strcmp(P.Prot, 'Cont') || strcmp(P.Prot, 'ContTask'))
 %     mainLoopData.dispValue = 0;
 %     mainLoopData.vectNFBs(indVolNorm) = tmp_fbVal;
 %     mainLoopData.Reward = '';
-% 
+%
 %     displayData.Reward = mainLoopData.Reward;
 %     displayData.dispValue = mainLoopData.dispValue;
 end
@@ -240,7 +240,7 @@ if flags.isDCM
 
     % Reward threshold for DCM is hard-coded per day, see Intermittent PSC
     % NF for generalzad reward data transfer aross the runs.
-    thReward = 3; % set the threshold for logBF, 
+    thReward = 3; % set the threshold for logBF,
                   % e.g. constant per run or per day
 
     if isDcmCalculated
@@ -251,7 +251,7 @@ if flags.isDCM
         mainLoopData.vectNFBs(indNFTrial) = logBF;
         mainLoopData.flagEndDCM = 1;
         tmp_fbVal = mainLoopData.logBF(indNFTrial);
-        dispValue = round(P.MaxFeedbackVal*tmp_fbVal, P.FeedbackValDec); 
+        dispValue = round(P.MaxFeedbackVal*tmp_fbVal, P.FeedbackValDec);
 
         % calculating monetory reward value
         if mainLoopData.dispValue > thReward
@@ -261,7 +261,7 @@ if flags.isDCM
         mainLoopData.Reward = mat2str(mainLoopData.tReward);
     end
 
-    if mainLoopData.flagEndDCM 
+    if mainLoopData.flagEndDCM
         displayData.Reward = mainLoopData.Reward;
         displayData.dispValue = mainLoopData.dispValue;
     else
@@ -276,7 +276,7 @@ end
 %% continuous SVM NF
 if flags.isSVM
     blockNF = mainLoopData.blockNF;
-    firstNF = mainLoopData.firstNF;    
+    firstNF = mainLoopData.firstNF;
     dispValue = mainLoopData.dispValue;
 
     if condition == 2
@@ -293,15 +293,15 @@ if flags.isSVM
         end
 
         % compute average feedback value
-        tmp_fbVal = mean(norm_percValues);%eval(P.RoiAnatOperation); 
-        dispValue = round(P.MaxFeedbackVal*tmp_fbVal, P.FeedbackValDec); 
+        tmp_fbVal = mean(norm_percValues);%eval(P.RoiAnatOperation);
+        dispValue = round(P.MaxFeedbackVal*tmp_fbVal, P.FeedbackValDec);
 
         mainLoopData.norm_percValues(indVolNorm,:) = norm_percValues;
         mainLoopData.dispValues(indVolNorm) = dispValue;
         mainLoopData.dispValue = dispValue;
     else
         tmp_fbVal = 0;
-        mainLoopData.dispValue = 0;                                    
+        mainLoopData.dispValue = 0;
     end
 
     mainLoopData.vectNFBs(indVolNorm) = tmp_fbVal;
@@ -317,4 +317,3 @@ end
 %%
 assignin('base', 'P', P);
 assignin('base', 'mainLoopData', mainLoopData);
-

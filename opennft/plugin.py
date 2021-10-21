@@ -3,12 +3,11 @@ from PyQt5.QtGui import QStandardItemModel, QStandardItem
 from PyQt5.QtCore import Qt
 from PyQt5.uic import loadUi
 from loguru import logger
-import matlab
 
 import importlib
-import os
 
-from opennft import config, utils, eventrecorder
+from opennft import config, utils, eventrecorder  # noqa: F401
+
 
 class PluginWindow(QDialog):
     def __init__(self, parent=None):
@@ -21,8 +20,8 @@ class PluginWindow(QDialog):
         self.setWindowModality(Qt.ApplicationModal)
 
         model = QStandardItemModel(self.lvPlugins)
-        for p in [f for f in os.listdir(config.PLUGIN_PATH) if f.endswith('.py')]:
-            plMod = 'opennft.' + os.path.basename(config.PLUGIN_PATH).lower() + '.' + p[:-3]
+        for p in [f.name for f in config.PLUGIN_PATH.glob('*.py')]:
+            plMod = 'opennft.' + config.PLUGIN_PATH.name.lower() + '.' + p[:-3]
             self.plugins += [importlib.import_module(plMod)]
             plName = self.plugins[-1].META['plugin_name']
             item = QStandardItem(plName)
@@ -30,6 +29,7 @@ class PluginWindow(QDialog):
             item.setCheckable(True)
             model.appendRow(item)
         self.lvPlugins.setModel(model)
+
 
 class Plugin:
 
@@ -39,11 +39,11 @@ class Plugin:
         self.object = None
 
     def initialize(self):
-        if type(self.module.META['plugin_init']) == list: # post-initialization
+        if type(self.module.META['plugin_init']) == list:  # post-initialization
             initcmd = self.module.META['plugin_init'][0]
             postinitcdm = self.module.META['plugin_init'][1:]
-        else: 
-            initcmd = self.module.META['plugin_init'] # no post-initialization
+        else:
+            initcmd = self.module.META['plugin_init']  # no post-initialization
             postinitcdm = []
         self.object = eval("self.module." + initcmd.format(**self.parent.P))
         for cmd in postinitcdm:
@@ -54,6 +54,6 @@ class Plugin:
         m = self.module.META
         if (self.parent.recorder.getLastEvent() == eval("eventrecorder.Times." + m['plugin_time'])) and eval(m['plugin_signal']):
             exec("self.object." + m['plugin_exec'])
-    
+
     def finalize(self):
         self.object = None
