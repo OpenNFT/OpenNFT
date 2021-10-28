@@ -20,13 +20,15 @@ PLUGIN_PATH = ROOT_PATH / 'plugins'
 OpenNFT_ICON = ROOT_PATH / 'ui' / 'images' / 'appicon.png'
 MATLAB_FUNCTIONS_PATH = ROOT_PATH / 'matlab'
 
+AUTO_RTQA = True
+
 # Matlab sessions
 MAIN_MATLAB_NAME = 'MATLAB_NFB_MAIN'
 PTB_MATLAB_NAME = 'MATLAB_NFB_PTB'
 SPM_MATLAB_NAME = 'MATLAB_NFB_SPM'
 MODEL_HELPER_MATLAB_NAME = 'MATLAB_NFB_MODEL_HELPER'
 
-MAIN_MATLAB_STARTUP_OPTIONS = '-nodesktop'
+MAIN_MATLAB_STARTUP_OPTIONS = '-desktop'
 PTB_MATLAB_STARTUP_OPTIONS = '-nodesktop'
 SPM_MATLAB_STARTUP_OPTIONS = '-nodesktop'
 MODEL_HELPER_MATLAB_STARTUP_OPTIONS = '-nodesktop'
@@ -133,6 +135,10 @@ nrZeroPadVol = 3
 # FD defaults
 DEFAULT_FD_RADIUS = 50  # radius multiplying angular displacement in FD compution
 DEFAULT_FD_THRESHOLDS = [0.1, 0.2, 0.5]  # FD thresholds to display by default
+DEFAULT_DVARS_THRESHOLD = 0.5
+
+# Mask threshold
+WHOLE_BRAIN_MASK_THRESHOLD = 50
 
 # plot display defaults
 PLOT_BACKGROUND_COLOR = (255, 255, 255)

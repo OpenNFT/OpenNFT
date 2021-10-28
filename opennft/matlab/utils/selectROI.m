@@ -54,7 +54,7 @@ if flags.isPSC || flags.isSVM || flags.isCorr || P.isRestingState
         ROIs(iFile).mask2D = vol3Dimg2D(ROIs(iFile).vol, slNrImg2DdimX, ...
                      slNrImg2DdimY, img2DdimX, img2DdimY, ROIs(iFile).dim);
     end
-    
+
     assignin('base', 'ROIs', ROIs);
 end
 
@@ -133,10 +133,15 @@ if flags.isDCM
                                      img2DdimY, ROIsGroup(iFile).dim);
 
     end
+
     assignin('base', 'ROIsGroup', ROIsGroup);
     assignin('base', 'ROIsAnat', ROIsAnat);
     assignin('base', 'ROIsGlmAnat', []);
     assignin('base', 'ROIoptimGlmAnat', []);
+end
+
+if P.isRTQA
+    P.NrROIs = P.NrROIs + 1;
 end
 
 assignin('base', 'P', P);

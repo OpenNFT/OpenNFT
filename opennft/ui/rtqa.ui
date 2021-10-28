@@ -377,7 +377,7 @@
        </item>
       </layout>
      </widget>
-     <widget class="QWidget" name="noRegSnrPlot">
+     <widget class="QWidget" name="pageNoRegSnrPlot">
       <layout class="QVBoxLayout" name="verticalLayout_26">
        <property name="leftMargin">
         <number>0</number>
@@ -415,6 +415,43 @@
          </item>
          <item>
           <layout class="QVBoxLayout" name="noRegSnrPlotLayout"/>
+         </item>
+        </layout>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="pageDvarsPlot">
+      <layout class="QVBoxLayout" name="verticalLayout_24">
+       <property name="leftMargin">
+        <number>0</number>
+       </property>
+       <property name="topMargin">
+        <number>0</number>
+       </property>
+       <property name="rightMargin">
+        <number>0</number>
+       </property>
+       <property name="bottomMargin">
+        <number>0</number>
+       </property>
+       <item>
+        <layout class="QVBoxLayout" name="dvarsLayout">
+         <item>
+          <widget class="QLabel" name="label_6">
+           <property name="font">
+            <font>
+             <pointsize>10</pointsize>
+             <weight>75</weight>
+             <bold>true</bold>
+            </font>
+           </property>
+           <property name="text">
+            <string>DVARS</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <layout class="QVBoxLayout" name="dvarsPlotLayout"/>
          </item>
         </layout>
        </item>
@@ -468,6 +505,11 @@
        <item>
         <property name="text">
          <string>no reg SNR</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>DVARS</string>
         </property>
        </item>
       </widget>
@@ -745,6 +787,37 @@
             <size>
              <width>20</width>
              <height>168</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+        </layout>
+       </widget>
+       <widget class="QWidget" name="pageDvars">
+        <layout class="QVBoxLayout" name="verticalLayout_27">
+         <item>
+          <widget class="QLabel" name="dvarsLabel">
+           <property name="font">
+            <font>
+             <pointsize>10</pointsize>
+             <weight>50</weight>
+             <bold>false</bold>
+            </font>
+           </property>
+           <property name="text">
+            <string/>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <spacer name="verticalSpacer_8">
+           <property name="orientation">
+            <enum>Qt::Vertical</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>20</width>
+             <height>40</height>
             </size>
            </property>
           </spacer>

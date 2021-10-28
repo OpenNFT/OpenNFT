@@ -958,6 +958,7 @@ class OpenNFT(QWidget):
                 self.windowRTQA.calculateCNR(data, n, isNewDCMBlock)
             self.windowRTQA.calculateSpikes(dataGLM, n, posSpikes, negSpikes)
             self.windowRTQA.calculateMSE(n, dataGLM, dataProc[:, n])
+            self.windowRTQA.calculateDVARS(dataRealRaw[-1, n-1], dataRealRaw[-1, n])
 
             self.windowRTQA.plotRTQA(n + 1)
             self.windowRTQA.plotDisplacements(dataMC[n, :], isNewDCMBlock)
@@ -1279,6 +1280,9 @@ class OpenNFT(QWidget):
 
             with utils.timeit('  initMainLoopData:'):
                 self.initMainLoopData()
+
+            if self.P['isRTQA']:
+                self.eng.assignWholeBrainRoiEPI(nargout=0)
 
             if config.USE_SHAM:
                 logger.warning("Sham feedback has been selected")
@@ -1921,6 +1925,7 @@ class OpenNFT(QWidget):
         self.P['isIGLM'] = config.USE_IGLM
         self.P['isZeroPadding'] = config.zeroPaddingFlag
         self.P['nrZeroPadVol'] = config.nrZeroPadVol
+        self.P['wholeBrainMaskThreshold'] = config.WHOLE_BRAIN_MASK_THRESHOLD
 
         if self.P['Prot'] == 'ContTask':
             self.P['TaskFolder'] = self.leTaskFolder.text()

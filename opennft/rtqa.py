@@ -74,6 +74,8 @@ class RTQAWindow(QtWidgets.QWidget):
         self.posSpikes = dict.fromkeys(['{:d}'.format(x) for x in range(sz)], np.array(0))
         self.negSpikes = dict.fromkeys(['{:d}'.format(x) for x in range(sz)], np.array(0))
         self.rMSE = np.zeros((sz, xrange))
+        self.DVARS = np.zeros((1, 1))
+        self.excDVARS = 0
         self.linTrendCoeff = np.zeros((sz, xrange))
         self.checkedBoxesInd = []
         self.currentMode = 0
@@ -81,7 +83,11 @@ class RTQAWindow(QtWidgets.QWidget):
         # Additional GUI elements connection and initialization
         groupBoxLayout = self.roiGroupBox.layout()
         for i in range(sz):
-            checkbox = QtWidgets.QCheckBox('ROI_' + str(i + 1))
+            if i==sz-1:
+                name = 'Whole brain ROI'
+            else:
+                name = 'ROI_' + str(i + 1)
+            checkbox = QtWidgets.QCheckBox(name)
             checkbox.setStyleSheet("color: " + config.ROI_PLOT_COLORS[i].name())
             if not i:
                 checkbox.setChecked(True)
@@ -140,6 +146,12 @@ class RTQAWindow(QtWidgets.QWidget):
         self.rdPlotLayout.addWidget(self.rotatPlot)
         p = self.rotatPlot.getPlotItem()
         self.plotsSetup(p, "Amplitude [mm]", xrange)
+
+        self.dvarsPlot = pg.PlotWidget(self)
+        self.dvarsPlot.setBackground((255, 255, 255))
+        self.dvarsPlotLayout.addWidget(self.dvarsPlot)
+        p = self.dvarsPlot.getPlotItem()
+        self.plotsSetup(p, "Amplitude [a.u.]", xrange)
 
         self.spikesPlot = pg.PlotWidget(self)
         self.spikesPlot.setBackground((255, 255, 255))
@@ -453,6 +465,13 @@ class RTQAWindow(QtWidgets.QWidget):
         plotitem = self.noRegSnrPlot.getPlotItem()
         data = self.rNoRegSNR[self.checkedBoxesInd, 0:n]
         self.plotTs(self.init, plotitem, data, self.checkedBoxesInd)
+
+        # DVARS plot
+        plotitem = self.dvarsPlot.getPlotItem()
+        plotitem.clear()
+        plotitem.plot(y=self.DVARS, pen=config.PLOT_PEN_COLORS[0], name='DVARS')
+        plotitem.plot(x=np.arange(0, self._fd.xmax, dtype=np.float64), y=config.DEFAULT_DVARS_THRESHOLD * np.ones(self._fd.xmax),
+                        pen=config.PLOT_PEN_COLORS[2], name='thr')
 
         # Linear trend coefficients value label
         if self.comboBox.currentIndex() == 5:
@@ -850,13 +869,32 @@ class RTQAWindow(QtWidgets.QWidget):
             self.makeTextValueLabel(self.mseLabel, names, pens, lineBreak='<br>')
 
     # --------------------------------------------------------------------------
+    def calculateDVARS(self, prev, cur):
+
+        self.DVARS = np.append(self.DVARS, np.abs(cur-prev))
+
+        if self.DVARS[-1] > config.DEFAULT_DVARS_THRESHOLD:
+            self.excDVARS = self.excDVARS + 1
+
+        if self.comboBox.currentIndex() == 7:
+
+            names = ['DVARS ']
+            pens = [config.PLOT_PEN_COLORS[6]]
+            names.append('{0:.3f} '.format(float(self.DVARS[-1])))
+            names.append('<br>Threshold : ' + str(int(self.excDVARS)))
+            pens.append(pg.mkPen(color=config.ROI_PLOT_COLORS[-1], width=1.2))
+            pens.append(pg.mkPen(color=config.ROI_PLOT_COLORS[-1], width=1.2))
+
+            self.makeTextValueLabel(self.dvarsLabel, names, pens, lineBreak='<br>')
+
+    # --------------------------------------------------------------------------
     def dataPacking(self):
         """ Packaging of python RTQA data for following save
         """
 
         tsRTQA = dict.fromkeys(['rMean', 'rVar', 'rSNR', 'rNoRegSNR',
                                 'meanBas', 'varBas', 'meanCond', 'varCond', 'rCNR',
-                                'excFDIndexes_1', 'excFDIndexes_2', 'excMDIndexes', 'FD', 'MD', 'rMSE'])
+                                'excFDIndexes_1', 'excFDIndexes_2', 'excMDIndexes', 'FD', 'MD', 'DVARS', 'rMSE'])
 
         tsRTQA['rMean'] = matlab.double(self.rMean.tolist())
         tsRTQA['rVar'] = matlab.double(self.rVar.tolist())
@@ -872,6 +910,7 @@ class RTQAWindow(QtWidgets.QWidget):
         tsRTQA['excMDIndexes'] = matlab.double(self._fd.excMDIndexes.tolist())
         tsRTQA['FD'] = matlab.double(self._fd.FD.tolist())
         tsRTQA['MD'] = matlab.double(self._fd.MD.tolist())
+        tsRTQA['DVARS'] = matlab.double(self.DVARS.tolist())
         tsRTQA['rMSE'] = matlab.double(self.rMSE.tolist())
 
         return tsRTQA
