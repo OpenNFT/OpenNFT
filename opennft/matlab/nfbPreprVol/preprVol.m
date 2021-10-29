@@ -35,6 +35,14 @@ end
 flags = getFlagsType(P);
 if flags.isDCM
     ROIsAnat = evalin('base', 'ROIsAnat');
+    if P.isRTQA
+        wbROI = evalin('base','ROIs');
+        ROIsAnat(P.NrROIs).voxelIndex = wbROI.voxelIndex;
+        ROIsAnat(P.NrROIs).mat = wbROI.mat;
+        ROIsAnat(P.NrROIs).dim = wbROI.dim;
+        ROIsAnat(P.NrROIs).vol = wbROI.vol;
+        ROIsAnat(P.NrROIs).mask2D = wbROI.mask2D;
+    end
 end
 
 % realign and reslice init
@@ -457,6 +465,12 @@ if flags.isIGLM
     if P.isRTQA
         if flags.isDCM
             ROIs = evalin('base', 'ROIsAnat');
+            wbROI = evalin('base','ROIs');
+            ROIs(P.NrROIs).voxelIndex = wbROI.voxelIndex;
+            ROIs(P.NrROIs).mat = wbROI.mat;
+            ROIs(P.NrROIs).dim = wbROI.dim;
+            ROIs(P.NrROIs).vol = wbROI.vol;
+            ROIs(P.NrROIs).mask2D = wbROI.mask2D;
         else
             ROIs = evalin('base', 'ROIs');
         end
@@ -575,9 +589,25 @@ if flags.isDCM
     if ~isempty(find( P.endDCMblock == indVol - P.nrSkipVol,1 ))
         if (indNFTrial+1) > 1
             ROIsGlmAnat = evalin('base', 'ROIsGlmAnat');
+%             if P.isRTQA
+%                 wbROI = evalin('base','ROIs');
+%                 ROIsGlmAnat(P.NrROIs).voxelIndex = wbROI.voxelIndex;
+%                 ROIsGlmAnat(P.NrROIs).mat = wbROI.mat;
+%                 ROIsGlmAnat(P.NrROIs).dim = wbROI.dim;
+%                 ROIsGlmAnat(P.NrROIs).vol = wbROI.vol;
+%                 ROIsGlmAnat(P.NrROIs).mask2D = wbROI.mask2D;
+%             end
         end
         if (indNFTrial+1) > 2
             ROIoptimGlmAnat = evalin('base', 'ROIoptimGlmAnat');
+%             if P.isRTQA
+%                 wbROI = evalin('base','ROIs');
+%                 ROIoptimGlmAnat(P.NrROIs).voxelIndex = wbROI.voxelIndex;
+%                 ROIoptimGlmAnat(P.NrROIs).mat = wbROI.mat;
+%                 ROIoptimGlmAnat(P.NrROIs).dim = wbROI.dim;
+%                 ROIoptimGlmAnat(P.NrROIs).vol = wbROI.vol;
+%                 ROIoptimGlmAnat(P.NrROIs).mask2D = wbROI.mask2D;
+%             end
         end
         for iROI = 1:P.NrROIs
             ROIsAnat(iROI).mask2D(isnan(ROIsAnat(iROI).mask2D))=0;

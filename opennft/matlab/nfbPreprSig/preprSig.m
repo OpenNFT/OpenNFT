@@ -67,15 +67,12 @@ for indRoi = 1:P.NrROIs
     
     if flags.isDCM
         indNFTrial = P.indNFTrial;
-        if indROI == P.nrROIs && P.isRTQA
-
+        if indRoi == P.NrROIs && P.isRTQA
             % Whole brain ROI time-series
             ROIs = evalin('base', 'ROIs');
             rawTimeSeries(indRoi, indVolNorm) = mean( ...
-                mainLoopData.smReslVol_2D(ROIs(indRoi).mask2D>0));
-
+                mainLoopData.smReslVol_2D(ROIs.mask2D>0));
         else
-
             % manual set of ROI adaptation scheme
             isFixedGrROIforDCM = 0;
             if isFixedGrROIforDCM

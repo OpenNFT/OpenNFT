@@ -26,6 +26,8 @@ maskThreshold = P.wholeBrainMaskThreshold;
 ROIs(iFile).vol(ROIs(iFile).vol < maskThreshold) = 0;
 ROIs(iFile).vol(ROIs(iFile).vol >= maskThreshold) = 1;
 
+ROIs(iFile).voxelIndex = find(ROIs(iFile).vol == 1);
+
 ROIs(iFile).mask2D = vol3Dimg2D(ROIs(iFile).vol, slNrImg2DdimX, ...
              slNrImg2DdimY, img2DdimX, img2DdimY, ROIs(iFile).dim);
 

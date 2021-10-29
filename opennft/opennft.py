@@ -958,7 +958,7 @@ class OpenNFT(QWidget):
                 self.windowRTQA.calculateCNR(data, n, isNewDCMBlock)
             self.windowRTQA.calculateSpikes(dataGLM, n, posSpikes, negSpikes)
             self.windowRTQA.calculateMSE(n, dataGLM, dataProc[:, n])
-            self.windowRTQA.calculateDVARS(dataRealRaw[-1, n-1], dataRealRaw[-1, n])
+            self.windowRTQA.calculateDVARS(dataRealRaw[-1, n-1], dataRealRaw[-1, n], isNewDCMBlock)
 
             self.windowRTQA.plotRTQA(n + 1)
             self.windowRTQA.plotDisplacements(dataMC[n, :], isNewDCMBlock)
