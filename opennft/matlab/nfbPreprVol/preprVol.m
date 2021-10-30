@@ -244,7 +244,7 @@ if flags.isPSC || flags.isSVM || flags.isCorr || P.isRestingState
         img2DdimX, img2DdimY, dimVol);
     if P.isRTQA
         ROIs = evalin('base','ROIs');
-        dvarsDiff = ((smReslVol_2D - mainLoopData.smReslVol_2D).^2) / P.scaleFactorDVARS;
+        dvarsDiff = ((smReslVol_2D - mainLoopData.smReslVol_2D) / P.scaleFactorDVARS).^2;
         mainLoopData.dvarsValue = sqrt(mean(dvarsDiff(ROIs(end).voxelIndex)));
     end
     mainLoopData.smReslVol_2D = smReslVol_2D;
@@ -257,7 +257,7 @@ if flags.isDCM
             slNrImg2DdimY, img2DdimX, img2DdimY, dimVol);
         if P.isRTQA
             ROIs = evalin('base','ROIs');
-            dvarsDiff = ((nosmReslVol_2D - mainLoopData.nosmReslVol_2D).^2) / P.scaleFactorDVARS;
+            dvarsDiff = ((nosmReslVol_2D - mainLoopData.nosmReslVol_2D) / P.scaleFactorDVARS).^2;
             mainLoopData.dvarsValue = sqrt(mean(dvarsDiff(ROIs.voxelIndex)));
         end
         mainLoopData.nosmReslVol_2D = nosmReslVol_2D;
@@ -267,7 +267,7 @@ if flags.isDCM
             slNrImg2DdimY, img2DdimX, img2DdimY, dimVol);
         if P.isRTQA
             ROIs = evalin('base','ROIs');
-            dvarsDiff = ((smReslVol_2D - mainLoopData.smReslVol_2D).^2) / P.scaleFactorDVARS;
+            dvarsDiff = ((smReslVol_2D - mainLoopData.smReslVol_2D) / P.scaleFactorDVARS).^2;
             mainLoopData.dvarsValue = sqrt(mean(dvarsDiff(ROIs.voxelIndex)));
         end
         mainLoopData.smReslVol_2D = smReslVol_2D;
