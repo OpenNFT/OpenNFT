@@ -80,9 +80,11 @@ figure,plot(xdata,ydata,'k.'),hold on,
 plot(xfit,fun(fitResults,xfit),'b-', 'linewidth', 2)
 end
 
+threshEpiWholeBrainMask = round(fitResults(4)/2);
+
 % get mask
 epiWholeBrainMask = zeros(dimTemplMotCorr);
-indexEpiWholeBrainMask = find(smImgVolTempl>floor(fitResults(4)/2));
+indexEpiWholeBrainMask = find(smImgVolTempl>threshEpiWholeBrainMask);
 epiWholeBrainMask(indexEpiWholeBrainMask) = 1;
 
 % display mask
@@ -97,6 +99,9 @@ ROIs(iFile).vol = epiWholeBrainMask;
 ROIs(iFile).voxelIndex = indexEpiWholeBrainMask;
 ROIs(iFile).mask2D = vol3Dimg2D(ROIs(iFile).vol, slNrImg2DdimX, ...
              slNrImg2DdimY, img2DdimX, img2DdimY, ROIs(iFile).dim);
+         
+% DVARS scaling is most frequent image value given fit
+P.scaleFactorDVARS = round(fitResults(4));
 
 assignin('base', 'P', P);
 assignin('base', 'ROIs', ROIs);
