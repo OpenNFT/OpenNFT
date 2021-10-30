@@ -925,6 +925,7 @@ class OpenNFT(QWidget):
             dataGLM = np.array(self.eng.evalin('base', 'mainLoopData.glmProcTimeSeries(:,end)'), ndmin=2)
             dataProc = np.array(self.outputSamples['kalmanProcTimeSeries'], ndmin=2)
             dataMC = np.array(self.outputSamples['motCorrParam'], ndmin=2)
+            dvarsValue = self.eng.evalin('base', 'mainLoopData.dvarsValue')
             n = len(dataRealRaw[0, :]) - 1
             data = dataRealRaw[:, n]
 
@@ -958,7 +959,7 @@ class OpenNFT(QWidget):
                 self.windowRTQA.calculateCNR(data, n, isNewDCMBlock)
             self.windowRTQA.calculateSpikes(dataGLM, n, posSpikes, negSpikes)
             self.windowRTQA.calculateMSE(n, dataGLM, dataProc[:, n])
-            self.windowRTQA.calculateDVARS(dataRealRaw[-1, n-1], dataRealRaw[-1, n], isNewDCMBlock)
+            self.windowRTQA.calculateDVARS(dvarsValue, isNewDCMBlock)
 
             self.windowRTQA.plotRTQA(n + 1)
             self.windowRTQA.plotDisplacements(dataMC[n, :], isNewDCMBlock)

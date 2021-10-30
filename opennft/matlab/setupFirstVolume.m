@@ -108,6 +108,14 @@ m = evalin('base', 'mmImgViewTempl');
 shift = 0 * length(imgViewTempl(:)) + 1;
 m.Data(shift:end) = imgViewTempl(:);
 
+if P.isRTQA
+    if strcmp(P.Type, 'DCM') && ~P.smForDCM
+        mainLoopData.nosmReslVol_2D = zeros(img2DdimY,img2DdimX);
+    else
+        mainLoopData.smReslVol_2D = zeros(img2DdimY,img2DdimX);
+    end
+end
+
 mainLoopData.dimVol = dimVol;
 mainLoopData.matVol = matVol;
 mainLoopData.dicomInfoVox = dicomInfoVox;
@@ -116,6 +124,7 @@ mainLoopData.img2DdimY = img2DdimY;
 mainLoopData.slNrImg2DdimX = slNrImg2DdimX;
 mainLoopData.slNrImg2DdimY = slNrImg2DdimY;
 mainLoopData.nrVoxInVol = nrVoxInVol;
+
 
 assignin('base', 'mainLoopData', mainLoopData);
 assignin('base', 'P', P);

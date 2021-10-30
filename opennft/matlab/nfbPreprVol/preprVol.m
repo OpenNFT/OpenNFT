@@ -242,6 +242,11 @@ if flags.isPSC || flags.isSVM || flags.isCorr || P.isRestingState
     % Smoothed Vol 3D -> 2D
     smReslVol_2D = vol3Dimg2D(smReslVol, slNrImg2DdimX, slNrImg2DdimY, ...
         img2DdimX, img2DdimY, dimVol);
+    if P.isRTQA
+        ROIs = evalin('base','ROIs');
+        dvarsDiff = ((smReslVol_2D - mainLoopData.smReslVol_2D).^2) / P.scaleFactorDVARS;
+        mainLoopData.dvarsValue = sqrt(mean(dvarsDiff(ROIs(end).voxelIndex)));
+    end
     mainLoopData.smReslVol_2D = smReslVol_2D;
 end
 
@@ -250,11 +255,21 @@ if flags.isDCM
         % NoN-Smoothed Vol 3D -> 2D
         nosmReslVol_2D = vol3Dimg2D(reslVol, slNrImg2DdimX, ...
             slNrImg2DdimY, img2DdimX, img2DdimY, dimVol);
+        if P.isRTQA
+            ROIs = evalin('base','ROIs');
+            dvarsDiff = ((nosmReslVol_2D - mainLoopData.nosmReslVol_2D).^2) / P.scaleFactorDVARS;
+            mainLoopData.dvarsValue = sqrt(mean(dvarsDiff(ROIs.voxelIndex)));
+        end
         mainLoopData.nosmReslVol_2D = nosmReslVol_2D;
     else
         % Smoothed Vol 3D -> 2D
         smReslVol_2D = vol3Dimg2D(smReslVol, slNrImg2DdimX, ...
             slNrImg2DdimY, img2DdimX, img2DdimY, dimVol);
+        if P.isRTQA
+            ROIs = evalin('base','ROIs');
+            dvarsDiff = ((smReslVol_2D - mainLoopData.smReslVol_2D).^2) / P.scaleFactorDVARS;
+            mainLoopData.dvarsValue = sqrt(mean(dvarsDiff(ROIs.voxelIndex)));
+        end
         mainLoopData.smReslVol_2D = smReslVol_2D;
     end
 end
@@ -589,25 +604,9 @@ if flags.isDCM
     if ~isempty(find( P.endDCMblock == indVol - P.nrSkipVol,1 ))
         if (indNFTrial+1) > 1
             ROIsGlmAnat = evalin('base', 'ROIsGlmAnat');
-%             if P.isRTQA
-%                 wbROI = evalin('base','ROIs');
-%                 ROIsGlmAnat(P.NrROIs).voxelIndex = wbROI.voxelIndex;
-%                 ROIsGlmAnat(P.NrROIs).mat = wbROI.mat;
-%                 ROIsGlmAnat(P.NrROIs).dim = wbROI.dim;
-%                 ROIsGlmAnat(P.NrROIs).vol = wbROI.vol;
-%                 ROIsGlmAnat(P.NrROIs).mask2D = wbROI.mask2D;
-%             end
         end
         if (indNFTrial+1) > 2
             ROIoptimGlmAnat = evalin('base', 'ROIoptimGlmAnat');
-%             if P.isRTQA
-%                 wbROI = evalin('base','ROIs');
-%                 ROIoptimGlmAnat(P.NrROIs).voxelIndex = wbROI.voxelIndex;
-%                 ROIoptimGlmAnat(P.NrROIs).mat = wbROI.mat;
-%                 ROIoptimGlmAnat(P.NrROIs).dim = wbROI.dim;
-%                 ROIoptimGlmAnat(P.NrROIs).vol = wbROI.vol;
-%                 ROIoptimGlmAnat(P.NrROIs).mask2D = wbROI.mask2D;
-%             end
         end
         for iROI = 1:P.NrROIs
             ROIsAnat(iROI).mask2D(isnan(ROIsAnat(iROI).mask2D))=0;
