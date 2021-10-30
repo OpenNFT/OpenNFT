@@ -244,8 +244,9 @@ if flags.isPSC || flags.isSVM || flags.isCorr || P.isRestingState
         img2DdimX, img2DdimY, dimVol);
     if P.isRTQA
         ROIs = evalin('base','ROIs');
-        dvarsDiff = ((smReslVol_2D - mainLoopData.smReslVol_2D) / P.scaleFactorDVARS).^2;
-        mainLoopData.dvarsValue = sqrt(mean(dvarsDiff(ROIs(end).voxelIndex)));
+        indROI = ROIs(end).mask2D>0;
+        dvarsDiff = ((smReslVol_2D(indROI) - mainLoopData.smReslVol_2D(indROI)) / P.scaleFactorDVARS).^2;
+        mainLoopData.dvarsValue = sqrt(mean(dvarsDiff));
     end
     mainLoopData.smReslVol_2D = smReslVol_2D;
 end
@@ -256,9 +257,10 @@ if flags.isDCM
         nosmReslVol_2D = vol3Dimg2D(reslVol, slNrImg2DdimX, ...
             slNrImg2DdimY, img2DdimX, img2DdimY, dimVol);
         if P.isRTQA
-            ROIs = evalin('base','ROIs');
-            dvarsDiff = ((nosmReslVol_2D - mainLoopData.nosmReslVol_2D) / P.scaleFactorDVARS).^2;
-            mainLoopData.dvarsValue = sqrt(mean(dvarsDiff(ROIs.voxelIndex)));
+            ROIs = evalin('base','ROIs');            
+            indROI = ROIs.mask2D>0;
+            dvarsDiff = ((nosmReslVol_2D(indROI) - mainLoopData.nosmReslVol_2D(indROI)) / P.scaleFactorDVARS).^2;
+            mainLoopData.dvarsValue = sqrt(mean(dvarsDiff));
         end
         mainLoopData.nosmReslVol_2D = nosmReslVol_2D;
     else
@@ -266,9 +268,10 @@ if flags.isDCM
         smReslVol_2D = vol3Dimg2D(smReslVol, slNrImg2DdimX, ...
             slNrImg2DdimY, img2DdimX, img2DdimY, dimVol);
         if P.isRTQA
-            ROIs = evalin('base','ROIs');
-            dvarsDiff = ((smReslVol_2D - mainLoopData.smReslVol_2D) / P.scaleFactorDVARS).^2;
-            mainLoopData.dvarsValue = sqrt(mean(dvarsDiff(ROIs.voxelIndex)));
+            ROIs = evalin('base','ROIs');            
+            indROI = ROIs.mask2D>0;
+            dvarsDiff = ((smReslVol_2D(indROI) - mainLoopData.smReslVol_2D(indROI)) / P.scaleFactorDVARS).^2;
+            mainLoopData.dvarsValue = sqrt(mean(dvarsDiff));
         end
         mainLoopData.smReslVol_2D = smReslVol_2D;
     end
