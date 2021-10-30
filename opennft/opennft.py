@@ -1282,7 +1282,7 @@ class OpenNFT(QWidget):
                 self.initMainLoopData()
 
             if self.P['isRTQA']:
-                self.eng.assignWholeBrainRoiEPI(nargout=0)
+                self.eng.epiWholeBrainROI(nargout=0)
 
             if config.USE_SHAM:
                 logger.warning("Sham feedback has been selected")
@@ -1925,7 +1925,6 @@ class OpenNFT(QWidget):
         self.P['isIGLM'] = config.USE_IGLM
         self.P['isZeroPadding'] = config.zeroPaddingFlag
         self.P['nrZeroPadVol'] = config.nrZeroPadVol
-        self.P['wholeBrainMaskThreshold'] = config.WHOLE_BRAIN_MASK_THRESHOLD
 
         if self.P['Prot'] == 'ContTask':
             self.P['TaskFolder'] = self.leTaskFolder.text()

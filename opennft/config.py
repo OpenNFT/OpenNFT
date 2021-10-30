@@ -135,10 +135,9 @@ nrZeroPadVol = 3
 # FD defaults
 DEFAULT_FD_RADIUS = 50  # radius multiplying angular displacement in FD compution
 DEFAULT_FD_THRESHOLDS = [0.1, 0.2, 0.5]  # FD thresholds to display by default
-DEFAULT_DVARS_THRESHOLD = 0.5
 
-# Mask threshold
-WHOLE_BRAIN_MASK_THRESHOLD = 50
+# DVARS
+DEFAULT_DVARS_THRESHOLD = 0.5
 
 # plot display defaults
 PLOT_BACKGROUND_COLOR = (255, 255, 255)
