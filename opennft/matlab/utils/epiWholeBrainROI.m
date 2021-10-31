@@ -51,7 +51,8 @@ figure, imshow(mosaicSmImgVolTempl,[])
 end
 
 % histohram
-nbins = 1000;
+% nbins = 1000;
+nbins = 2^nextpow2(max(smImgVolTempl(:)));
 [N,edges] = histcounts(smImgVolTempl,1:nbins);
 
 % histogram fit with single exponent and single gaussian
@@ -65,8 +66,10 @@ ydata = N(wholeBrainMaskThreshold:end);
 % fit
 maxiter = 200;
 tolfun = 1e-10;
-cf = [ydata(1), .001, 10, floor(lxdata/2), 100]; 
-lb = [1, 0, 0, 5, 100, wholeBrainMaskThreshold];
+% cf = [ydata(1), .00001, 10, floor(lxdata/2), 100]; 
+% lb = [1, 0, 0, 5, 100, wholeBrainMaskThreshold];
+cf = [ydata(1), .001, 10, round(lxdata/2), 10];
+lb = [1, 0, 0, 5, nbins/10, nbins/100];
 ub = [inf, inf, inf, lxdata, inf];
 maxfuneval = maxiter*(length(cf)+1);
 opt = optimset('Tolfun',tolfun,'MaxFunEval',maxfuneval,'MaxIter',...
