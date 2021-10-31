@@ -151,7 +151,7 @@ class RTQAWindow(QtWidgets.QWidget):
         self.dvarsPlot.setBackground((255, 255, 255))
         self.dvarsPlotLayout.addWidget(self.dvarsPlot)
         p = self.dvarsPlot.getPlotItem()
-        self.plotsSetup(p, "DVARS x 10", xrange)
+        self.plotsSetup(p, "DVARS %", xrange)
 
         self.spikesPlot = pg.PlotWidget(self)
         self.spikesPlot.setBackground((255, 255, 255))

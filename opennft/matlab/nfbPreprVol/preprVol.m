@@ -245,7 +245,7 @@ if flags.isDCM && ~P.smForDCM
         indROI = ROIs.voxelIndex;
         % on current iteration mainLoopData has previous volume
         dvarsDiff = ((reslVol(indROI) - mainLoopData.procVol(indROI)) ./ P.scaleFactorDVARS).^2;
-        mainLoopData.dvarsValue = 1000 * sqrt(mean(dvarsDiff(:)));
+        mainLoopData.dvarsValue = 100 * sqrt(mean(dvarsDiff(:)));
     end
     % after DVARS calculation previous volume re-assign with current
     mainLoopData.procVol = reslVol;
@@ -255,7 +255,7 @@ else
         ROIs = evalin('base','ROIs');            
         indROI = ROIs(end).voxelIndex;
         dvarsDiff = ((smReslVol(indROI) - mainLoopData.procVol(indROI)) ./ P.scaleFactorDVARS).^2;
-        mainLoopData.dvarsValue = 1000 * sqrt(mean(dvarsDiff(:)));
+        mainLoopData.dvarsValue = 100 * sqrt(mean(dvarsDiff(:)));
     end
     mainLoopData.procVol = smReslVol;
 end
