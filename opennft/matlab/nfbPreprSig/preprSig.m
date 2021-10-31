@@ -56,11 +56,11 @@ for indRoi = 1:P.NrROIs
     %% Get Raw time-series
     if flags.isPSC || flags.isCorr || P.isRestingState
         rawTimeSeries(indRoi, indVolNorm) = mean(...
-            mainLoopData.reslVol(ROIs(indRoi).voxelIndex));
+            mainLoopData.procVol(ROIs(indRoi).voxelIndex));
     end
     
     if flags.isSVM
-        roiVect = mainLoopData.reslVol(ROIs(indRoi).voxelIndex);
+        roiVect = mainLoopData.procVol(ROIs(indRoi).voxelIndex);
         weightVect = WEIGHTs.mask2D(ROIs(indRoi).mask2D>0);
         rawTimeSeries(indRoi, indVolNorm) = dot(roiVect,weightVect);
     end
@@ -71,17 +71,17 @@ for indRoi = 1:P.NrROIs
             % Whole brain ROI time-series
             ROIs = evalin('base', 'ROIs');
             rawTimeSeries(indRoi, indVolNorm) = mean( ...
-                mainLoopData.reslVol(ROIs.voxelIndex));
+                mainLoopData.procVol(ROIs.voxelIndex));
         else
             % manual set of ROI adaptation scheme
             isFixedGrROIforDCM = 0;
             if isFixedGrROIforDCM
                 % fixed group ROI
                 if ~P.smForDCM
-                    tmpVect = mainLoopData.reslVol(...
+                    tmpVect = mainLoopData.procVol(...
                         ROIsGroup(indRoi).voxelIndex);
                 else
-                    tmpVect = mainLoopData.reslVol(...
+                    tmpVect = mainLoopData.procVol(...
                         ROIsGroup(indRoi).voxelIndex);
                 end
                 rawTimeSeries(indRoi, indVolNorm) = mean(tmpVect);
@@ -97,7 +97,7 @@ for indRoi = 1:P.NrROIs
                     slNrImg2DdimY = mainLoopData.slNrImg2DdimY;
                     img2DdimX = mainLoopData.img2DdimX;
                     img2DdimY = mainLoopData.img2DdimY;
-                    reslVol_2D = vol3Dimg2D(mainLoopData.reslVol, ...
+                    reslVol_2D = vol3Dimg2D(mainLoopData.procVol, ...
                         slNrImg2DdimX, slNrImg2DdimY, ...
                         img2DdimX, img2DdimY, dimVol);
                     tmpVect = reslVol_2D(...
@@ -119,7 +119,7 @@ for indRoi = 1:P.NrROIs
                     end
                 else
                     rawTimeSeries(indRoi, indVolNorm) = mean(...
-                        mainLoopData.reslVol(...
+                        mainLoopData.procVol(...
                         ROIsGroup(indRoi).voxelIndex));
                     mainLoopData.adaptROIs(indRoi, indNFTrial+1) = 1;
                 end

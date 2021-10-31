@@ -244,20 +244,20 @@ if flags.isDCM && ~P.smForDCM
         ROIs = evalin('base','ROIs');            
         indROI = ROIs.voxelIndex;
         % on current iteration mainLoopData has previous volume
-        dvarsDiff = ((reslVol(indROI) - mainLoopData.reslVol(indROI)) ./ P.scaleFactorDVARS).^2;
-        mainLoopData.dvarsValue = sqrt(mean(dvarsDiff(:)));
+        dvarsDiff = ((reslVol(indROI) - mainLoopData.procVol(indROI)) ./ P.scaleFactorDVARS).^2;
+        mainLoopData.dvarsValue = 1000 * sqrt(mean(dvarsDiff(:)));
     end
     % after DVARS calculation previous volume re-assign with current
-    mainLoopData.reslVol = reslVol;
+    mainLoopData.procVol = reslVol;
 else
     % for PSC/SVM/Resting state/DCM with smoothing
     if P.isRTQA
         ROIs = evalin('base','ROIs');            
         indROI = ROIs(end).voxelIndex;
-        dvarsDiff = ((smReslVol(indROI) - mainLoopData.reslVol(indROI)) ./ P.scaleFactorDVARS).^2;
-        mainLoopData.dvarsValue = sqrt(mean(dvarsDiff(:)));
+        dvarsDiff = ((smReslVol(indROI) - mainLoopData.procVol(indROI)) ./ P.scaleFactorDVARS).^2;
+        mainLoopData.dvarsValue = 1000 * sqrt(mean(dvarsDiff(:)));
     end
-    mainLoopData.reslVol = smReslVol;
+    mainLoopData.procVol = smReslVol;
 end
 
 % iGLM init

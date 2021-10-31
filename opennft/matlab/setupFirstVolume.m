@@ -109,7 +109,7 @@ shift = 0 * length(imgViewTempl(:)) + 1;
 m.Data(shift:end) = imgViewTempl(:);
 
 if P.isRTQA
-    mainLoopData.reslVol = zeros(dimVol);
+    mainLoopData.procVol = zeros(dimVol);
 end
 
 mainLoopData.dimVol = dimVol;

@@ -910,7 +910,7 @@ class RTQAWindow(QtWidgets.QWidget):
         if self.iteration == 0 or isNewDCMBlock:
             self.DVARS = np.append(self.DVARS, 0)
         else:
-            self.DVARS = np.append(self.DVARS, dvarsValue*1e3)
+            self.DVARS = np.append(self.DVARS, dvarsValue)
 
         if self.DVARS[-1] > config.DEFAULT_DVARS_THRESHOLD:
             self.excDVARS = self.excDVARS + 1
