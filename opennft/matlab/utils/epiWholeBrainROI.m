@@ -100,6 +100,7 @@ end
 % assign ROI
 ROIs(iFile).vol = epiWholeBrainMask;
 ROIs(iFile).voxelIndex = indexEpiWholeBrainMask;
+ROIs(iFile).voxelCoord = index2coord(indexEpiWholeBrainMask,ROIs(iFile).dim);
 ROIs(iFile).mask2D = vol3Dimg2D(ROIs(iFile).vol, slNrImg2DdimX, ...
              slNrImg2DdimY, img2DdimX, img2DdimY, ROIs(iFile).dim);
          
