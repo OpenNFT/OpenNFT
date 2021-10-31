@@ -109,11 +109,7 @@ shift = 0 * length(imgViewTempl(:)) + 1;
 m.Data(shift:end) = imgViewTempl(:);
 
 if P.isRTQA
-    if strcmp(P.Type, 'DCM') && ~P.smForDCM
-        mainLoopData.nosmReslVol_2D = zeros(img2DdimY,img2DdimX);
-    else
-        mainLoopData.smReslVol_2D = zeros(img2DdimY,img2DdimX);
-    end
+    mainLoopData.reslVol = zeros(dimVol);
 end
 
 mainLoopData.dimVol = dimVol;

@@ -2081,7 +2081,7 @@ class OpenNFT(QWidget):
 
                 with utils.timeit("Receiving mosaic image from Matlab (read memmap):"):
                     self.mosaic_background_image_reader.read(filename, self.eng)
-                background_image = self.mosaic_background_image_reader.image
+                background_image = np.array(self.mosaic_background_image_reader.image)
 
                 if background_image.size > 0:
                     self.mosaicImageView.set_background_image(background_image)

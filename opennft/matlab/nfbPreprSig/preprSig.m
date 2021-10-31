@@ -56,11 +56,11 @@ for indRoi = 1:P.NrROIs
     %% Get Raw time-series
     if flags.isPSC || flags.isCorr || P.isRestingState
         rawTimeSeries(indRoi, indVolNorm) = mean(...
-            mainLoopData.smReslVol_2D(ROIs(indRoi).mask2D>0));
+            mainLoopData.reslVol(ROIs(indRoi).voxelIndex));
     end
     
     if flags.isSVM
-        roiVect = mainLoopData.smReslVol_2D(ROIs(indRoi).mask2D>0);
+        roiVect = mainLoopData.reslVol(ROIs(indRoi).voxelIndex);
         weightVect = WEIGHTs.mask2D(ROIs(indRoi).mask2D>0);
         rawTimeSeries(indRoi, indVolNorm) = dot(roiVect,weightVect);
     end
@@ -71,18 +71,18 @@ for indRoi = 1:P.NrROIs
             % Whole brain ROI time-series
             ROIs = evalin('base', 'ROIs');
             rawTimeSeries(indRoi, indVolNorm) = mean( ...
-                mainLoopData.smReslVol_2D(ROIs.mask2D>0));
+                mainLoopData.reslVol(ROIs.voxelIndex));
         else
             % manual set of ROI adaptation scheme
             isFixedGrROIforDCM = 0;
             if isFixedGrROIforDCM
                 % fixed group ROI
                 if ~P.smForDCM
-                    tmpVect = mainLoopData.nosmReslVol_2D(...
-                        ROIsGroup(indRoi).mask2D>0);
+                    tmpVect = mainLoopData.reslVol(...
+                        ROIsGroup(indRoi).voxelIndex);
                 else
-                    tmpVect = mainLoopData.smReslVol_2D(...
-                        ROIsGroup(indRoi).mask2D>0);
+                    tmpVect = mainLoopData.reslVol(...
+                        ROIsGroup(indRoi).voxelIndex);
                 end
                 rawTimeSeries(indRoi, indVolNorm) = mean(tmpVect);
                 % ROI index, for records
@@ -92,50 +92,35 @@ for indRoi = 1:P.NrROIs
                 if indNFTrial > 1
                     ROIsGlmAnat = evalin('base', 'ROIsGlmAnat');
                     ROIoptimGlmAnat = evalin('base', 'ROIoptimGlmAnat');
-                    if ~P.smForDCM
-                        tmpVect = mainLoopData.nosmReslVol_2D(...
-                            cell2mat(ROIsGlmAnat(indRoi).mask2D(indNFTrial))>0);
-                    else
-                        tmpVect = mainLoopData.smReslVol_2D(...
-                            cell2mat(ROIsGlmAnat(indRoi).mask2D(indNFTrial))>0);
-                    end
+                    dimVol = mainLoopData.dimVol;
+                    slNrImg2DdimX = mainLoopData.slNrImg2DdimX;
+                    slNrImg2DdimY = mainLoopData.slNrImg2DdimY;
+                    img2DdimX = mainLoopData.img2DdimX;
+                    img2DdimY = mainLoopData.img2DdimY;
+                    reslVol_2D = vol3Dimg2D(mainLoopData.reslVol, ...
+                        slNrImg2DdimX, slNrImg2DdimY, ...
+                        img2DdimX, img2DdimY, dimVol);
+                    tmpVect = reslVol_2D(...
+                        cell2mat(ROIsGlmAnat(indRoi).mask2D(indNFTrial))>0);
                     if ~isempty(tmpVect) && length(tmpVect)>10
                         rawTimeSeries(indRoi, indVolNorm) = mean(tmpVect);
                         mainLoopData.adaptROIs(indRoi, indNFTrial+1) = 2;
                     else
-                        if ~P.smForDCM
-                            tmpOptRoiVect = mainLoopData.nosmReslVol_2D(cell2mat(...
-                                ROIoptimGlmAnat(indRoi).mask2D(indNFTrial))>0);
-                        else
-                            tmpOptRoiVect = mainLoopData.smReslVol_2D(cell2mat(...
-                                ROIoptimGlmAnat(indRoi).mask2D(indNFTrial))>0);
-                        end
+                        tmpOptRoiVect = reslVol_2D(cell2mat(...
+                            ROIoptimGlmAnat(indRoi).mask2D(indNFTrial))>0);
                         if ~isempty(tmpOptRoiVect) && length(tmpOptRoiVect)>10
                             rawTimeSeries(indRoi, indVolNorm) = mean(tmpOptRoiVect);
                             mainLoopData.adaptROIs(indRoi, indNFTrial+1) = 3;
                         else
-                            if ~P.smForDCM
-                                rawTimeSeries(indRoi, indVolNorm) = mean(...
-                                    mainLoopData.nosmReslVol_2D(...
-                                    ROIsGroup(indRoi).mask2D>0));
-                            else
-                                rawTimeSeries(indRoi, indVolNorm) = mean(...
-                                    mainLoopData.smReslVol_2D(...
-                                    ROIsGroup(indRoi).mask2D>0));
-                            end
+                            rawTimeSeries(indRoi, indVolNorm) = mean(...
+                                reslVol_2D(ROIsGroup(indRoi).mask2D>0));
                             mainLoopData.adaptROIs(indRoi, indNFTrial+1) = 1;
                         end
                     end
                 else
-                    if ~P.smForDCM
-                        rawTimeSeries(indRoi, indVolNorm) = mean(...
-                            mainLoopData.nosmReslVol_2D(...
-                            ROIsGroup(indRoi).mask2D>0));
-                    else
-                        rawTimeSeries(indRoi, indVolNorm) = mean(...
-                            mainLoopData.smReslVol_2D(...
-                            ROIsGroup(indRoi).mask2D>0));
-                    end
+                    rawTimeSeries(indRoi, indVolNorm) = mean(...
+                        mainLoopData.reslVol(...
+                        ROIsGroup(indRoi).voxelIndex));
                     mainLoopData.adaptROIs(indRoi, indNFTrial+1) = 1;
                 end
             end

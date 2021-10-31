@@ -237,44 +237,27 @@ else
 end
     
 
-    
-if flags.isPSC || flags.isSVM || flags.isCorr || P.isRestingState
-    % Smoothed Vol 3D -> 2D
-    smReslVol_2D = vol3Dimg2D(smReslVol, slNrImg2DdimX, slNrImg2DdimY, ...
-        img2DdimX, img2DdimY, dimVol);
+% DVARS calulcation and new volume assign
+if flags.isDCM && ~P.smForDCM
+    % for DCM without smoothing
     if P.isRTQA
-        ROIs = evalin('base','ROIs');
-        indROI = ROIs(end).mask2D>0;
-        dvarsDiff = ((smReslVol_2D(indROI) - mainLoopData.smReslVol_2D(indROI)) / P.scaleFactorDVARS).^2;
+        ROIs = evalin('base','ROIs');            
+        indROI = ROIs.voxelIndex;
+        % on current iteration mainLoopData has previous volume
+        dvarsDiff = ((reslVol(indROI) - mainLoopData.reslVol(indROI)) / P.scaleFactorDVARS).^2;
         mainLoopData.dvarsValue = sqrt(mean(dvarsDiff));
     end
-    mainLoopData.smReslVol_2D = smReslVol_2D;
-end
-
-if flags.isDCM
-    if ~P.smForDCM
-        % NoN-Smoothed Vol 3D -> 2D
-        nosmReslVol_2D = vol3Dimg2D(reslVol, slNrImg2DdimX, ...
-            slNrImg2DdimY, img2DdimX, img2DdimY, dimVol);
-        if P.isRTQA
-            ROIs = evalin('base','ROIs');            
-            indROI = ROIs.mask2D>0;
-            dvarsDiff = ((nosmReslVol_2D(indROI) - mainLoopData.nosmReslVol_2D(indROI)) / P.scaleFactorDVARS).^2;
-            mainLoopData.dvarsValue = sqrt(mean(dvarsDiff));
-        end
-        mainLoopData.nosmReslVol_2D = nosmReslVol_2D;
-    else
-        % Smoothed Vol 3D -> 2D
-        smReslVol_2D = vol3Dimg2D(smReslVol, slNrImg2DdimX, ...
-            slNrImg2DdimY, img2DdimX, img2DdimY, dimVol);
-        if P.isRTQA
-            ROIs = evalin('base','ROIs');            
-            indROI = ROIs.mask2D>0;
-            dvarsDiff = ((smReslVol_2D(indROI) - mainLoopData.smReslVol_2D(indROI)) / P.scaleFactorDVARS).^2;
-            mainLoopData.dvarsValue = sqrt(mean(dvarsDiff));
-        end
-        mainLoopData.smReslVol_2D = smReslVol_2D;
+    % after DVARS calculation previous volume re-assign with current
+    mainLoopData.reslVol = reslVol;
+else
+    % for PSC/SVM/Resting state/DCM with smoothing
+    if P.isRTQA
+        ROIs = evalin('base','ROIs');            
+        indROI = ROIs(end).voxelIndex;
+        dvarsDiff = ((smReslVol(indROI) - mainLoopData.reslVol(indROI)) / P.scaleFactorDVARS).^2;
+        mainLoopData.dvarsValue = sqrt(mean(dvarsDiff));
     end
+    mainLoopData.reslVol = smReslVol;
 end
 
 % iGLM init

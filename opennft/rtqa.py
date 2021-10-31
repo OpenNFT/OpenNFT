@@ -151,7 +151,7 @@ class RTQAWindow(QtWidgets.QWidget):
         self.dvarsPlot.setBackground((255, 255, 255))
         self.dvarsPlotLayout.addWidget(self.dvarsPlot)
         p = self.dvarsPlot.getPlotItem()
-        self.plotsSetup(p, "Amplitude [a.u.]", xrange)
+        self.plotsSetup(p, "DVARS x 10", xrange)
 
         self.spikesPlot = pg.PlotWidget(self)
         self.spikesPlot.setBackground((255, 255, 255))
@@ -910,7 +910,7 @@ class RTQAWindow(QtWidgets.QWidget):
         if self.iteration == 0 or isNewDCMBlock:
             self.DVARS = np.append(self.DVARS, 0)
         else:
-            self.DVARS = np.append(self.DVARS, dvarsValue)
+            self.DVARS = np.append(self.DVARS, dvarsValue*1e3)
 
         if self.DVARS[-1] > config.DEFAULT_DVARS_THRESHOLD:
             self.excDVARS = self.excDVARS + 1

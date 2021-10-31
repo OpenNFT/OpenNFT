@@ -137,7 +137,7 @@ DEFAULT_FD_RADIUS = 50  # radius multiplying angular displacement in FD computio
 DEFAULT_FD_THRESHOLDS = [0.1, 0.2, 0.5]  # FD thresholds to display by default
 
 # DVARS
-DEFAULT_DVARS_THRESHOLD = 0.5
+DEFAULT_DVARS_THRESHOLD = 5
 
 # plot display defaults
 PLOT_BACKGROUND_COLOR = (255, 255, 255)
