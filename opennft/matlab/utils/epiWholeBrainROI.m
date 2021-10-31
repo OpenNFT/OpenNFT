@@ -100,12 +100,11 @@ end
 % assign ROI
 ROIs(iFile).vol = epiWholeBrainMask;
 ROIs(iFile).voxelIndex = indexEpiWholeBrainMask;
-ROIs(iFile).voxelCoord = index2coord(indexEpiWholeBrainMask,ROIs(iFile).dim);
 ROIs(iFile).mask2D = vol3Dimg2D(ROIs(iFile).vol, slNrImg2DdimX, ...
              slNrImg2DdimY, img2DdimX, img2DdimY, ROIs(iFile).dim);
          
 % DVARS scaling is most frequent image value given fit
-P.scaleFactorDVARS = round(fitResults(4));
+P.scaleFactorDVARS = median(smImgVolTempl(indexEpiWholeBrainMask));
 
 assignin('base', 'P', P);
 assignin('base', 'ROIs', ROIs);

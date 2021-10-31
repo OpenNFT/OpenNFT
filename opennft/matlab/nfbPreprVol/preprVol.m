@@ -242,7 +242,7 @@ if flags.isDCM && ~P.smForDCM
     % for DCM without smoothing
     if P.isRTQA
         ROIs = evalin('base','ROIs');            
-        indROI = ROIs.voxelCoord;
+        indROI = ROIs.voxelIndex;
         % on current iteration mainLoopData has previous volume
         dvarsDiff = ((reslVol(indROI) - mainLoopData.reslVol(indROI)) ./ P.scaleFactorDVARS).^2;
         mainLoopData.dvarsValue = sqrt(mean(dvarsDiff(:)));
@@ -253,7 +253,7 @@ else
     % for PSC/SVM/Resting state/DCM with smoothing
     if P.isRTQA
         ROIs = evalin('base','ROIs');            
-        indROI = ROIs(end).voxelCoord;
+        indROI = ROIs(end).voxelIndex;
         dvarsDiff = ((smReslVol(indROI) - mainLoopData.reslVol(indROI)) ./ P.scaleFactorDVARS).^2;
         mainLoopData.dvarsValue = sqrt(mean(dvarsDiff(:)));
     end

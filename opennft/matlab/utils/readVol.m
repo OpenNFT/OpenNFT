@@ -8,7 +8,7 @@ function [voxelCoord, voxelIntens, voxelIndex, mat, dim, vol] = ...
 % output:
 % voxelCoord  - voxel coordinates within 3D volume
 % voxelIntens - voxel grey-values
-% voxelIndex  - voxel index within vecor
+% voxelIndex  - voxel index within vector
 % mat         - volume orientation structure
 % dim         - 3D volume dimensions
 % vol         - 3D volume
