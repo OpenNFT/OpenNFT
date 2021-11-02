@@ -2422,7 +2422,7 @@ class OpenNFT(QWidget):
         # matlabStatusTimer
 
         mgr = multiprocessing.Manager()
-        ns = mgr.Namespace()
+        # ns = mgr.Namespace()
         # ns.ptb = self.ptbScreen
         self.displayData = {'feedbackType': 'DCM', 'condition': 2.0, 'dispValue': 0.0, 'Reward': ''}
         # self.ptbScreen.display(displayData)
