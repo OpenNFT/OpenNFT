@@ -7,7 +7,7 @@ import opennft.config as c
 
 
 class FD:
-    def __init__(self, xmax, module = None):
+    def __init__(self, xmax, module=None):
         self.module = module
 
         # names of the dofs
