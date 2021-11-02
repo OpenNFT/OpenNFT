@@ -686,8 +686,8 @@ class OpenNFT(QWidget):
                     # self.udpSender.send_data(self.displayData['instrValue'])
 
         if self.cbUseTCPData.isChecked():
-            fname = str(Path(self.P['WatchFolder']) /
-                                 self.P['FirstFileNameTxt'].replace('Image Series No','ImgSerNr').replace('#','iter').format(**(self.P),iter=self.iteration))
+            fname = str(Path(self.P['WatchFolder'])
+                        / self.P['FirstFileNameTxt'].replace('Image Series No','ImgSerNr').replace('#','iter').format(**(self.P),iter=self.iteration))
         else:
             try:
                 fname = self.files_queue.get_nowait()
