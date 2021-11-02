@@ -61,7 +61,7 @@ def keypressed(event):
         #np_arr[counter] = tmp
 
         logger.debug('arr {}', np_arr)
-    elif event.Ascii == 35:  # it is # sign
+    elif event.Ascii == 35:  # 'ASCII character '#'
         recordPulseEvent()
         #displayEvent.set()
 
