@@ -113,9 +113,9 @@ if  strcmp(P.Prot, 'Inter') && (flags.isPSC || flags.isCorr)
     Reward = mainLoopData.Reward;
 
     % NF estimation condition
-    if condition == 2
+    if condition == 3
         % count NF regulation blocks
-        k = cellfun(@(x) x(end) == indVolNorm, P.ProtCond{ 2 });
+        k = cellfun(@(x) x(end) == indVolNorm, P.ProtCond{ 3 });
         if any(k)
             blockNF = find(k);
             firstNF = indVolNorm;
@@ -127,16 +127,16 @@ if  strcmp(P.Prot, 'Inter') && (flags.isPSC || flags.isCorr)
             % expected when assigning volumes for averaging, take HRF delay
             % into account
             if blockNF<2
-                i_blockNF = P.ProtCond{ 2 }{blockNF}(end-6:end);
-                i_blockBAS = P.ProtCond{ 1 }{blockNF}(end-6:end);
+                i_blockNF = P.ProtCond{ 3 }{blockNF}(end-6:end);
+                i_blockBAS = P.ProtCond{ 2 }{blockNF}(end-6:end);
             else
-                i_blockNF = P.ProtCond{ 2 }{blockNF}(end-6:end);
-                i_blockBAS = [P.ProtCond{ 1 }{blockNF}(end-5:end) ...
-                              P.ProtCond{ 1 }{blockNF}(end)+1];
+                i_blockNF = P.ProtCond{ 3 }{blockNF}(end-6:end);
+                i_blockBAS = [P.ProtCond{ 2 }{blockNF}(end-5:end) ...
+                              P.ProtCond{ 2 }{blockNF}(end)+1];
             end
     
             if flags.isPSC
-                for indRoi = 1:P.NrROIs
+                for indRoi = 1:P.NrROIs-1
                     % Averaging across blocks
                     mBas  = median(mainLoopData.scalProcTimeSeries(indRoi,...
                         i_blockBAS));
