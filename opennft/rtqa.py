@@ -151,7 +151,7 @@ class RTQAWindow(QtWidgets.QWidget):
         self.dvarsPlot.setBackground((255, 255, 255))
         self.dvarsPlotLayout.addWidget(self.dvarsPlot)
         p = self.dvarsPlot.getPlotItem()
-        self.plotsSetup(p, "DVARS %", xrange)
+        self.plotsSetup(p, "DVARS [a.u.]", xrange)
 
         self.spikesPlot = pg.PlotWidget(self)
         self.spikesPlot.setBackground((255, 255, 255))
@@ -486,7 +486,7 @@ class RTQAWindow(QtWidgets.QWidget):
         plotitem = self.dvarsPlot.getPlotItem()
         plotitem.clear()
         plotitem.plot(y=self.DVARS, pen=config.PLOT_PEN_COLORS[0], name='DVARS')
-        plotitem.plot(x=np.arange(0, self._fd.xmax, dtype=np.float64), y=config.DEFAULT_DVARS_THRESHOLD * np.ones(self._fd.xmax),
+        plotitem.plot(x=np.arange(1, self._fd.xmax+1, dtype=np.float64), y=config.DEFAULT_DVARS_THRESHOLD * np.ones(self._fd.xmax),
                         pen=config.PLOT_PEN_COLORS[2], name='thr')
 
         # Linear trend coefficients value label

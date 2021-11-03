@@ -255,7 +255,7 @@ for indRoi = 1:P.NrROIs
 
             end
 
-            if tmp_ind_end < 3*regrStep
+            if tmp_ind_end < 3*regrStep || P.isRestingState
                 mainLoopData.noRegGlmProcTimeSeries(indRoi,indVolNorm) = ...
                     tmp_rawTimeSeries(end);
             else
