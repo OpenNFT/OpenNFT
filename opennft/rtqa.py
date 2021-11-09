@@ -47,6 +47,7 @@ class RTQAWindow(QtWidgets.QWidget):
         # main class data initialization block
         self.prot = parent.P['Prot']
         self._fd = FD(xrange)
+        self.offsetMCParam = np.zeros((6,1))
         self.names = ['X', 'Y', 'Z', 'Pitch', 'Roll', 'Yaw', 'FD']
         self.iterBas = 0
         self.iterCond = 0
@@ -580,6 +581,11 @@ class RTQAWindow(QtWidgets.QWidget):
         pens.append(config.PLOT_PEN_COLORS[6])
         names.append('{0:.3f}'.format(self._fd.meanMD))
         pens.append(config.PLOT_PEN_COLORS[6])
+        names.append('<br><u>Offset MC parameters</u> ')
+        pens.append(config.PLOT_PEN_COLORS[-1])
+        for i in range(6):
+            names.append('{0:.3e}'.format(self.offsetMCParam[0][i]))
+            pens.append(config.PLOT_PEN_COLORS[-1])
         self.makeTextValueLabel(self.mcmdValuesLabel, names, pens, lineBreak='<br>')
 
     # --------------------------------------------------------------------------

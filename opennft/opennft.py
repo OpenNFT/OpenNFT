@@ -929,6 +929,11 @@ class OpenNFT(QWidget):
             n = len(dataRealRaw[0, :]) - 1
             data = dataRealRaw[:, n]
 
+            if n == 0:
+                offsetMCParam = np.array(self.eng.evalin('base','P.offsetMCParam'), ndmin=1)
+                self.windowRTQA.offsetMCParam = offsetMCParam
+
+
             if self.P['Type'] != 'DCM':
                 betaCoeff = np.array(
                     self.eng.evalin('base', 'cellfun(@(a)a(mainLoopData.indVolNorm,2),rtQA_matlab.betRegr)'), ndmin=2)

@@ -24,9 +24,9 @@ class FD:
         self.threshold = c.DEFAULT_FD_THRESHOLDS
 
         self.xmax = xmax
-        self.FD = np.array([0])
+        self.FD = np.array([])
         self.meanFD = 0
-        self.MD = np.array([0])
+        self.MD = np.array([])
         self.meanMD = 0
         self.blockIter = 1
 
@@ -55,12 +55,12 @@ class FD:
 
         if not self.isNewDCMBlock:
             self.FD = np.append(self.FD, self._ij_FD(i-1, i))
-            self.meanFD = self.meanFD + (self.FD[i] - self.meanFD) / self.blockIter
+            self.meanFD = self.meanFD + (self.FD[-1] - self.meanFD) / self.blockIter
         else:
             self.FD = np.append(self.FD, 0)
             self.meanFD = 0
 
-        if self.FD[i] >= self.threshold[1]:
+        if self.FD[-1] >= self.threshold[1]:
            self.excFD[0] += 1
 
            if self.excFDIndexes_1[-1] == -1:
@@ -95,7 +95,7 @@ class FD:
             self.MD = np.append(self.MD, 0)
             self.meanMD = 0
 
-        if self.MD[n] >= self.threshold[0]:
+        if self.MD[-1] >= self.threshold[0]:
             self.excVD += 1
             if self.excMDIndexes[-1] == -1:
                 self.excMDIndexes = np.array([n-1])
@@ -124,6 +124,8 @@ class FD:
 
         for i in range(3, 6):
             rotPlotitem.plot(x=x, y=self.data[:, i]*50, pen=c.PLOT_PEN_COLORS[i], name=self.names[i])
+
+        x = np.arange(1, self.data.shape[0], dtype=np.float64)
 
         if mdFlag:
             fdPlotitem.setLabel('left', "MD [mm]")

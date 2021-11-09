@@ -43,15 +43,7 @@ spm_smooth(imgVolTempl, smImgVolTempl, gKernel);
 wholeBrainMaskThreshold = 30;
 smImgVolTempl(smImgVolTempl<wholeBrainMaskThreshold) = nan;
 
-if 0
-% check thresholded template
-mosaicSmImgVolTempl = vol3Dimg2D(smImgVolTempl, slNrImg2DdimX, ...
-             slNrImg2DdimY, img2DdimX, img2DdimY, ROIs(iFile).dim);
-figure, imshow(mosaicSmImgVolTempl,[])
-end
-
 % histohram
-% nbins = 1000;
 nbins = 2^nextpow2(max(smImgVolTempl(:)));
 [N,edges] = histcounts(smImgVolTempl,1:nbins);
 
@@ -66,8 +58,6 @@ ydata = N(wholeBrainMaskThreshold:end);
 % fit
 maxiter = 200;
 tolfun = 1e-10;
-% cf = [ydata(1), .00001, 10, floor(lxdata/2), 100]; 
-% lb = [1, 0, 0, 5, 100, wholeBrainMaskThreshold];
 cf = [ydata(1), .001, 10, round(lxdata/2), 10];
 lb = [1, 0, 0, 5, nbins/10, nbins/100];
 ub = [inf, inf, inf, lxdata, inf];
@@ -77,25 +67,12 @@ opt = optimset('Tolfun',tolfun,'MaxFunEval',maxfuneval,'MaxIter',...
 
 fitResults = lsqcurvefit(fun,cf,xdata,ydata,lb,ub,opt);
 
-if 1
-xfit = wholeBrainMaskThreshold:nbins;
-figure,plot(xdata,ydata,'k.'),hold on,
-plot(xfit,fun(fitResults,xfit),'b-', 'linewidth', 2)
-end
-
 threshEpiWholeBrainMask = round(fitResults(4)/2);
 
 % get mask
 epiWholeBrainMask = zeros(dimTemplMotCorr);
 indexEpiWholeBrainMask = find(smImgVolTempl>threshEpiWholeBrainMask);
 epiWholeBrainMask(indexEpiWholeBrainMask) = 1;
-
-% display mask
-if 0
-mosaicEpiWholeBrainMask = vol3Dimg2D(epiWholeBrainMask, slNrImg2DdimX, ...
-             slNrImg2DdimY, img2DdimX, img2DdimY, ROIs(iFile).dim);
-figure, imshow(mosaicEpiWholeBrainMask)
-end
 
 % assign ROI
 ROIs(iFile).vol = epiWholeBrainMask;

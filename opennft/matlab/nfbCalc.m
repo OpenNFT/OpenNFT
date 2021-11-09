@@ -30,6 +30,12 @@ condition = mainLoopData.condition;
 
 flags = getFlagsType(P);
 
+if P.isRTQA
+    loopNrROIs = P.NrROIs-1;
+else
+    loopNrROIs = P.NrROIs;
+end
+
 %% Continuous PSC NF
 if flags.isPSC && (strcmp(P.Prot, 'Cont') || strcmp(P.Prot, 'ContTask'))
     blockNF = mainLoopData.blockNF;
@@ -45,7 +51,7 @@ if flags.isPSC && (strcmp(P.Prot, 'Cont') || strcmp(P.Prot, 'ContTask'))
             blockNF = find(k);
             firstNF = indVolNorm;
         end
-    
+
         % Get reference baseline in cumulated way across the RUN,
         % or any other fashion
         i_blockBAS = [];
@@ -60,7 +66,7 @@ if flags.isPSC && (strcmp(P.Prot, 'Cont') || strcmp(P.Prot, 'ContTask'))
             end
         end
 
-        for indRoi = 1:P.NrROIs
+        for indRoi = 1:loopNrROIs
             mBas = median(mainLoopData.scalProcTimeSeries(indRoi,i_blockBAS));
             mCond = mainLoopData.scalProcTimeSeries(indRoi,indVolNorm);
             norm_percValues(indRoi) = mCond - mBas;
@@ -113,9 +119,9 @@ if  strcmp(P.Prot, 'Inter') && (flags.isPSC || flags.isCorr)
     Reward = mainLoopData.Reward;
 
     % NF estimation condition
-    if condition == 3
+    if condition == 2
         % count NF regulation blocks
-        k = cellfun(@(x) x(end) == indVolNorm, P.ProtCond{ 3 });
+        k = cellfun(@(x) x(end) == indVolNorm, P.ProtCond{ 2 });
         if any(k)
             blockNF = find(k);
             firstNF = indVolNorm;
@@ -127,22 +133,22 @@ if  strcmp(P.Prot, 'Inter') && (flags.isPSC || flags.isCorr)
             % expected when assigning volumes for averaging, take HRF delay
             % into account
             if blockNF<2
-                i_blockNF = P.ProtCond{ 3 }{blockNF}(end-6:end);
-                i_blockBAS = P.ProtCond{ 2 }{blockNF}(end-6:end);
+                i_blockNF = P.ProtCond{ 2 }{blockNF}(end-6:end);
+                i_blockBAS = P.ProtCond{ 1 }{blockNF}(end-6:end);
             else
-                i_blockNF = P.ProtCond{ 3 }{blockNF}(end-6:end);
-                i_blockBAS = [P.ProtCond{ 2 }{blockNF}(end-5:end) ...
-                              P.ProtCond{ 2 }{blockNF}(end)+1];
+                i_blockNF = P.ProtCond{ 2 }{blockNF}(end-6:end);
+                i_blockBAS = [P.ProtCond{ 1 }{blockNF}(end-5:end) ...
+                              P.ProtCond{ 1 }{blockNF}(end)+1];
             end
-    
+
             if flags.isPSC
-                for indRoi = 1:P.NrROIs-1
+                for indRoi = 1:loopNrROIs
                     % Averaging across blocks
                     mBas  = median(mainLoopData.scalProcTimeSeries(indRoi,...
                         i_blockBAS));
                     mCond = median(mainLoopData.scalProcTimeSeries(indRoi,...
                         i_blockNF));
-                    
+
                     % Scaling
                     mBasScaled  = (mBas - mainLoopData.mposMin(indVolNorm)) / ...
                         (mainLoopData.mposMax(indVolNorm) - ...
@@ -152,14 +158,14 @@ if  strcmp(P.Prot, 'Inter') && (flags.isPSC || flags.isCorr)
                         mainLoopData.mposMin(indVolNorm));
                     norm_percValues(indRoi) = mCondScaled - mBasScaled;
                 end
-                
+
                 % compute average %SC feedback value
                 tmp_fbVal = eval(P.RoiAnatOperation);
             elseif flags.isCorr
                 rhoBas = corrcoef(mainLoopData.scalProcTimeSeries(:,i_blockBAS)'); rhoBas = rhoBas(1,2);
                 rhoCond = corrcoef(mainLoopData.scalProcTimeSeries(:,i_blockNF)'); rhoCond = rhoCond(1,2);
-                norm_percValues(1:P.NrROIs) = rhoCond - rhoBas;
-                
+                norm_percValues(1:loopNrROIs) = rhoCond - rhoBas;
+
                 % compute average %SC feedback value
                 tmp_fbVal = rhoCond - rhoBas;
             end
@@ -287,7 +293,7 @@ if flags.isSVM
             firstNF = indVolNorm;
         end
 
-        for indRoi = 1:P.NrROIs
+        for indRoi = 1:loopNrROIs
             norm_percValues(indRoi) = ...
                        mainLoopData.scalProcTimeSeries(indRoi, indVolNorm);
         end
