@@ -7,7 +7,7 @@ import opennft.config as c
 
 
 class FD:
-    def __init__(self, xmax, module = None):
+    def __init__(self, xmax, module=None):
         self.module = module
 
         # names of the dofs
@@ -61,20 +61,20 @@ class FD:
             self.meanFD = 0
 
         if self.FD[i] >= self.threshold[1]:
-           self.excFD[0] += 1
+            self.excFD[0] += 1
 
-           if self.excFDIndexes_1[-1] == -1:
-               self.excFDIndexes_1 = np.array([i - 1])
-           else:
-               self.excFDIndexes_1 = np.append(self.excFDIndexes_1, i - 1)
+            if self.excFDIndexes_1[-1] == -1:
+                self.excFDIndexes_1 = np.array([i - 1])
+            else:
+                self.excFDIndexes_1 = np.append(self.excFDIndexes_1, i - 1)
 
-           if self.FD[i] >= self.threshold[2]:
-              self.excFD[1] += 1
+            if self.FD[i] >= self.threshold[2]:
+                self.excFD[1] += 1
 
-              if self.excFDIndexes_2[-1] == -1:
-                  self.excFDIndexes_2 = np.array([i - 1])
-              else:
-                  self.excFDIndexes_2 = np.append(self.excFDIndexes_2, i - 1)
+                if self.excFDIndexes_2[-1] == -1:
+                    self.excFDIndexes_2 = np.array([i - 1])
+                else:
+                    self.excFDIndexes_2 = np.append(self.excFDIndexes_2, i - 1)
 
     def micro_displacement(self):
 
