@@ -48,28 +48,27 @@ def keypressed(event):
     global pulses
     global displayEvent
     if event.Ascii == 13:
-        keys='<ENTER>'
+        keys = '<ENTER>'
     elif event.Ascii == 8:
-        keys='<BACK SPACE>'
+        keys = '<BACK SPACE>'
     elif event.Ascii == 9:
-        keys='<TAB>'
+        keys = '<TAB>'
         np_arr = toNpData(pulses)
         #counter = np_arr[0]
         #counter += 1
         #tmp = np_arr[counter]
         #np_arr[counter] = counter + 1
         #np_arr[counter] = tmp
-
         logger.debug('arr {}', np_arr)
-    elif event.Ascii == 35:  # it is # sign
+    elif event.Ascii == 35:
+        keys = '#'
         recordPulseEvent()
         #displayEvent.set()
-
     elif event.Ascii == 27:
+        keys = '<ESC>'
         np_arr = toNpData(pulses)
         logger.debug('pulses {}', pulses)
         logger.debug('arr', np_arr)
-        keys='<ESC>'
         sys.exit(0)
     else:
         #keys = chr(event.Ascii)

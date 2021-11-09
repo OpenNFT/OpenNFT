@@ -6,8 +6,8 @@ import subprocess
 
 sys.path = sys.argv[3:]
 
-import elevate
-import chardet
+import elevate  # noqa: E402
+import chardet  # noqa: E402
 
 
 def main():

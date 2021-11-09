@@ -27,7 +27,7 @@ Written by Tibor Auer
 
 """
 
-from pyniexp.mlplugins import dataProcess, SIG_NOTSTARTED, SIG_RUNNING, SIG_STOPPED, SIG_NEWIMAGE
+from pyniexp.mlplugins import dataProcess
 from loguru import logger
 from multiprocessing import Value, RawArray
 from numpy import array, meshgrid, savetxt
