@@ -68,7 +68,7 @@ class FD:
            else:
                self.excFDIndexes_1 = np.append(self.excFDIndexes_1, i - 1)
 
-           if self.FD[i] >= self.threshold[2]:
+           if self.FD[-1] >= self.threshold[2]:
               self.excFD[1] += 1
 
               if self.excFDIndexes_2[-1] == -1:
