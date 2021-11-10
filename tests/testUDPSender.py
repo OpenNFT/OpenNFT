@@ -18,7 +18,7 @@ UDP_IP = "127.0.0.1"
 UDP_PORT = 1234
 UDP_CONTROL_CHAR = '#'
 
-sender = Udp(IP=UDP_IP,port=UDP_PORT,control_signal=UDP_CONTROL_CHAR)
+sender = Udp(IP=UDP_IP, port=UDP_PORT, control_signal=UDP_CONTROL_CHAR)
 
 sender.connect_for_sending()
 sender.sending_time_stamp = True
@@ -35,9 +35,9 @@ while not(keyboard.is_pressed('q')):
         cond = 'NFBDISP'
 
     sender.send_data(cond)
-    val = float(uniform(-100,100))
+    val = float(uniform(-100, 100))
     sender.send_data(val)
-    print(cond,val)
+    print(cond, val)
 
     sleep(1)
 

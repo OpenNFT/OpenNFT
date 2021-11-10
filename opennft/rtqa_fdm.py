@@ -11,9 +11,13 @@ class FD:
         self.module = module
 
         # names of the dofs
-        self.names = ['X','Y','Z','pitch','roll','yaw', 'FD']
+        self.names = ['X', 'Y', 'Z', 'pitch', 'roll', 'yaw', 'FD']
 
-        self.mode = {'tr': ['tr', 'translational','tr_sa'], 'rot': ['rot', 'rotational','rot_sa'], 'fd': ['FD', 'fd','FD_sa']}
+        self.mode = {
+            'tr': ['tr', 'translational', 'tr_sa'],
+            'rot': ['rot', 'rotational', 'rot_sa'],
+            'fd': ['FD', 'fd', 'FD_sa']
+        }
 
         self.plotBgColor = c.PLOT_BACKGROUND_COLOR
 
@@ -51,7 +55,7 @@ class FD:
               sum(np.absolute(self._ri(j)-self._ri(i))) * self.radius
 
     def all_fd(self):
-        i = len(self.data)-1
+        i = len(self.data) - 1
 
         if not self.isNewDCMBlock:
             self.FD = np.append(self.FD, self._ij_FD(i-1, i))
@@ -105,7 +109,7 @@ class FD:
     def calc_mc_plots(self, data, isNewDCMBlock):
 
         self.isNewDCMBlock = isNewDCMBlock
-        self.data = np.vstack((self.data,data))
+        self.data = np.vstack((self.data, data))
         self.micro_displacement()
         self.all_fd()
         if isNewDCMBlock:

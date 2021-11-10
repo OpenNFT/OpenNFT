@@ -64,7 +64,7 @@ else:
 for filename in sorted(filelist):
     src = filename
     if Path.is_file(src) and (not str(filename).startswith(".")):
-        dst = Path(dstpath,filename.name)
+        dst = Path(dstpath, filename.name)
         shutil.copy(src, dst)
         print(filename)
         sleep(pause_in_sec)  # seconds

@@ -710,7 +710,7 @@ class OpenNFT(QWidget):
 
         # data acquisition
         if fname is not None:
-            path = str(Path(self.P['WatchFolder'],fname))
+            path = str(Path(self.P['WatchFolder'], fname))
             if (not self.isOffline) and (not self.cbUseTCPData.isChecked()) and self.reachedFirstFile:
                 if not self.checkFileIsReady(path, fname):
                     self.isMainLoopEntered = False
@@ -874,7 +874,7 @@ class OpenNFT(QWidget):
             # t5
             self.recorder.recordEvent(erd.Times.t5, self.iteration, time.time())
 
-        elif self.P['Type'] in ['PSC','Corr']:
+        elif self.P['Type'] in ['PSC', 'Corr']:
             self.displayData = self.eng.nfbCalc(self.iteration, self.displayData, nargout=1)
 
             # t5
@@ -884,10 +884,10 @@ class OpenNFT(QWidget):
                 if config.USE_PTB:
                     if self.displayData:
                         if self.P['Prot'] == 'ContTask':
-                            #                       Here task condition is evaluated: if condition is 3 (task) and the current
-                            #                       iteration corresponds with the onset of a task block (kept in TaskFirstVol)
-                            #                       taskseq is set to one. While set to 1, Display  in ptbScreen.py
-                            #                       will use the taskse flag to call the ptbTask function.
+                            # Here task condition is evaluated: if condition is 3 (task) and the current
+                            # iteration corresponds with the onset of a task block (kept in TaskFirstVol)
+                            # taskseq is set to one. While set to 1, Display in ptbScreen.py
+                            # will use the taskse flag to call the ptbTask function.
                             # cond = self.eng.evalin('base', 'mainLoopData.displayData.condition')
                             cond = self.displayData['condition']
                             if cond == 3 and int(self.P['TaskFirstVol'][0][self.iteration - 1]) == 1:
@@ -938,7 +938,7 @@ class OpenNFT(QWidget):
                 betaCoeff = np.array(
                     self.eng.evalin('base', 'cellfun(@(a)a(mainLoopData.indVolNorm,2),rtQA_matlab.betRegr)'), ndmin=2)
             else:
-                betaCoeff = np.zeros((int(self.P['NrROIs']),1))
+                betaCoeff = np.zeros((int(self.P['NrROIs']), 1))
 
             for i in range(int(self.P['NrROIs'])):
                 self.windowRTQA.linTrendCoeff[i, n] = betaCoeff[i]
@@ -1015,7 +1015,7 @@ class OpenNFT(QWidget):
 
     # --------------------------------------------------------------------------
     def startInOfflineMode(self):
-        path = Path(self.P['WatchFolder'],self.P['FirstFileName'])
+        path = Path(self.P['WatchFolder'], self.P['FirstFileName'])
         ext = re.findall(r"\.\w*$", str(path))
         if not ext:
             if self.P['DataType'] == 'IMAPH':
@@ -1046,7 +1046,7 @@ class OpenNFT(QWidget):
     def startFilesystemWatching(self):
         self.files_queue = queue.Queue()
 
-        path = Path(self.P['WatchFolder'],self.P['FirstFileName'])
+        path = Path(self.P['WatchFolder'], self.P['FirstFileName'])
 
         ext = re.findall(r"\.\w*$", str(path))
         if not ext:
@@ -1299,7 +1299,7 @@ class OpenNFT(QWidget):
                     NFBdata = loadmat(self.P['ShamFile'])['dispValues']
 
                 dispValues = list(NFBdata.flatten())
-                if len(dispValues) != self.P['NrOfVolumes']-self.P['nrSkipVol']:
+                if len(dispValues) != self.P['NrOfVolumes'] - self.P['nrSkipVol']:
                     logger.error(
                         "Number of display values ({:d}) in {} does not correspond to number of volumes ({:d} - {:d} skipped).\n SELECT ANOTHER SHAM FILE".format(
                             len(dispValues), self.P['ShamFile'], self.P['NrOfVolumes'], self.P['nrSkipVol']))
@@ -1860,7 +1860,7 @@ class OpenNFT(QWidget):
     # --------------------------------------------------------------------------
     def selectRoi(self):
 
-        if self.P['Type'] in ['PSC','SVM','Corr','None']:
+        if self.P['Type'] in ['PSC', 'SVM', 'Corr', 'None']:
             if not Path(self.P['RoiFilesFolder']).is_dir():
                 logger.error("Couldn't find: " + self.P['RoiFilesFolder'])
                 return
@@ -1869,10 +1869,10 @@ class OpenNFT(QWidget):
             self.engSPM.selectROI(self.P['RoiFilesFolder'], nargout=0)
 
             if self.P['Type'] == 'Corr':
-                if int(self.eng.evalin('base','P.NrROIs')) < 2:
+                if int(self.eng.evalin('base', 'P.NrROIs')) < 2:
                     logger.error("More than 1 ROI is required for Correlations")
                     return
-                if int(self.eng.evalin('base','P.NrROIs')) > 2:
+                if int(self.eng.evalin('base', 'P.NrROIs')) > 2:
                     logger.error("Correlations between more than 2 ROI is not yet implemented")
                     return
 
@@ -1969,7 +1969,7 @@ class OpenNFT(QWidget):
 
         # Update GUI information
         self.leCurrentVolume.setText('%d' % self.iteration)
-        self.leFirstFilePath.setText(str(Path(self.P['WatchFolder'],self.P['FirstFileName'])))
+        self.leFirstFilePath.setText(str(Path(self.P['WatchFolder'], self.P['FirstFileName'])))
 
         filePathStatus = ""
         if Path(self.P['WatchFolder']).is_dir():
@@ -2248,7 +2248,9 @@ class OpenNFT(QWidget):
         dataProc = np.array(self.outputSamples['kalmanProcTimeSeries'], ndmin=2)
         dataNorm = np.array(self.outputSamples['scalProcTimeSeries'], ndmin=2)
         if self.P['PlotFeedback']:
-            dataNorm = np.concatenate((dataNorm,np.array([self.displaySamples])/self.P['MaxFeedbackVal']))
+            dataNorm = np.concatenate(
+                (dataNorm, np.array([self.displaySamples]) / self.P['MaxFeedbackVal'])
+            )
 
         self.drawGivenRoiPlot(init, self.rawRoiPlot, dataRaw)
         self.drawGivenRoiPlot(init, self.procRoiPlot, dataProc)
