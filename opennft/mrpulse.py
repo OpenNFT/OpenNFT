@@ -75,12 +75,12 @@ def keypressed(event):
         keys = str(event.Ascii)
 
 
-def setHook(pulses_,displayEvent_):
+def setHook(pulses_, displayEvent_):
     global pulses
     global displayEvent
+    pulses = pulses_
     displayEvent = displayEvent_
     counter = 0
-    pulses = pulses_
     np_arr = toNpData(pulses)
     obj = pyHook.HookManager()
     obj.KeyDown = keypressed
@@ -99,7 +99,3 @@ def start(NrVolumes, ptbEvent, recorder_):
     # p.join()
 
     return p, pulses
-
-
-if __name__ == '__main__':
-    start(12, 1)

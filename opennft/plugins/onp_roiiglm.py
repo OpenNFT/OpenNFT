@@ -24,7 +24,7 @@ Copyright (C) 2016-2021 OpenNFT.org
 
 Written by Tibor Auer
 
-"""
+"""  # noqa: E501
 
 from pyniexp.mlplugins import dataProcess
 from loguru import logger
@@ -43,26 +43,26 @@ META = {
 
 
 class ROIiGLM(dataProcess):
-    def __init__(self,nROIs,nVols, nSkipVols, nfbDataFolder):
-        super().__init__(nROIs,autostart=False)
+    def __init__(self, nROIs, nVols, nSkipVols, nfbDataFolder):
+        super().__init__(nROIs, autostart=False)
 
         self.nfbDataFolder = nfbDataFolder
         self.nROIs = nROIs
         self.nVols = nVols
 
-        self.rtdata = RawArray('d',[0]*self.nROIs*self.nVols)
-        self.nData = Value('i',self.nROIs*nSkipVols)
+        self.rtdata = RawArray('d', [0]*self.nROIs*self.nVols)
+        self.nData = Value('i', self.nROIs*nSkipVols)
 
         self.start_process()
 
-    def process(self,data):
+    def process(self, data):
         for r in data:
             self.rtdata[self.nData.value] = r
             self.nData.value += 1
         logger.info(('ROIs: [ ' + '{:.3f} '*len(data) + ']').format(*data))
 
     def finalize_process(self):
-        dat = array(self.rtdata).reshape(self.nVols,self.nROIs)
+        dat = array(self.rtdata).reshape(self.nVols, self.nROIs)
 
         fname = path.join(path.normpath(self.nfbDataFolder), 'ROIiGLM.csv')
         savetxt(fname=fname, X=dat, fmt='%.3f', delimiter=',')

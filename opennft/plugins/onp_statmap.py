@@ -27,7 +27,7 @@ Copyright (C) 2016-2021 OpenNFT.org
 
 Written by Tibor Auer
 
-"""
+"""  # noqa: E501
 
 from pyniexp.mlplugins import imageProcess
 import matplotlib.pyplot as plt
@@ -43,8 +43,8 @@ META = {
 
 
 class myImageProcess(imageProcess):
-    def __init__(self,image_dimension,toDraw=False):
-        super().__init__(image_dimension,autostart=False)
+    def __init__(self, image_dimension, toDraw=False):
+        super().__init__(image_dimension, autostart=False)
 
         self.toDraw = toDraw
         if self.toDraw:
@@ -53,15 +53,15 @@ class myImageProcess(imageProcess):
 
         self.start_process()
 
-    def process(self,image):
+    def process(self, image):
         # Convert 3D to 2D mosaic
-        (vx,vy,vz) = self._image_dimension
+        (vx, vy, vz) = self._image_dimension
         [mxy, mxx] = getFactorPair(vz)
-        tiles = image.reshape(vx,vy,mxx,mxy)
-        tiles = np.moveaxis(np.rot90(tiles),[0,1,2,3],[1,3,0,2]).reshape(vx*mxx,vy*mxy)
+        tiles = image.reshape(vx, vy, mxx, mxy)
+        tiles = np.moveaxis(np.rot90(tiles), [0,1,2,3], [1,3,0,2]).reshape(vx*mxx,vy*mxy)
 
         if self.toDraw:
-            self.axes.imshow(tiles,cmap='jet')
+            self.axes.imshow(tiles, cmap='jet')
             self.figure.canvas.draw()
             plt.pause(0.01)
 

@@ -33,7 +33,7 @@ class PluginWindow(QDialog):
 
 class Plugin:
 
-    def __init__(self,parentApplication,module):
+    def __init__(self, parentApplication, module):
         self.parent = parentApplication
         self.module = module
         self.object = None

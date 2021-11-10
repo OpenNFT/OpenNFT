@@ -527,4 +527,3 @@ Ep     = spm_unvec(spm_vec(pE) + V*C.p(ip),pE);
 Cp     = V*C.Cp(ip,ip)*V';
 Eh     = C.h;
 F      = C.F;
-
