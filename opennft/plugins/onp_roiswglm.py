@@ -25,7 +25,7 @@ Copyright (C) 2016-2021 OpenNFT.org
 
 Written by Tibor Auer
 
-"""
+"""  # noqa: E501
 
 from pyniexp.mlplugins import dataProcess
 from loguru import logger
@@ -47,19 +47,19 @@ META = {
 
 
 class ROIswGLM(dataProcess):
-    def __init__(self,nROIs,nBlocks,nfbDataFolder):
-        super().__init__(nROIs*nBlocks,autostart=False)
+    def __init__(self, nROIs, nBlocks, nfbDataFolder):
+        super().__init__(nROIs*nBlocks, autostart=False)
 
         self.nfbDataFolder = nfbDataFolder
         self.nROIs = nROIs
         self.nBlocks = nBlocks
 
-        self.rtdata = RawArray('d',[0]*self.nROIs*self.nBlocks*self.nBlocks)
-        self.nData = Value('i',0)
+        self.rtdata = RawArray('d', [0]*self.nROIs*self.nBlocks*self.nBlocks)
+        self.nData = Value('i', 0)
 
         self.start_process()
 
-    def process(self,data):
+    def process(self, data):
         if any(array(data) != 0):
             for r in data:
                 self.rtdata[self.nData.value] = r
@@ -67,14 +67,14 @@ class ROIswGLM(dataProcess):
         logger.info(('ROIs: [ ' + '{:.3f} '*len(data) + ']').format(*data))
 
     def finalize_process(self):
-        dat = array(self.rtdata).reshape(self.nBlocks,self.nROIs,self.nBlocks)
+        dat = array(self.rtdata).reshape(self.nBlocks, self.nROIs, self.nBlocks)
 
-        for b in range(0,self.nBlocks):
+        for b in range(0, self.nBlocks):
             fname = path.join(path.normpath(self.nfbDataFolder), 'ROIswGLM_{:02d}.txt'.format(b+1))
             savetxt(fname=fname, X=dat[b,:,0:b+1].transpose(), fmt='%.3f', delimiter=',')
 
-        X,Y = meshgrid(self.nBlocks,self.nBlocks)
-        for r in range(0,self.nROIs):
-            ax = plt.subplot(120+(r+1),projection='3d')
-            ax.plot_surface(X,Y,dat[:,r,:])
+        X, Y = meshgrid(self.nBlocks, self.nBlocks)
+        for r in range(0, self.nROIs):
+            ax = plt.subplot(120+(r+1), projection='3d')
+            ax.plot_surface(X, Y, dat[:,r,:])
         plt.show()

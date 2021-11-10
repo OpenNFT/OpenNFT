@@ -16,7 +16,7 @@ UDP_IP = "127.0.0.1"
 UDP_PORT = 1234
 UDP_CONTROL_CHAR = '#'
 
-receiver = Udp(IP=UDP_IP,port=UDP_PORT,control_signal=UDP_CONTROL_CHAR)
+receiver = Udp(IP=UDP_IP, port=UDP_PORT, control_signal=UDP_CONTROL_CHAR)
 
 receiver.connect_for_receiving()
 receiver.sending_time_stamp = True
@@ -27,7 +27,7 @@ n = 0
 dat = []
 cond = 'test'
 while receiver.is_open:
-    data = receiver.receive_data(n=1,dtype='float')
+    data = receiver.receive_data(n=1, dtype='float')
     if len(data) > 1:
         if type(data[1]) == str:
             cond = data[1]
