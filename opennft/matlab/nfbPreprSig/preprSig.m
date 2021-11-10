@@ -61,7 +61,7 @@ for indRoi = 1:P.NrROIs
     
     if flags.isSVM
         roiVect = mainLoopData.procVol(ROIs(indRoi).voxelIndex);
-        weightVect = WEIGHTs.mask2D(ROIs(indRoi).mask2D>0);
+        weightVect = WEIGHTs.vol(ROIs(indRoi).voxelIndex);
         rawTimeSeries(indRoi, indVolNorm) = dot(roiVect,weightVect);
     end
     
