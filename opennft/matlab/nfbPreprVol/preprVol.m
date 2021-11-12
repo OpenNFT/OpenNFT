@@ -36,12 +36,11 @@ flags = getFlagsType(P);
 if flags.isDCM
     ROIsAnat = evalin('base', 'ROIsAnat');
     if P.isRTQA
-        wbROI = evalin('base','ROIs');
-        ROIsAnat(P.NrROIs).voxelIndex = wbROI.voxelIndex;
-        ROIsAnat(P.NrROIs).mat = wbROI.mat;
-        ROIsAnat(P.NrROIs).dim = wbROI.dim;
-        ROIsAnat(P.NrROIs).vol = wbROI.vol;
-        ROIsAnat(P.NrROIs).mask2D = wbROI.mask2D;
+        wholeBrainROI = evalin('base','ROIs');
+        ROIsAnat(P.NrROIs).voxelIndex = wholeBrainROI.voxelIndex;
+        ROIsAnat(P.NrROIs).mat = wholeBrainROI.mat;
+        ROIsAnat(P.NrROIs).dim = wholeBrainROI.dim;
+        ROIsAnat(P.NrROIs).vol = wholeBrainROI.vol;
     end
 end
 
@@ -466,12 +465,11 @@ if flags.isIGLM
     if P.isRTQA
         if flags.isDCM
             ROIs = evalin('base', 'ROIsAnat');
-            wbROI = evalin('base','ROIs');
-            ROIs(P.NrROIs).voxelIndex = wbROI.voxelIndex;
-            ROIs(P.NrROIs).mat = wbROI.mat;
-            ROIs(P.NrROIs).dim = wbROI.dim;
-            ROIs(P.NrROIs).vol = wbROI.vol;
-            ROIs(P.NrROIs).mask2D = wbROI.mask2D;
+            wholeBrainROI = evalin('base','ROIs');
+            ROIs(P.NrROIs).voxelIndex = wholeBrainROI.voxelIndex;
+            ROIs(P.NrROIs).mat = wholeBrainROI.mat;
+            ROIs(P.NrROIs).dim = wholeBrainROI.dim;
+            ROIs(P.NrROIs).vol = wholeBrainROI.vol;
         else
             ROIs = evalin('base', 'ROIs');
         end
@@ -595,15 +593,17 @@ if flags.isDCM
             ROIoptimGlmAnat = evalin('base', 'ROIoptimGlmAnat');
         end
         for iROI = 1:P.NrROIs
-            ROIsAnat(iROI).mask2D(isnan(ROIsAnat(iROI).mask2D))=0;
             
-            ROIsGlmAnat(iROI).mask2D(indNFTrial+1) = ...
-                {statMap2D_pos & ROIsAnat(iROI).mask2D};
+            ROIsAnat(iROI).vol(isnan(ROIsAnat(iROI).vol))=0;
+
+            ROIsGlmAnat(iROI).vol(indNFTrial+1) = ...
+                {statMap3D_pos & ROIsAnat(iROI).vol};
+
             clear tmpVect
-            tmpVect = find(cell2mat(ROIsGlmAnat(iROI).mask2D(indNFTrial+1))>0);
+            tmpVect = find(cell2mat(ROIsGlmAnat(iROI).vol(indNFTrial+1))>0);
             if ~isempty(tmpVect) && length(tmpVect)>10
                 ROIsGlmAnat(iROI).meanGlmAnatROI(indNFTrial+1) = ...
-                    mean(statMap2D_pos(tmpVect));
+                    mean(statMap3D_pos(tmpVect));
             else
                 ROIsGlmAnat(iROI).meanGlmAnatROI(indNFTrial+1) = 0;
             end
@@ -611,8 +611,8 @@ if flags.isDCM
                 % for at least 2 ROIsGlmAnat, there is always one ROIoptimGlmAnat
                 [val, nrROIoptimGlmAnat] = ...
                     max(ROIsGlmAnat(iROI).meanGlmAnatROI);
-                ROIoptimGlmAnat(iROI).mask2D(indNFTrial+1) = ...
-                    ROIsGlmAnat(iROI).mask2D(nrROIoptimGlmAnat);
+                ROIoptimGlmAnat(iROI).vol(indNFTrial+1) = ...
+                    ROIsGlmAnat(iROI).vol(nrROIoptimGlmAnat);
                 mainLoopData.nrROIoptimGlmAnat(iROI,indNFTrial) = ...
                     nrROIoptimGlmAnat;
                 clear nrROIoptimGlmAnat val

@@ -92,28 +92,34 @@ for indRoi = 1:P.NrROIs
                 if indNFTrial > 1
                     ROIsGlmAnat = evalin('base', 'ROIsGlmAnat');
                     ROIoptimGlmAnat = evalin('base', 'ROIoptimGlmAnat');
-                    dimVol = mainLoopData.dimVol;
-                    slNrImg2DdimX = mainLoopData.slNrImg2DdimX;
-                    slNrImg2DdimY = mainLoopData.slNrImg2DdimY;
-                    img2DdimX = mainLoopData.img2DdimX;
-                    img2DdimY = mainLoopData.img2DdimY;
-                    reslVol_2D = vol3Dimg2D(mainLoopData.procVol, ...
-                        slNrImg2DdimX, slNrImg2DdimY, ...
-                        img2DdimX, img2DdimY, dimVol);
-                    tmpVect = reslVol_2D(...
-                        cell2mat(ROIsGlmAnat(indRoi).mask2D(indNFTrial))>0);
+%                     dimVol = mainLoopData.dimVol;
+%                     slNrImg2DdimX = mainLoopData.slNrImg2DdimX;
+%                     slNrImg2DdimY = mainLoopData.slNrImg2DdimY;
+%                     img2DdimX = mainLoopData.img2DdimX;
+%                     img2DdimY = mainLoopData.img2DdimY;
+%                     reslVol_2D = vol3Dimg2D(mainLoopData.procVol, ...
+%                         slNrImg2DdimX, slNrImg2DdimY, ...
+%                         img2DdimX, img2DdimY, dimVol);
+                    procVol = mainLoopData.procVol;
+
+%                     tmpVect = reslVol_2D(...
+%                         cell2mat(ROIsGlmAnat(indRoi).vol(indNFTrial))>0);
+
+                    tmpVect = procVol(...
+                        cell2mat(ROIsGlmAnat(indRoi).vol(indNFTrial))>0);
+
                     if ~isempty(tmpVect) && length(tmpVect)>10
                         rawTimeSeries(indRoi, indVolNorm) = mean(tmpVect);
                         mainLoopData.adaptROIs(indRoi, indNFTrial+1) = 2;
                     else
-                        tmpOptRoiVect = reslVol_2D(cell2mat(...
-                            ROIoptimGlmAnat(indRoi).mask2D(indNFTrial))>0);
+                        tmpOptRoiVect = procVol(cell2mat(...
+                            ROIoptimGlmAnat(indRoi).vol(indNFTrial))>0);
                         if ~isempty(tmpOptRoiVect) && length(tmpOptRoiVect)>10
                             rawTimeSeries(indRoi, indVolNorm) = mean(tmpOptRoiVect);
                             mainLoopData.adaptROIs(indRoi, indNFTrial+1) = 3;
                         else
                             rawTimeSeries(indRoi, indVolNorm) = mean(...
-                                reslVol_2D(ROIsGroup(indRoi).mask2D>0));
+                                procVol(ROIsGroup(indRoi).voxelIndex));
                             mainLoopData.adaptROIs(indRoi, indNFTrial+1) = 1;
                         end
                     end

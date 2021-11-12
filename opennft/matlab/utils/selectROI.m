@@ -51,8 +51,6 @@ if flags.isPSC || flags.isSVM || flags.isCorr || P.isRestingState
                                              getMosaicDim(ROIs(iFile).dim);
         ROIs(iFile).vol(ROIs(iFile).vol < 0.5) = 0;
         ROIs(iFile).vol(ROIs(iFile).vol >= 0.5) = 1;
-        ROIs(iFile).mask2D = vol3Dimg2D(ROIs(iFile).vol, slNrImg2DdimX, ...
-                     slNrImg2DdimY, img2DdimX, img2DdimY, ROIs(iFile).dim);
     end
 
     assignin('base', 'ROIs', ROIs);
@@ -73,9 +71,6 @@ if flags.isSVM
                                                readVol(weightNames{iFile});
         [slNrImg2DdimX, slNrImg2DdimY, img2DdimX, img2DdimY] = ...
                                           getMosaicDim(WEIGHTs(iFile).dim);
-        WEIGHTs(iFile).mask2D = vol3Dimg2D(WEIGHTs(iFile).vol, ...
-                                  slNrImg2DdimX, slNrImg2DdimY, img2DdimX, ...
-                                    img2DdimY, WEIGHTs(iFile).dim);
     end
 
     assignin('base', 'WEIGHTs', WEIGHTs);
@@ -102,9 +97,6 @@ if flags.isDCM
                                          getMosaicDim(ROIsAnat(iFile).dim);
         ROIsAnat(iFile).vol(ROIsAnat(iFile).vol < 0.5) = 0;
         ROIsAnat(iFile).vol(ROIsAnat(iFile).vol >= 0.5) = 1;
-        ROIsAnat(iFile).mask2D = vol3Dimg2D(ROIsAnat(iFile).vol, ...
-                                   slNrImg2DdimX, slNrImg2DdimY, img2DdimX, ...
-                                     img2DdimY, ROIsAnat(iFile).dim);
     end
 
     %% Group
@@ -128,10 +120,6 @@ if flags.isDCM
                                         getMosaicDim(ROIsGroup(iFile).dim);
         ROIsGroup(iFile).vol(ROIsGroup(iFile).vol < 0.5) = 0;
         ROIsGroup(iFile).vol(ROIsGroup(iFile).vol >= 0.5) = 1;
-        ROIsGroup(iFile).mask2D = vol3Dimg2D(ROIsGroup(iFile).vol, ...
-                                   slNrImg2DdimX, slNrImg2DdimY, img2DdimX, ...
-                                     img2DdimY, ROIsGroup(iFile).dim);
-
     end
 
     assignin('base', 'ROIsGroup', ROIsGroup);

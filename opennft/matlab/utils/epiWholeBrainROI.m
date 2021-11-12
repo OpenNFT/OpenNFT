@@ -43,6 +43,13 @@ spm_smooth(imgVolTempl, smImgVolTempl, gKernel);
 wholeBrainMaskThreshold = 30;
 smImgVolTempl(smImgVolTempl<wholeBrainMaskThreshold) = nan;
 
+if 0
+% check thresholded template
+mosaicSmImgVolTempl = vol3Dimg2D(smImgVolTempl, slNrImg2DdimX, ...
+             slNrImg2DdimY, img2DdimX, img2DdimY, ROIs(iFile).dim);
+figure, imshow(mosaicSmImgVolTempl,[])
+end
+
 % histohram
 nbins = 2^nextpow2(max(smImgVolTempl(:)));
 [N,edges] = histcounts(smImgVolTempl,1:nbins);
@@ -74,11 +81,16 @@ epiWholeBrainMask = zeros(dimTemplMotCorr);
 indexEpiWholeBrainMask = find(smImgVolTempl>threshEpiWholeBrainMask);
 epiWholeBrainMask(indexEpiWholeBrainMask) = 1;
 
+% display mask
+if 0
+mosaicEpiWholeBrainMask = vol3Dimg2D(epiWholeBrainMask, slNrImg2DdimX, ...
+             slNrImg2DdimY, img2DdimX, img2DdimY, ROIs(iFile).dim);
+figure, imshow(mosaicEpiWholeBrainMask)
+end
+
 % assign ROI
 ROIs(iFile).vol = epiWholeBrainMask;
 ROIs(iFile).voxelIndex = indexEpiWholeBrainMask;
-ROIs(iFile).mask2D = vol3Dimg2D(ROIs(iFile).vol, slNrImg2DdimX, ...
-             slNrImg2DdimY, img2DdimX, img2DdimY, ROIs(iFile).dim);
          
 % DVARS scaling is most frequent image value given fit
 P.scaleFactorDVARS = median(smImgVolTempl(indexEpiWholeBrainMask));
