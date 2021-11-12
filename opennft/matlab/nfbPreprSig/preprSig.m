@@ -92,19 +92,7 @@ for indRoi = 1:P.NrROIs
                 if indNFTrial > 1
                     ROIsGlmAnat = evalin('base', 'ROIsGlmAnat');
                     ROIoptimGlmAnat = evalin('base', 'ROIoptimGlmAnat');
-%                     dimVol = mainLoopData.dimVol;
-%                     slNrImg2DdimX = mainLoopData.slNrImg2DdimX;
-%                     slNrImg2DdimY = mainLoopData.slNrImg2DdimY;
-%                     img2DdimX = mainLoopData.img2DdimX;
-%                     img2DdimY = mainLoopData.img2DdimY;
-%                     reslVol_2D = vol3Dimg2D(mainLoopData.procVol, ...
-%                         slNrImg2DdimX, slNrImg2DdimY, ...
-%                         img2DdimX, img2DdimY, dimVol);
                     procVol = mainLoopData.procVol;
-
-%                     tmpVect = reslVol_2D(...
-%                         cell2mat(ROIsGlmAnat(indRoi).vol(indNFTrial))>0);
-
                     tmpVect = procVol(...
                         cell2mat(ROIsGlmAnat(indRoi).vol(indNFTrial))>0);
 
@@ -235,6 +223,10 @@ for indRoi = 1:P.NrROIs
                 cX0 = tmpRegr;
                 betaReg = pinv(cX0) * tmp_rawTimeSeries;
                 tmp_glmProcTimeSeries = (tmp_rawTimeSeries - cX0 * betaReg)';
+                if P.isRTQA
+                    tmp_noRegGlmProcTimeSeries = (tmp_rawTimeSeries - ...
+                        cX0 * [zeros(length(betaReg)-6,1); betaReg(end-5:end)])';
+                end
             end
 
         end
@@ -261,7 +253,7 @@ for indRoi = 1:P.NrROIs
 
             end
 
-            if tmp_ind_end < 3*regrStep || P.isRestingState
+            if tmp_ind_end < 3*regrStep
                 mainLoopData.noRegGlmProcTimeSeries(indRoi,indVolNorm) = ...
                     tmp_rawTimeSeries(end);
             else
