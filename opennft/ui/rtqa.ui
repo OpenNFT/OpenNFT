@@ -644,6 +644,9 @@
        </widget>
        <widget class="QWidget" name="pageCnrOptions">
         <layout class="QVBoxLayout" name="verticalLayout_10">
+         <property name="leftMargin">
+          <number>0</number>
+         </property>
          <item>
           <spacer name="verticalSpacer_3">
            <property name="orientation">
@@ -661,6 +664,9 @@
        </widget>
        <widget class="QWidget" name="pageSpikes">
         <layout class="QVBoxLayout" name="verticalLayout_20">
+         <property name="leftMargin">
+          <number>0</number>
+         </property>
          <item>
           <widget class="QLabel" name="spikesLabel">
            <property name="font">
@@ -693,6 +699,9 @@
        </widget>
        <widget class="QWidget" name="pageMse">
         <layout class="QVBoxLayout" name="verticalLayout_21">
+         <property name="leftMargin">
+          <number>0</number>
+         </property>
          <item>
           <widget class="QLabel" name="mseLabel">
            <property name="font">
@@ -766,6 +775,9 @@
        </widget>
        <widget class="QWidget" name="pageNoRegSnr">
         <layout class="QVBoxLayout" name="verticalLayout_25">
+         <property name="leftMargin">
+          <number>0</number>
+         </property>
          <item>
           <widget class="QLabel" name="noRegSnrValueLabel">
            <property name="font">
@@ -795,6 +807,9 @@
        </widget>
        <widget class="QWidget" name="pageDvars">
         <layout class="QVBoxLayout" name="verticalLayout_27">
+         <property name="leftMargin">
+          <number>0</number>
+         </property>
          <item>
           <widget class="QLabel" name="dvarsLabel">
            <property name="font">
