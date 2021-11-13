@@ -223,10 +223,6 @@ for indRoi = 1:P.NrROIs
                 cX0 = tmpRegr;
                 betaReg = pinv(cX0) * tmp_rawTimeSeries;
                 tmp_glmProcTimeSeries = (tmp_rawTimeSeries - cX0 * betaReg)';
-                if P.isRTQA
-                    tmp_noRegGlmProcTimeSeries = (tmp_rawTimeSeries - ...
-                        cX0 * [zeros(length(betaReg)-6,1); betaReg(end-5:end)])';
-                end
             end
 
         end
@@ -253,7 +249,7 @@ for indRoi = 1:P.NrROIs
 
             end
 
-            if tmp_ind_end < 3*regrStep
+            if tmp_ind_end < 3*regrStep || P.isRestingState
                 mainLoopData.noRegGlmProcTimeSeries(indRoi,indVolNorm) = ...
                     tmp_rawTimeSeries(end);
             else
