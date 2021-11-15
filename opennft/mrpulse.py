@@ -20,9 +20,9 @@ import multiprocessing as mp
 import numpy as np
 from opennft.eventrecorder import Times
 
-global pulses
-global displayEvent
-global recorder
+pulses = None
+displayEvent = None
+recorder = None
 
 
 def toNpData(mp_arr):
