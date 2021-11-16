@@ -49,7 +49,13 @@ indVolNorm = double(indVolNorm);
 rawTimeSeries = mainLoopData.rawTimeSeries;
 
 % number of regressors of no interest to correct with cGLM
-nrRegrToCorrect = 8; % 6 MC regressors, linear trend, constant
+if ~P.isRestingState
+    % 6 MC regressors, linear trend, constant
+    nrRegrToCorrect = 8; 
+else
+    % 2 linear trend, constant, because 6 MC regressors are nrBasFct
+    nrRegrToCorrect = 2; 
+end
 
 for indRoi = 1:P.NrROIs
     
@@ -223,6 +229,9 @@ for indRoi = 1:P.NrROIs
                 cX0 = tmpRegr;
                 betaReg = pinv(cX0) * tmp_rawTimeSeries;
                 tmp_glmProcTimeSeries = (tmp_rawTimeSeries - cX0 * betaReg)';
+                if P.isRTQA
+                    tmp_noRegGlmProcTimeSeries = tmp_glmProcTimeSeries;
+                end
             end
 
         end
@@ -249,7 +258,7 @@ for indRoi = 1:P.NrROIs
 
             end
 
-            if tmp_ind_end < 3*regrStep || P.isRestingState
+            if tmp_ind_end < 3*regrStep
                 mainLoopData.noRegGlmProcTimeSeries(indRoi,indVolNorm) = ...
                     tmp_rawTimeSeries(end);
             else
