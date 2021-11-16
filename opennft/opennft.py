@@ -404,7 +404,6 @@ class OpenNFT(QWidget):
         self.btnChooseStructBgFile.clicked.connect(self.onChooseStructBgFile)
 
         self.btnMCTempl.clicked.connect(self.onChooseMCTemplFile)
-        # self.btnTest.clicked.connect(self.onTest)
 
         self.btnChooseWorkFolder.clicked.connect(
             lambda: self.onChooseFolder('WorkFolder', self.leWorkFolder))
@@ -412,9 +411,6 @@ class OpenNFT(QWidget):
             lambda: self.onChooseFolder('WatchFolder', self.leWatchFolder))
 
         self.btnStart.setEnabled(False)
-
-        # if config.HIDE_TEST_BTN:
-        #    self.btnTest.setVisible(False)
 
         self.cbImageViewMode.currentIndexChanged.connect(self.onChangeImageViewMode)
         self.orthView.cursorPositionChanged.connect(self.onChangeOrthViewCursorPosition)

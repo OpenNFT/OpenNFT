@@ -348,7 +348,7 @@ class RTQAWindow(QtWidgets.QWidget):
 
         self.init = True
         if self.isStopped:
-            self.plotRTQA(self.rSNR.size)
+            self.plotRTQA(self.iteration+1)
 
     # --------------------------------------------------------------------------
     def drawMusterPlot(self, plotitem):
