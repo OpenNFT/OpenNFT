@@ -849,7 +849,7 @@
         </font>
        </property>
        <property name="title">
-        <string>ROI selection</string>
+        <string>Selected ROI</string>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout_23">
         <item>

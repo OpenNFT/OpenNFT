@@ -54,7 +54,7 @@ from watchdog.events import FileSystemEventHandler
 from pyniexp.connection import Udp
 from scipy.io import loadmat
 
-from PyQt5.QtWidgets import QApplication, QWidget, QFileDialog
+from PyQt5.QtWidgets import QApplication, QWidget, QFileDialog, QMenu
 from PyQt5.QtGui import QIcon, QPalette
 from PyQt5.QtCore import QSettings, QTimer, QEvent, QRegExp
 from PyQt5.uic import loadUi
@@ -450,6 +450,9 @@ class OpenNFT(QWidget):
         self.onChangeNegMapVisible()
         self.onChangeUseUDPFeedback()
 
+        self.allSelectBtn.clicked.connect(self.onAllChecked)
+        self.noneSelectBtn.clicked.connect(self.onNoneChecked)
+
     # --------------------------------------------------------------------------
     def onChangePosMapVisible(self):
         is_visible = self.posMapCheckBox.isChecked()
@@ -559,6 +562,13 @@ class OpenNFT(QWidget):
 
         self.eng.workspace['rtQA_matlab'] = self.rtQA_matlab
 
+        # if self.P['Type'] in ['PSC', 'SVM', 'Corr', 'None']:
+        #     self.engSPM.workspace['ROIs'] = self.eng.evalin('base', 'ROIs')
+        # elif self.P['Type'] == 'DCM':
+        #     self.engSPM.workspace['ROIsAnat'] = self.eng.evalin('base', 'ROIsAnat')
+        #     if self.P['isRTQA']:
+        #         self.engSPM.workspace['ROIs'] = self.eng.evalin('base', 'ROIs')
+
         self.eng.setupProcParams(nargout=0)
 
         with utils.timeit("Receiving 'P' from Matlab:"):
@@ -576,6 +586,7 @@ class OpenNFT(QWidget):
             'isRestingState': self.P['isRestingState'],
             'isIGLM': self.P['isIGLM'],
             'isROI': config.USE_ROI,
+            'isRTQA': config.USE_RTQA
         }
 
         self.engSPM.helperPrepareOrthView(self.spmHelperP, 'bgEPI', nargout=0)
@@ -1283,8 +1294,24 @@ class OpenNFT(QWidget):
             with utils.timeit('  initMainLoopData:'):
                 self.initMainLoopData()
 
-            if self.P['isRTQA']:
-                self.eng.epiWholeBrainROI(nargout=0)
+            self.roiDict = dict()
+            self.selectedRoi = []
+            roi_menu = QMenu()
+            roi_menu.triggered.connect(self.onRoiChecked)
+            self.roiSelectorBtn.setMenu(roi_menu)
+            nrROIs = int(self.P['NrROIs'])
+            for i in range(nrROIs):
+                if self.P['isRTQA'] and i+1==nrROIs:
+                    roi = 'Whole brain ROI'
+                else:
+                    roi = 'ROI_{}'.format(i+1)
+                roi_action = roi_menu.addAction(roi)
+                roi_action.setCheckable(True)
+                self.roiDict[roi] = False
+            self.roiSelectorBtn.setEnabled(True)
+            self.allSelectBtn.setEnabled(True)
+            self.noneSelectBtn.setEnabled(True)
+
 
             if config.USE_SHAM:
                 logger.warning("Sham feedback has been selected")
@@ -1487,6 +1514,43 @@ class OpenNFT(QWidget):
 
         is_rtqa_smoothed = self.windowRTQA.smoothedCheckBox.isChecked()
         self.eng.assignin('base', 'isSmoothed', is_rtqa_smoothed, nargout=0)
+
+    # --------------------------------------------------------------------------
+    def onRoiChecked(self, action):
+        self.roiDict[action.text()] = action.isChecked()
+        self.selectedRoi = np.where(list(self.roiDict.values()))[0]
+
+        self.windowRTQA.roiChecked(self.selectedRoi)
+
+        self.drawRoiPlots(True)
+        if self.isStopped:
+            self.updateOrthViewAsync()
+
+    # --------------------------------------------------------------------------
+    def onAllChecked(self):
+        for action in self.roiSelectorBtn.menu().actions():
+            action.setChecked(True)
+            self.roiDict[action.text()] = True
+
+        self.selectedRoi = np.where(list(self.roiDict.values()))[0]
+        self.windowRTQA.roiChecked(self.selectedRoi)
+
+        self.drawRoiPlots(True)
+        if self.isStopped:
+            self.updateOrthViewAsync()
+
+    # --------------------------------------------------------------------------
+    def onNoneChecked(self):
+        for action in self.roiSelectorBtn.menu().actions():
+            action.setChecked(False)
+            self.roiDict[action.text()] = False
+
+        self.selectedRoi = np.where(list(self.roiDict.values()))[0]
+        self.windowRTQA.roiChecked(self.selectedRoi)
+
+        self.drawRoiPlots(True)
+        if self.isStopped:
+            self.updateOrthViewAsync()
 
     # --------------------------------------------------------------------------
     def onModeChanged(self):
@@ -1754,9 +1818,9 @@ class OpenNFT(QWidget):
             if rgba_neg_map_image is not None:
                 self.orthView.set_neg_map_image(proj, rgba_neg_map_image)
 
-        self.orthView.set_roi(projview.ProjectionType.transversal, self.spmHelperP['tRoiBoundaries'])
-        self.orthView.set_roi(projview.ProjectionType.coronal, self.spmHelperP['cRoiBoundaries'])
-        self.orthView.set_roi(projview.ProjectionType.sagittal, self.spmHelperP['sRoiBoundaries'])
+        self.orthView.set_roi(projview.ProjectionType.transversal, [self.spmHelperP['tRoiBoundaries'][i] for i in self.selectedRoi], self.selectedRoi)
+        self.orthView.set_roi(projview.ProjectionType.coronal, [self.spmHelperP['cRoiBoundaries'][i] for i in self.selectedRoi], self.selectedRoi)
+        self.orthView.set_roi(projview.ProjectionType.sagittal, [self.spmHelperP['sRoiBoundaries'][i] for i in self.selectedRoi], self.selectedRoi)
 
         if self.orthViewInitialize:
             self.orthView.reset_view()
@@ -1876,6 +1940,10 @@ class OpenNFT(QWidget):
             p = [self.P['RoiAnatFolder'], self.P['RoiGroupFolder']]
             self.eng.selectROI(p, nargout=0)
             self.engSPM.selectROI(p, nargout=0)
+
+        if self.P['isRTQA']:
+            self.eng.epiWholeBrainROI(nargout=0)
+            self.engSPM.epiWholeBrainROI(nargout=0)
 
     # --------------------------------------------------------------------------
     def actualize(self):
@@ -2240,9 +2308,9 @@ class OpenNFT(QWidget):
         else:
             key = 'rawTimeSeries'
 
-        dataRaw = np.array(self.outputSamples[key], ndmin=2)
-        dataProc = np.array(self.outputSamples['kalmanProcTimeSeries'], ndmin=2)
-        dataNorm = np.array(self.outputSamples['scalProcTimeSeries'], ndmin=2)
+        dataRaw = np.array(self.outputSamples[key], ndmin=2)[self.selectedRoi,:]
+        dataProc = np.array(self.outputSamples['kalmanProcTimeSeries'], ndmin=2)[self.selectedRoi,:]
+        dataNorm = np.array(self.outputSamples['scalProcTimeSeries'], ndmin=2)[self.selectedRoi,:]
         if self.P['PlotFeedback']:
             dataNorm = np.concatenate(
                 (dataNorm, np.array([self.displaySamples]) / self.P['MaxFeedbackVal'])
@@ -2267,7 +2335,10 @@ class OpenNFT(QWidget):
 
             plots = []
 
-            for i, c in zip(range(sz), config.ROI_PLOT_COLORS):
+            plot_colors = np.array(config.ROI_PLOT_COLORS)[self.selectedRoi]
+            if self.P['PlotFeedback']:
+                plot_colors = np.append(plot_colors, config.ROI_PLOT_COLORS[int(self.P['NrROIs'])])
+            for i, c in zip(range(sz), plot_colors):
                 pen = pg.mkPen(color=c, width=config.ROI_PLOT_WIDTH)
                 p = plotitem.plot(pen=pen)
                 plots.append(p)
@@ -2291,7 +2362,12 @@ class OpenNFT(QWidget):
         for m in self.drawGivenRoiPlot.__dict__[plotitem][1]:
             items.remove(m)
 
-        plotitem.autoRange(items=items)
+        if data.any():
+            if plotitem.vb.state["targetRange"][1] == [-1, 1]:
+                plotitem.enableAutoRange(enable=True, x=False, y=True)
+            plotitem.setYRange(np.min(data), np.max(data), padding=0.0)
+
+        # plotitem.autoRange(items=items)
         if self.P['isRestingState']:
             grid = True
         else:

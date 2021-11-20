@@ -88,13 +88,11 @@ class RTQAWindow(QtWidgets.QWidget):
                 name = 'Whole brain ROI'
             else:
                 name = 'ROI_' + str(i + 1)
-            checkbox = QtWidgets.QCheckBox(name)
-            checkbox.setStyleSheet("color: " + config.ROI_PLOT_COLORS[i].name())
-            if not i:
-                checkbox.setChecked(True)
-            checkbox.stateChanged.connect(self.roiCheckBoxStateChanged)
-            groupBoxLayout.addWidget(checkbox)
-        self.roiCheckBoxes = self.roiGroupBox.findChildren(QtWidgets.QCheckBox)
+            label = QtWidgets.QLabel(name)
+            label.setStyleSheet("color: " + config.ROI_PLOT_COLORS[i].name())
+            label.setVisible(False)
+            groupBoxLayout.addWidget(label)
+        self.selectedRoiLabels = self.roiGroupBox.findChildren(QtWidgets.QLabel)
         self.mcrRadioButton.toggled.connect(self.onRadioButtonStateChanged)
 
         # Plots initialization
@@ -297,6 +295,11 @@ class RTQAWindow(QtWidgets.QWidget):
             self.makeTextValueLabel(self.valuesLabel, names, pens, lineBreak='<br>')
             self.currentMode = 2
 
+        if state == 1 or state == 7:
+            self.roiGroupBox.setVisible(False)
+        else:
+            self.roiGroupBox.setVisible(True)
+
     # --------------------------------------------------------------------------
     def onRadioButtonStateChanged(self):
         """ FD and MD mode change. Mode changing switch plots and plot title
@@ -342,9 +345,16 @@ class RTQAWindow(QtWidgets.QWidget):
         label.setText(legendText)
 
     # --------------------------------------------------------------------------
-    def roiCheckBoxStateChanged(self):
+    def roiChecked(self, roiChecked):
         """ Redrawing plots when the set of selected ROIs is changed even if run is stopped
         """
+
+        self.checkedBoxesInd = roiChecked
+        for i in range(len(self.selectedRoiLabels)):
+            if i in roiChecked:
+                self.selectedRoiLabels[i].setVisible(True)
+            else:
+                self.selectedRoiLabels[i].setVisible(False)
 
         self.init = True
         if self.isStopped:
@@ -400,7 +410,8 @@ class RTQAWindow(QtWidgets.QWidget):
 
                 muster = self.drawMusterPlot(plotitem)
 
-                for i, c in zip(range(sz), np.array(config.ROI_PLOT_COLORS)[checkedBoxesInd]):
+                plot_colors = np.array(config.ROI_PLOT_COLORS)[checkedBoxesInd]
+                for i, c in zip(range(sz), plot_colors):
                     pen = pg.mkPen(color=c, width=config.ROI_PLOT_WIDTH)
                     p = plotitem.plot(pen=pen)
                     plots.append(p)
@@ -429,12 +440,6 @@ class RTQAWindow(QtWidgets.QWidget):
 
         :param n: last volume index
         """
-
-        # The set of active ROIs changing
-        if self.init:
-            sz, l = self.rSNR.shape
-            checkedBoxes = [self.roiCheckBoxes[i].isChecked() for i in range(sz)]
-            self.checkedBoxesInd = [j for j, val in enumerate(checkedBoxes) if val]
 
         # SNR plot
         plotitem = self.snrPlot.getPlotItem()

@@ -41,6 +41,13 @@ end
 if flags.isDCM
     ROIsAnat = evalin('base', 'ROIsAnat');
     ROIsOverlay = ROIsAnat;
+    if P.isRTQA
+        ROIs = evalin('base', 'ROIs');
+        ROIsOverlay(end+1).vol = ROIs.vol;
+        ROIsOverlay(end).dim = ROIs.dim;
+        ROIsOverlay(end).mat = ROIs.mat;
+        ROIsOverlay(end).voxelIndex = ROIs.voxelIndex;
+    end
 end
 if flags.isPSC || flags.isSVM || flags.isCorr || P.isRestingState
     ROIs = evalin('base', 'ROIs');
@@ -292,8 +299,18 @@ return
 function [drawimgt, drawimgc, drawimgs, cimgt, cimgc, cimgs] = ...
                             getOrthROIs(imgt, imgc, imgs, ROIs, coordParam)
 global strParam
-% 6 colors, extend if >6  ROIs
-colour=[0 0 1; 0 1 1; 0 1 0; 1 0 1; 1 0 0; 1 1 0; flipud(pink(3)); 0 0 0];%pink(3); %flipud(pink(3));
+% 10 colors, extend if >10  ROIs (11th for whole brain ROI)
+colour=[0      0      1; 
+        0      1      1; 
+        0      1      0; 
+        1      0      1; 
+        1      0      0; 
+        1      1      0;
+        0.5490 0.7843 0.9411;
+        0.8157 0.8157 0.5765;
+        0.5765 0      0;
+        0.3922 0.6863 0;
+        0      0      0];%pink(3); %flipud(pink(3));
 mx = coordParam.mx;
 mn = coordParam.mn;
 eps = coordParam.eps;
