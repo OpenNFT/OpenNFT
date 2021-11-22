@@ -62,6 +62,7 @@ from PyQt5.QtGui import QRegExpValidator
 
 from opennft import (
     config,
+    conversions,
     runmatlab,
     ptbscreen,
     mmapimage,
@@ -1312,7 +1313,6 @@ class OpenNFT(QWidget):
             self.allSelectBtn.setEnabled(True)
             self.noneSelectBtn.setEnabled(True)
 
-
             if config.USE_SHAM:
                 logger.warning("Sham feedback has been selected")
                 fext = Path(self.P['ShamFile']).suffix
@@ -1403,6 +1403,7 @@ class OpenNFT(QWidget):
                 self.eng.assignin('base', 'isShowRtqaVol', False, nargout=0)
                 self.eng.assignin('base', 'isSmoothed', False, nargout=0)
 
+            self.onAllChecked()
             self.onChangeNegMapPolicy()
             self.eng.assignin('base', 'imageViewMode', int(self.imageViewMode), nargout=0)
             self.eng.assignin('base', 'FIRST_SNR_VOLUME', config.FIRST_SNR_VOLUME, nargout=0)
@@ -2140,22 +2141,31 @@ class OpenNFT(QWidget):
 
     # --------------------------------------------------------------------------
     def displayMosaicImage(self):
-        background_image = None
-        pos_map_image = None
-        neg_map_image = None
+        imgVolTempl = None
+        posVol = None
+        negVol = None
 
-        if 'imgViewTempl' not in self.P:
-            if self.eng.evalin('base', 'length(imgViewTempl)') > 0:
-                filename = self.eng.evalin('base', 'P.memMapFile')
+        imgVolTempl = np.array(self.eng.evalin('base', 'mainLoopData.imgVolTempl'))
+        dim3D = np.squeeze(self.eng.evalin('base', 'mainLoopData.dimVol')).T.astype(int)
+        if imgVolTempl.size > 0:
+            xdim, ydim, img2d_dimx, img2d_dimy = conversions.get_mosaic_dim(dim3D)
+            background_image = conversions.vol3d_img2d(imgVolTempl, xdim, ydim, img2d_dimx, img2d_dimy, dim3D)
+            self.mosaicImageView.set_background_image(background_image)
+        else:
+            return
 
-                with utils.timeit("Receiving mosaic image from Matlab (read memmap):"):
-                    self.mosaic_background_image_reader.read(filename, self.eng)
-                background_image = np.array(self.mosaic_background_image_reader.image)
-
-                if background_image.size > 0:
-                    self.mosaicImageView.set_background_image(background_image)
-            else:
-                return
+        # if 'imgViewTempl' not in self.P:
+        #     if self.eng.evalin('base', 'length(imgViewTempl)') > 0:
+        #         filename = self.eng.evalin('base', 'P.memMapFile')
+        #
+        #         with utils.timeit("Receiving mosaic image from Matlab (read memmap):"):
+        #             self.mosaic_background_image_reader.read(filename, self.eng)
+        #         background_image = np.array(self.mosaic_background_image_reader.image)
+        #
+        #         if background_image.size > 0:
+        #             self.mosaicImageView.set_background_image(background_image)
+        #     else:
+        #         return
 
         # SNR/Stat map display
         is_stat_map_created = bool(self.eng.evalin('base', 'mainLoopData.statMapCreated'))
@@ -2169,18 +2179,25 @@ class OpenNFT(QWidget):
         if (background_image is not None
                 and (is_stat_map_created and not is_rtqa_volume_checked
                      or is_snr_map_created and is_rtqa_volume_checked)):
-            with utils.timeit("Receiving mosaic maps from Matlab:"):
-                filename_pat = self.eng.evalin('base', 'P.memMapFile')
-                filename_pos = filename_pat.replace('shared', 'statMap')
-                filename_neg = filename_pat.replace('shared', 'statMap_neg')
+            # with utils.timeit("Receiving mosaic maps from Matlab:"):
+            #     filename_pat = self.eng.evalin('base', 'P.memMapFile')
+            #     filename_pos = filename_pat.replace('shared', 'statMap')
+            #     filename_neg = filename_pat.replace('shared', 'statMap_neg')
+            #
+            #     self.mosaic_pos_map_image_reader.read(filename_pos, self.eng)
+            #     self.mosaic_neg_map_image_reader.read(filename_neg, self.eng)
+            #
+            # pos_map_image = self.mosaic_pos_map_image_reader.image
+            # neg_map_image = self.mosaic_neg_map_image_reader.image
 
-                self.mosaic_pos_map_image_reader.read(filename_pos, self.eng)
-                self.mosaic_neg_map_image_reader.read(filename_neg, self.eng)
+            posVol = np.array(self.eng.evalin('base', 'mainLoopData.statMap3D_pos'))
+            negVol = np.array(self.eng.evalin('base', 'mainLoopData.statMap3D_neg'))
 
-            pos_map_image = self.mosaic_pos_map_image_reader.image
-            neg_map_image = self.mosaic_neg_map_image_reader.image
+        if posVol is not None:
 
-        if pos_map_image is not None:
+            xdim, ydim, img2d_dimx, img2d_dimy = conversions.get_mosaic_dim(dim3D)
+            pos_map_image = conversions.vol3d_img2d(posVol, xdim, ydim, img2d_dimx, img2d_dimy, dim3D)
+
             self.pos_map_thresholds_widget.compute_thresholds(pos_map_image)
             rgba_pos_map_image = self.pos_map_thresholds_widget.compute_rgba(pos_map_image)
 
@@ -2189,7 +2206,11 @@ class OpenNFT(QWidget):
         else:
             self.mosaicImageView.clear_pos_map()
 
-        if neg_map_image is not None:
+        if negVol is not None:
+
+            xdim, ydim, img2d_dimx, img2d_dimy = conversions.get_mosaic_dim(dim3D)
+            neg_map_image = conversions.vol3d_img2d(negVol, xdim, ydim, img2d_dimx, img2d_dimy, dim3D)
+
             self.neg_map_thresholds_widget.compute_thresholds(neg_map_image)
             rgba_neg_map_image = self.neg_map_thresholds_widget.compute_rgba(neg_map_image)
 

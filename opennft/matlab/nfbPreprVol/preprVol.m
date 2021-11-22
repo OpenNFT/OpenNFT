@@ -316,13 +316,14 @@ if flags.isIGLM
             min_smReslVol = min(smReslVol(:));
             normSmReslVol = (smReslVol-min_smReslVol) / ...
                 (max_smReslVol-min_smReslVol);
-            normSmReslVol_2D = vol3Dimg2D(normSmReslVol, slNrImg2DdimX, ...
-                slNrImg2DdimY, img2DdimX, img2DdimY, dimVol);
-            imgViewTempl = uint8(normSmReslVol_2D * 255);
-            assignin('base', 'imgViewTempl', imgViewTempl)
-            m = evalin('base', 'mmImgViewTempl');
-            shift = 0 * length(imgViewTempl(:)) + 1;
-            m.Data(shift:end) = imgViewTempl(:);
+            mainLoopData.imgVolTempl = normSmReslVol;
+%            normSmReslVol_2D = vol3Dimg2D(normSmReslVol, slNrImg2DdimX, ...
+%                slNrImg2DdimY, img2DdimX, img2DdimY, dimVol);
+%            imgViewTempl = uint8(normSmReslVol_2D * 255);
+%            assignin('base', 'imgViewTempl', imgViewTempl)
+%            m = evalin('base', 'mmImgViewTempl');
+%            shift = 0 * length(imgViewTempl(:)) + 1;
+%            m.Data(shift:end) = imgViewTempl(:);
         end
         
     else
@@ -332,14 +333,15 @@ if flags.isIGLM
         min_smReslVol = min(smReslVol(:));
         normSmReslVol = (smReslVol-min_smReslVol) / ...
             (max_smReslVol-min_smReslVol);
-        normSmReslVol_2D = vol3Dimg2D(normSmReslVol, slNrImg2DdimX, ...
-            slNrImg2DdimY, img2DdimX, img2DdimY, dimVol);
-        mainLoopData.normSmReslVol_2D = normSmReslVol_2D;
-        imgViewTempl = uint8(normSmReslVol_2D * 255);
-        assignin('base', 'imgViewTempl', imgViewTempl)
-        m = evalin('base', 'mmImgViewTempl');
-        shift = 0 * length(imgViewTempl(:)) + 1;
-        m.Data(shift:end) = imgViewTempl(:);
+        mainLoopData.imgVolTempl = normSmReslVol;
+%        normSmReslVol_2D = vol3Dimg2D(normSmReslVol, slNrImg2DdimX, ...
+%            slNrImg2DdimY, img2DdimX, img2DdimY, dimVol);
+%        mainLoopData.normSmReslVol_2D = normSmReslVol_2D;
+%        imgViewTempl = uint8(normSmReslVol_2D * 255);
+%        assignin('base', 'imgViewTempl', imgViewTempl)
+%        m = evalin('base', 'mmImgViewTempl');
+%        shift = 0 * length(imgViewTempl(:)) + 1;
+%        m.Data(shift:end) = imgViewTempl(:);
         
         pVal = mainLoopData.pVal;
         tContr = mainLoopData.tContr;
@@ -513,26 +515,23 @@ if ~isempty(idxActVoxIGLM.pos) && max(tn.pos) > 0 % handle empty activation map
     statMapVect = maskedStatMapVect_pos;
     statMap3D_pos(idxActVoxIGLM.pos) = statMapVect;
         
-    statMap2D_pos = vol3Dimg2D(statMap3D_pos, slNrImg2DdimX, slNrImg2DdimY, ...
-        img2DdimX, img2DdimY, dimVol) / maxTval_pos;
-    statMap2D_pos = statMap2D_pos * 255;
-   
-    if indVol == 26
-       1 ;
-    end
+%    statMap2D_pos = vol3Dimg2D(statMap3D_pos, slNrImg2DdimX, slNrImg2DdimY, ...
+%        img2DdimX, img2DdimY, dimVol) / maxTval_pos;
+%    statMap2D_pos = statMap2D_pos * 255;
     
-    if ~isShowRtqaVol && ~imageViewMode
-        
-        m_out =  evalin('base', 'mmStatMap');
-        m_out.Data.statMap = uint8(statMap2D_pos);
-        assignin('base', 'statMap', statMap2D_pos);
-        
-    end
+%    if ~isShowRtqaVol && ~imageViewMode
+%
+%        m_out =  evalin('base', 'mmStatMap');
+%        m_out.Data.statMap = uint8(statMap2D_pos);
+%        assignin('base', 'statMap', statMap2D_pos);
+%
+%    end
     
     % shared for SPM matlab helper
     m = evalin('base', 'mmStatVol');
     m.Data.posStatVol = statMap3D_pos;
     mainLoopData.statMapCreated = 1;
+    mainLoopData.statMap3D_pos = statMap3D_pos;
 end
 if ~isempty(idxActVoxIGLM.neg) && max(tn.neg) > 0
         
@@ -543,22 +542,22 @@ if ~isempty(idxActVoxIGLM.neg) && max(tn.neg) > 0
     
     clear idxActVoxIGLM
      
-    statMap2D_neg = vol3Dimg2D(statMap3D_neg, slNrImg2DdimX, slNrImg2DdimY, ...
-        img2DdimX, img2DdimY, dimVol) / maxTval_neg;
-    statMap2D_neg = statMap2D_neg * 255;
-    
-    if ~isShowRtqaVol && ~imageViewMode
-        
-        m_out =  evalin('base', 'mmStatMap_neg');
-        m_out.Data.statMap_neg = uint8(statMap2D_neg);
-        assignin('base', 'statMap_neg', statMap2D_neg);
-        
-    end
+%    statMap2D_neg = vol3Dimg2D(statMap3D_neg, slNrImg2DdimX, slNrImg2DdimY, ...
+%        img2DdimX, img2DdimY, dimVol) / maxTval_neg;
+%    statMap2D_neg = statMap2D_neg * 255;
+%
+%    if ~isShowRtqaVol && ~imageViewMode
+%
+%        m_out =  evalin('base', 'mmStatMap_neg');
+%        m_out.Data.statMap_neg = uint8(statMap2D_neg);
+%        assignin('base', 'statMap_neg', statMap2D_neg);
+%
+%    end
     
     % shared for SPM matlab helper
     m = evalin('base', 'mmStatVol');
     m.Data.negStatVol = statMap3D_neg;
-%     mainLoopData.statMapCreated = 1;
+    mainLoopData.statMap3D_neg = statMap3D_neg;
 
 end
 
