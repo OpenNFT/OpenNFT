@@ -435,7 +435,7 @@ class RTQAWindow(QtWidgets.QWidget):
             if data.any():
                 if plotitem.vb.state["targetRange"][1] == [-1, 1]:
                     plotitem.enableAutoRange(enable=True, x=False, y=True)
-                plotitem.setYRange(np.min(data), np.max(data), padding=0.0)
+                plotitem.setYRange(float(np.min(data)), float(np.max(data)), padding=0.0)
 
     # --------------------------------------------------------------------------
     def plotRTQA(self, n):

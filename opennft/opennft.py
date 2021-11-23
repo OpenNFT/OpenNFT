@@ -157,7 +157,7 @@ class OpenNFT(QWidget):
         self.orthView = projview.ProjectionsWidget(self)
         self.layoutOrthView.addWidget(self.orthView)
 
-        self.mosaic_background_image_reader = mmapimage.MosaicImageReader(image_name='imgViewTempl')
+        self.mosaic_background_image_reader = mmapimage.MosaicImageReader(image_name='imgVolTempl')
         self.mosaic_pos_map_image_reader = mmapimage.MosaicImageReader(image_name='statMap')
         self.mosaic_neg_map_image_reader = mmapimage.MosaicImageReader(image_name='statMap_neg')
 
@@ -1308,7 +1308,10 @@ class OpenNFT(QWidget):
                     roi = 'ROI_{}'.format(i+1)
                 roi_action = roi_menu.addAction(roi)
                 roi_action.setCheckable(True)
-                self.roiDict[roi] = False
+                if not (self.P['isRTQA'] and i+1==nrROIs):
+                    roi_action.setChecked(True)
+                    self.roiDict[roi] = True
+                    self.selectedRoi.append(i)
             self.roiSelectorBtn.setEnabled(True)
             self.allSelectBtn.setEnabled(True)
             self.noneSelectBtn.setEnabled(True)
@@ -1403,7 +1406,6 @@ class OpenNFT(QWidget):
                 self.eng.assignin('base', 'isShowRtqaVol', False, nargout=0)
                 self.eng.assignin('base', 'isSmoothed', False, nargout=0)
 
-            self.onAllChecked()
             self.onChangeNegMapPolicy()
             self.eng.assignin('base', 'imageViewMode', int(self.imageViewMode), nargout=0)
             self.eng.assignin('base', 'FIRST_SNR_VOLUME', config.FIRST_SNR_VOLUME, nargout=0)
@@ -1521,7 +1523,8 @@ class OpenNFT(QWidget):
         self.roiDict[action.text()] = action.isChecked()
         self.selectedRoi = np.where(list(self.roiDict.values()))[0]
 
-        self.windowRTQA.roiChecked(self.selectedRoi)
+        if self.windowRTQA:
+            self.windowRTQA.roiChecked(self.selectedRoi)
 
         self.drawRoiPlots(True)
         if self.isStopped:
@@ -1534,7 +1537,8 @@ class OpenNFT(QWidget):
             self.roiDict[action.text()] = True
 
         self.selectedRoi = np.where(list(self.roiDict.values()))[0]
-        self.windowRTQA.roiChecked(self.selectedRoi)
+        if self.windowRTQA:
+            self.windowRTQA.roiChecked(self.selectedRoi)
 
         self.drawRoiPlots(True)
         if self.isStopped:
@@ -1547,7 +1551,8 @@ class OpenNFT(QWidget):
             self.roiDict[action.text()] = False
 
         self.selectedRoi = np.where(list(self.roiDict.values()))[0]
-        self.windowRTQA.roiChecked(self.selectedRoi)
+        if self.windowRTQA:
+            self.windowRTQA.roiChecked(self.selectedRoi)
 
         self.drawRoiPlots(True)
         if self.isStopped:
@@ -2144,15 +2149,19 @@ class OpenNFT(QWidget):
         imgVolTempl = None
         posVol = None
         negVol = None
+        dim3D = np.squeeze(self.eng.evalin('base', 'int32(mainLoopData.dimVol)'))
+        xdim, ydim, img2d_dimx, img2d_dimy = conversions.get_mosaic_dim(dim3D)
 
-        imgVolTempl = np.array(self.eng.evalin('base', 'mainLoopData.imgVolTempl'))
-        dim3D = np.squeeze(self.eng.evalin('base', 'mainLoopData.dimVol')).T.astype(int)
-        if imgVolTempl.size > 0:
-            xdim, ydim, img2d_dimx, img2d_dimy = conversions.get_mosaic_dim(dim3D)
-            background_image = conversions.vol3d_img2d(imgVolTempl, xdim, ydim, img2d_dimx, img2d_dimy, dim3D)
-            self.mosaicImageView.set_background_image(background_image)
-        else:
-            return
+        if 'imgVolTempl' not in self.P:
+            if self.eng.evalin('base', 'length(imgVolTempl)') > 0:
+                with utils.timeit('Getting background volume:'):
+                    filename = self.eng.evalin('base', 'P.memMapFile')
+                    imgVolTempl = np.array(np.memmap(filename, dtype=np.float64,shape=tuple(dim3D), order='F'))
+                    if imgVolTempl.size > 0:
+                        background_image = conversions.vol3d_img2d(imgVolTempl, xdim, ydim, img2d_dimx, img2d_dimy, dim3D)
+                        self.mosaicImageView.set_background_image(background_image)
+                    else:
+                        return
 
         # if 'imgViewTempl' not in self.P:
         #     if self.eng.evalin('base', 'length(imgViewTempl)') > 0:
@@ -2179,9 +2188,27 @@ class OpenNFT(QWidget):
         if (background_image is not None
                 and (is_stat_map_created and not is_rtqa_volume_checked
                      or is_snr_map_created and is_rtqa_volume_checked)):
-            # with utils.timeit("Receiving mosaic maps from Matlab:"):
-            #     filename_pat = self.eng.evalin('base', 'P.memMapFile')
-            #     filename_pos = filename_pat.replace('shared', 'statMap')
+            with utils.timeit("Receiving stat volumes from Matlab:"):
+
+                if not is_rtqa_volume_checked:
+
+                    filename_pat = self.eng.evalin('base', 'P.memMapFile')
+                    filename = filename_pat.replace('shared', 'statVol')
+
+                    posVol = np.memmap(filename, dtype=np.float64, shape=tuple(dim3D), order='F')
+                    negVol = np.memmap(filename, dtype=np.float64, shape=tuple(dim3D), offset=posVol.size*posVol.data.itemsize, order='F')
+
+                    posVol = np.array(posVol, dtype=np.int32)
+                    negVol = np.array(negVol, dtype=np.int32)
+
+                else:
+
+                    filename_pat = self.eng.evalin('base', 'P.memMapFile')
+                    filename = filename_pat.replace('shared', 'RTQAVol')
+
+                    posVol = np.memmap(filename, dtype=np.float64, shape=tuple(dim3D), offset=0, order='F')
+                    posVol = np.array(posVol)
+
             #     filename_neg = filename_pat.replace('shared', 'statMap_neg')
             #
             #     self.mosaic_pos_map_image_reader.read(filename_pos, self.eng)
@@ -2190,13 +2217,11 @@ class OpenNFT(QWidget):
             # pos_map_image = self.mosaic_pos_map_image_reader.image
             # neg_map_image = self.mosaic_neg_map_image_reader.image
 
-            posVol = np.array(self.eng.evalin('base', 'mainLoopData.statMap3D_pos'))
-            negVol = np.array(self.eng.evalin('base', 'mainLoopData.statMap3D_neg'))
-
         if posVol is not None:
 
             xdim, ydim, img2d_dimx, img2d_dimy = conversions.get_mosaic_dim(dim3D)
-            pos_map_image = conversions.vol3d_img2d(posVol, xdim, ydim, img2d_dimx, img2d_dimy, dim3D)
+            with utils.timeit("Slicing positive volume:"):
+                pos_map_image = conversions.vol3d_img2d(posVol, xdim, ydim, img2d_dimx, img2d_dimy, dim3D)
 
             self.pos_map_thresholds_widget.compute_thresholds(pos_map_image)
             rgba_pos_map_image = self.pos_map_thresholds_widget.compute_rgba(pos_map_image)

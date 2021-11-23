@@ -66,9 +66,9 @@ end
 nrVoxInVol = prod(dimVol);
 
 %% Init memmapfile transport
-% mosaic volume from root matlab to python GUI
-%initMemmap(P.memMapFile, 'shared', uint8(zeros(img2DdimX, img2DdimY)), ...
-%    'uint8', 'mmImgViewTempl');
+% volume from root matlab to python GUI
+initMemmap(P.memMapFile, 'shared', zeros(nrVoxInVol,1), ...
+    'double', 'mmImgVolTempl', {'double', dimVol, 'imgVolTempl'});
 
 % statVol from root matlab to helper matlab
 statVol = zeros(dimVol);
@@ -98,15 +98,14 @@ end
 
 
 %% transfer background mosaic to Python
-%imgVolTempl = mainLoopData.imgVolTempl;
-%imgViewTempl = vol3Dimg2D(imgVolTempl, slNrImg2DdimX, slNrImg2DdimY, ...
-%    img2DdimX, img2DdimY, dimVol);
+imgVolTempl = mainLoopData.imgVolTempl;
+imgViewTempl = vol3Dimg2D(imgVolTempl, slNrImg2DdimX, slNrImg2DdimY, ...
+   img2DdimX, img2DdimY, dimVol);
 %imgViewTempl = uint8((imgViewTempl) / max(max(imgViewTempl)) * 255);
-%assignin('base', 'imgViewTempl', imgViewTempl);
-%
-%m = evalin('base', 'mmImgViewTempl');
-%shift = 0 * length(imgViewTempl(:)) + 1;
-%m.Data(shift:end) = imgViewTempl(:);
+assignin('base', 'imgVolTempl', imgVolTempl);
+
+m = evalin('base', 'mmImgVolTempl');
+m.Data.imgVolTempl = imgVolTempl(:,:,P.nrZeroPadVol+1:end-P.nrZeroPadVol);
 
 if P.isRTQA
     mainLoopData.procVol = zeros(dimVol);

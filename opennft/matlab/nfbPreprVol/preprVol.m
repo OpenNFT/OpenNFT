@@ -208,23 +208,10 @@ if P.isRTQA && indVolNorm > FIRST_SNR_VOLUME
         else
             outputVol = rtQA_matlab.cnrData.cnrVol;
         end
-   
-        if imageViewMode == 1 || imageViewMode == 2
-            % orthviewAnat (1) || orthviewEPI (2)
-            fname = strrep(P.memMapFile, 'shared', 'RTQAVol');
-            m_out = evalin('base', 'mmrtQAVol');
-            m_out.Data.rtQAVol = outputVol;
 
-        else
-            % mosaic (0)
-            statMap2D_pos = vol3Dimg2D(outputVol, slNrImg2DdimX, slNrImg2DdimY, img2DdimX, img2DdimY, dimVol);
-            statMap2D_pos = statMap2D_pos-min(statMap2D_pos(:));
-            statMap2D_pos = (statMap2D_pos / max(statMap2D_pos(:))) * 255;
-            m = evalin('base', 'mmStatMap');
-            m.Data.statMap = uint8(statMap2D_pos);
-            assignin('base', 'statMap', statMap2D_pos);
-        
-        end
+        fname = strrep(P.memMapFile, 'shared', 'RTQAVol');
+        m_out = evalin('base', 'mmrtQAVol');
+        m_out.Data.rtQAVol = outputVol;
         
         rtQA_matlab.snrMapCreated = 1;
            
@@ -317,13 +304,9 @@ if flags.isIGLM
             normSmReslVol = (smReslVol-min_smReslVol) / ...
                 (max_smReslVol-min_smReslVol);
             mainLoopData.imgVolTempl = normSmReslVol;
-%            normSmReslVol_2D = vol3Dimg2D(normSmReslVol, slNrImg2DdimX, ...
-%                slNrImg2DdimY, img2DdimX, img2DdimY, dimVol);
-%            imgViewTempl = uint8(normSmReslVol_2D * 255);
-%            assignin('base', 'imgViewTempl', imgViewTempl)
-%            m = evalin('base', 'mmImgViewTempl');
-%            shift = 0 * length(imgViewTempl(:)) + 1;
-%            m.Data(shift:end) = imgViewTempl(:);
+            assignin('base', 'imgVolTempl', normSmReslVol)
+            m = evalin('base', 'mmImgVolTempl');
+            m.Data.imgVolTempl = normSmReslVol;
         end
         
     else
@@ -334,14 +317,9 @@ if flags.isIGLM
         normSmReslVol = (smReslVol-min_smReslVol) / ...
             (max_smReslVol-min_smReslVol);
         mainLoopData.imgVolTempl = normSmReslVol;
-%        normSmReslVol_2D = vol3Dimg2D(normSmReslVol, slNrImg2DdimX, ...
-%            slNrImg2DdimY, img2DdimX, img2DdimY, dimVol);
-%        mainLoopData.normSmReslVol_2D = normSmReslVol_2D;
-%        imgViewTempl = uint8(normSmReslVol_2D * 255);
-%        assignin('base', 'imgViewTempl', imgViewTempl)
-%        m = evalin('base', 'mmImgViewTempl');
-%        shift = 0 * length(imgViewTempl(:)) + 1;
-%        m.Data(shift:end) = imgViewTempl(:);
+        assignin('base', 'imgVolTempl', normSmReslVol)
+        m = evalin('base', 'mmImgVolTempl');
+        m.Data.imgVolTempl = normSmReslVol;
         
         pVal = mainLoopData.pVal;
         tContr = mainLoopData.tContr;

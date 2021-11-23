@@ -216,6 +216,6 @@ end
 disp('Saving done')
 
 % Clear workspace
-evalin('base', 'clear mmImgViewTempl;');
+evalin('base', 'clear mmImgVolTempl;');
 evalin('base', 'clear mmStatVol;');
 evalin('base', 'clear mmOrthView;');

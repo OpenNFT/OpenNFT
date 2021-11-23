@@ -26,10 +26,8 @@ if P.isRTQA
     rtQA_matlab = evalin('base', 'rtQA_matlab');
 end
 
-evalin('base', 'clear mmImgViewTempl;');
+evalin('base', 'clear mmImgVolTempl;');
 evalin('base', 'clear mmStatVol;');
-evalin('base', 'clear mmStatMap;');
-evalin('base', 'clear mmStatMap_neg;');
 evalin('base', 'clear mmOrthView;');
 
 if ~exist(fullfile(P.WorkFolder,'Settings')), mkdir(fullfile(P.WorkFolder,'Settings')); end
