@@ -492,19 +492,7 @@ if ~isempty(idxActVoxIGLM.pos) && max(tn.pos) > 0 % handle empty activation map
     maxTval_pos = max(maskedStatMapVect_pos);
     statMapVect = maskedStatMapVect_pos;
     statMap3D_pos(idxActVoxIGLM.pos) = statMapVect;
-        
-%    statMap2D_pos = vol3Dimg2D(statMap3D_pos, slNrImg2DdimX, slNrImg2DdimY, ...
-%        img2DdimX, img2DdimY, dimVol) / maxTval_pos;
-%    statMap2D_pos = statMap2D_pos * 255;
-    
-%    if ~isShowRtqaVol && ~imageViewMode
-%
-%        m_out =  evalin('base', 'mmStatMap');
-%        m_out.Data.statMap = uint8(statMap2D_pos);
-%        assignin('base', 'statMap', statMap2D_pos);
-%
-%    end
-    
+
     % shared for SPM matlab helper
     m = evalin('base', 'mmStatVol');
     m.Data.posStatVol = statMap3D_pos;
@@ -519,19 +507,7 @@ if ~isempty(idxActVoxIGLM.neg) && max(tn.neg) > 0
     statMap3D_neg(idxActVoxIGLM.neg) = statMapVect;
     
     clear idxActVoxIGLM
-     
-%    statMap2D_neg = vol3Dimg2D(statMap3D_neg, slNrImg2DdimX, slNrImg2DdimY, ...
-%        img2DdimX, img2DdimY, dimVol) / maxTval_neg;
-%    statMap2D_neg = statMap2D_neg * 255;
-%
-%    if ~isShowRtqaVol && ~imageViewMode
-%
-%        m_out =  evalin('base', 'mmStatMap_neg');
-%        m_out.Data.statMap_neg = uint8(statMap2D_neg);
-%        assignin('base', 'statMap_neg', statMap2D_neg);
-%
-%    end
-    
+
     % shared for SPM matlab helper
     m = evalin('base', 'mmStatVol');
     m.Data.negStatVol = statMap3D_neg;

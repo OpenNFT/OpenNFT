@@ -2163,19 +2163,6 @@ class OpenNFT(QWidget):
                     else:
                         return
 
-        # if 'imgViewTempl' not in self.P:
-        #     if self.eng.evalin('base', 'length(imgViewTempl)') > 0:
-        #         filename = self.eng.evalin('base', 'P.memMapFile')
-        #
-        #         with utils.timeit("Receiving mosaic image from Matlab (read memmap):"):
-        #             self.mosaic_background_image_reader.read(filename, self.eng)
-        #         background_image = np.array(self.mosaic_background_image_reader.image)
-        #
-        #         if background_image.size > 0:
-        #             self.mosaicImageView.set_background_image(background_image)
-        #     else:
-        #         return
-
         # SNR/Stat map display
         is_stat_map_created = bool(self.eng.evalin('base', 'mainLoopData.statMapCreated'))
         if self.windowRTQA:
@@ -2208,14 +2195,6 @@ class OpenNFT(QWidget):
 
                     posVol = np.memmap(filename, dtype=np.float64, shape=tuple(dim3D), offset=0, order='F')
                     posVol = np.array(posVol)
-
-            #     filename_neg = filename_pat.replace('shared', 'statMap_neg')
-            #
-            #     self.mosaic_pos_map_image_reader.read(filename_pos, self.eng)
-            #     self.mosaic_neg_map_image_reader.read(filename_neg, self.eng)
-            #
-            # pos_map_image = self.mosaic_pos_map_image_reader.image
-            # neg_map_image = self.mosaic_neg_map_image_reader.image
 
         if posVol is not None:
 
