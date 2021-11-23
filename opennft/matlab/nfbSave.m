@@ -57,9 +57,6 @@ if mainLoopData.statMapCreated
     statMapVect = maskedStatMapVect;
     statMap3D_pos(idxActVoxIGLM.pos) = statMapVect;
 
-%    statMap2D_pos = vol3Dimg2D(statMap3D_pos, slNrImg2DdimX, slNrImg2DdimY, img2DdimX, img2DdimY, dimVol) / maxTval;
-%    statMap2D_pos = statMap2D_pos * 255;
-
     idxActVoxIGLM.neg = mainLoopData.idxActVoxIGLM.neg{indVolIglmIndx};
     maskedStatMapVect = tn.neg(idxActVoxIGLM.neg);
     maxTval = max(maskedStatMapVect);
@@ -68,23 +65,6 @@ if mainLoopData.statMapCreated
     end
     statMapVect = maskedStatMapVect;
     statMap3D_neg(idxActVoxIGLM.neg) = statMapVect;
-
-%    statMap2D_neg = vol3Dimg2D(statMap3D_neg, slNrImg2DdimX, slNrImg2DdimY, img2DdimX, img2DdimY, dimVol) / maxTval;
-%    statMap2D_neg = statMap2D_neg * 255;
-%
-%    mainLoopData.statMap2D_pos = statMap2D_pos;
-%    mainLoopData.statMap2D_neg = statMap2D_neg;
-%
-%    m = evalin('base', 'mmStatVol');
-%    m.Data.posStatVol = statMap3D_pos;
-%    assignin('base', 'mainLoopData', mainLoopData);
-%
-%    m_out =  evalin('base', 'mmStatMap');
-%    m_out.Data.statMap = uint8(statMap2D_pos);
-%
-%    m_out =  evalin('base', 'mmStatMap_neg');
-%    m_out.Data.statMap_neg = uint8(statMap2D_neg);
-%    assignin('base', 'statMap_neg', statMap2D_neg);
     
     if P.isRTQA
         n = mainLoopData.indVolNorm;

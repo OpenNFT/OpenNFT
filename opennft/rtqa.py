@@ -360,7 +360,7 @@ class RTQAWindow(QtWidgets.QWidget):
                 self.selectedRoiLabels[i].setVisible(False)
 
         self.init = True
-        if self.isStopped:
+        if self.isStopped and self.iteration!=1:
             self.plotRTQA(self.iteration+1)
 
     # --------------------------------------------------------------------------

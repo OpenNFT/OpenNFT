@@ -1399,6 +1399,7 @@ class OpenNFT(QWidget):
                 self.eng.assignin('base', 'isShowRtqaVol', self.windowRTQA.volumeCheckBox.isChecked(), nargout=0)
                 self.eng.assignin('base', 'isSmoothed', self.windowRTQA.smoothedCheckBox.isChecked(), nargout=0)
 
+                self.windowRTQA.roiChecked(self.selectedRoi)
                 self.windowRTQA.isStopped = False
 
             else:
@@ -1511,6 +1512,10 @@ class OpenNFT(QWidget):
 
         if self.isStopped:
             self.eng.offlineImageSwitch(nargout=0)
+            if self.imageViewMode == ImageViewMode.mosaic:
+                self.displayMosaicImage()
+            else:
+                self.onCheckOrthViewUpdated()
 
     # --------------------------------------------------------------------------
     def onSmoothedChecked(self):

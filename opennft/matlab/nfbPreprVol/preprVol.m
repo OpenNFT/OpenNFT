@@ -209,6 +209,11 @@ if P.isRTQA && indVolNorm > FIRST_SNR_VOLUME
             outputVol = rtQA_matlab.cnrData.cnrVol;
         end
 
+        ROIs = evalin('base', 'ROIs');
+        indx = ROIs(end).voxelIndex;
+        idx=ismember(1:numel(outputVol),indx);
+        outputVol(~idx) = 0;
+
         fname = strrep(P.memMapFile, 'shared', 'RTQAVol');
         m_out = evalin('base', 'mmrtQAVol');
         m_out.Data.rtQAVol = outputVol;
