@@ -502,7 +502,6 @@ if ~isempty(idxActVoxIGLM.pos) && max(tn.pos) > 0 % handle empty activation map
     m = evalin('base', 'mmStatVol');
     m.Data.posStatVol = statMap3D_pos;
     mainLoopData.statMapCreated = 1;
-    mainLoopData.statMap3D_pos = statMap3D_pos;
 end
 if ~isempty(idxActVoxIGLM.neg) && max(tn.neg) > 0
         
@@ -516,7 +515,6 @@ if ~isempty(idxActVoxIGLM.neg) && max(tn.neg) > 0
     % shared for SPM matlab helper
     m = evalin('base', 'mmStatVol');
     m.Data.negStatVol = statMap3D_neg;
-    mainLoopData.statMap3D_neg = statMap3D_neg;
 
 end
 
