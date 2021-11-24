@@ -2212,6 +2212,7 @@ class OpenNFT(QWidget):
             xdim, ydim, img2d_dimx, img2d_dimy = conversions.get_mosaic_dim(dim3D)
             with utils.timeit("Slicing positive volume:"):
                 pos_map_image = conversions.vol3d_img2d(posVol, xdim, ydim, img2d_dimx, img2d_dimy, dim3D)
+                pos_map_image = pos_map_image / np.max(pos_map_image)
 
             self.pos_map_thresholds_widget.compute_thresholds(pos_map_image)
             rgba_pos_map_image = self.pos_map_thresholds_widget.compute_rgba(pos_map_image)
@@ -2225,6 +2226,7 @@ class OpenNFT(QWidget):
 
             xdim, ydim, img2d_dimx, img2d_dimy = conversions.get_mosaic_dim(dim3D)
             neg_map_image = conversions.vol3d_img2d(negVol, xdim, ydim, img2d_dimx, img2d_dimy, dim3D)
+            neg_map_image = neg_map_image / np.max(neg_map_image)
 
             self.neg_map_thresholds_widget.compute_thresholds(neg_map_image)
             rgba_neg_map_image = self.neg_map_thresholds_widget.compute_rgba(neg_map_image)

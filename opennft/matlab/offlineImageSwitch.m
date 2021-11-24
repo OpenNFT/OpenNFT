@@ -20,7 +20,6 @@ function offlineImageSwitch
         indx = ROIs(end).voxelIndex;
         idx=ismember(1:numel(outputVol),indx);
         outputVol(~idx) = 0;
-        outputVol = (outputVol./max(outputVol(:)))*255;
 
         fname = strrep(P.memMapFile, 'shared', 'RTQAVol');
         m_out = memmapfile(fname, 'Writable', true, 'Format',  {'double', dimVol, 'rtQAVol'});
