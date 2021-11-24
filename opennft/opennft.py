@@ -169,7 +169,9 @@ class OpenNFT(QWidget):
         self.neg_map_thresholds_widget = mapimagewidget.MapImageThresholdsWidget(self, colormap='Blues_r')
 
         self.layoutHotMapThresholds.addWidget(self.pos_map_thresholds_widget)
+        self.pos_map_thresholds_widget.setEnabled(False)
         self.layoutNegMapThresholds.addWidget(self.neg_map_thresholds_widget)
+        self.neg_map_thresholds_widget.setEnabled(False)
 
         self.mcPlot = self.createMcPlot()
 
@@ -1419,6 +1421,8 @@ class OpenNFT(QWidget):
         logger.info("*** Started ***")
 
         self.cbImageViewMode.setEnabled(True)
+        self.pos_map_thresholds_widget.setEnabled(True)
+        self.neg_map_thresholds_widget.setEnabled(True)
         self.btnPlugins.setEnabled(False)
         self.btnSetup.setEnabled(False)
         self.btnStart.setEnabled(False)
@@ -1571,12 +1575,14 @@ class OpenNFT(QWidget):
             self.eng.assignin('base', 'rtQAMode', self.windowRTQA.currentMode, nargout=0)
             self.onShowRtqaVol()
 
-        if not self.btnSetup.isEnabled():
-            self.updateOrthViewAsync()
-            self.onInteractWithMapImage()
+        # if not self.btnSetup.isEnabled():
+        #     self.updateOrthViewAsync()
+        #     self.onInteractWithMapImage()
 
         if self.isStopped:
             self.eng.offlineImageSwitch(nargout=0)
+            self.updateOrthViewAsync()
+            self.onInteractWithMapImage()
 
     # --------------------------------------------------------------------------
     def onChooseSetFile(self):
