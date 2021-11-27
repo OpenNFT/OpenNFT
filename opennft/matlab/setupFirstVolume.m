@@ -86,7 +86,12 @@ imgVolTempl = mainLoopData.imgVolTempl;
 assignin('base', 'imgVolTempl', imgVolTempl);
 
 m = evalin('base', 'mmImgVolTempl');
-m.Data.imgVolTempl = imgVolTempl(:,:,P.nrZeroPadVol+1:end-P.nrZeroPadVol);
+if P.isZeroPadding
+    m.Data.imgVolTempl = imgVolTempl(:,:,P.nrZeroPadVol+1:end-P.nrZeroPadVol);
+else
+    m.Data.imgVolTempl = imgVolTempl;
+end
+
 
 if P.isRTQA
     mainLoopData.procVol = zeros(dimVol);

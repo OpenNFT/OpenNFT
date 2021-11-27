@@ -333,13 +333,15 @@ tmp_imgVolTempl  = spm_read_vols(infoVolTempl);
 dimTemplMotCorr     = infoVolTempl.dim;
 matTemplMotCorr     = infoVolTempl.mat;
 
-isZeroPadVol = 1;
-if isZeroPadVol
+if P.isZeroPadding
     nrZeroPadVol = 3;
     zeroPadVol = zeros(dimTemplMotCorr(1),dimTemplMotCorr(2),nrZeroPadVol);
     dimTemplMotCorr(3) = dimTemplMotCorr(3)+nrZeroPadVol*2;
     imgVolTempl = cat(3, cat(3, zeroPadVol, tmp_imgVolTempl), zeroPadVol);
+else
+    imgVolTempl = tmp_imgVolTempl;
 end
+
 
 mainLoopData.dimTemplMotCorr = dimTemplMotCorr;
 mainLoopData.matTemplMotCorr = matTemplMotCorr;
