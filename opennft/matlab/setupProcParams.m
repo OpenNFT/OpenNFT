@@ -180,7 +180,7 @@ end
 
 %% adding high-pass filter to iGLM
 % Note, different data processing iGLM approach as compared to SPM
-P.isHighPass = false;
+P.isHighPass = true;
 
 %% adding linear regressor
 P.isLinRegr = true;
