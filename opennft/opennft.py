@@ -937,7 +937,7 @@ class OpenNFT(QWidget):
             dataMC = np.array(self.outputSamples['motCorrParam'], ndmin=2)
             dvarsValue = self.eng.evalin('base', 'mainLoopData.dvarsValue')
             n = len(dataRealRaw[0, :]) - 1
-            data = dataRealRaw[:, n]
+            dataRaw = dataRealRaw[:, n]
 
             if n == 0:
                 offsetMCParam = np.array(self.eng.evalin('base','P.offsetMCParam'), ndmin=1)
@@ -969,9 +969,9 @@ class OpenNFT(QWidget):
             else:
                 dataNoRegGLM = np.array([])
 
-            self.windowRTQA.calculateSNR(data, dataNoRegGLM, n, isNewDCMBlock)
+            self.windowRTQA.calculateSNR(dataRaw, dataNoRegGLM, n, isNewDCMBlock)
             if not self.P['isRestingState']:
-                self.windowRTQA.calculateCNR(data, n, isNewDCMBlock)
+                self.windowRTQA.calculateCNR(dataRaw, n, isNewDCMBlock)
             self.windowRTQA.calculateSpikes(dataGLM, n, posSpikes, negSpikes)
             self.windowRTQA.calculateMSE(n, dataGLM, dataProc[:, n])
             self.windowRTQA.calculateDVARS(dvarsValue, isNewDCMBlock)

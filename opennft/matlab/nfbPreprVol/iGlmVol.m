@@ -92,8 +92,6 @@ spmActVox = sigma2n > recTh;
 idxSPMAct = find(spmActVox);
 
 % intersect of iGLM and SPM indexes
-tn.pos = tn.pos .* spmActVox;
-tn.neg = tn.neg .* spmActVox;
 idxActVox.pos = intersect(iglmActVox.pos, idxSPMAct);
 idxActVox.neg = intersect(iglmActVox.neg, idxSPMAct);
 clear iglmActVox spmActVox
