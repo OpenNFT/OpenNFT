@@ -201,22 +201,19 @@ if P.isRTQA && indVolNorm > FIRST_SNR_VOLUME
 
     % Transfer data for following visualization
     if isShowRtqaVol
-        
-        if ~rtQAMode || P.isRestingState
-            % 0 - SNR mode, 2 - CNR mode
-            outputVol = rtQA_matlab.snrData.snrVol;
-        else
-            outputVol = rtQA_matlab.cnrData.cnrVol;
-        end
 
         ROIs = evalin('base', 'ROIs');
         indx = ROIs(end).voxelIndex;
-        idx=ismember(1:numel(outputVol),indx);
-        outputVol(~idx) = 0;
+        rtqaVol = rtQA_matlab.rtqaVol;
+        if ~rtQAMode || P.isRestingState
+            rtqaVol(indx) = rtQA_matlab.snrData.snrVol(indx);
+        else
+            rtqaVol(indx) = rtQA_matlab.cnrData.cnrVol(indx);
+        end
 
         fname = strrep(P.memMapFile, 'shared', 'RTQAVol');
         m_out = evalin('base', 'mmrtQAVol');
-        m_out.Data.rtQAVol = outputVol;
+        m_out.Data.rtQAVol = rtqaVol;
         
         rtQA_matlab.snrMapCreated = 1;
            
@@ -301,7 +298,7 @@ if flags.isIGLM
         statMap3D_pos = mainLoopData.statMap3D_pos; % this structure is set with 0
         statMap3D_neg = mainLoopData.statMap3D_neg; % this structure is set with 0
         tempStatMap2D = mainLoopData.statMap2D; % this structure is set with 0
-        
+
         if ~fLockedTempl
             % assign Template
             max_smReslVol = max(smReslVol(:));

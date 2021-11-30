@@ -21,6 +21,7 @@ OpenNFT_ICON = ROOT_PATH / 'ui' / 'images' / 'appicon.png'
 MATLAB_FUNCTIONS_PATH = ROOT_PATH / 'matlab'
 
 AUTO_RTQA = True
+SELECT_ROIS = True
 
 # Matlab sessions
 MAIN_MATLAB_NAME = 'MATLAB_NFB_MAIN'
@@ -130,7 +131,7 @@ USE_ROI = True
 FIRST_SNR_VOLUME = 2
 
 # zero padding settings
-zeroPaddingFlag = True
+zeroPaddingFlag = False
 nrZeroPadVol = 3
 
 # FD defaults

@@ -235,6 +235,17 @@ else
     mainLoopData.statMap3D_iGLM = [];
 end
 
+mainLoopData.mf = [];
+mainLoopData.npv = 0;
+mainLoopData.statMapCreated = 0;
+
+%% Get motion realignment template data and volume
+infoVolTempl = spm_vol(P.MCTempl);
+mainLoopData.infoVolTempl = infoVolTempl;
+tmp_imgVolTempl  = spm_read_vols(infoVolTempl);
+dimTemplMotCorr     = infoVolTempl.dim;
+matTemplMotCorr     = infoVolTempl.mat;
+
 %% rtQA init
 rtQA_matlab.snrMapCreated = 0;
 if P.isRTQA
@@ -268,7 +279,7 @@ if P.isRTQA
         rtQA_matlab.tGlmProcTimeSeries.pos = zeros(P.NrROIs,P.VolumesNumber);
         rtQA_matlab.tGlmProcTimeSeries.neg = zeros(P.NrROIs,P.VolumesNumber);
     end
-    
+
     rtQA_matlab.snrData.snrVol = [];
     rtQA_matlab.snrData.meanSmoothed = [];
     rtQA_matlab.snrData.m2Smoothed = [];
@@ -318,20 +329,12 @@ if P.isRTQA
         rtQA_matlab.cnrData.basData.indexesBas = indexesBas;
         rtQA_matlab.cnrData.condData.indexesCond = indexesCond;
     end
+
+    rtQA_matlab.rtqaVol = zeros(dimTemplMotCorr);
+
 end
 
 clear SPM
-
-mainLoopData.mf = [];
-mainLoopData.npv = 0;
-mainLoopData.statMapCreated = 0;
-
-%% Get motion realignment template data and volume
-infoVolTempl = spm_vol(P.MCTempl);
-mainLoopData.infoVolTempl = infoVolTempl;
-tmp_imgVolTempl  = spm_read_vols(infoVolTempl);
-dimTemplMotCorr     = infoVolTempl.dim;
-matTemplMotCorr     = infoVolTempl.mat;
 
 if P.isZeroPadding
     nrZeroPadVol = 3;
