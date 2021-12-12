@@ -435,7 +435,7 @@ class RTQAWindow(QtWidgets.QWidget):
             if data.any():
                 if plotitem.vb.state["targetRange"][1] == [-1, 1]:
                     plotitem.enableAutoRange(enable=True, x=False, y=True)
-                plotitem.setYRange(float(np.min(data)), float(np.max(data)), padding=0.0)
+                plotitem.setYRange(np.min(data).astype(np.float32), np.max(data).astype(np.float32), padding=0.0)
 
     # --------------------------------------------------------------------------
     def plotRTQA(self, n):
@@ -680,10 +680,10 @@ class RTQAWindow(QtWidgets.QWidget):
         names.append('{0:.3f}'.format(self._fd.meanMD))
         pens.append(config.PLOT_PEN_COLORS[6])
         names.append('<br><u>Offset MC parameters</u> ')
-        pens.append(config.PLOT_PEN_COLORS[-1])
+        pens.append(config.PLOT_PEN_COLORS[6])
         for i in range(6):
             names.append('{0:.3e}'.format(self.offsetMCParam[0][i]))
-            pens.append(config.PLOT_PEN_COLORS[-1])
+            pens.append(config.PLOT_PEN_COLORS[6])
         self.makeTextValueLabel(self.mcmdValuesLabel, names, pens, lineBreak='<br>')
 
         # CNR
@@ -699,9 +699,9 @@ class RTQAWindow(QtWidgets.QWidget):
 
         if self.comboBox.currentIndex() == 2:
             names.append('<br><br>Baseline values   --- ')
-            pens.append(pg.mkPen(color=config.ROI_PLOT_COLORS[-1], width=1.2))
+            pens.append(config.PLOT_PEN_COLORS[6])
             names.append('Condition values -··-··- ')
-            pens.append(pg.mkPen(color=config.ROI_PLOT_COLORS[-1], width=1.2))
+            pens.append(config.PLOT_PEN_COLORS[6])
 
         self.makeTextValueLabel(self.valuesLabel, names, pens, lineBreak='<br>')
 
@@ -715,8 +715,8 @@ class RTQAWindow(QtWidgets.QWidget):
         for i in range(sz):
             cnt = cnt + np.count_nonzero(self.negSpikes[str(i)])
         names.append('<br>( Diamonds )<br>Negative spikes: ' + str(int(cnt)))
-        pens = [pg.mkPen(color=config.ROI_PLOT_COLORS[-1], width=1.2),
-                pg.mkPen(color=config.ROI_PLOT_COLORS[-1], width=1.2)]
+        pens = [config.PLOT_PEN_COLORS[6],
+                config.PLOT_PEN_COLORS[6]]
         self.makeTextValueLabel(self.spikesLabel, names, pens, lineBreak='<br>')
 
         # Linear trend
@@ -753,7 +753,7 @@ class RTQAWindow(QtWidgets.QWidget):
                 name = 'Whole brain ROI'
             else:
                 name = 'ROI_' + str(i + 1)
-            names.append(name + ': ' + '{0:.3f}'.format(float(self.rSNR[i, indexVolume])))
+            names.append(name + ': ' + '{0:.3f}'.format(float(self.rNoRegSNR[i, indexVolume])))
             pens.append(pg.mkPen(color=config.ROI_PLOT_COLORS[i], width=1.2))
 
         self.makeTextValueLabel(self.noRegSnrValueLabel, names, pens, lineBreak='<br>')
@@ -762,9 +762,9 @@ class RTQAWindow(QtWidgets.QWidget):
         names = ['DVARS ']
         pens = [config.PLOT_PEN_COLORS[6]]
         names.append('{0:.3f} '.format(float(self.DVARS[-1])))
+        pens.append(config.PLOT_PEN_COLORS[6])
         names.append('<br>Threshold : ' + str(int(self.excDVARS)))
-        pens.append(pg.mkPen(color=config.ROI_PLOT_COLORS[-1], width=1.2))
-        pens.append(pg.mkPen(color=config.ROI_PLOT_COLORS[-1], width=1.2))
+        pens.append(config.PLOT_PEN_COLORS[6])
 
         self.makeTextValueLabel(self.dvarsLabel, names, pens, lineBreak='<br>')
 

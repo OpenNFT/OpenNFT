@@ -946,7 +946,7 @@ class OpenNFT(QWidget):
 
             if self.P['Type'] != 'DCM':
                 betaCoeff = np.array(
-                    self.eng.evalin('base', 'cellfun(@(a)a(mainLoopData.indVolNorm,2),rtQA_matlab.betRegr)'), ndmin=2)
+                    self.eng.evalin('base', 'rtQA_matlab.linRegr(:,mainLoopData.indVolNorm)'), ndmin=2)
             else:
                 betaCoeff = np.zeros((int(self.P['NrROIs']), 1))
 
@@ -2400,12 +2400,7 @@ class OpenNFT(QWidget):
         for m in self.drawGivenRoiPlot.__dict__[plotitem][1]:
             items.remove(m)
 
-        if data.any():
-            if plotitem.vb.state["targetRange"][1] == [-1, 1]:
-                plotitem.enableAutoRange(enable=True, x=False, y=True)
-            plotitem.setYRange(np.min(data), np.max(data), padding=0.0)
-
-        # plotitem.autoRange(items=items)
+        plotitem.autoRange(items=items)
         if self.P['isRestingState']:
             grid = True
         else:

@@ -187,14 +187,14 @@ if P.isRTQA && indVolNorm > FIRST_SNR_VOLUME
     
     if flags.isDCM && ~isempty(find(P.beginDCMblock == indVol-P.nrSkipVol,1))
         rtQA_matlab.snrData.meanSmoothed = [];
-        rtQA_matlab.cnrData.basData.mean = [];
-        rtQA_matlab.cnrData.condData.mean = [];
+        rtQA_matlab.cnrData.basData.meanSmoothed = [];
+        rtQA_matlab.cnrData.condData.meanSmoothed = [];
     end
     
-    [ rtQA_matlab.snrData ] = snr_calc(indVolNorm, reslVol, smReslVol, rtQA_matlab.snrData, isSmoothed);
+    [ rtQA_matlab.snrData ] = snr_calc(indVolNorm,  smReslVol, rtQA_matlab.snrData, isSmoothed);
     
     if ~P.isRestingState
-        [ rtQA_matlab.cnrData ] = cnr_calc(indVolNorm, reslVol, smReslVol, rtQA_matlab.cnrData, isSmoothed);
+        [ rtQA_matlab.cnrData ] = cnr_calc(indVolNorm, smReslVol, rtQA_matlab.cnrData, isSmoothed);
     end
         
     rtQA_matlab.snrMapCreated = 1;
@@ -297,7 +297,6 @@ if flags.isIGLM
         statMapVect = mainLoopData.statMapVect;
         statMap3D_pos = mainLoopData.statMap3D_pos; % this structure is set with 0
         statMap3D_neg = mainLoopData.statMap3D_neg; % this structure is set with 0
-        tempStatMap2D = mainLoopData.statMap2D; % this structure is set with 0
 
         if ~fLockedTempl
             % assign Template
@@ -381,8 +380,6 @@ if flags.isIGLM
         mainLoopData.statMapVect = statMapVect;
         mainLoopData.statMap3D_pos = statMap3D_pos;
         mainLoopData.statMap3D_neg = statMap3D_neg;
-        tempStatMap2D = zeros(img2DdimY,img2DdimX);
-        mainLoopData.statMap2D = tempStatMap2D;
     end
     
     if flags.isPSC || flags.isSVM || flags.isCorr || P.isRestingState
@@ -443,7 +440,8 @@ if flags.isIGLM
     if ~isempty(neg_e2n)
         disp('HERE THE NEGATIVE e2n!!!')
     end
-    
+
+    tic
     if P.isRTQA
         if flags.isDCM
             ROIs = evalin('base', 'ROIsAnat');
@@ -456,22 +454,24 @@ if flags.isIGLM
             ROIs = evalin('base', 'ROIs');
         end
         for i=1:P.NrROIs
-            rtQA_matlab.Bn{i}(indIglm,:) = mean(Bn(ROIs(i).voxelIndex,:));
+            rtQA_matlab.ROI(i).Bn(indIglm,:) = mean(Bn(ROIs(i).voxelIndex,:));
             inds = intersect(ROIs(i).voxelIndex,find(tn.pos>0));
             if isempty(inds)
-                rtQA_matlab.tn.pos{i}(indIglm,:) = 0;
+                rtQA_matlab.ROI(i).tn.pos(indIglm) = 0;
             else
-                rtQA_matlab.tn.pos{i}(indIglm,:) = geomean(tn.pos(inds));
+                rtQA_matlab.ROI(i).tn.pos(indIglm) = geomean(tn.pos(inds));
             end
             inds = intersect(ROIs(i).voxelIndex,find(tn.neg>0));
             if isempty(inds)
-                rtQA_matlab.tn.neg{i}(indIglm,:) = 0;
+                rtQA_matlab.ROI(i).tn.neg(indIglm) = 0;
             else
-                rtQA_matlab.tn.neg{i}(indIglm,:) = geomean(tn.neg(inds));
+                rtQA_matlab.ROI(i).tn.neg(indIglm) = geomean(tn.neg(inds));
             end
-            rtQA_matlab.var{i}(indIglm,:) =  geomean(e2n(ROIs(i).voxelIndex,:));
+            rtQA_matlab.ROI(i).var(indIglm) =  geomean(e2n(ROIs(i).voxelIndex,:));
         end
     end
+    mainLoopData.iGLMrtQA_time(indVol) = toc;
+
     mainLoopData.nrBasFctRegr = nrBasFctRegr;
     mainLoopData.Cn = Cn;
     mainLoopData.Dn = Dn;
@@ -533,6 +533,8 @@ else
 end
 
 tStopIGLM = toc(tStartMotCorr);
+mainLoopData.iGLM_diff(indVol) = tStopIGLM-tStopSm;
+mainLoopData.tStopMC(indVol) = tStopMC;
 fprintf('TIMING: %d iter - PREPROC MC: %d s - SMOOTH: %d s - IGLM: %d s\n',...
     nrIter, tStopMC, tStopSm-tStopMC, tStopIGLM-tStopSm);
 

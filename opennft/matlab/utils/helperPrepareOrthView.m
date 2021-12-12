@@ -310,7 +310,7 @@ colour=[0      0      1;
         0.8157 0.8157 0.5765;
         0.5765 0      0;
         0.3922 0.6863 0;
-        0      0      0];%pink(3); %flipud(pink(3));
+        0.5765 1      0];%pink(3); %flipud(pink(3));
 mx = coordParam.mx;
 mn = coordParam.mn;
 eps = coordParam.eps;

@@ -83,13 +83,7 @@ for indRoi = 1:P.NrROIs
             isFixedGrROIforDCM = 0;
             if isFixedGrROIforDCM
                 % fixed group ROI
-                if ~P.smForDCM
-                    tmpVect = mainLoopData.procVol(...
-                        ROIsGroup(indRoi).voxelIndex);
-                else
-                    tmpVect = mainLoopData.procVol(...
-                        ROIsGroup(indRoi).voxelIndex);
-                end
+                tmpVect = mainLoopData.procVol(ROIsGroup(indRoi).voxelIndex);
                 rawTimeSeries(indRoi, indVolNorm) = mean(tmpVect);
                 % ROI index, for records
                 mainLoopData.adaptROIs(indRoi, indNFTrial+1) = 1;
@@ -242,7 +236,8 @@ for indRoi = 1:P.NrROIs
             rtQA_matlab.varErGlmProcTimeSeries(indRoi,tmp_ind_end) = erGlmProcTimeSeries'*erGlmProcTimeSeries/(tmp_ind_end - length(tContr.pos));
             
             tmpBetRegr = [ betaReg; zeros(mainLoopData.nrBasFct + nrRegrToCorrect - length(betaReg),1) ];
-            rtQA_matlab.betRegr{indRoi}(tmp_ind_end,:) = tmpBetRegr;
+            rtQA_matlab.ROI(indRoi).betRegr(tmp_ind_end,:) = tmpBetRegr;
+            rtQA_matlab.linRegr(indRoi,tmp_ind_end) = tmpBetRegr(2);
             
             tContr.pos = [ zeros(length(betaReg)-length(tContr.pos),1); tContr.pos ];
             tContr.neg = [ zeros(length(betaReg)-length(tContr.neg),1); tContr.neg ];
@@ -374,6 +369,7 @@ output.posMin = [mainLoopData.posMin; mainLoopData.mposMin];
 output.posMax = [mainLoopData.posMax; mainLoopData.mposMax];
 output.scalProcTimeSeries = mainLoopData.scalProcTimeSeries;
 
+output.glmProcTimeSeries = mainLoopData.glmProcTimeSeries;
 output.kalmanProcTimeSeries = mainLoopData.kalmanProcTimeSeries;
 output.displRawTimeSeries = mainLoopData.displRawTimeSeries;
 output.rawTimeSeries = mainLoopData.rawTimeSeries;
