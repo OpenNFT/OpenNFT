@@ -453,9 +453,6 @@ class OpenNFT(QWidget):
         self.onChangeNegMapVisible()
         self.onChangeUseUDPFeedback()
 
-        self.allSelectBtn.clicked.connect(self.onAllChecked)
-        self.noneSelectBtn.clicked.connect(self.onNoneChecked)
-
     # --------------------------------------------------------------------------
     def onChangePosMapVisible(self):
         is_visible = self.posMapCheckBox.isChecked()
@@ -1314,9 +1311,14 @@ class OpenNFT(QWidget):
                     roi_action.setChecked(True)
                     self.roiDict[roi] = True
                     self.selectedRoi.append(i)
+
+            action = roi_menu.addAction("All")
+            action.setCheckable(False)
+
+            action = roi_menu.addAction("None")
+            action.setCheckable(False)
+
             self.roiSelectorBtn.setEnabled(True)
-            self.allSelectBtn.setEnabled(True)
-            self.noneSelectBtn.setEnabled(True)
 
             if config.USE_SHAM:
                 logger.warning("Sham feedback has been selected")
@@ -1529,35 +1531,20 @@ class OpenNFT(QWidget):
 
     # --------------------------------------------------------------------------
     def onRoiChecked(self, action):
-        self.roiDict[action.text()] = action.isChecked()
-        self.selectedRoi = np.where(list(self.roiDict.values()))[0]
-
-        if self.windowRTQA:
-            self.windowRTQA.roiChecked(self.selectedRoi)
-
-        self.drawRoiPlots(True)
-        if self.isStopped:
-            self.updateOrthViewAsync()
-
-    # --------------------------------------------------------------------------
-    def onAllChecked(self):
-        for action in self.roiSelectorBtn.menu().actions():
-            action.setChecked(True)
-            self.roiDict[action.text()] = True
-
-        self.selectedRoi = np.where(list(self.roiDict.values()))[0]
-        if self.windowRTQA:
-            self.windowRTQA.roiChecked(self.selectedRoi)
-
-        self.drawRoiPlots(True)
-        if self.isStopped:
-            self.updateOrthViewAsync()
-
-    # --------------------------------------------------------------------------
-    def onNoneChecked(self):
-        for action in self.roiSelectorBtn.menu().actions():
-            action.setChecked(False)
-            self.roiDict[action.text()] = False
+        if action.text() == "All":
+            actList = self.roiSelectorBtn.menu().actions()
+            actList = actList[0:-2]
+            for act in actList:
+                act.setChecked(True)
+                self.roiDict[act.text()] = True
+        elif action.text() == "None":
+            actList = self.roiSelectorBtn.menu().actions()
+            actList = actList[0:-2]
+            for act in actList:
+                act.setChecked(False)
+                self.roiDict[act.text()] = False
+        else:
+            self.roiDict[action.text()] = action.isChecked()
 
         self.selectedRoi = np.where(list(self.roiDict.values()))[0]
         if self.windowRTQA:

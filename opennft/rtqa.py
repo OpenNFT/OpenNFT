@@ -648,17 +648,37 @@ class RTQAWindow(QtWidgets.QWidget):
         indexVolume = self.iteration
 
         # SNR
-        names = ['SNR ']
-        pens = [config.PLOT_PEN_COLORS[6]]
-        for i in range(sz):
-            if i == sz - 1:
-                name = 'Whole brain ROI'
-            else:
-                name = 'ROI_' + str(i + 1)
-            names.append(name + ': ' + '{0:.3f}'.format(float(self.rSNR[i, indexVolume])))
-            pens.append(pg.mkPen(color=config.ROI_PLOT_COLORS[i], width=1.2))
+        if self.comboBox.currentIndex() == 0:
+            names = ['SNR ']
+            pens = [config.PLOT_PEN_COLORS[6]]
+            for i in range(sz):
+                if i == sz - 1:
+                    name = 'Whole brain ROI'
+                else:
+                    name = 'ROI_' + str(i + 1)
+                names.append(name + ': ' + '{0:.3f}'.format(float(self.rSNR[i, indexVolume])))
+                pens.append(pg.mkPen(color=config.ROI_PLOT_COLORS[i], width=1.2))
 
-        self.makeTextValueLabel(self.valuesLabel, names, pens, lineBreak='<br>')
+            self.makeTextValueLabel(self.valuesLabel, names, pens, lineBreak='<br>')
+        elif self.comboBox.currentIndex() == 2:
+            # CNR
+            names = ['СNR ']
+            pens = [config.PLOT_PEN_COLORS[6]]
+            for i in range(self.nrROIs):
+                if i == sz - 1:
+                    name = 'Whole brain ROI'
+                else:
+                    name = 'ROI_' + str(i + 1)
+                names.append(name + ': ' + '{0:.3f}'.format(float(self.rCNR[i][indexVolume - 1])))
+                pens.append(pg.mkPen(color=config.ROI_PLOT_COLORS[i], width=1.2))
+
+            if self.comboBox.currentIndex() == 2:
+                names.append('<br><br>Baseline values   --- ')
+                pens.append(config.PLOT_PEN_COLORS[6])
+                names.append('Condition values -··-··- ')
+                pens.append(config.PLOT_PEN_COLORS[6])
+
+            self.makeTextValueLabel(self.valuesLabel, names, pens, lineBreak='<br>')
 
         # MCMD
         names = ['<u>FD</u> ']
@@ -685,25 +705,6 @@ class RTQAWindow(QtWidgets.QWidget):
             names.append('{0:.3e}'.format(self.offsetMCParam[0][i]))
             pens.append(config.PLOT_PEN_COLORS[6])
         self.makeTextValueLabel(self.mcmdValuesLabel, names, pens, lineBreak='<br>')
-
-        # CNR
-        names = ['СNR ']
-        pens = [config.PLOT_PEN_COLORS[6]]
-        for i in range(self.nrROIs):
-            if i == sz - 1:
-                name = 'Whole brain ROI'
-            else:
-                name = 'ROI_' + str(i + 1)
-            names.append(name + ': ' + '{0:.3f}'.format(float(self.rCNR[i][indexVolume - 1])))
-            pens.append(pg.mkPen(color=config.ROI_PLOT_COLORS[i], width=1.2))
-
-        if self.comboBox.currentIndex() == 2:
-            names.append('<br><br>Baseline values   --- ')
-            pens.append(config.PLOT_PEN_COLORS[6])
-            names.append('Condition values -··-··- ')
-            pens.append(config.PLOT_PEN_COLORS[6])
-
-        self.makeTextValueLabel(self.valuesLabel, names, pens, lineBreak='<br>')
 
         # Spikes
         cnt = 0
