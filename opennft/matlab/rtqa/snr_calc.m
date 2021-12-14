@@ -15,10 +15,10 @@ function [ snrData ] = snr_calc( iteration, volSmoothed, snrData, isSmoothed )
     
     shape = size(volSmoothed);
     snrData.snrVol = zeros(shape);
-    if isempty(meanSmoothed)
+    if snrData.iteration == 0
         snrData.meanSmoothed = volSmoothed;
         snrData.m2Smoothed = zeros(shape);
-        snrData.iteration = 1;
+        snrData.iteration = snrData.iteration + 1;
         return;
     end
 

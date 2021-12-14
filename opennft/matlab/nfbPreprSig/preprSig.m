@@ -172,7 +172,7 @@ for indRoi = 1:P.NrROIs
  
     % 2.2. exemplary step-wise addition of regressors, step = total nr of
     % Regressors, which may require a justification for particular project
-    regrStep = mainLoopData.nrBasFct + nrRegrToCorrect;
+    regrStep = P.nrBasFct + nrRegrToCorrect;
     if flags.isPSC || flags.isSVM || flags.isCorr || P.isRestingState
         if (tmp_ind_end < regrStep)
             tmpRegr = ones(tmp_ind_end,1);
@@ -235,7 +235,7 @@ for indRoi = 1:P.NrROIs
             erGlmProcTimeSeries = tmp_rawTimeSeries - cX0*betaReg;
             rtQA_matlab.varErGlmProcTimeSeries(indRoi,tmp_ind_end) = erGlmProcTimeSeries'*erGlmProcTimeSeries/(tmp_ind_end - length(tContr.pos));
             
-            tmpBetRegr = [ betaReg; zeros(mainLoopData.nrBasFct + nrRegrToCorrect - length(betaReg),1) ];
+            tmpBetRegr = [ betaReg; zeros(P.nrBasFct + nrRegrToCorrect - length(betaReg),1) ];
             rtQA_matlab.ROI(indRoi).betRegr(tmp_ind_end,:) = tmpBetRegr;
             rtQA_matlab.linRegr(indRoi,tmp_ind_end) = tmpBetRegr(2);
             

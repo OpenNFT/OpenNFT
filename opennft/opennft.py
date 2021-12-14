@@ -2377,10 +2377,17 @@ class OpenNFT(QWidget):
 
         if self.P['Prot'] != 'InterBlock':
             if plotwidget == self.procRoiPlot:
+
+                posMin = np.array(self.outputSamples['posMin'],ndmin=2)
+                posMax = np.array(self.outputSamples['posMax'],ndmin=2)
+                inds = list(self.selectedRoi)
+                inds.append(len(posMin)-1)
+                posMin = posMin[inds]
+                posMax = posMax[inds]
+
                 self.drawMinMaxProcRoiPlot(
                     init, data,
-                    self.outputSamples['posMin'],
-                    self.outputSamples['posMax'])
+                    posMin, posMax)
 
         items = plotitem.listDataItems()
 
@@ -2433,7 +2440,9 @@ class OpenNFT(QWidget):
             plotsMin = []
             plotsMax = []
 
-            for i, c in zip(range(sz), config.ROI_PLOT_COLORS):
+            plot_colors = np.array(config.ROI_PLOT_COLORS)
+            plot_colors = np.append(plot_colors[self.selectedRoi],plot_colors[-1])
+            for i, c in zip(range(sz), plot_colors):
                 plotsMin.append(plotitem.plot(pen=pg.mkPen(
                     color=c, width=config.ROI_PLOT_WIDTH)))
                 plotsMax.append(plotitem.plot(pen=pg.mkPen(
@@ -2447,8 +2456,8 @@ class OpenNFT(QWidget):
         for pmi, mi, pma, ma in zip(
                 self.drawMinMaxProcRoiPlot.__dict__['posMin'], posMin,
                 self.drawMinMaxProcRoiPlot.__dict__['posMax'], posMax):
-            mi = np.array(mi)
-            ma = np.array(ma)
+            mi = np.array(mi,ndmin=1)
+            ma = np.array(ma,ndmin=1)
             pmi.setData(x=x, y=mi)
             pma.setData(x=x, y=ma)
 

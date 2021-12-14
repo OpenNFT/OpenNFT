@@ -206,7 +206,7 @@ if ~P.isRestingState
         % exclude constant regressor
         mainLoopData.basFct = arRegr(P.aAR1, SPM.xX.X(:,1:end-1));
     end
-    [mainLoopData.numscan, mainLoopData.nrBasFct] = size(mainLoopData.basFct);
+    [mainLoopData.numscan, P.nrBasFct] = size(mainLoopData.basFct);
     % see notes above definition of spmMaskTh value
     mainLoopData.spmMaskTh = mean(SPM.xM.TH)*ones(size(SPM.xM.TH)); % SPM.xM.TH;
     mainLoopData.pVal = .01;
@@ -226,7 +226,7 @@ if ~P.isRestingState
 
 else
     mainLoopData.basFct = [];
-    mainLoopData.nrBasFct = 6; % size of motion regressors, P.motCorrParam
+    P.nrBasFct = 6; % size of motion regressors, P.motCorrParam
     mainLoopData.numscan = 0;
     [mainLoopData.numscan, mainLoopData.nrHighPassFct] = size(mainLoopData.K.X0);
     P.spmDesign = [];
@@ -245,6 +245,58 @@ mainLoopData.infoVolTempl = infoVolTempl;
 tmp_imgVolTempl  = spm_read_vols(infoVolTempl);
 dimTemplMotCorr     = infoVolTempl.dim;
 matTemplMotCorr     = infoVolTempl.mat;
+
+% number of regressors of no interest to correct with cGLM
+if ~P.isRestingState
+    % 6 MC regressors, linear trend, constant
+    nrRegrToCorrect = 8;
+else
+    % 2 linear trend, constant, because 6 MC regressors are nrBasFct
+    nrRegrToCorrect = 2;
+end
+if ~P.isRegrIGLM
+    if ~P.isRestingState
+        nrBasFctRegr = 1;
+    else
+        nrBasFctRegr = 6;
+    end
+else
+    nrHighPassRegr = size(mainLoopData.K.X0,2);
+    if ~P.isRestingState
+        nrMotRegr = 6;
+        if P.isHighPass && P.isMotionRegr && P.isLinRegr
+            nrBasFctRegr = nrMotRegr+nrHighPassRegr+2;
+            % adding 6 head motion, linear, high-pass filter, and
+            % constant regressors
+        elseif ~P.isHighPass && P.isMotionRegr && P.isLinRegr
+            nrBasFctRegr = nrMotRegr+2;
+            % adding 6 head motion, linear, and constant regressors
+        elseif P.isHighPass && ~P.isMotionRegr && P.isLinRegr
+            nrBasFctRegr = nrHighPassRegr+2;
+            % adding high-pass filter, linear, and constant regressors
+        elseif P.isHighPass && ~P.isMotionRegr && ~P.isLinRegr
+            nrBasFctRegr = nrHighPassRegr+1;
+            % adding high-pass filter, and constant regressors
+        elseif ~P.isHighPass && ~P.isMotionRegr && P.isLinRegr
+            nrBasFctRegr = 2; % adding linear, and constant regressors
+        end
+    else
+        if P.isHighPass && P.isLinRegr
+            nrBasFctRegr = nrHighPassRegr+2;
+            % adding 6 head motion, linear, high-pass filter, and
+            % constant regressors
+        elseif ~P.isHighPass && P.isLinRegr
+            nrBasFctRegr = 2;
+            % adding 6 head motion, linear, and constant regressors
+        elseif P.isHighPass && ~P.isLinRegr
+            nrBasFctRegr = nrHighPassRegr+1;
+            % adding high-pass filter, and constant regressors
+        end
+    end
+end
+
+P.nrRegrToCorrect = nrRegrToCorrect;
+P.nrBasFctRegr = nrBasFctRegr;
 
 %% rtQA init
 rtQA_matlab.snrMapCreated = 0;
@@ -281,59 +333,10 @@ if P.isRTQA
     rtQA_matlab.snrData.snrVol = [];
     rtQA_matlab.snrData.meanSmoothed = [];
     rtQA_matlab.snrData.m2Smoothed = [];
-    rtQA_matlab.snrData.iteration = 1;
+    rtQA_matlab.snrData.iteration = 0;
 
-    % number of regressors of no interest to correct with cGLM
-    if ~P.isRestingState
-        % 6 MC regressors, linear trend, constant
-        nrRegrToCorrect = 8; 
-    else
-        % 2 linear trend, constant, because 6 MC regressors are nrBasFct
-        nrRegrToCorrect = 2; 
-    end
-    if ~P.isRegrIGLM
-        if ~P.isRestingState
-            nrBasFctRegr = 1;
-        else
-            nrBasFctRegr = 6;
-        end
-    else
-        nrHighPassRegr = size(mainLoopData.K.X0,2);
-        if ~P.isRestingState
-            nrMotRegr = 6;
-            if P.isHighPass && P.isMotionRegr && P.isLinRegr
-                nrBasFctRegr = nrMotRegr+nrHighPassRegr+2;
-                % adding 6 head motion, linear, high-pass filter, and
-                % constant regressors
-            elseif ~P.isHighPass && P.isMotionRegr && P.isLinRegr
-                nrBasFctRegr = nrMotRegr+2;
-                % adding 6 head motion, linear, and constant regressors
-            elseif P.isHighPass && ~P.isMotionRegr && P.isLinRegr
-                nrBasFctRegr = nrHighPassRegr+2;
-                % adding high-pass filter, linear, and constant regressors
-            elseif P.isHighPass && ~P.isMotionRegr && ~P.isLinRegr
-                nrBasFctRegr = nrHighPassRegr+1;
-                % adding high-pass filter, and constant regressors
-            elseif ~P.isHighPass && ~P.isMotionRegr && P.isLinRegr
-                nrBasFctRegr = 2; % adding linear, and constant regressors
-            end
-        else
-            if P.isHighPass && P.isLinRegr
-                nrBasFctRegr = nrHighPassRegr+2;
-                % adding 6 head motion, linear, high-pass filter, and
-                % constant regressors
-            elseif ~P.isHighPass && P.isLinRegr
-                nrBasFctRegr = 2;
-                % adding 6 head motion, linear, and constant regressors
-            elseif P.isHighPass && ~P.isLinRegr
-                nrBasFctRegr = nrHighPassRegr+1;
-                % adding high-pass filter, and constant regressors
-            end
-        end
-    end
-
-    ROI.betaRegr = zeros(duration, mainLoopData.nrBasFct+nrRegrToCorrect);
-    ROI.Bn = zeros(duration, mainLoopData.nrBasFct+nrBasFctRegr);
+    ROI.betaRegr = zeros(duration, P.nrBasFct+nrRegrToCorrect);
+    ROI.Bn = zeros(duration, P.nrBasFct+nrBasFctRegr);
     ROI.tn.pos = zeros(duration, 1);
     ROI.tn.neg = zeros(duration, 1);
     
@@ -345,11 +348,11 @@ if P.isRTQA
 
         rtQA_matlab.cnrData.basData.meanSmoothed = [];
         rtQA_matlab.cnrData.basData.m2Smoothed = [];
-        rtQA_matlab.cnrData.basData.iteration = 1;
+        rtQA_matlab.cnrData.basData.iteration = 0;
 
         rtQA_matlab.cnrData.condData.meanSmoothed = [];
         rtQA_matlab.cnrData.condData.m2Smoothed = [];
-        rtQA_matlab.cnrData.condData.iteration = 1;
+        rtQA_matlab.cnrData.condData.iteration = 0;
 
         % indexes of baseline and condition for CNR calculation
         tmpindexesCond = find(SPM.xX.X(:,contains(SPM.xX.name, P.CondIndexNames( 2 )))>0.6); % Index for Regulation block == 2

@@ -16,14 +16,16 @@ function [ cnrData ] = cnr_calc( index, volSmoothed, cnrData, isSmoothed )
     condData = cnrData.condData;
     
     if ismember(index,basData.indexesBas)
-        if isempty(basData.meanSmoothed)
+        if basData.iteration == 0
             basData.meanSmoothed = volSmoothed;
             basData.m2Smoothed = zeros(shape);
+            basData.iteration = basData.iteration + 1;
             cnrData.basData = basData;
-            basData.iteration = 1;
             return;
         end
         
+
+        basData.iteration = basData.iteration + 1;
         meanPrev = basData.meanSmoothed;
         
         basData.meanSmoothed = basData.meanSmoothed + (volSmoothed - basData.meanSmoothed) / basData.iteration;
@@ -32,14 +34,15 @@ function [ cnrData ] = cnr_calc( index, volSmoothed, cnrData, isSmoothed )
     end
     
     if ismember(index,condData.indexesCond)
-        if isempty(condData.meanSmoothed)
+        if condData.iteration == 0
             condData.meanSmoothed = volSmoothed;
             condData.m2Smoothed = zeros(shape);
+            condData.iteration = condData.iteration + 1;
             cnrData.condData = condData;
-            condData.iteration = 1;
-            return
+            return;
         end
         
+        condData.iteration = condData.iteration + 1;
         meanPrev = condData.meanSmoothed;
 
         condData.meanSmoothed = condData.meanSmoothed + (volSmoothed - condData.meanSmoothed) / condData.iteration;
@@ -47,7 +50,7 @@ function [ cnrData ] = cnr_calc( index, volSmoothed, cnrData, isSmoothed )
 
     end
     
-    if ~isempty(condData.meanSmoothed)
+    if condData.iteration > 0
 
         meanBas = basData.meanSmoothed;
         meanCond = condData.meanSmoothed;

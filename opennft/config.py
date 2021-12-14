@@ -79,7 +79,8 @@ ROI_PLOT_COLORS = [
     pg.mkColor(208, 208, 147, 255),
     pg.mkColor(147, 0, 0, 255),
     pg.mkColor(100, 175, 0, 255),
-    pg.mkColor(147, 255, 0, 255)
+    pg.mkColor(147, 255, 0, 255),
+    pg.mkColor(120, 147, 147, 255)
 ]
 
 MUSTER_PEN_COLORS = [

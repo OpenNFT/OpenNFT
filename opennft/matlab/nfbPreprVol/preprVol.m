@@ -186,9 +186,9 @@ spm_smooth(reslVol, smReslVol, gKernel);
 if P.isRTQA && indVolNorm > FIRST_SNR_VOLUME
     
     if flags.isDCM && ~isempty(find(P.beginDCMblock == indVol-P.nrSkipVol,1))
-        rtQA_matlab.snrData.meanSmoothed = [];
-        rtQA_matlab.cnrData.basData.meanSmoothed = [];
-        rtQA_matlab.cnrData.condData.meanSmoothed = [];
+        rtQA_matlab.snrData.iteration = 0;
+        rtQA_matlab.cnrData.basData.iteration = 0;
+        rtQA_matlab.cnrData.condData.iteration = 0;
     end
     
     [ rtQA_matlab.snrData ] = snr_calc(indVolNorm,  smReslVol, rtQA_matlab.snrData, isSmoothed);
@@ -243,6 +243,9 @@ else
         ROIs = evalin('base','ROIs');            
         indROI = ROIs(end).voxelIndex;
         dvarsDiff = ((smReslVol(indROI) - mainLoopData.procVol(indROI)) ./ P.scaleFactorDVARS).^2;
+        mainLoopData.prevVol(indVol) = mean(mainLoopData.procVol(indROI),"all");
+        mainLoopData.currVol(indVol) = mean(smReslVol(indROI),"all");
+        mainLoopData.dvarsDiff(indVol,:) = (smReslVol(indROI) - mainLoopData.procVol(indROI)).^2;
         mainLoopData.dvarsValue = 100 * sqrt(mean(dvarsDiff(:)));
     end
     mainLoopData.procVol = smReslVol;
@@ -250,10 +253,11 @@ end
 
 % iGLM init
 nrVoxInVol = mainLoopData.nrVoxInVol;
-nrBasFct = mainLoopData.nrBasFct;
+nrBasFct = P.nrBasFct;
 numscan = mainLoopData.numscan;
 spmMaskTh = mainLoopData.spmMaskTh;
 basFct = mainLoopData.basFct;
+nrBasFctRegr = P.nrBasFctRegr;
 
 %% AR(1) iGLM, i.e. after assigning _2D matrices used for ROI's extractions
 if P.iglmAR1
@@ -286,7 +290,6 @@ if flags.isIGLM
         
         pVal = mainLoopData.pVal;
         tContr = mainLoopData.tContr;
-        nrBasFctRegr = mainLoopData.nrBasFctRegr;
         Cn = mainLoopData.Cn;
         Dn = mainLoopData.Dn;
         s2n = mainLoopData.s2n;
@@ -324,47 +327,7 @@ if flags.isIGLM
         
         pVal = mainLoopData.pVal;
         tContr = mainLoopData.tContr;
-        
-        if ~P.isRegrIGLM
-            if ~P.isRestingState
-                nrBasFctRegr = 1;
-            else
-                nrBasFctRegr = 6;
-            end
-        else
-            nrHighPassRegr = size(mainLoopData.K.X0,2);
-            if ~P.isRestingState
-                nrMotRegr = 6;
-                if P.isHighPass && P.isMotionRegr && P.isLinRegr
-                    nrBasFctRegr = nrMotRegr+nrHighPassRegr+2;
-                    % adding 6 head motion, linear, high-pass filter, and
-                    % constant regressors
-                elseif ~P.isHighPass && P.isMotionRegr && P.isLinRegr
-                    nrBasFctRegr = nrMotRegr+2;
-                    % adding 6 head motion, linear, and constant regressors
-                elseif P.isHighPass && ~P.isMotionRegr && P.isLinRegr
-                    nrBasFctRegr = nrHighPassRegr+2;
-                    % adding high-pass filter, linear, and constant regressors
-                elseif P.isHighPass && ~P.isMotionRegr && ~P.isLinRegr
-                    nrBasFctRegr = nrHighPassRegr+1;
-                    % adding high-pass filter, and constant regressors
-                elseif ~P.isHighPass && ~P.isMotionRegr && P.isLinRegr
-                    nrBasFctRegr = 2; % adding linear, and constant regressors
-                end
-            else
-                if P.isHighPass && P.isLinRegr
-                    nrBasFctRegr = nrHighPassRegr+2;
-                    % adding 6 head motion, linear, high-pass filter, and
-                    % constant regressors
-                elseif ~P.isHighPass && P.isLinRegr
-                    nrBasFctRegr = 2;
-                    % adding 6 head motion, linear, and constant regressors
-                elseif P.isHighPass && ~P.isLinRegr
-                    nrBasFctRegr = nrHighPassRegr+1;
-                    % adding high-pass filter, and constant regressors
-                end
-            end
-        end
+
         Cn = zeros(nrBasFct + nrBasFctRegr);
         Dn = zeros(nrVoxInVol, nrBasFct + nrBasFctRegr);
         s2n = zeros(nrVoxInVol, 1);
@@ -441,7 +404,6 @@ if flags.isIGLM
         disp('HERE THE NEGATIVE e2n!!!')
     end
 
-    tic
     if P.isRTQA
         if flags.isDCM
             ROIs = evalin('base', 'ROIsAnat');
@@ -470,9 +432,7 @@ if flags.isIGLM
             rtQA_matlab.ROI(i).var(indIglm) =  geomean(e2n(ROIs(i).voxelIndex,:));
         end
     end
-    mainLoopData.iGLMrtQA_time(indVol) = toc;
 
-    mainLoopData.nrBasFctRegr = nrBasFctRegr;
     mainLoopData.Cn = Cn;
     mainLoopData.Dn = Dn;
     mainLoopData.s2n = s2n;
