@@ -18,7 +18,6 @@ imageViewMode = evalin('base', 'imageViewMode');
 if P.isRTQA
     isShowRtqaVol = evalin('base', 'isShowRtqaVol');
     rtQAMode = evalin('base', 'rtQAMode');
-    isSmoothed = evalin('base', 'isSmoothed');
     rtQA_matlab = evalin('base', 'rtQA_matlab');
     FIRST_SNR_VOLUME = evalin('base', 'FIRST_SNR_VOLUME');
 else
@@ -35,6 +34,13 @@ end
 flags = getFlagsType(P);
 if flags.isDCM
     ROIsAnat = evalin('base', 'ROIsAnat');
+    if P.isRTQA
+        wholeBrainROI = evalin('base','ROIs');
+        ROIsAnat(P.NrROIs).voxelIndex = wholeBrainROI.voxelIndex;
+        ROIsAnat(P.NrROIs).mat = wholeBrainROI.mat;
+        ROIsAnat(P.NrROIs).dim = wholeBrainROI.dim;
+        ROIsAnat(P.NrROIs).vol = wholeBrainROI.vol;
+    end
 end
 
 % realign and reslice init
@@ -179,45 +185,34 @@ spm_smooth(reslVol, smReslVol, gKernel);
 if P.isRTQA && indVolNorm > FIRST_SNR_VOLUME
     
     if flags.isDCM && ~isempty(find(P.beginDCMblock == indVol-P.nrSkipVol,1))
-        rtQA_matlab.snrData.meanSmoothed = [];
-        rtQA_matlab.cnrData.basData.mean = [];
-        rtQA_matlab.cnrData.condData.mean = [];
+        rtQA_matlab.snrData.iteration = 0;
+        rtQA_matlab.cnrData.basData.iteration = 0;
+        rtQA_matlab.cnrData.condData.iteration = 0;
     end
     
-    [ rtQA_matlab.snrData ] = snr_calc(indVolNorm, reslVol, smReslVol, rtQA_matlab.snrData, isSmoothed);
+    [ rtQA_matlab.snrData ] = snr_calc(indVolNorm,  smReslVol, rtQA_matlab.snrData);
     
     if ~P.isRestingState
-        [ rtQA_matlab.cnrData ] = cnr_calc(indVolNorm, reslVol, smReslVol, rtQA_matlab.cnrData, isSmoothed);
+        [ rtQA_matlab.cnrData ] = cnr_calc(indVolNorm, smReslVol, rtQA_matlab.cnrData);
     end
         
     rtQA_matlab.snrMapCreated = 1;
 
     % Transfer data for following visualization
     if isShowRtqaVol
-        
-        if ~rtQAMode || P.isRestingState
-            % 0 - SNR mode, 2 - CNR mode
-            outputVol = rtQA_matlab.snrData.snrVol;
-        else
-            outputVol = rtQA_matlab.cnrData.cnrVol;
-        end
-   
-        if imageViewMode == 1 || imageViewMode == 2
-            % orthviewAnat (1) || orthviewEPI (2)
-            fname = strrep(P.memMapFile, 'shared', 'RTQAVol');
-            m_out = evalin('base', 'mmrtQAVol');
-            m_out.Data.rtQAVol = outputVol;
 
+        ROIs = evalin('base', 'ROIs');
+        indx = ROIs(end).voxelIndex;
+        rtqaVol = rtQA_matlab.rtqaVol;
+        if ~rtQAMode || P.isRestingState
+            rtqaVol(indx) = rtQA_matlab.snrData.snrVol(indx);
         else
-            % mosaic (0)
-            statMap2D_pos = vol3Dimg2D(outputVol, slNrImg2DdimX, slNrImg2DdimY, img2DdimX, img2DdimY, dimVol);
-            statMap2D_pos = statMap2D_pos-min(statMap2D_pos(:));
-            statMap2D_pos = (statMap2D_pos / max(statMap2D_pos(:))) * 255;
-            m = evalin('base', 'mmStatMap');
-            m.Data.statMap = uint8(statMap2D_pos);
-            assignin('base', 'statMap', statMap2D_pos);
-        
+            rtqaVol(indx) = rtQA_matlab.cnrData.cnrVol(indx);
         end
+
+        fname = strrep(P.memMapFile, 'shared', 'RTQAVol');
+        m_out = evalin('base', 'mmrtQAVol');
+        m_out.Data.rtQAVol = rtqaVol;
         
         rtQA_matlab.snrMapCreated = 1;
            
@@ -229,34 +224,36 @@ else
 end
     
 
-    
-if flags.isPSC || flags.isSVM || flags.isCorr || P.isRestingState
-    % Smoothed Vol 3D -> 2D
-    smReslVol_2D = vol3Dimg2D(smReslVol, slNrImg2DdimX, slNrImg2DdimY, ...
-        img2DdimX, img2DdimY, dimVol);
-    mainLoopData.smReslVol_2D = smReslVol_2D;
-end
-
-if flags.isDCM
-    if ~P.smForDCM
-        % NoN-Smoothed Vol 3D -> 2D
-        nosmReslVol_2D = vol3Dimg2D(reslVol, slNrImg2DdimX, ...
-            slNrImg2DdimY, img2DdimX, img2DdimY, dimVol);
-        mainLoopData.nosmReslVol_2D = nosmReslVol_2D;
-    else
-        % Smoothed Vol 3D -> 2D
-        smReslVol_2D = vol3Dimg2D(smReslVol, slNrImg2DdimX, ...
-            slNrImg2DdimY, img2DdimX, img2DdimY, dimVol);
-        mainLoopData.smReslVol_2D = smReslVol_2D;
+% DVARS calulcation and new volume assign
+if flags.isDCM && ~P.smForDCM
+    % for DCM without smoothing
+    if P.isRTQA
+        ROIs = evalin('base','ROIs');            
+        indROI = ROIs.voxelIndex;
+        % on current iteration mainLoopData has previous volume
+        dvarsDiff = ((reslVol(indROI) - mainLoopData.procVol(indROI)) ./ P.scaleFactorDVARS).^2;
+        mainLoopData.dvarsValue = 100 * sqrt(mean(dvarsDiff(:)));
     end
+    % after DVARS calculation previous volume re-assign with current
+    mainLoopData.procVol = reslVol;
+else
+    % for PSC/SVM/Resting state/DCM with smoothing
+    if P.isRTQA
+        ROIs = evalin('base','ROIs');            
+        indROI = ROIs(end).voxelIndex;
+        dvarsDiff = ((smReslVol(indROI) - mainLoopData.procVol(indROI)) ./ P.scaleFactorDVARS).^2;
+        mainLoopData.dvarsValue = 100 * sqrt(mean(dvarsDiff(:)));
+    end
+    mainLoopData.procVol = smReslVol;
 end
 
 % iGLM init
 nrVoxInVol = mainLoopData.nrVoxInVol;
-nrBasFct = mainLoopData.nrBasFct;
+nrBasFct = P.nrBasFct;
 numscan = mainLoopData.numscan;
 spmMaskTh = mainLoopData.spmMaskTh;
 basFct = mainLoopData.basFct;
+nrBasFctRegr = P.nrBasFctRegr;
 
 %% AR(1) iGLM, i.e. after assigning _2D matrices used for ROI's extractions
 if P.iglmAR1
@@ -289,7 +286,6 @@ if flags.isIGLM
         
         pVal = mainLoopData.pVal;
         tContr = mainLoopData.tContr;
-        nrBasFctRegr = mainLoopData.nrBasFctRegr;
         Cn = mainLoopData.Cn;
         Dn = mainLoopData.Dn;
         s2n = mainLoopData.s2n;
@@ -300,21 +296,17 @@ if flags.isIGLM
         statMapVect = mainLoopData.statMapVect;
         statMap3D_pos = mainLoopData.statMap3D_pos; % this structure is set with 0
         statMap3D_neg = mainLoopData.statMap3D_neg; % this structure is set with 0
-        tempStatMap2D = mainLoopData.statMap2D; % this structure is set with 0
-        
+
         if ~fLockedTempl
             % assign Template
             max_smReslVol = max(smReslVol(:));
             min_smReslVol = min(smReslVol(:));
             normSmReslVol = (smReslVol-min_smReslVol) / ...
                 (max_smReslVol-min_smReslVol);
-            normSmReslVol_2D = vol3Dimg2D(normSmReslVol, slNrImg2DdimX, ...
-                slNrImg2DdimY, img2DdimX, img2DdimY, dimVol);
-            imgViewTempl = uint8(normSmReslVol_2D * 255);
-            assignin('base', 'imgViewTempl', imgViewTempl)
-            m = evalin('base', 'mmImgViewTempl');
-            shift = 0 * length(imgViewTempl(:)) + 1;
-            m.Data(shift:end) = imgViewTempl(:);
+            mainLoopData.imgVolTempl = normSmReslVol;
+            assignin('base', 'imgVolTempl', normSmReslVol)
+            m = evalin('base', 'mmImgVolTempl');
+            m.Data.imgVolTempl = normSmReslVol;
         end
         
     else
@@ -324,58 +316,14 @@ if flags.isIGLM
         min_smReslVol = min(smReslVol(:));
         normSmReslVol = (smReslVol-min_smReslVol) / ...
             (max_smReslVol-min_smReslVol);
-        normSmReslVol_2D = vol3Dimg2D(normSmReslVol, slNrImg2DdimX, ...
-            slNrImg2DdimY, img2DdimX, img2DdimY, dimVol);
-        mainLoopData.normSmReslVol_2D = normSmReslVol_2D;
-        imgViewTempl = uint8(normSmReslVol_2D * 255);
-        assignin('base', 'imgViewTempl', imgViewTempl)
-        m = evalin('base', 'mmImgViewTempl');
-        shift = 0 * length(imgViewTempl(:)) + 1;
-        m.Data(shift:end) = imgViewTempl(:);
+        mainLoopData.imgVolTempl = normSmReslVol;
+        assignin('base', 'imgVolTempl', normSmReslVol)
+        m = evalin('base', 'mmImgVolTempl');
+        m.Data.imgVolTempl = normSmReslVol;
         
         pVal = mainLoopData.pVal;
         tContr = mainLoopData.tContr;
-        
-        if ~P.isRegrIGLM
-            if ~P.isRestingState
-                nrBasFctRegr = 1;
-            else
-                nrBasFctRegr = 6;
-            end
-        else
-            nrHighPassRegr = size(mainLoopData.K.X0,2);
-            if ~P.isRestingState
-                nrMotRegr = 6;
-                if P.isHighPass && P.isMotionRegr && P.isLinRegr
-                    nrBasFctRegr = nrMotRegr+nrHighPassRegr+2;
-                    % adding 6 head motion, linear, high-pass filter, and
-                    % constant regressors
-                elseif ~P.isHighPass && P.isMotionRegr && P.isLinRegr
-                    nrBasFctRegr = nrMotRegr+2;
-                    % adding 6 head motion, linear, and constant regressors
-                elseif P.isHighPass && ~P.isMotionRegr && P.isLinRegr
-                    nrBasFctRegr = nrHighPassRegr+2;
-                    % adding high-pass filter, linear, and constant regressors
-                elseif P.isHighPass && ~P.isMotionRegr && ~P.isLinRegr
-                    nrBasFctRegr = nrHighPassRegr+1;
-                    % adding high-pass filter, and constant regressors
-                elseif ~P.isHighPass && ~P.isMotionRegr && P.isLinRegr
-                    nrBasFctRegr = 2; % adding linear, and constant regressors
-                end
-            else
-                if P.isHighPass && P.isLinRegr
-                    nrBasFctRegr = nrHighPassRegr+2;
-                    % adding 6 head motion, linear, high-pass filter, and
-                    % constant regressors
-                elseif ~P.isHighPass && P.isLinRegr
-                    nrBasFctRegr = 2;
-                    % adding 6 head motion, linear, and constant regressors
-                elseif P.isHighPass && ~P.isLinRegr
-                    nrBasFctRegr = nrHighPassRegr+1;
-                    % adding high-pass filter, and constant regressors
-                end
-            end
-        end
+
         Cn = zeros(nrBasFct + nrBasFctRegr);
         Dn = zeros(nrVoxInVol, nrBasFct + nrBasFctRegr);
         s2n = zeros(nrVoxInVol, 1);
@@ -391,8 +339,6 @@ if flags.isIGLM
         mainLoopData.statMapVect = statMapVect;
         mainLoopData.statMap3D_pos = statMap3D_pos;
         mainLoopData.statMap3D_neg = statMap3D_neg;
-        tempStatMap2D = zeros(img2DdimY,img2DdimX);
-        mainLoopData.statMap2D = tempStatMap2D;
     end
     
     if flags.isPSC || flags.isSVM || flags.isCorr || P.isRestingState
@@ -453,31 +399,36 @@ if flags.isIGLM
     if ~isempty(neg_e2n)
         disp('HERE THE NEGATIVE e2n!!!')
     end
-    
+
     if P.isRTQA
         if flags.isDCM
             ROIs = evalin('base', 'ROIsAnat');
+            wholeBrainROI = evalin('base','ROIs');
+            ROIs(P.NrROIs).voxelIndex = wholeBrainROI.voxelIndex;
+            ROIs(P.NrROIs).mat = wholeBrainROI.mat;
+            ROIs(P.NrROIs).dim = wholeBrainROI.dim;
+            ROIs(P.NrROIs).vol = wholeBrainROI.vol;
         else
             ROIs = evalin('base', 'ROIs');
         end
         for i=1:P.NrROIs
-            rtQA_matlab.Bn{i}(indIglm,:) = mean(Bn(ROIs(i).voxelIndex,:));
+            rtQA_matlab.ROI(i).Bn(indIglm,:) = mean(Bn(ROIs(i).voxelIndex,:));
             inds = intersect(ROIs(i).voxelIndex,find(tn.pos>0));
             if isempty(inds)
-                rtQA_matlab.tn.pos{i}(indIglm,:) = 0;
+                rtQA_matlab.ROI(i).tn.pos(indIglm) = 0;
             else
-                rtQA_matlab.tn.pos{i}(indIglm,:) = geomean(tn.pos(inds));
+                rtQA_matlab.ROI(i).tn.pos(indIglm) = geomean(tn.pos(inds));
             end
             inds = intersect(ROIs(i).voxelIndex,find(tn.neg>0));
             if isempty(inds)
-                rtQA_matlab.tn.neg{i}(indIglm,:) = 0;
+                rtQA_matlab.ROI(i).tn.neg(indIglm) = 0;
             else
-                rtQA_matlab.tn.neg{i}(indIglm,:) = geomean(tn.neg(inds));
+                rtQA_matlab.ROI(i).tn.neg(indIglm) = geomean(tn.neg(inds));
             end
-            rtQA_matlab.var{i}(indIglm,:) =  geomean(e2n(ROIs(i).voxelIndex,:));
+            rtQA_matlab.ROI(i).var(indIglm) =  geomean(e2n(ROIs(i).voxelIndex,:));
         end
     end
-    mainLoopData.nrBasFctRegr = nrBasFctRegr;
+
     mainLoopData.Cn = Cn;
     mainLoopData.Dn = Dn;
     mainLoopData.s2n = s2n;
@@ -499,23 +450,7 @@ if ~isempty(idxActVoxIGLM.pos) && max(tn.pos) > 0 % handle empty activation map
     maxTval_pos = max(maskedStatMapVect_pos);
     statMapVect = maskedStatMapVect_pos;
     statMap3D_pos(idxActVoxIGLM.pos) = statMapVect;
-        
-    statMap2D_pos = vol3Dimg2D(statMap3D_pos, slNrImg2DdimX, slNrImg2DdimY, ...
-        img2DdimX, img2DdimY, dimVol) / maxTval_pos;
-    statMap2D_pos = statMap2D_pos * 255;
-   
-    if indVol == 26
-       1 ;
-    end
-    
-    if ~isShowRtqaVol && ~imageViewMode
-        
-        m_out =  evalin('base', 'mmStatMap');
-        m_out.Data.statMap = uint8(statMap2D_pos);
-        assignin('base', 'statMap', statMap2D_pos);
-        
-    end
-    
+
     % shared for SPM matlab helper
     m = evalin('base', 'mmStatVol');
     m.Data.posStatVol = statMap3D_pos;
@@ -529,23 +464,10 @@ if ~isempty(idxActVoxIGLM.neg) && max(tn.neg) > 0
     statMap3D_neg(idxActVoxIGLM.neg) = statMapVect;
     
     clear idxActVoxIGLM
-     
-    statMap2D_neg = vol3Dimg2D(statMap3D_neg, slNrImg2DdimX, slNrImg2DdimY, ...
-        img2DdimX, img2DdimY, dimVol) / maxTval_neg;
-    statMap2D_neg = statMap2D_neg * 255;
-    
-    if ~isShowRtqaVol && ~imageViewMode
-        
-        m_out =  evalin('base', 'mmStatMap_neg');
-        m_out.Data.statMap_neg = uint8(statMap2D_neg);
-        assignin('base', 'statMap_neg', statMap2D_neg);
-        
-    end
-    
+
     % shared for SPM matlab helper
     m = evalin('base', 'mmStatVol');
     m.Data.negStatVol = statMap3D_neg;
-%     mainLoopData.statMapCreated = 1;
 
 end
 
@@ -567,6 +489,8 @@ else
 end
 
 tStopIGLM = toc(tStartMotCorr);
+mainLoopData.iGLM_diff(indVol) = tStopIGLM-tStopSm;
+mainLoopData.tStopMC(indVol) = tStopMC;
 fprintf('TIMING: %d iter - PREPROC MC: %d s - SMOOTH: %d s - IGLM: %d s\n',...
     nrIter, tStopMC, tStopSm-tStopMC, tStopIGLM-tStopSm);
 
@@ -580,15 +504,17 @@ if flags.isDCM
             ROIoptimGlmAnat = evalin('base', 'ROIoptimGlmAnat');
         end
         for iROI = 1:P.NrROIs
-            ROIsAnat(iROI).mask2D(isnan(ROIsAnat(iROI).mask2D))=0;
             
-            ROIsGlmAnat(iROI).mask2D(indNFTrial+1) = ...
-                {statMap2D_pos & ROIsAnat(iROI).mask2D};
+            ROIsAnat(iROI).vol(isnan(ROIsAnat(iROI).vol))=0;
+
+            ROIsGlmAnat(iROI).vol(indNFTrial+1) = ...
+                {statMap3D_pos & ROIsAnat(iROI).vol};
+
             clear tmpVect
-            tmpVect = find(cell2mat(ROIsGlmAnat(iROI).mask2D(indNFTrial+1))>0);
+            tmpVect = find(cell2mat(ROIsGlmAnat(iROI).vol(indNFTrial+1))>0);
             if ~isempty(tmpVect) && length(tmpVect)>10
                 ROIsGlmAnat(iROI).meanGlmAnatROI(indNFTrial+1) = ...
-                    mean(statMap2D_pos(tmpVect));
+                    mean(statMap3D_pos(tmpVect));
             else
                 ROIsGlmAnat(iROI).meanGlmAnatROI(indNFTrial+1) = 0;
             end
@@ -596,8 +522,8 @@ if flags.isDCM
                 % for at least 2 ROIsGlmAnat, there is always one ROIoptimGlmAnat
                 [val, nrROIoptimGlmAnat] = ...
                     max(ROIsGlmAnat(iROI).meanGlmAnatROI);
-                ROIoptimGlmAnat(iROI).mask2D(indNFTrial+1) = ...
-                    ROIsGlmAnat(iROI).mask2D(nrROIoptimGlmAnat);
+                ROIoptimGlmAnat(iROI).vol(indNFTrial+1) = ...
+                    ROIsGlmAnat(iROI).vol(nrROIoptimGlmAnat);
                 mainLoopData.nrROIoptimGlmAnat(iROI,indNFTrial) = ...
                     nrROIoptimGlmAnat;
                 clear nrROIoptimGlmAnat val

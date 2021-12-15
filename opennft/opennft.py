@@ -54,7 +54,7 @@ from watchdog.events import FileSystemEventHandler
 from pyniexp.connection import Udp
 from scipy.io import loadmat
 
-from PyQt5.QtWidgets import QApplication, QWidget, QFileDialog
+from PyQt5.QtWidgets import QApplication, QWidget, QFileDialog, QMenu
 from PyQt5.QtGui import QIcon, QPalette
 from PyQt5.QtCore import QSettings, QTimer, QEvent, QRegExp
 from PyQt5.uic import loadUi
@@ -62,6 +62,7 @@ from PyQt5.QtGui import QRegExpValidator
 
 from opennft import (
     config,
+    conversions,
     runmatlab,
     ptbscreen,
     mmapimage,
@@ -156,7 +157,7 @@ class OpenNFT(QWidget):
         self.orthView = projview.ProjectionsWidget(self)
         self.layoutOrthView.addWidget(self.orthView)
 
-        self.mosaic_background_image_reader = mmapimage.MosaicImageReader(image_name='imgViewTempl')
+        self.mosaic_background_image_reader = mmapimage.MosaicImageReader(image_name='imgVolTempl')
         self.mosaic_pos_map_image_reader = mmapimage.MosaicImageReader(image_name='statMap')
         self.mosaic_neg_map_image_reader = mmapimage.MosaicImageReader(image_name='statMap_neg')
 
@@ -168,7 +169,9 @@ class OpenNFT(QWidget):
         self.neg_map_thresholds_widget = mapimagewidget.MapImageThresholdsWidget(self, colormap='Blues_r')
 
         self.layoutHotMapThresholds.addWidget(self.pos_map_thresholds_widget)
+        self.pos_map_thresholds_widget.setEnabled(False)
         self.layoutNegMapThresholds.addWidget(self.neg_map_thresholds_widget)
+        self.neg_map_thresholds_widget.setEnabled(False)
 
         self.mcPlot = self.createMcPlot()
 
@@ -404,7 +407,6 @@ class OpenNFT(QWidget):
         self.btnChooseStructBgFile.clicked.connect(self.onChooseStructBgFile)
 
         self.btnMCTempl.clicked.connect(self.onChooseMCTemplFile)
-        # self.btnTest.clicked.connect(self.onTest)
 
         self.btnChooseWorkFolder.clicked.connect(
             lambda: self.onChooseFolder('WorkFolder', self.leWorkFolder))
@@ -412,9 +414,6 @@ class OpenNFT(QWidget):
             lambda: self.onChooseFolder('WatchFolder', self.leWatchFolder))
 
         self.btnStart.setEnabled(False)
-
-        # if config.HIDE_TEST_BTN:
-        #    self.btnTest.setVisible(False)
 
         self.cbImageViewMode.currentIndexChanged.connect(self.onChangeImageViewMode)
         self.orthView.cursorPositionChanged.connect(self.onChangeOrthViewCursorPosition)
@@ -563,6 +562,13 @@ class OpenNFT(QWidget):
 
         self.eng.workspace['rtQA_matlab'] = self.rtQA_matlab
 
+        # if self.P['Type'] in ['PSC', 'SVM', 'Corr', 'None']:
+        #     self.engSPM.workspace['ROIs'] = self.eng.evalin('base', 'ROIs')
+        # elif self.P['Type'] == 'DCM':
+        #     self.engSPM.workspace['ROIsAnat'] = self.eng.evalin('base', 'ROIsAnat')
+        #     if self.P['isRTQA']:
+        #         self.engSPM.workspace['ROIs'] = self.eng.evalin('base', 'ROIs')
+
         self.eng.setupProcParams(nargout=0)
 
         with utils.timeit("Receiving 'P' from Matlab:"):
@@ -580,6 +586,7 @@ class OpenNFT(QWidget):
             'isRestingState': self.P['isRestingState'],
             'isIGLM': self.P['isIGLM'],
             'isROI': config.USE_ROI,
+            'isRTQA': config.USE_RTQA
         }
 
         self.engSPM.helperPrepareOrthView(self.spmHelperP, 'bgEPI', nargout=0)
@@ -925,12 +932,18 @@ class OpenNFT(QWidget):
             dataGLM = np.array(self.eng.evalin('base', 'mainLoopData.glmProcTimeSeries(:,end)'), ndmin=2)
             dataProc = np.array(self.outputSamples['kalmanProcTimeSeries'], ndmin=2)
             dataMC = np.array(self.outputSamples['motCorrParam'], ndmin=2)
+            dvarsValue = self.eng.evalin('base', 'mainLoopData.dvarsValue')
             n = len(dataRealRaw[0, :]) - 1
-            data = dataRealRaw[:, n]
+            dataRaw = dataRealRaw[:, n]
+
+            if n == 0:
+                offsetMCParam = np.array(self.eng.evalin('base','P.offsetMCParam'), ndmin=1)
+                self.windowRTQA.offsetMCParam = offsetMCParam
+
 
             if self.P['Type'] != 'DCM':
                 betaCoeff = np.array(
-                    self.eng.evalin('base', 'cellfun(@(a)a(mainLoopData.indVolNorm,2),rtQA_matlab.betRegr)'), ndmin=2)
+                    self.eng.evalin('base', 'rtQA_matlab.linRegr(:,mainLoopData.indVolNorm)'), ndmin=2)
             else:
                 betaCoeff = np.zeros((int(self.P['NrROIs']), 1))
 
@@ -953,11 +966,12 @@ class OpenNFT(QWidget):
             else:
                 dataNoRegGLM = np.array([])
 
-            self.windowRTQA.calculateSNR(data, dataNoRegGLM, n, isNewDCMBlock)
+            self.windowRTQA.calculateSNR(dataRaw, dataNoRegGLM, n, isNewDCMBlock)
             if not self.P['isRestingState']:
-                self.windowRTQA.calculateCNR(data, n, isNewDCMBlock)
+                self.windowRTQA.calculateCNR(dataRaw, n, isNewDCMBlock)
             self.windowRTQA.calculateSpikes(dataGLM, n, posSpikes, negSpikes)
             self.windowRTQA.calculateMSE(n, dataGLM, dataProc[:, n])
+            self.windowRTQA.calculateDVARS(dvarsValue, isNewDCMBlock)
 
             self.windowRTQA.plotRTQA(n + 1)
             self.windowRTQA.plotDisplacements(dataMC[n, :], isNewDCMBlock)
@@ -1280,6 +1294,32 @@ class OpenNFT(QWidget):
             with utils.timeit('  initMainLoopData:'):
                 self.initMainLoopData()
 
+            self.roiDict = dict()
+            self.selectedRoi = []
+            roi_menu = QMenu()
+            roi_menu.triggered.connect(self.onRoiChecked)
+            self.roiSelectorBtn.setMenu(roi_menu)
+            nrROIs = int(self.P['NrROIs'])
+            for i in range(nrROIs):
+                if self.P['isRTQA'] and i+1==nrROIs:
+                    roi = 'Whole brain ROI'
+                else:
+                    roi = 'ROI_{}'.format(i+1)
+                roi_action = roi_menu.addAction(roi)
+                roi_action.setCheckable(True)
+                if not (self.P['isRTQA'] and i+1==nrROIs):
+                    roi_action.setChecked(True)
+                    self.roiDict[roi] = True
+                    self.selectedRoi.append(i)
+
+            action = roi_menu.addAction("All")
+            action.setCheckable(False)
+
+            action = roi_menu.addAction("None")
+            action.setCheckable(False)
+
+            self.roiSelectorBtn.setEnabled(True)
+
             if config.USE_SHAM:
                 logger.warning("Sham feedback has been selected")
                 fext = Path(self.P['ShamFile']).suffix
@@ -1357,18 +1397,16 @@ class OpenNFT(QWidget):
                 self.windowRTQA.volumeCheckBox.stateChanged.connect(self.onChangeNegMapPolicy)
                 self.windowRTQA.volumeCheckBox.stateChanged.connect(self.onInteractWithMapImage)
                 self.windowRTQA.volumeCheckBox.toggled.connect(self.updateOrthViewAsync)
-                self.windowRTQA.smoothedCheckBox.stateChanged.connect(self.onSmoothedChecked)
                 self.windowRTQA.comboBox.currentIndexChanged.connect(self.onModeChanged)
                 self.eng.assignin('base', 'rtQAMode', self.windowRTQA.currentMode, nargout=0)
                 self.eng.assignin('base', 'isShowRtqaVol', self.windowRTQA.volumeCheckBox.isChecked(), nargout=0)
-                self.eng.assignin('base', 'isSmoothed', self.windowRTQA.smoothedCheckBox.isChecked(), nargout=0)
 
+                self.windowRTQA.roiChecked(self.selectedRoi)
                 self.windowRTQA.isStopped = False
 
             else:
                 self.eng.assignin('base', 'rtQAMode', False, nargout=0)
                 self.eng.assignin('base', 'isShowRtqaVol', False, nargout=0)
-                self.eng.assignin('base', 'isSmoothed', False, nargout=0)
 
             self.onChangeNegMapPolicy()
             self.eng.assignin('base', 'imageViewMode', int(self.imageViewMode), nargout=0)
@@ -1382,6 +1420,8 @@ class OpenNFT(QWidget):
         logger.info("*** Started ***")
 
         self.cbImageViewMode.setEnabled(True)
+        self.pos_map_thresholds_widget.setEnabled(True)
+        self.neg_map_thresholds_widget.setEnabled(True)
         self.btnPlugins.setEnabled(False)
         self.btnSetup.setEnabled(False)
         self.btnStart.setEnabled(False)
@@ -1475,12 +1515,35 @@ class OpenNFT(QWidget):
 
         if self.isStopped:
             self.eng.offlineImageSwitch(nargout=0)
+            if self.imageViewMode == ImageViewMode.mosaic:
+                self.displayMosaicImage()
+            else:
+                self.onCheckOrthViewUpdated()
 
     # --------------------------------------------------------------------------
-    def onSmoothedChecked(self):
+    def onRoiChecked(self, action):
+        if action.text() == "All":
+            actList = self.roiSelectorBtn.menu().actions()
+            actList = actList[0:-2]
+            for act in actList:
+                act.setChecked(True)
+                self.roiDict[act.text()] = True
+        elif action.text() == "None":
+            actList = self.roiSelectorBtn.menu().actions()
+            actList = actList[0:-2]
+            for act in actList:
+                act.setChecked(False)
+                self.roiDict[act.text()] = False
+        else:
+            self.roiDict[action.text()] = action.isChecked()
 
-        is_rtqa_smoothed = self.windowRTQA.smoothedCheckBox.isChecked()
-        self.eng.assignin('base', 'isSmoothed', is_rtqa_smoothed, nargout=0)
+        self.selectedRoi = np.where(list(self.roiDict.values()))[0]
+        if self.windowRTQA:
+            self.windowRTQA.roiChecked(self.selectedRoi)
+
+        self.drawRoiPlots(True)
+        if self.isStopped:
+            self.updateOrthViewAsync()
 
     # --------------------------------------------------------------------------
     def onModeChanged(self):
@@ -1490,12 +1553,14 @@ class OpenNFT(QWidget):
             self.eng.assignin('base', 'rtQAMode', self.windowRTQA.currentMode, nargout=0)
             self.onShowRtqaVol()
 
-        if not self.btnSetup.isEnabled():
-            self.updateOrthViewAsync()
-            self.onInteractWithMapImage()
+        # if not self.btnSetup.isEnabled():
+        #     self.updateOrthViewAsync()
+        #     self.onInteractWithMapImage()
 
         if self.isStopped:
             self.eng.offlineImageSwitch(nargout=0)
+            self.updateOrthViewAsync()
+            self.onInteractWithMapImage()
 
     # --------------------------------------------------------------------------
     def onChooseSetFile(self):
@@ -1748,9 +1813,9 @@ class OpenNFT(QWidget):
             if rgba_neg_map_image is not None:
                 self.orthView.set_neg_map_image(proj, rgba_neg_map_image)
 
-        self.orthView.set_roi(projview.ProjectionType.transversal, self.spmHelperP['tRoiBoundaries'])
-        self.orthView.set_roi(projview.ProjectionType.coronal, self.spmHelperP['cRoiBoundaries'])
-        self.orthView.set_roi(projview.ProjectionType.sagittal, self.spmHelperP['sRoiBoundaries'])
+        self.orthView.set_roi(projview.ProjectionType.transversal, [self.spmHelperP['tRoiBoundaries'][i] for i in self.selectedRoi], self.selectedRoi)
+        self.orthView.set_roi(projview.ProjectionType.coronal, [self.spmHelperP['cRoiBoundaries'][i] for i in self.selectedRoi], self.selectedRoi)
+        self.orthView.set_roi(projview.ProjectionType.sagittal, [self.spmHelperP['sRoiBoundaries'][i] for i in self.selectedRoi], self.selectedRoi)
 
         if self.orthViewInitialize:
             self.orthView.reset_view()
@@ -1870,6 +1935,10 @@ class OpenNFT(QWidget):
             p = [self.P['RoiAnatFolder'], self.P['RoiGroupFolder']]
             self.eng.selectROI(p, nargout=0)
             self.engSPM.selectROI(p, nargout=0)
+
+        if self.P['isRTQA']:
+            self.eng.epiWholeBrainROI(nargout=0)
+            self.engSPM.epiWholeBrainROI(nargout=0)
 
     # --------------------------------------------------------------------------
     def actualize(self):
@@ -2066,22 +2135,22 @@ class OpenNFT(QWidget):
 
     # --------------------------------------------------------------------------
     def displayMosaicImage(self):
-        background_image = None
-        pos_map_image = None
-        neg_map_image = None
+        imgVolTempl = None
+        posVol = None
+        negVol = None
+        dim3D = np.squeeze(self.eng.evalin('base', 'int32(mainLoopData.dimVol)'))
+        xdim, ydim, img2d_dimx, img2d_dimy = conversions.get_mosaic_dim(dim3D)
 
-        if 'imgViewTempl' not in self.P:
-            if self.eng.evalin('base', 'length(imgViewTempl)') > 0:
-                filename = self.eng.evalin('base', 'P.memMapFile')
-
-                with utils.timeit("Receiving mosaic image from Matlab (read memmap):"):
-                    self.mosaic_background_image_reader.read(filename, self.eng)
-                background_image = self.mosaic_background_image_reader.image
-
-                if background_image.size > 0:
-                    self.mosaicImageView.set_background_image(background_image)
-            else:
-                return
+        if 'imgVolTempl' not in self.P:
+            if self.eng.evalin('base', 'length(imgVolTempl)') > 0:
+                with utils.timeit('Getting background volume:'):
+                    filename = self.eng.evalin('base', 'P.memMapFile')
+                    imgVolTempl = np.array(np.memmap(filename, dtype=np.float64,shape=tuple(dim3D), order='F'))
+                    if imgVolTempl.size > 0:
+                        background_image = conversions.vol3d_img2d(imgVolTempl, xdim, ydim, img2d_dimx, img2d_dimy, dim3D)
+                        self.mosaicImageView.set_background_image(background_image)
+                    else:
+                        return
 
         # SNR/Stat map display
         is_stat_map_created = bool(self.eng.evalin('base', 'mainLoopData.statMapCreated'))
@@ -2095,18 +2164,34 @@ class OpenNFT(QWidget):
         if (background_image is not None
                 and (is_stat_map_created and not is_rtqa_volume_checked
                      or is_snr_map_created and is_rtqa_volume_checked)):
-            with utils.timeit("Receiving mosaic maps from Matlab:"):
-                filename_pat = self.eng.evalin('base', 'P.memMapFile')
-                filename_pos = filename_pat.replace('shared', 'statMap')
-                filename_neg = filename_pat.replace('shared', 'statMap_neg')
+            with utils.timeit("Receiving stat volumes from Matlab:"):
 
-                self.mosaic_pos_map_image_reader.read(filename_pos, self.eng)
-                self.mosaic_neg_map_image_reader.read(filename_neg, self.eng)
+                if not is_rtqa_volume_checked:
 
-            pos_map_image = self.mosaic_pos_map_image_reader.image
-            neg_map_image = self.mosaic_neg_map_image_reader.image
+                    filename_pat = self.eng.evalin('base', 'P.memMapFile')
+                    filename = filename_pat.replace('shared', 'statVol')
 
-        if pos_map_image is not None:
+                    posVol = np.memmap(filename, dtype=np.float64, shape=tuple(dim3D), order='F')
+                    negVol = np.memmap(filename, dtype=np.float64, shape=tuple(dim3D), offset=posVol.size*posVol.data.itemsize, order='F')
+
+                    posVol = np.array(posVol, dtype=np.int32)
+                    negVol = np.array(negVol, dtype=np.int32)
+
+                else:
+
+                    filename_pat = self.eng.evalin('base', 'P.memMapFile')
+                    filename = filename_pat.replace('shared', 'RTQAVol')
+
+                    posVol = np.memmap(filename, dtype=np.float64, shape=tuple(dim3D), offset=0, order='F')
+                    posVol = np.array(posVol)
+
+        if posVol is not None:
+
+            xdim, ydim, img2d_dimx, img2d_dimy = conversions.get_mosaic_dim(dim3D)
+            with utils.timeit("Slicing positive volume:"):
+                pos_map_image = conversions.vol3d_img2d(posVol, xdim, ydim, img2d_dimx, img2d_dimy, dim3D)
+                pos_map_image = (pos_map_image / np.max(pos_map_image)) * 255
+
             self.pos_map_thresholds_widget.compute_thresholds(pos_map_image)
             rgba_pos_map_image = self.pos_map_thresholds_widget.compute_rgba(pos_map_image)
 
@@ -2115,7 +2200,12 @@ class OpenNFT(QWidget):
         else:
             self.mosaicImageView.clear_pos_map()
 
-        if neg_map_image is not None:
+        if negVol is not None:
+
+            xdim, ydim, img2d_dimx, img2d_dimy = conversions.get_mosaic_dim(dim3D)
+            neg_map_image = conversions.vol3d_img2d(negVol, xdim, ydim, img2d_dimx, img2d_dimy, dim3D)
+            neg_map_image = (neg_map_image / np.max(neg_map_image)) * 255
+
             self.neg_map_thresholds_widget.compute_thresholds(neg_map_image)
             rgba_neg_map_image = self.neg_map_thresholds_widget.compute_rgba(neg_map_image)
 
@@ -2234,9 +2324,9 @@ class OpenNFT(QWidget):
         else:
             key = 'rawTimeSeries'
 
-        dataRaw = np.array(self.outputSamples[key], ndmin=2)
-        dataProc = np.array(self.outputSamples['kalmanProcTimeSeries'], ndmin=2)
-        dataNorm = np.array(self.outputSamples['scalProcTimeSeries'], ndmin=2)
+        dataRaw = np.array(self.outputSamples[key], ndmin=2)[self.selectedRoi,:]
+        dataProc = np.array(self.outputSamples['kalmanProcTimeSeries'], ndmin=2)[self.selectedRoi,:]
+        dataNorm = np.array(self.outputSamples['scalProcTimeSeries'], ndmin=2)[self.selectedRoi,:]
         if self.P['PlotFeedback']:
             dataNorm = np.concatenate(
                 (dataNorm, np.array([self.displaySamples]) / self.P['MaxFeedbackVal'])
@@ -2261,7 +2351,10 @@ class OpenNFT(QWidget):
 
             plots = []
 
-            for i, c in zip(range(sz), config.ROI_PLOT_COLORS):
+            plot_colors = np.array(config.ROI_PLOT_COLORS)[self.selectedRoi]
+            if self.P['PlotFeedback']:
+                plot_colors = np.append(plot_colors, config.ROI_PLOT_COLORS[int(self.P['NrROIs'])])
+            for i, c in zip(range(sz), plot_colors):
                 pen = pg.mkPen(color=c, width=config.ROI_PLOT_WIDTH)
                 p = plotitem.plot(pen=pen)
                 plots.append(p)
@@ -2275,10 +2368,17 @@ class OpenNFT(QWidget):
 
         if self.P['Prot'] != 'InterBlock':
             if plotwidget == self.procRoiPlot:
+
+                posMin = np.array(self.outputSamples['posMin'],ndmin=2)
+                posMax = np.array(self.outputSamples['posMax'],ndmin=2)
+                inds = list(self.selectedRoi)
+                inds.append(len(posMin)-1)
+                posMin = posMin[inds]
+                posMax = posMax[inds]
+
                 self.drawMinMaxProcRoiPlot(
                     init, data,
-                    self.outputSamples['posMin'],
-                    self.outputSamples['posMax'])
+                    posMin, posMax)
 
         items = plotitem.listDataItems()
 
@@ -2331,7 +2431,9 @@ class OpenNFT(QWidget):
             plotsMin = []
             plotsMax = []
 
-            for i, c in zip(range(sz), config.ROI_PLOT_COLORS):
+            plot_colors = np.array(config.ROI_PLOT_COLORS)
+            plot_colors = np.append(plot_colors[self.selectedRoi],plot_colors[-1])
+            for i, c in zip(range(sz), plot_colors):
                 plotsMin.append(plotitem.plot(pen=pg.mkPen(
                     color=c, width=config.ROI_PLOT_WIDTH)))
                 plotsMax.append(plotitem.plot(pen=pg.mkPen(
@@ -2345,8 +2447,8 @@ class OpenNFT(QWidget):
         for pmi, mi, pma, ma in zip(
                 self.drawMinMaxProcRoiPlot.__dict__['posMin'], posMin,
                 self.drawMinMaxProcRoiPlot.__dict__['posMax'], posMax):
-            mi = np.array(mi)
-            ma = np.array(ma)
+            mi = np.array(mi,ndmin=1)
+            ma = np.array(ma,ndmin=1)
             pmi.setData(x=x, y=mi)
             pma.setData(x=x, y=ma)
 

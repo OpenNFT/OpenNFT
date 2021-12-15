@@ -1,9 +1,8 @@
-function [ snrData ] = snr_calc( iteration, vol, volSmoothed, snrData, isSmoothed )
+function [ snrData ] = snr_calc( iteration, volSmoothed, snrData)
 % Function to calculate Signal-to-Noise Ratio for volume
 %
 % input:
 % iteration   - which volume is now processing
-% vol - the volume for processing
 % volSmoothed - smoothed volume for processing
 % snrData - structure with values of smoothed and non-smoothed mean, m2 and SNR values
 %
@@ -13,46 +12,27 @@ function [ snrData ] = snr_calc( iteration, vol, volSmoothed, snrData, isSmoothe
     
     meanSmoothed = snrData.meanSmoothed;
     m2Smoothed = snrData.m2Smoothed;
-    meanNonSmoothed = snrData.meanNonSmoothed;
-    m2NonSmoothed = snrData.m2NonSmoothed;
     
-    shape = size(vol);
+    shape = size(volSmoothed);
     snrData.snrVol = zeros(shape);
-    if isempty(meanSmoothed)
-        snrData.meanNonSmoothed = vol;
-        snrData.m2NonSmoothed = zeros(shape);
+    if snrData.iteration == 0
         snrData.meanSmoothed = volSmoothed;
         snrData.m2Smoothed = zeros(shape);
-        snrData.iteration = 1;
-        return;
-    end;
+        snrData.iteration = snrData.iteration + 1;
+    else
 
-    snrData.iteration = snrData.iteration + 1;
-    n = double(snrData.iteration);
-    
-    meanPrev = meanSmoothed;
-    meanSmoothed = meanSmoothed + (volSmoothed - meanSmoothed) / n;
-    m2Smoothed = m2Smoothed + (volSmoothed - meanPrev).*(volSmoothed - meanSmoothed);
+        snrData.iteration = snrData.iteration + 1;
+        n = double(snrData.iteration);
 
-    meanPrev = meanNonSmoothed;
-    meanNonSmoothed = meanNonSmoothed + (vol - meanNonSmoothed) / n;
-    m2NonSmoothed = m2NonSmoothed + (vol - meanPrev).*(vol - meanNonSmoothed);
-
-    if isSmoothed
+        meanPrev = meanSmoothed;
+        meanSmoothed = meanSmoothed + (volSmoothed - meanSmoothed) / n;
+        m2Smoothed = m2Smoothed + (volSmoothed - meanPrev).*(volSmoothed - meanSmoothed);
         variance = m2Smoothed / (n-1);
-    else
-        variance = m2NonSmoothed / (n-1);
-    end
-
-    if isSmoothed
         snrData.snrVol = meanSmoothed ./ (variance.^.5);
-    else
-        snrData.snrVol = meanNonSmoothed ./ (variance.^.5);
+
+        snrData.meanSmoothed = meanSmoothed;
+        snrData.m2Smoothed = m2Smoothed;
+
     end
-    
-    snrData.meanSmoothed = meanSmoothed;
-    snrData.m2Smoothed = m2Smoothed;
-    snrData.meanNonSmoothed = meanNonSmoothed;
-    snrData.m2NonSmoothed = m2NonSmoothed;
 
 end

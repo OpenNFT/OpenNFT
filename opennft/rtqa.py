@@ -26,6 +26,7 @@ class RTQAWindow(QtWidgets.QWidget):
 
         # parent data transfer block
         sz = int(parent.P['NrROIs'])
+        self.nrROIs = sz
         self.musterInfo = parent.musterInfo
 
         if parent.P['isRestingState']:
@@ -47,6 +48,7 @@ class RTQAWindow(QtWidgets.QWidget):
         # main class data initialization block
         self.prot = parent.P['Prot']
         self._fd = FD(xrange)
+        self.offsetMCParam = np.zeros((6,1))
         self.names = ['X', 'Y', 'Z', 'Pitch', 'Roll', 'Yaw', 'FD']
         self.iterBas = 0
         self.iterCond = 0
@@ -74,6 +76,8 @@ class RTQAWindow(QtWidgets.QWidget):
         self.posSpikes = dict.fromkeys(['{:d}'.format(x) for x in range(sz)], np.array(0))
         self.negSpikes = dict.fromkeys(['{:d}'.format(x) for x in range(sz)], np.array(0))
         self.rMSE = np.zeros((sz, xrange))
+        self.DVARS = np.zeros((0, 1))
+        self.excDVARS = 0
         self.linTrendCoeff = np.zeros((sz, xrange))
         self.checkedBoxesInd = []
         self.currentMode = 0
@@ -81,13 +85,15 @@ class RTQAWindow(QtWidgets.QWidget):
         # Additional GUI elements connection and initialization
         groupBoxLayout = self.roiGroupBox.layout()
         for i in range(sz):
-            checkbox = QtWidgets.QCheckBox('ROI_' + str(i + 1))
-            checkbox.setStyleSheet("color: " + config.ROI_PLOT_COLORS[i].name())
-            if not i:
-                checkbox.setChecked(True)
-            checkbox.stateChanged.connect(self.roiCheckBoxStateChanged)
-            groupBoxLayout.addWidget(checkbox)
-        self.roiCheckBoxes = self.roiGroupBox.findChildren(QtWidgets.QCheckBox)
+            if i == sz-1:
+                name = 'Whole brain ROI'
+            else:
+                name = 'ROI_' + str(i + 1)
+            label = QtWidgets.QLabel(name)
+            label.setStyleSheet("color: " + config.ROI_PLOT_COLORS[i].name())
+            label.setVisible(False)
+            groupBoxLayout.addWidget(label)
+        self.selectedRoiLabels = self.roiGroupBox.findChildren(QtWidgets.QLabel)
         self.mcrRadioButton.toggled.connect(self.onRadioButtonStateChanged)
 
         # Plots initialization
@@ -141,6 +147,12 @@ class RTQAWindow(QtWidgets.QWidget):
         p = self.rotatPlot.getPlotItem()
         self.plotsSetup(p, "Amplitude [mm]", xrange)
 
+        self.dvarsPlot = pg.PlotWidget(self)
+        self.dvarsPlot.setBackground((255, 255, 255))
+        self.dvarsPlotLayout.addWidget(self.dvarsPlot)
+        p = self.dvarsPlot.getPlotItem()
+        self.plotsSetup(p, "DVARS [a.u.]", xrange)
+
         self.spikesPlot = pg.PlotWidget(self)
         self.spikesPlot.setBackground((255, 255, 255))
         self.spikesPlotLayout.addWidget(self.spikesPlot)
@@ -179,7 +191,11 @@ class RTQAWindow(QtWidgets.QWidget):
             names = ['ROI_1 rMean', ' bas', ' cond']
             color = [config.ROI_PLOT_COLORS[0], config.ROI_PLOT_COLORS[0], config.ROI_PLOT_COLORS[0]]
             for i in range(sz - 1):
-                names.append('ROI_' + str(i + 2) + ' rMean')
+                if i == sz - 2:
+                    name = 'Whole brain ROI'
+                else:
+                    name = 'ROI_' + str(i + 2)
+                names.append(name + ' rMean')
                 names.append(' bas')
                 names.append(' cond')
                 color = color + [config.ROI_PLOT_COLORS[i + 1]] + [config.ROI_PLOT_COLORS[i + 1]] + [
@@ -191,7 +207,11 @@ class RTQAWindow(QtWidgets.QWidget):
 
             names = ['ROI_1 rVariance', ' bas', ' cond']
             for i in range(sz - 1):
-                names.append('ROI_' + str(i + 2) + ' rVariance')
+                if i == sz - 2:
+                    name = 'Whole brain ROI'
+                else:
+                    name = 'ROI_' + str(i + 2)
+                names.append(name + ' rVariance')
                 names.append(' bas')
                 names.append(' cond')
             self.makeTextValueLabel(self.labelVar, names, pens)
@@ -217,6 +237,8 @@ class RTQAWindow(QtWidgets.QWidget):
             names.append('Threshold ' + str(i + 1))
             pens.append(config.PLOT_PEN_COLORS[i + 1])
         self.makeTextValueLabel(self.fdLabel, names, pens)
+
+        self.onComboboxChanged()
 
     # --------------------------------------------------------------------------
     def closeEvent(self, event):
@@ -249,7 +271,11 @@ class RTQAWindow(QtWidgets.QWidget):
             pens = [config.PLOT_PEN_COLORS[6]]
             sz = len(self.rSNR)
             for i in range(sz):
-                names.append('ROI_' + str(i + 1) + ':  ' + '{0:.3f}'.format(float(self.rSNR[i][self.iteration])))
+                if i == sz - 1:
+                    name = 'Whole brain ROI'
+                else:
+                    name = 'ROI_' + str(i + 1)
+                names.append(name + ':  ' + '{0:.3f}'.format(float(self.rSNR[i][self.iteration])))
                 pens.append(pg.mkPen(color=config.ROI_PLOT_COLORS[i], width=1.2))
             self.makeTextValueLabel(self.valuesLabel, names, pens, lineBreak='<br>')
             self.currentMode = 0
@@ -263,10 +289,19 @@ class RTQAWindow(QtWidgets.QWidget):
             pens = [config.PLOT_PEN_COLORS[6]]
             sz = len(self.rCNR)
             for i in range(sz):
-                names.append('ROI_' + str(i + 1) + ':  ' + '{0:.3f}'.format(float(self.rCNR[i][self.iteration])))
+                if i == sz - 1:
+                    name = 'Whole brain ROI'
+                else:
+                    name = 'ROI_' + str(i + 1)
+                names.append(name + ':  ' + '{0:.3f}'.format(float(self.rCNR[i][self.iteration])))
                 pens.append(pg.mkPen(color=config.ROI_PLOT_COLORS[i], width=1.2))
             self.makeTextValueLabel(self.valuesLabel, names, pens, lineBreak='<br>')
             self.currentMode = 2
+
+        if state == 1 or state == 7:
+            self.roiGroupBox.setVisible(False)
+        else:
+            self.roiGroupBox.setVisible(True)
 
     # --------------------------------------------------------------------------
     def onRadioButtonStateChanged(self):
@@ -313,13 +348,20 @@ class RTQAWindow(QtWidgets.QWidget):
         label.setText(legendText)
 
     # --------------------------------------------------------------------------
-    def roiCheckBoxStateChanged(self):
+    def roiChecked(self, roiChecked):
         """ Redrawing plots when the set of selected ROIs is changed even if run is stopped
         """
 
+        self.checkedBoxesInd = roiChecked
+        for i in range(len(self.selectedRoiLabels)):
+            if i in roiChecked:
+                self.selectedRoiLabels[i].setVisible(True)
+            else:
+                self.selectedRoiLabels[i].setVisible(False)
+
         self.init = True
-        if self.isStopped:
-            self.plotRTQA(self.rSNR.size)
+        if self.isStopped and self.iteration!=1:
+            self.plotRTQA(self.iteration+1)
 
     # --------------------------------------------------------------------------
     def drawMusterPlot(self, plotitem):
@@ -371,7 +413,8 @@ class RTQAWindow(QtWidgets.QWidget):
 
                 muster = self.drawMusterPlot(plotitem)
 
-                for i, c in zip(range(sz), np.array(config.ROI_PLOT_COLORS)[checkedBoxesInd]):
+                plot_colors = np.array(config.ROI_PLOT_COLORS)[checkedBoxesInd]
+                for i, c in zip(range(sz), plot_colors):
                     pen = pg.mkPen(color=c, width=config.ROI_PLOT_WIDTH)
                     p = plotitem.plot(pen=pen)
                     plots.append(p)
@@ -392,7 +435,7 @@ class RTQAWindow(QtWidgets.QWidget):
             if data.any():
                 if plotitem.vb.state["targetRange"][1] == [-1, 1]:
                     plotitem.enableAutoRange(enable=True, x=False, y=True)
-                plotitem.setYRange(np.min(data), np.max(data), padding=0.0)
+                plotitem.setYRange(np.min(data).astype(np.float32), np.max(data).astype(np.float32), padding=0.0)
 
     # --------------------------------------------------------------------------
     def plotRTQA(self, n):
@@ -401,11 +444,7 @@ class RTQAWindow(QtWidgets.QWidget):
         :param n: last volume index
         """
 
-        # The set of active ROIs changing
-        if self.init:
-            sz, l = self.rSNR.shape
-            checkedBoxes = [self.roiCheckBoxes[i].isChecked() for i in range(sz)]
-            self.checkedBoxesInd = [j for j, val in enumerate(checkedBoxes) if val]
+        self.labelsUpdate()
 
         # SNR plot
         plotitem = self.snrPlot.getPlotItem()
@@ -425,7 +464,7 @@ class RTQAWindow(QtWidgets.QWidget):
             color = np.array(config.ROI_PLOT_COLORS)[self.checkedBoxesInd]
             color = np.append(color, np.array(config.ROI_PLOT_COLORS)[self.checkedBoxesInd])
             color = np.append(color, np.array(config.ROI_PLOT_COLORS)[self.checkedBoxesInd])
-            style = [QtCore.Qt.SolidLine, QtCore.Qt.DashLine, QtCore.Qt.DashLine]
+            style = [QtCore.Qt.SolidLine, QtCore.Qt.DashLine, QtCore.Qt.DashDotDotLine]
             self.plotStatValues(self.init, plotitem, data, color, style)
 
             # Variances plot
@@ -454,16 +493,12 @@ class RTQAWindow(QtWidgets.QWidget):
         data = self.rNoRegSNR[self.checkedBoxesInd, 0:n]
         self.plotTs(self.init, plotitem, data, self.checkedBoxesInd)
 
-        # Linear trend coefficients value label
-        if self.comboBox.currentIndex() == 5:
-
-            names = ['Linear trend beta ']
-            pens = [config.PLOT_PEN_COLORS[6]]
-            sz = self.linTrendCoeff.shape[0]
-            for i in range(sz):
-                names.append('ROI_' + str(i + 1) + ': ' + '{0:.3f}'.format(float(self.linTrendCoeff[i, n - 1])))
-                pens.append(pg.mkPen(color=config.ROI_PLOT_COLORS[i], width=1.2))
-            self.makeTextValueLabel(self.trendLabel, names, pens, lineBreak='<br>')
+        # DVARS plot
+        plotitem = self.dvarsPlot.getPlotItem()
+        plotitem.clear()
+        plotitem.plot(y=self.DVARS, pen=config.PLOT_PEN_COLORS[0], name='DVARS')
+        plotitem.plot(x=np.arange(1, self._fd.xmax+1, dtype=np.float64), y=config.DEFAULT_DVARS_THRESHOLD * np.ones(self._fd.xmax),
+                        pen=config.PLOT_PEN_COLORS[2], name='thr')
 
         self.init = False
 
@@ -522,26 +557,6 @@ class RTQAWindow(QtWidgets.QWidget):
         self._fd.calc_mc_plots(data, isNewDCMBlock)
 
         self._fd.draw_mc_plots(self.mcrRadioButton.isChecked(), self.translatPlot, self.rotatPlot, self.fdPlot)
-
-        names = ['<u>FD</u> ']
-        pens = [config.PLOT_PEN_COLORS[6]]
-        names.append('Threshold 1: ' + str(int(self._fd.excFD[0])))
-        pens.append(config.PLOT_PEN_COLORS[1])
-        names.append('Threshold 2: ' + str(int(self._fd.excFD[1])))
-        pens.append(config.PLOT_PEN_COLORS[2])
-        names.append('<br><u>MD</u> ')
-        pens.append(config.PLOT_PEN_COLORS[6])
-        names.append('Threshold: ' + str(int(self._fd.excVD)))
-        pens.append(config.PLOT_PEN_COLORS[2])
-        names.append('<br><u>Mean FD</u> ')
-        pens.append(config.PLOT_PEN_COLORS[6])
-        names.append('{0:.3f}'.format(self._fd.meanFD))
-        pens.append(config.PLOT_PEN_COLORS[6])
-        names.append('<br><u>Mean MD</u> ')
-        pens.append(config.PLOT_PEN_COLORS[6])
-        names.append('{0:.3f}'.format(self._fd.meanMD))
-        pens.append(config.PLOT_PEN_COLORS[6])
-        self.makeTextValueLabel(self.mcmdValuesLabel, names, pens, lineBreak='<br>')
 
     # --------------------------------------------------------------------------
     def plotSpikes(self, init, plotitem, data, checkedBoxesInd):
@@ -626,8 +641,72 @@ class RTQAWindow(QtWidgets.QWidget):
         if data.any():
             plotitem.setYRange(np.min(self.glmProcTimeSeries) - 1, np.max(self.glmProcTimeSeries) + 1, padding=0.0)
 
-        # number of spikes label
-        sz, l = self.glmProcTimeSeries.shape
+    # --------------------------------------------------------------------------
+    def labelsUpdate(self):
+
+        sz = self.nrROIs
+        indexVolume = self.iteration
+
+        # SNR
+        if self.comboBox.currentIndex() == 0:
+            names = ['SNR ']
+            pens = [config.PLOT_PEN_COLORS[6]]
+            for i in range(sz):
+                if i == sz - 1:
+                    name = 'Whole brain ROI'
+                else:
+                    name = 'ROI_' + str(i + 1)
+                names.append(name + ': ' + '{0:.3f}'.format(float(self.rSNR[i, indexVolume])))
+                pens.append(pg.mkPen(color=config.ROI_PLOT_COLORS[i], width=1.2))
+
+            self.makeTextValueLabel(self.valuesLabel, names, pens, lineBreak='<br>')
+        elif self.comboBox.currentIndex() == 2:
+            # CNR
+            names = ['СNR ']
+            pens = [config.PLOT_PEN_COLORS[6]]
+            for i in range(self.nrROIs):
+                if i == sz - 1:
+                    name = 'Whole brain ROI'
+                else:
+                    name = 'ROI_' + str(i + 1)
+                names.append(name + ': ' + '{0:.3f}'.format(float(self.rCNR[i][indexVolume - 1])))
+                pens.append(pg.mkPen(color=config.ROI_PLOT_COLORS[i], width=1.2))
+
+            if self.comboBox.currentIndex() == 2:
+                names.append('<br><br>Baseline values   --- ')
+                pens.append(config.PLOT_PEN_COLORS[6])
+                names.append('Condition values -··-··- ')
+                pens.append(config.PLOT_PEN_COLORS[6])
+
+            self.makeTextValueLabel(self.valuesLabel, names, pens, lineBreak='<br>')
+
+        # MCMD
+        names = ['<u>FD</u> ']
+        pens = [config.PLOT_PEN_COLORS[6]]
+        names.append('Threshold 1: ' + str(int(self._fd.excFD[0])))
+        pens.append(config.PLOT_PEN_COLORS[1])
+        names.append('Threshold 2: ' + str(int(self._fd.excFD[1])))
+        pens.append(config.PLOT_PEN_COLORS[2])
+        names.append('<br><u>MD</u> ')
+        pens.append(config.PLOT_PEN_COLORS[6])
+        names.append('Threshold: ' + str(int(self._fd.excVD)))
+        pens.append(config.PLOT_PEN_COLORS[2])
+        names.append('<br><u>Mean FD</u> ')
+        pens.append(config.PLOT_PEN_COLORS[6])
+        names.append('{0:.3f}'.format(self._fd.meanFD))
+        pens.append(config.PLOT_PEN_COLORS[6])
+        names.append('<br><u>Mean MD</u> ')
+        pens.append(config.PLOT_PEN_COLORS[6])
+        names.append('{0:.3f}'.format(self._fd.meanMD))
+        pens.append(config.PLOT_PEN_COLORS[6])
+        names.append('<br><u>Offset MC parameters</u> ')
+        pens.append(config.PLOT_PEN_COLORS[6])
+        for i in range(6):
+            names.append('{0:.3e}'.format(self.offsetMCParam[0][i]))
+            pens.append(config.PLOT_PEN_COLORS[6])
+        self.makeTextValueLabel(self.mcmdValuesLabel, names, pens, lineBreak='<br>')
+
+        # Spikes
         cnt = 0
         for i in range(sz):
             cnt = cnt + np.count_nonzero(self.posSpikes[str(i)])
@@ -637,9 +716,58 @@ class RTQAWindow(QtWidgets.QWidget):
         for i in range(sz):
             cnt = cnt + np.count_nonzero(self.negSpikes[str(i)])
         names.append('<br>( Diamonds )<br>Negative spikes: ' + str(int(cnt)))
-        pens = [pg.mkPen(color=config.ROI_PLOT_COLORS[9], width=1.2),
-                pg.mkPen(color=config.ROI_PLOT_COLORS[9], width=1.2)]
+        pens = [config.PLOT_PEN_COLORS[6],
+                config.PLOT_PEN_COLORS[6]]
         self.makeTextValueLabel(self.spikesLabel, names, pens, lineBreak='<br>')
+
+        # Linear trend
+        names = ['Linear trend beta ']
+        pens = [config.PLOT_PEN_COLORS[6]]
+        sz = self.linTrendCoeff.shape[0]
+        for i in range(sz):
+            if i == sz - 1:
+                name = 'Whole brain ROI'
+            else:
+                name = 'ROI_' + str(i + 1)
+            names.append(name + ': ' + '{0:.3f}'.format(float(self.linTrendCoeff[i, indexVolume - 1])))
+            pens.append(pg.mkPen(color=config.ROI_PLOT_COLORS[i], width=1.2))
+        self.makeTextValueLabel(self.trendLabel, names, pens, lineBreak='<br>')
+
+        # MSE
+        names = ['MSE ']
+        pens = [config.PLOT_PEN_COLORS[6]]
+        for i in range(sz):
+            if i == sz - 1:
+                name = 'Whole brain ROI'
+            else:
+                name = 'ROI_' + str(i + 1)
+            names.append(name + ': ' + '{0:.3f}'.format(float(self.rMSE[i, indexVolume])))
+            pens.append(pg.mkPen(color=config.ROI_PLOT_COLORS[i], width=1.2))
+
+        self.makeTextValueLabel(self.mseLabel, names, pens, lineBreak='<br>')
+
+        # no reg SNR
+        names = ['no reg SNR ']
+        pens = [config.PLOT_PEN_COLORS[6]]
+        for i in range(sz):
+            if i == sz - 1:
+                name = 'Whole brain ROI'
+            else:
+                name = 'ROI_' + str(i + 1)
+            names.append(name + ': ' + '{0:.3f}'.format(float(self.rNoRegSNR[i, indexVolume])))
+            pens.append(pg.mkPen(color=config.ROI_PLOT_COLORS[i], width=1.2))
+
+        self.makeTextValueLabel(self.noRegSnrValueLabel, names, pens, lineBreak='<br>')
+
+        # DVARS
+        names = ['DVARS ']
+        pens = [config.PLOT_PEN_COLORS[6]]
+        names.append('{0:.3f} '.format(float(self.DVARS[-1])))
+        pens.append(config.PLOT_PEN_COLORS[6])
+        names.append('<br>Threshold : ' + str(int(self.excDVARS)))
+        pens.append(config.PLOT_PEN_COLORS[6])
+
+        self.makeTextValueLabel(self.dvarsLabel, names, pens, lineBreak='<br>')
 
     # --------------------------------------------------------------------------
     def snr(self, rMean, rVar, m2, rSNR, blockIter, data, indexVolume, isNewDCMBlock):
@@ -694,27 +822,6 @@ class RTQAWindow(QtWidgets.QWidget):
             self.rNoRegMean, self.rNoRegVar, self.noRegM2, \
             self.rNoRegSNR, self.noRegBlockIter = self.snr(self.rNoRegMean, self.rNoRegVar, self.noRegM2, self.rNoRegSNR,
                                                            self.noRegBlockIter, dataNoReg, indexVolume, isNewDCMBlock)
-
-        if self.comboBox.currentIndex() == 0:
-
-            names = ['SNR ']
-            pens = [config.PLOT_PEN_COLORS[6]]
-            for i in range(sz):
-                names.append('ROI_' + str(i + 1) + ': ' + '{0:.3f}'.format(float(self.rSNR[i, indexVolume])))
-                pens.append(pg.mkPen(color=config.ROI_PLOT_COLORS[i], width=1.2))
-
-            self.makeTextValueLabel(self.valuesLabel, names, pens, lineBreak='<br>')
-
-        else:
-            if self.comboBox.currentIndex() == 6:
-
-                names = ['no reg SNR ']
-                pens = [config.PLOT_PEN_COLORS[6]]
-                for i in range(sz):
-                    names.append('ROI_' + str(i + 1) + ': ' + '{0:.3f}'.format(float(self.rSNR[i, indexVolume])))
-                    pens.append(pg.mkPen(color=config.ROI_PLOT_COLORS[i], width=1.2))
-
-                self.makeTextValueLabel(self.noRegSnrValueLabel, names, pens, lineBreak='<br>')
 
         self.iteration = indexVolume
 
@@ -788,16 +895,6 @@ class RTQAWindow(QtWidgets.QWidget):
                 self.rCNR[i, indexVolume] = (self.meanCond[i, indexVolume] - self.meanBas[i, indexVolume]) / (
                     np.sqrt(self.varCond[i, indexVolume] + self.varBas[i, indexVolume]))
 
-            if self.comboBox.currentIndex() == 2:
-
-                names = ['СNR ']
-                pens = [config.PLOT_PEN_COLORS[6]]
-                for i in range(sz):
-                    names.append('ROI_' + str(i + 1) + ': ' + '{0:.3f}'.format(float(self.rCNR[i][indexVolume - 1])))
-                    pens.append(pg.mkPen(color=config.ROI_PLOT_COLORS[i], width=1.2))
-
-                self.makeTextValueLabel(self.valuesLabel, names, pens, lineBreak='<br>')
-
     # --------------------------------------------------------------------------
     def calculateSpikes(self, data, indexVolume, posSpikes, negSpikes):
         """ Spikes and GLM signal recording
@@ -839,15 +936,16 @@ class RTQAWindow(QtWidgets.QWidget):
         for i in range(sz):
             self.rMSE[i,indexVolume] = (n/(n+1)) * self.rMSE[i,indexVolume-1] + ((inputSignal[i]-outputSignal[i])**2)/(n+1)
 
-        if self.comboBox.currentIndex() == 4:
+    # --------------------------------------------------------------------------
+    def calculateDVARS(self, dvarsValue, isNewDCMBlock):
 
-            names = ['MSE ']
-            pens = [config.PLOT_PEN_COLORS[6]]
-            for i in range(sz):
-                names.append('ROI_' + str(i + 1) + ': ' + '{0:.3f}'.format(float(self.rMSE[i, indexVolume])))
-                pens.append(pg.mkPen(color=config.ROI_PLOT_COLORS[i], width=1.2))
+        if self.iteration == 0 or isNewDCMBlock:
+            self.DVARS = np.append(self.DVARS, 0)
+        else:
+            self.DVARS = np.append(self.DVARS, dvarsValue)
 
-            self.makeTextValueLabel(self.mseLabel, names, pens, lineBreak='<br>')
+        if self.DVARS[-1] > config.DEFAULT_DVARS_THRESHOLD:
+            self.excDVARS = self.excDVARS + 1
 
     # --------------------------------------------------------------------------
     def dataPacking(self):
@@ -856,7 +954,8 @@ class RTQAWindow(QtWidgets.QWidget):
 
         tsRTQA = dict.fromkeys(['rMean', 'rVar', 'rSNR', 'rNoRegSNR',
                                 'meanBas', 'varBas', 'meanCond', 'varCond', 'rCNR',
-                                'excFDIndexes_1', 'excFDIndexes_2', 'excMDIndexes', 'FD', 'MD', 'rMSE'])
+                                'excFDIndexes_1', 'excFDIndexes_2', 'excMDIndexes',
+                                'FD', 'MD', 'DVARS', 'rMSE'])
 
         tsRTQA['rMean'] = matlab.double(self.rMean.tolist())
         tsRTQA['rVar'] = matlab.double(self.rVar.tolist())
@@ -872,6 +971,7 @@ class RTQAWindow(QtWidgets.QWidget):
         tsRTQA['excMDIndexes'] = matlab.double(self._fd.excMDIndexes.tolist())
         tsRTQA['FD'] = matlab.double(self._fd.FD.tolist())
         tsRTQA['MD'] = matlab.double(self._fd.MD.tolist())
+        tsRTQA['DVARS'] = matlab.double(self.DVARS.tolist())
         tsRTQA['rMSE'] = matlab.double(self.rMSE.tolist())
 
         return tsRTQA
