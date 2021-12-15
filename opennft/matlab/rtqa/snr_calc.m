@@ -1,4 +1,4 @@
-function [ snrData ] = snr_calc( iteration, volSmoothed, snrData, isSmoothed )
+function [ snrData ] = snr_calc( iteration, volSmoothed, snrData)
 % Function to calculate Signal-to-Noise Ratio for volume
 %
 % input:
@@ -19,19 +19,20 @@ function [ snrData ] = snr_calc( iteration, volSmoothed, snrData, isSmoothed )
         snrData.meanSmoothed = volSmoothed;
         snrData.m2Smoothed = zeros(shape);
         snrData.iteration = snrData.iteration + 1;
-        return;
-    end
+    else
 
-    snrData.iteration = snrData.iteration + 1;
-    n = double(snrData.iteration);
-    
-    meanPrev = meanSmoothed;
-    meanSmoothed = meanSmoothed + (volSmoothed - meanSmoothed) / n;
-    m2Smoothed = m2Smoothed + (volSmoothed - meanPrev).*(volSmoothed - meanSmoothed);
-    variance = m2Smoothed / (n-1);
-    snrData.snrVol = meanSmoothed ./ (variance.^.5);
-    
-    snrData.meanSmoothed = meanSmoothed;
-    snrData.m2Smoothed = m2Smoothed;
+        snrData.iteration = snrData.iteration + 1;
+        n = double(snrData.iteration);
+
+        meanPrev = meanSmoothed;
+        meanSmoothed = meanSmoothed + (volSmoothed - meanSmoothed) / n;
+        m2Smoothed = m2Smoothed + (volSmoothed - meanPrev).*(volSmoothed - meanSmoothed);
+        variance = m2Smoothed / (n-1);
+        snrData.snrVol = meanSmoothed ./ (variance.^.5);
+
+        snrData.meanSmoothed = meanSmoothed;
+        snrData.m2Smoothed = m2Smoothed;
+
+    end
 
 end

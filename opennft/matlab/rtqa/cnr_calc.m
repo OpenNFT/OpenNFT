@@ -1,4 +1,4 @@
-function [ cnrData ] = cnr_calc( index, volSmoothed, cnrData, isSmoothed )
+function [ cnrData ] = cnr_calc( index, volSmoothed, cnrData )
 % Function to calculate Contrast-to-Noise Ratio for volume
 %
 % input:
@@ -21,16 +21,13 @@ function [ cnrData ] = cnr_calc( index, volSmoothed, cnrData, isSmoothed )
             basData.m2Smoothed = zeros(shape);
             basData.iteration = basData.iteration + 1;
             cnrData.basData = basData;
-            return;
-        end
-        
+        else
+            basData.iteration = basData.iteration + 1;
+            meanPrev = basData.meanSmoothed;
 
-        basData.iteration = basData.iteration + 1;
-        meanPrev = basData.meanSmoothed;
-        
-        basData.meanSmoothed = basData.meanSmoothed + (volSmoothed - basData.meanSmoothed) / basData.iteration;
-        basData.m2Smoothed = basData.m2Smoothed + (volSmoothed - meanPrev).*(volSmoothed - basData.meanSmoothed);
-        
+            basData.meanSmoothed = basData.meanSmoothed + (volSmoothed - basData.meanSmoothed) / basData.iteration;
+            basData.m2Smoothed = basData.m2Smoothed + (volSmoothed - meanPrev).*(volSmoothed - basData.meanSmoothed);
+        end
     end
     
     if ismember(index,condData.indexesCond)
@@ -39,15 +36,12 @@ function [ cnrData ] = cnr_calc( index, volSmoothed, cnrData, isSmoothed )
             condData.m2Smoothed = zeros(shape);
             condData.iteration = condData.iteration + 1;
             cnrData.condData = condData;
-            return;
+        else
+            condData.iteration = condData.iteration + 1;
+            meanPrev = condData.meanSmoothed;
+            condData.meanSmoothed = condData.meanSmoothed + (volSmoothed - condData.meanSmoothed) / condData.iteration;
+            condData.m2Smoothed = condData.m2Smoothed + (volSmoothed - meanPrev).*(volSmoothed - condData.meanSmoothed);
         end
-        
-        condData.iteration = condData.iteration + 1;
-        meanPrev = condData.meanSmoothed;
-
-        condData.meanSmoothed = condData.meanSmoothed + (volSmoothed - condData.meanSmoothed) / condData.iteration;
-        condData.m2Smoothed = condData.m2Smoothed + (volSmoothed - meanPrev).*(volSmoothed - condData.meanSmoothed);
-
     end
     
     if condData.iteration > 0

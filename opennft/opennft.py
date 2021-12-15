@@ -1397,11 +1397,9 @@ class OpenNFT(QWidget):
                 self.windowRTQA.volumeCheckBox.stateChanged.connect(self.onChangeNegMapPolicy)
                 self.windowRTQA.volumeCheckBox.stateChanged.connect(self.onInteractWithMapImage)
                 self.windowRTQA.volumeCheckBox.toggled.connect(self.updateOrthViewAsync)
-                self.windowRTQA.smoothedCheckBox.stateChanged.connect(self.onSmoothedChecked)
                 self.windowRTQA.comboBox.currentIndexChanged.connect(self.onModeChanged)
                 self.eng.assignin('base', 'rtQAMode', self.windowRTQA.currentMode, nargout=0)
                 self.eng.assignin('base', 'isShowRtqaVol', self.windowRTQA.volumeCheckBox.isChecked(), nargout=0)
-                self.eng.assignin('base', 'isSmoothed', self.windowRTQA.smoothedCheckBox.isChecked(), nargout=0)
 
                 self.windowRTQA.roiChecked(self.selectedRoi)
                 self.windowRTQA.isStopped = False
@@ -1409,7 +1407,6 @@ class OpenNFT(QWidget):
             else:
                 self.eng.assignin('base', 'rtQAMode', False, nargout=0)
                 self.eng.assignin('base', 'isShowRtqaVol', False, nargout=0)
-                self.eng.assignin('base', 'isSmoothed', False, nargout=0)
 
             self.onChangeNegMapPolicy()
             self.eng.assignin('base', 'imageViewMode', int(self.imageViewMode), nargout=0)
@@ -1522,12 +1519,6 @@ class OpenNFT(QWidget):
                 self.displayMosaicImage()
             else:
                 self.onCheckOrthViewUpdated()
-
-    # --------------------------------------------------------------------------
-    def onSmoothedChecked(self):
-
-        is_rtqa_smoothed = self.windowRTQA.smoothedCheckBox.isChecked()
-        self.eng.assignin('base', 'isSmoothed', is_rtqa_smoothed, nargout=0)
 
     # --------------------------------------------------------------------------
     def onRoiChecked(self, action):

@@ -18,7 +18,6 @@ imageViewMode = evalin('base', 'imageViewMode');
 if P.isRTQA
     isShowRtqaVol = evalin('base', 'isShowRtqaVol');
     rtQAMode = evalin('base', 'rtQAMode');
-    isSmoothed = evalin('base', 'isSmoothed');
     rtQA_matlab = evalin('base', 'rtQA_matlab');
     FIRST_SNR_VOLUME = evalin('base', 'FIRST_SNR_VOLUME');
 else
@@ -191,10 +190,10 @@ if P.isRTQA && indVolNorm > FIRST_SNR_VOLUME
         rtQA_matlab.cnrData.condData.iteration = 0;
     end
     
-    [ rtQA_matlab.snrData ] = snr_calc(indVolNorm,  smReslVol, rtQA_matlab.snrData, isSmoothed);
+    [ rtQA_matlab.snrData ] = snr_calc(indVolNorm,  smReslVol, rtQA_matlab.snrData);
     
     if ~P.isRestingState
-        [ rtQA_matlab.cnrData ] = cnr_calc(indVolNorm, smReslVol, rtQA_matlab.cnrData, isSmoothed);
+        [ rtQA_matlab.cnrData ] = cnr_calc(indVolNorm, smReslVol, rtQA_matlab.cnrData);
     end
         
     rtQA_matlab.snrMapCreated = 1;
@@ -243,9 +242,6 @@ else
         ROIs = evalin('base','ROIs');            
         indROI = ROIs(end).voxelIndex;
         dvarsDiff = ((smReslVol(indROI) - mainLoopData.procVol(indROI)) ./ P.scaleFactorDVARS).^2;
-        mainLoopData.prevVol(indVol) = mean(mainLoopData.procVol(indROI),"all");
-        mainLoopData.currVol(indVol) = mean(smReslVol(indROI),"all");
-        mainLoopData.dvarsDiff(indVol,:) = (smReslVol(indROI) - mainLoopData.procVol(indROI)).^2;
         mainLoopData.dvarsValue = 100 * sqrt(mean(dvarsDiff(:)));
     end
     mainLoopData.procVol = smReslVol;

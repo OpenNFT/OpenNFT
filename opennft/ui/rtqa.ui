@@ -542,13 +542,6 @@
           </widget>
          </item>
          <item>
-          <widget class="QCheckBox" name="smoothedCheckBox">
-           <property name="text">
-            <string>Smoothed</string>
-           </property>
-          </widget>
-         </item>
-         <item>
           <widget class="QLabel" name="valuesLabel">
            <property name="font">
             <font>
