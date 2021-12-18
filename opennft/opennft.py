@@ -377,43 +377,66 @@ class OpenNFT(QWidget):
         w_sizes = [self.width() // 2] * 2
         self.splitterMainHor.setSizes(w_sizes)
 
-        self.leFirstFile.textChanged.connect(lambda: self.textChangedDual(self.leFirstFile, self.leFirstFile2))
-        self.leFirstFile2.textChanged.connect(lambda: self.textChangedDual(self.leFirstFile2, self.leFirstFile))
-
-        self.pbMoreParameters.toggled.connect(self.onShowMoreParameters)
-
         self.btnInit.clicked.connect(lambda: self.initialize(start=True))
-        self.btnPlugins.clicked.connect(self.showPluginDlg)
-        self.btnPlugins.setEnabled(False)
-        self.btnSetup.clicked.connect(self.setup)
-        self.btnStart.clicked.connect(self.start)
-        self.btnStop.clicked.connect(self.stop)
-        self.btnRTQA.clicked.connect(self.rtQA)
-        self.btnRTQA.setEnabled(False)
 
-        self.btnChooseSetFile.clicked.connect(self.onChooseSetFile)
-        self.btnChooseSetFile2.clicked.connect(self.onChooseSetFile)
+        if not config.AUTO_RTQA:
+            self.btnPlugins.clicked.connect(self.showPluginDlg)
+            self.btnPlugins.setEnabled(False)
+            self.btnSetup.clicked.connect(self.setup)
+            self.btnStart.clicked.connect(self.start)
+            self.btnStop.clicked.connect(self.stop)
+            self.btnRTQA.clicked.connect(self.rtQA)
+            self.btnRTQA.setEnabled(False)
 
-        self.btnChooseProtocolFile.clicked.connect(self.onChooseProtocolFile)
+            self.leFirstFile.textChanged.connect(lambda: self.textChangedDual(self.leFirstFile, self.leFirstFile2))
+            self.leFirstFile2.textChanged.connect(lambda: self.textChangedDual(self.leFirstFile2, self.leFirstFile))
 
-        self.btnChhoseWeghts.clicked.connect(self.onChooseWeightsFile)
+            self.pbMoreParameters.toggled.connect(self.onShowMoreParameters)
 
-        self.btnChooseRoiAnatFolder.clicked.connect(
-            lambda: self.onChooseFolder('RoiAnatFolder', self.leRoiAnatFolder))
+            self.btnChooseSetFile.clicked.connect(self.onChooseSetFile)
+            self.btnChooseSetFile2.clicked.connect(self.onChooseSetFile)
 
-        self.btnChooseRoiGroupFolder.clicked.connect(
-            lambda: self.onChooseFolder('RoiGroupFolder', self.leRoiGroupFolder))
+            self.btnChooseProtocolFile.clicked.connect(self.onChooseProtocolFile)
 
-        self.btnChooseStructBgFile.clicked.connect(self.onChooseStructBgFile)
+            self.btnChhoseWeghts.clicked.connect(self.onChooseWeightsFile)
 
-        self.btnMCTempl.clicked.connect(self.onChooseMCTemplFile)
+            self.btnChooseRoiAnatFolder.clicked.connect(
+                lambda: self.onChooseFolder('RoiAnatFolder', self.leRoiAnatFolder))
 
-        self.btnChooseWorkFolder.clicked.connect(
-            lambda: self.onChooseFolder('WorkFolder', self.leWorkFolder))
-        self.btnChooseWatchFolder.clicked.connect(
-            lambda: self.onChooseFolder('WatchFolder', self.leWatchFolder))
+            self.btnChooseRoiGroupFolder.clicked.connect(
+                lambda: self.onChooseFolder('RoiGroupFolder', self.leRoiGroupFolder))
 
-        self.btnStart.setEnabled(False)
+            self.btnChooseStructBgFile.clicked.connect(self.onChooseStructBgFile)
+
+            self.btnMCTempl.clicked.connect(self.onChooseMCTemplFile)
+
+            self.btnChooseWorkFolder.clicked.connect(
+                lambda: self.onChooseFolder('WorkFolder', self.leWorkFolder))
+            self.btnChooseWatchFolder.clicked.connect(
+                lambda: self.onChooseFolder('WatchFolder', self.leWatchFolder))
+
+            self.btnStart.setEnabled(False)
+
+        else:
+            self.stackedWidget.setCurrentIndex(1)
+            self.btnPlugins.setEnabled(False)
+            self.pbMoreParameters.setEnabled(False)
+            self.btnSetup.setEnabled(False)
+            self.btnStart.clicked.connect(self.start)
+            self.btnStop.clicked.connect(self.stop)
+            self.btnRTQA.clicked.connect(self.rtQA)
+            self.btnRTQA.setEnabled(True)
+            self.btnStart.setEnabled(True)
+
+            self.btnChooseWatchFolder3.clicked.connect(
+                lambda: self.onChooseFolder('WatchFolder', self.leWatchFolder3))
+            self.btnChooseRoiFolder.clicked.connect(
+                lambda: self.onChooseFolder('RoiFolder', self.leRoiFolder))
+
+            if not config.SELECT_ROIS:
+                self.label_16.setEnabled(False)
+                self.leRoiFolder.setEnabled(False)
+                self.btnChooseRoiFolder.setEnabled(False)
 
         self.cbImageViewMode.currentIndexChanged.connect(self.onChangeImageViewMode)
         self.orthView.cursorPositionChanged.connect(self.onChangeOrthViewCursorPosition)
@@ -561,13 +584,6 @@ class OpenNFT(QWidget):
         self.eng.workspace['mainLoopData'] = self.mainLoopData
 
         self.eng.workspace['rtQA_matlab'] = self.rtQA_matlab
-
-        # if self.P['Type'] in ['PSC', 'SVM', 'Corr', 'None']:
-        #     self.engSPM.workspace['ROIs'] = self.eng.evalin('base', 'ROIs')
-        # elif self.P['Type'] == 'DCM':
-        #     self.engSPM.workspace['ROIsAnat'] = self.eng.evalin('base', 'ROIsAnat')
-        #     if self.P['isRTQA']:
-        #         self.engSPM.workspace['ROIs'] = self.eng.evalin('base', 'ROIs')
 
         self.eng.setupProcParams(nargout=0)
 
@@ -724,6 +740,9 @@ class OpenNFT(QWidget):
                     return
 
             self.files_exported.append(fname)
+
+        if config.AUTO_RTQA:
+            self.setup_auto_rtqa()
 
         # check file sequence
         if (not self.isOffline) and (not self.cbUseTCPData.isChecked()) and (len(self.files_processed) > 0):
@@ -1190,15 +1209,34 @@ class OpenNFT(QWidget):
         self.eng.workspace['mainLoopData'] = self.mainLoopData
         self.eng.workspace['rtQA_matlab'] = self.rtQA_matlab
 
-        self.frameParams.setEnabled(True)
-        self.frameShortParams.setEnabled(True)
-        self.btnSetup.setEnabled(self.isSetFileChosen)
+        if not config.AUTO_RTQA:
+            self.frameParams.setEnabled(True)
+            self.frameShortParams.setEnabled(True)
+            self.btnSetup.setEnabled(self.isSetFileChosen)
+            self.pluginWindow = plugin.PluginWindow()
+            self.btnPlugins.setEnabled(True)
+        else:
+            self.btnChooseRoiFolder.setEnabled(True)
+            self.btnChooseWatchFolder3.setEnabled(True)
+            self.label_15.setEnabled(True)
+            self.label_16.setEnabled(True)
+            self.leRoiFolder.setEnabled(True)
+            self.leWatchFolder3.setEnabled(True)
+            self.cbOfflineMode3.setEnabled(True)
+            self.label_17.setEnabled(True)
+            self.label_18.setEnabled(True)
+            self.label_45.setEnabled(True)
+            self.sbImgSerNr3.setEnabled(True)
+            self.sbNFRunNr3.setEnabled(True)
+            self.sbSkipVol3.setEnabled(True)
+            self.sbVolumesNr3.setEnabled(True)
+            self.label_44.setEnabled(True)
+            self.label_46.setEnabled(True)
+            self.leFirstFile3.setEnabled(True)
+            # self.frameAutoRtqaParams.setEnabled(True)
 
         self.resetDone = True
         self.isInitialized = True
-
-        self.pluginWindow = plugin.PluginWindow()
-        self.btnPlugins.setEnabled(True)
 
         logger.info("Initialization finished ({:.2f} s)", time.time() - ts)
 
@@ -1413,6 +1451,120 @@ class OpenNFT(QWidget):
             self.eng.assignin('base', 'FIRST_SNR_VOLUME', config.FIRST_SNR_VOLUME, nargout=0)
             self.cbImageViewMode.setEnabled(False)
             self.cbImageViewMode.setCurrentIndex(0)
+            self.isStopped = False
+
+    # --------------------------------------------------------------------------
+    def setup_auto_rtqa(self):
+        if not self.isInitialized:
+            logger.error("Couldn't connect Matlab.\n PRESS INITIALIZE FIRST!")
+            return
+
+        with utils.timeit('Setup finished:'):
+            logger.info("Setup application...")
+
+            self.orthViewInitialize = True
+
+            self.actualize_auto_rtqa()
+            self.isOffline = self.cbOfflineMode3.isChecked()
+
+            memMapFile = self.getFreeMemmapFilename()
+            memMapFile = memMapFile.replace('OrthView', 'shared')
+            logger.info('memMapFile: {}', memMapFile)
+            self.P['memMapFile'] = memMapFile
+
+            self.eng.workspace['P'] = self.P
+            self.engSPM.workspace['P'] = self.P
+            self.previousIterStartTime = 0
+            self.displaySamples = []
+
+            with utils.timeit("  Load protocol data:"):
+                self.loadJsonProtocol()
+
+            with utils.timeit("  Selecting ROI:"):
+                self.selectRoi()
+
+            self.P.update(self.eng.workspace['P'])
+
+            logger.info("  Setup plots...")
+            self.setupRoiPlots()
+            self.setupMcPlots()
+
+            with utils.timeit('  initMainLoopData:'):
+                self.initMainLoopData()
+
+            self.roiDict = dict()
+            self.selectedRoi = []
+            roi_menu = QMenu()
+            roi_menu.triggered.connect(self.onRoiChecked)
+            self.roiSelectorBtn.setMenu(roi_menu)
+            nrROIs = int(self.P['NrROIs'])
+            for i in range(nrROIs):
+                if self.P['isRTQA'] and i+1==nrROIs:
+                    roi = 'Whole brain ROI'
+                else:
+                    roi = 'ROI_{}'.format(i+1)
+                roi_action = roi_menu.addAction(roi)
+                roi_action.setCheckable(True)
+                if not (self.P['isRTQA'] and i+1==nrROIs):
+                    roi_action.setChecked(True)
+                    self.roiDict[roi] = True
+                    self.selectedRoi.append(i)
+
+            action = roi_menu.addAction("All")
+            action.setCheckable(False)
+
+            action = roi_menu.addAction("None")
+            action.setCheckable(False)
+
+            self.roiSelectorBtn.setEnabled(True)
+
+            self.recorder.initialize(self.P['NrOfVolumes'])
+            self.eng.nfbInitReward(nargout=0)
+
+            self.initUdpSender()
+
+            with utils.timeit("  Initialize plugins:"):
+                excPlugins = []
+                for i in range(len(self.plugins)):
+                    try:
+                        self.plugins[i].initialize()
+                    except KeyError as e:
+                        logger.warning("Initializing plugin '{}' failed - {} not found in settings".format(
+                            self.plugins[i].module.META['plugin_name'], str(e)))
+                        excPlugins.append(i)
+                for i in excPlugins:
+                    del self.plugins[i]
+
+            self.btnStart.setEnabled(True)
+            if self.P['isRTQA']:
+
+                self.btnRTQA.setEnabled(True)
+
+                if self.windowRTQA:
+                    self.windowRTQA.deleteLater()
+
+                self.windowRTQA = rtqa.RTQAWindow(parent=self)
+                self.windowRTQA.volumeCheckBox.stateChanged.connect(self.onShowRtqaVol)
+                self.windowRTQA.volumeCheckBox.stateChanged.connect(self.onChangeNegMapPolicy)
+                self.windowRTQA.volumeCheckBox.stateChanged.connect(self.onInteractWithMapImage)
+                self.windowRTQA.volumeCheckBox.toggled.connect(self.updateOrthViewAsync)
+                self.windowRTQA.comboBox.currentIndexChanged.connect(self.onModeChanged)
+                self.eng.assignin('base', 'rtQAMode', self.windowRTQA.currentMode, nargout=0)
+                self.eng.assignin('base', 'isShowRtqaVol', self.windowRTQA.volumeCheckBox.isChecked(), nargout=0)
+
+                self.windowRTQA.roiChecked(self.selectedRoi)
+                self.windowRTQA.isStopped = False
+
+            else:
+                self.eng.assignin('base', 'rtQAMode', False, nargout=0)
+                self.eng.assignin('base', 'isShowRtqaVol', False, nargout=0)
+
+            self.onChangeNegMapPolicy()
+            self.eng.assignin('base', 'imageViewMode', int(self.imageViewMode), nargout=0)
+            self.eng.assignin('base', 'FIRST_SNR_VOLUME', config.FIRST_SNR_VOLUME, nargout=0)
+            self.cbImageViewMode.setEnabled(False)
+            self.cbImageViewMode.setCurrentIndex(0)
+            self.cbImageViewMode.model().item(2).setEnabled(False)
             self.isStopped = False
 
     # --------------------------------------------------------------------------
@@ -1826,87 +1978,107 @@ class OpenNFT(QWidget):
 
     # --------------------------------------------------------------------------
     def loadSettingsFromSetFile(self):
-        # --- top ---
-        self.leProtocolFile.setText(self.settings.value('StimulationProtocol', ''))
-        self.leWorkFolder.setText(self.settings.value('WorkFolder', ''))
-        self.leWatchFolder.setText(self.settings.value('WatchFolder', ''))
-        if (self.settings.value('Type', '')) == 'DCM':
-            self.leRoiAnatFolder.setText(self.settings.value('RoiAnatFolder', ''))
+
+        if not config.AUTO_RTQA:
+            # --- top ---
+            self.leProtocolFile.setText(self.settings.value('StimulationProtocol', ''))
+            self.leWorkFolder.setText(self.settings.value('WorkFolder', ''))
+            self.leWatchFolder.setText(self.settings.value('WatchFolder', ''))
+            if (self.settings.value('Type', '')) == 'DCM':
+                self.leRoiAnatFolder.setText(self.settings.value('RoiAnatFolder', ''))
+            else:
+                self.leRoiAnatFolder.setText(self.settings.value('RoiFilesFolder', ''))
+            self.leRoiAnatOperation.setText(self.settings.value('RoiAnatOperation', 'mean(norm_percValues)'))
+            self.leRoiGroupFolder.setText(self.settings.value('RoiGroupFolder', ''))
+            self.leStructBgFile.setText(self.settings.value('StructBgFile', ''))
+            self.leMCTempl.setText(self.settings.value('MCTempl', ''))
+            if (self.settings.value('Prot', '')) == 'ContTask':
+                self.leTaskFolder.setText(self.settings.value('TaskFolder', ''))
+
+            # --- middle ---
+            self.leProjName.setText(self.settings.value('ProjectName', ''))
+            self.leSubjectID.setText(self.settings.value('SubjectID', ''))
+            self.leFirstFile.setText(self.settings.value('FirstFileNameTxt', '001_{Image Series No:06}_{#:06}.dcm'))
+            self.sbNFRunNr.setValue(int(self.settings.value('NFRunNr', '1')))
+            self.sbImgSerNr.setValue(int(self.settings.value('ImgSerNr', '1')))
+            self.sbVolumesNr.setValue(int(self.settings.value('NrOfVolumes')))
+            self.sbSlicesNr.setValue(int(self.settings.value('NrOfSlices')))
+            self.sbTR.setValue(int(self.settings.value('TR')))
+            self.sbSkipVol.setValue(int(self.settings.value('nrSkipVol')))
+            self.sbMatrixSizeX.setValue(int(self.settings.value('MatrixSizeX')))
+            self.sbMatrixSizeY.setValue(int(self.settings.value('MatrixSizeY')))
+
+            # --- bottom left ---
+            self.cbOfflineMode.setChecked(str(self.settings.value('OfflineMode', 'true')).lower() == 'true')
+
+            if self.settings.value('UseTCPData', None) is None:
+                logger.warning('Upgrade settings format from version 1.0.rc0')
+
+            self.cbUseTCPData.setChecked(str(self.settings.value('UseTCPData', 'false')).lower() == 'true')
+            if self.cbUseTCPData.isChecked():
+                self.leTCPDataIP.setText(self.settings.value('TCPDataIP', ''))
+                self.leTCPDataPort.setText(str(self.settings.value('TCPDataPort', '')))
+
+            self.leMaxFeedbackVal.setText(str(self.settings.value('MaxFeedbackVal', '100')))  # FixMe
+            self.leMinFeedbackVal.setText(str(self.settings.value('MinFeedbackVal', '-100')))
+            self.sbFeedbackValDec.setValue(int(self.settings.value('FeedbackValDec', '0')))  # FixMe
+            self.cbNegFeedback.setChecked(str(self.settings.value('NegFeedback', 'false')).lower() == 'true')
+            self.cbFeedbackPlot.setChecked(str(self.settings.value('PlotFeedback', 'true')).lower() == 'true')
+
+            self.leShamFile.setText(self.settings.value('ShamFile', ''))
+
+            self.cbUsePTB.setChecked(str(self.settings.value('UsePTB', 'false')).lower() == 'true')
+            if not config.USE_PTB_HELPER:
+                self.cbUsePTB.setChecked(False)
+                self.cbUsePTB.setEnabled(False)
+
+            self.cbScreenId.setCurrentIndex(int(self.settings.value('DisplayFeedbackScreenID', 0)))
+            self.cbDisplayFeedbackFullscreen.setChecked(
+                str(self.settings.value('DisplayFeedbackFullscreen')).lower() == 'true')
+
+            self.cbUseUDPFeedback.setChecked(str(self.settings.value('UseUDPFeedback')).lower() == 'true')
+            self.leUDPFeedbackIP.setText(self.settings.value('UDPFeedbackIP', ''))
+            self.leUDPFeedbackPort.setText(str(self.settings.value('UDPFeedbackPort', '1234')))
+            self.leUDPFeedbackControlChar.setText(str(self.settings.value('UDPFeedbackControlChar', '')))
+            self.cbUDPSendCondition.setChecked(str(self.settings.value('UDPSendCondition')).lower() == 'true')
+
+            # --- bottom right ---
+            idx = self.cbDataType.findText(self.settings.value('DataType', 'DICOM'))
+            if idx >= 0:
+                self.cbDataType.setCurrentIndex(idx)
+            self.cbgetMAT.setChecked(str(self.settings.value('GetMAT')).lower() == 'true')
+            idx = self.cbProt.findText(self.settings.value('Prot', 'Inter'))
+            if idx >= 0:
+                self.cbProt.setCurrentIndex(idx)
+            idx = self.cbType.findText(self.settings.value('Type', 'PSC'))
+            if idx >= 0:
+                self.cbType.setCurrentIndex(idx)
+
+            # --- main viewer ---
+            self.sbTargANG.setValue(float(self.settings.value('TargANG', 0)))
+            self.sbTargRAD.setValue(float(self.settings.value('TargRAD', 0)))
+            self.sbTargDIAM.setValue(float(self.settings.value('TargDIAM', 0.0)))
+            self.leWeightsFile.setText(str(self.settings.value('WeightsFileName', '')))
+
+            self.actualize
+
         else:
-            self.leRoiAnatFolder.setText(self.settings.value('RoiFilesFolder', ''))
-        self.leRoiAnatOperation.setText(self.settings.value('RoiAnatOperation', 'mean(norm_percValues)'))
-        self.leRoiGroupFolder.setText(self.settings.value('RoiGroupFolder', ''))
-        self.leStructBgFile.setText(self.settings.value('StructBgFile', ''))
-        self.leMCTempl.setText(self.settings.value('MCTempl', ''))
-        if (self.settings.value('Prot', '')) == 'ContTask':
-            self.leTaskFolder.setText(self.settings.value('TaskFolder', ''))
+            self.leWatchFolder3.setText(self.settings.value('WatchFolder', ''))
+            if config.SELECT_ROIS:
+                self.leRoiFolder.setText(self.settings.value('RoiFolder', ''))
+            self.leRoiAnatOperation.setText(self.settings.value('RoiAnatOperation', 'mean(norm_percValues)'))
 
-        # --- middle ---
-        self.leProjName.setText(self.settings.value('ProjectName', ''))
-        self.leSubjectID.setText(self.settings.value('SubjectID', ''))
-        self.leFirstFile.setText(self.settings.value('FirstFileNameTxt', '001_{Image Series No:06}_{#:06}.dcm'))
-        self.sbNFRunNr.setValue(int(self.settings.value('NFRunNr', '1')))
-        self.sbImgSerNr.setValue(int(self.settings.value('ImgSerNr', '1')))
-        self.sbVolumesNr.setValue(int(self.settings.value('NrOfVolumes')))
-        self.sbSlicesNr.setValue(int(self.settings.value('NrOfSlices')))
-        self.sbTR.setValue(int(self.settings.value('TR')))
-        self.sbSkipVol.setValue(int(self.settings.value('nrSkipVol')))
-        self.sbMatrixSizeX.setValue(int(self.settings.value('MatrixSizeX')))
-        self.sbMatrixSizeY.setValue(int(self.settings.value('MatrixSizeY')))
+            self.leProjName.setText(self.settings.value('ProjectName', ''))
+            self.leSubjectID.setText(self.settings.value('SubjectID', ''))
+            self.leFirstFile3.setText(self.settings.value('FirstFileNameTxt', '001_{Image Series No:06}_{#:06}.dcm'))
+            self.sbNFRunNr3.setValue(int(self.settings.value('NFRunNr', '1')))
+            self.sbImgSerNr3.setValue(int(self.settings.value('ImgSerNr', '1')))
+            self.sbVolumesNr3.setValue(int(self.settings.value('NrOfVolumes')))
+            self.sbSkipVol3.setValue(int(self.settings.value('nrSkipVol')))
 
-        # --- bottom left ---
-        self.cbOfflineMode.setChecked(str(self.settings.value('OfflineMode', 'true')).lower() == 'true')
+            self.cbOfflineMode3.setChecked(str(self.settings.value('OfflineMode', 'true')).lower() == 'true')
 
-        if self.settings.value('UseTCPData', None) is None:
-            logger.warning('Upgrade settings format from version 1.0.rc0')
-
-        self.cbUseTCPData.setChecked(str(self.settings.value('UseTCPData', 'false')).lower() == 'true')
-        if self.cbUseTCPData.isChecked():
-            self.leTCPDataIP.setText(self.settings.value('TCPDataIP', ''))
-            self.leTCPDataPort.setText(str(self.settings.value('TCPDataPort', '')))
-
-        self.leMaxFeedbackVal.setText(str(self.settings.value('MaxFeedbackVal', '100')))  # FixMe
-        self.leMinFeedbackVal.setText(str(self.settings.value('MinFeedbackVal', '-100')))
-        self.sbFeedbackValDec.setValue(int(self.settings.value('FeedbackValDec', '0')))  # FixMe
-        self.cbNegFeedback.setChecked(str(self.settings.value('NegFeedback', 'false')).lower() == 'true')
-        self.cbFeedbackPlot.setChecked(str(self.settings.value('PlotFeedback', 'true')).lower() == 'true')
-
-        self.leShamFile.setText(self.settings.value('ShamFile', ''))
-
-        self.cbUsePTB.setChecked(str(self.settings.value('UsePTB', 'false')).lower() == 'true')
-        if not config.USE_PTB_HELPER:
-            self.cbUsePTB.setChecked(False)
-            self.cbUsePTB.setEnabled(False)
-
-        self.cbScreenId.setCurrentIndex(int(self.settings.value('DisplayFeedbackScreenID', 0)))
-        self.cbDisplayFeedbackFullscreen.setChecked(
-            str(self.settings.value('DisplayFeedbackFullscreen')).lower() == 'true')
-
-        self.cbUseUDPFeedback.setChecked(str(self.settings.value('UseUDPFeedback')).lower() == 'true')
-        self.leUDPFeedbackIP.setText(self.settings.value('UDPFeedbackIP', ''))
-        self.leUDPFeedbackPort.setText(str(self.settings.value('UDPFeedbackPort', '1234')))
-        self.leUDPFeedbackControlChar.setText(str(self.settings.value('UDPFeedbackControlChar', '')))
-        self.cbUDPSendCondition.setChecked(str(self.settings.value('UDPSendCondition')).lower() == 'true')
-
-        # --- bottom right ---
-        idx = self.cbDataType.findText(self.settings.value('DataType', 'DICOM'))
-        if idx >= 0:
-            self.cbDataType.setCurrentIndex(idx)
-        self.cbgetMAT.setChecked(str(self.settings.value('GetMAT')).lower() == 'true')
-        idx = self.cbProt.findText(self.settings.value('Prot', 'Inter'))
-        if idx >= 0:
-            self.cbProt.setCurrentIndex(idx)
-        idx = self.cbType.findText(self.settings.value('Type', 'PSC'))
-        if idx >= 0:
-            self.cbType.setCurrentIndex(idx)
-
-        # --- main viewer ---
-        self.sbTargANG.setValue(float(self.settings.value('TargANG', 0)))
-        self.sbTargRAD.setValue(float(self.settings.value('TargRAD', 0)))
-        self.sbTargDIAM.setValue(float(self.settings.value('TargDIAM', 0.0)))
-        self.leWeightsFile.setText(str(self.settings.value('WeightsFileName', '')))
-
-        self.actualize
+            self.actualize_auto_rtqa
 
     # --------------------------------------------------------------------------
     def loadJsonProtocol(self):
@@ -1936,9 +2108,78 @@ class OpenNFT(QWidget):
             self.eng.selectROI(p, nargout=0)
             self.engSPM.selectROI(p, nargout=0)
 
-        if self.P['isRTQA']:
+        if config.SELECT_ROIS and self.P['isAutoRTQA']:
+            self.eng.selectROI(self.P['RoiFilesFolder'], nargout=0)
+            self.engSPM.selectROI(self.P['RoiFilesFolder'], nargout=0)
+
+        if self.P['isRTQA'] and not self.P['isAutoRTQA']:
             self.eng.epiWholeBrainROI(nargout=0)
             self.engSPM.epiWholeBrainROI(nargout=0)
+
+    # --------------------------------------------------------------------------
+    def actualize_auto_rtqa(self):
+        logger.info("  Actualizing:")
+
+        # --- top ---
+        self.P['WatchFolder'] = self.leWatchFolder3.text()
+        self.P['WorkFolder'] = str(Path(self.P['WatchFolder']).absolute().resolve().parent)
+
+
+        self.P['Type'] = "Auto_RTQA"
+        if config.SELECT_ROIS:
+            self.P['RoiFilesFolder'] = self.leRoiFolder.text()
+        else:
+            self.P['RoiFilesFolder'] = []
+        self.P['RoiAnatOperation'] = "median(norm_percValues)"
+
+        self.P['ProjectName'] = "Auto_RTQA"
+        self.P['SubjectID'] = "foo"
+        self.P['FirstFileNameTxt'] = self.leFirstFile3.text()
+        self.P['ImgSerNr'] = self.sbImgSerNr3.value()
+        self.P['NFRunNr'] = self.sbNFRunNr3.value()
+        self.P['NrOfVolumes'] = self.sbVolumesNr3.value()
+        self.P['nrSkipVol'] = self.sbSkipVol3.value()
+
+        # Parsing FirstFileNameTxt template and replace it with variables ---
+        fields = {
+            'projectname': self.P['ProjectName'],
+            'subjectid': self.P['SubjectID'],
+            'imageseriesno': self.P['ImgSerNr'],
+            'nfrunno': self.P['NFRunNr'],
+            '#': 1
+        }
+        template = self.P['FirstFileNameTxt']
+        template_elements = re.findall(r"\{([A-Za-z0-9_: ]+)\}", template)
+
+        self.P['FirstFileName'] = self.P['FirstFileNameTxt']
+
+        for template_element in template_elements:
+            template = template.replace("{%s}" % template_element, "{%s}" % template_element.replace(" ", "").lower())
+
+        self.P['FirstFileName'] = template.format(**fields)
+
+        self.P['DataType'] = "DICOM"
+        self.P['isAutoRTQA'] = True
+        self.P['isRTQA'] = True
+        self.P['isIGLM'] = config.USE_IGLM
+        self.P['isZeroPadding'] = config.zeroPaddingFlag
+        self.P['nrZeroPadVol'] = config.nrZeroPadVol
+
+        # Update settings file
+        self.settings.setValue('WorkFolder', self.P['WorkFolder'])
+        self.settings.setValue('WatchFolder', self.P['WatchFolder'])
+        self.settings.setValue('RoiFilesFolder', self.P['RoiFilesFolder'])
+        self.settings.setValue('RoiAnatOperation', self.P['RoiAnatOperation'])
+
+        self.settings.setValue('ImgSerNr', self.P['ImgSerNr'])
+        self.settings.setValue('NFRunNr', self.P['NFRunNr'])
+
+        self.settings.setValue('FirstFileNameTxt', self.P['FirstFileNameTxt'])
+        self.settings.setValue('FirstFileName', self.P['FirstFileName'])
+
+        self.settings.setValue('NrOfVolumes', self.P['NrOfVolumes'])
+        self.settings.setValue('nrSkipVol', self.P['nrSkipVol'])
+        self.settings.setValue('OfflineMode', self.cbOfflineMode.isChecked())
 
     # --------------------------------------------------------------------------
     def actualize(self):
@@ -2496,8 +2737,12 @@ class OpenNFT(QWidget):
         self.appSettings.endGroup()
 
         self.appSettings.beginGroup('Params')
-        self.settingFileName = self.appSettings.value(
-            'SettingFileName', self.settingFileName)
+
+        if not config.AUTO_RTQA:
+            self.settingFileName = self.appSettings.value(
+                'SettingFileName', self.settingFileName)
+        else:
+            self.settingFileName = str(config.ROOT_PATH / 'configs' / 'auto_rtqa_settings.ini')
 
         self.appSettings.endGroup()
 

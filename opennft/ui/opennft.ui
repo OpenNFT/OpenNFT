@@ -248,10 +248,16 @@
             </property>
             <item>
              <widget class="QStackedWidget" name="stackedWidget">
+              <property name="enabled">
+               <bool>true</bool>
+              </property>
               <property name="currentIndex">
                <number>0</number>
               </property>
               <widget class="QWidget" name="shortParams">
+               <property name="enabled">
+                <bool>false</bool>
+               </property>
                <layout class="QVBoxLayout" name="verticalLayout_13">
                 <property name="leftMargin">
                  <number>0</number>
@@ -400,6 +406,9 @@
                </layout>
               </widget>
               <widget class="QWidget" name="autoRtqaParams">
+               <property name="enabled">
+                <bool>true</bool>
+               </property>
                <layout class="QVBoxLayout" name="verticalLayout_14">
                 <property name="leftMargin">
                  <number>0</number>
@@ -414,7 +423,10 @@
                  <number>0</number>
                 </property>
                 <item>
-                 <widget class="QFrame" name="verticalFrame">
+                 <widget class="QFrame" name="frameAutoRtqaParams">
+                  <property name="enabled">
+                   <bool>true</bool>
+                  </property>
                   <layout class="QVBoxLayout" name="verticalLayout_9">
                    <property name="leftMargin">
                     <number>0</number>
@@ -511,7 +523,7 @@
                       </widget>
                      </item>
                      <item row="0" column="1">
-                      <layout class="QHBoxLayout" name="horizontalLayout_8" stretch="0,0,0,0,1,0,0,0,0,0,0">
+                      <layout class="QHBoxLayout" name="horizontalLayout_8" stretch="0,0,0,0,1,0,0,0,0,0,0,0,0">
                        <item>
                         <widget class="QSpinBox" name="sbNFRunNr3">
                          <property name="enabled">
@@ -595,6 +607,9 @@
                          <property name="enabled">
                           <bool>false</bool>
                          </property>
+                         <property name="maximum">
+                          <number>999999</number>
+                         </property>
                         </widget>
                        </item>
                        <item>
@@ -628,10 +643,39 @@
                          <property name="enabled">
                           <bool>false</bool>
                          </property>
+                         <property name="maximum">
+                          <number>999999</number>
+                         </property>
                         </widget>
                        </item>
                        <item>
                         <spacer name="horizontalSpacer_6">
+                         <property name="orientation">
+                          <enum>Qt::Horizontal</enum>
+                         </property>
+                         <property name="sizeType">
+                          <enum>QSizePolicy::Fixed</enum>
+                         </property>
+                         <property name="sizeHint" stdset="0">
+                          <size>
+                           <width>20</width>
+                           <height>20</height>
+                          </size>
+                         </property>
+                        </spacer>
+                       </item>
+                       <item>
+                        <widget class="QCheckBox" name="cbOfflineMode3">
+                         <property name="enabled">
+                          <bool>false</bool>
+                         </property>
+                         <property name="text">
+                          <string>Offline mode</string>
+                         </property>
+                        </widget>
+                       </item>
+                       <item>
+                        <spacer name="horizontalSpacer_7">
                          <property name="orientation">
                           <enum>Qt::Horizontal</enum>
                          </property>
