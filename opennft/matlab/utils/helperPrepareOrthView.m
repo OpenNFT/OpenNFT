@@ -23,13 +23,32 @@ flags = getFlagsType(P);
 displayBgStructName = P.StructBgFile;
 displayBgEpiName = P.MCTempl;
 
-[displayBgEpi.voxelCoord, displayBgEpi.voxelIndex, ...
-    displayBgEpi.mat, displayBgEpi.dim, displayBgEpi.vol] = ...
-    readVol(displayBgEpiName);
+if ~P.isAutoRTQA
+    [displayBgEpi.voxelCoord, displayBgEpi.voxelIndex, ...
+        displayBgEpi.mat, displayBgEpi.dim, displayBgEpi.vol] = ...
+        readVol(displayBgEpiName);
 
-[displayBgStruct.voxelCoord, displayBgStruct.voxelIndex, ...
-    displayBgStruct.mat, displayBgStruct.dim, displayBgStruct.vol] = ...
-    readVol(displayBgStructName);
+    [displayBgStruct.voxelCoord, displayBgStruct.voxelIndex, ...
+        displayBgStruct.mat, displayBgStruct.dim, displayBgStruct.vol] = ...
+        readVol(displayBgStructName);
+else
+    displayBgEpi.vol          = double(dicomread(P.MCTempl));
+    displayBgEpi.dim      = double([P.MatrixSizeX, P.MatrixSizeY, P.NrOfSlices]);
+
+    imgInfoTempl         = dicominfo(P.MCTempl);
+    if isfield(imgInfoTempl,'ImagePositionPatient') && isfield(imgInfoTempl,'ImageOrientationPatient')
+        displayBgEpi.mat      = getMAT(imgInfoTempl, displayBgEpi.dim)
+    else
+        displayBgEpi.mat      = eye(4,4);
+        displayBgEpi.mat(:,4) = 1;
+    end
+
+    [slNrImg2DdimX, slNrImg2DdimY, img2DdimX, img2DdimY] = getMosaicDim(displayBgEpi.dim);
+    displayBgEpi.vol          = img2Dvol3D(displayBgEpi.vol, slNrImg2DdimX, slNrImg2DdimY, displayBgEpi.dim);
+
+    displayBgStruct = [];
+
+end
 
 if ~strcmp(bgType, 'BgStruct')
     displBackgr = displayBgEpi;
@@ -49,7 +68,7 @@ if flags.isDCM
         ROIsOverlay(end).voxelIndex = ROIs.voxelIndex;
     end
 end
-if flags.isPSC || flags.isSVM || flags.isCorr || P.isRestingState
+if flags.isPSC || flags.isSVM || flags.isCorr || P.isAutoRTQA
     ROIs = evalin('base', 'ROIs');
     ROIsOverlay = ROIs;
 end
@@ -61,9 +80,13 @@ strParam = struct('n', 0, 'bb',[],'Space',eye(4),'centre',[0 0 0],'mode',1,...
 strParam.Space = spm_matrix([0 0 0  0 pi -pi/2])*strParam.Space;
 
 %% get bounding box and resolution
-if isempty(strParam.bb),
-     strParam.maxBB = maxbb(displayBgEpiName);
-     strParam.bb = strParam.maxBB;
+if isempty(strParam.bb)
+    if ~P.isAutoRTQA
+        strParam.maxBB = maxbb(displayBgEpiName);
+    else
+        strParam.maxBB = maxbb_autoRTQA(displayBgEpi.dim,displayBgEpi.mat);
+    end
+    strParam.bb = strParam.maxBB;
 end
 resolution(displBackgr.mat);
 
@@ -416,6 +439,35 @@ mn = [Inf Inf Inf];
 mx = -mn;
 premul = strParam.Space \ strParam.premul;
 bb = spm_get_bbox(fileName, 'fv', premul);
+mx = max([bb ; mx]);
+mn = min([bb ; mn]);
+bb = [mn ; mx];
+return;
+
+function bb = maxbb_autoRTQA(dim, mat)
+global strParam
+mn = [Inf Inf Inf];
+mx = -mn;
+premul = strParam.Space \ strParam.premul;
+
+P = spm_imatrix(mat);
+vx = P(7:9);
+corners = [
+    1    1    1    1
+    1    1    dim(3) 1
+    1    dim(2) 1    1
+    1    dim(2) dim(3) 1
+    dim(1) 1    1    1
+    dim(1) 1    dim(3) 1
+    dim(1) dim(2) 1    1
+    dim(1) dim(2) dim(3) 1
+    ]';
+XYZ = mat(1:3, :) * corners;
+XYZ = premul(1:3, :) * [XYZ; ones(1, size(XYZ, 2))];
+
+bb = [min(XYZ, [], 2)'
+      max(XYZ, [], 2)'];
+
 mx = max([bb ; mx]);
 mn = min([bb ; mn]);
 bb = [mn ; mx];

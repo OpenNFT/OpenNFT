@@ -16,16 +16,42 @@ function epiWholeBrainROI()
 P = evalin('base', 'P');
 flags = getFlagsType(P);
 
-infoVolTempl = spm_vol(P.MCTempl);
-imgVolTempl  = spm_read_vols(infoVolTempl);
-dimTemplMotCorr     = infoVolTempl.dim;
-matTemplMotCorr     = infoVolTempl.mat;
+if ~P.isAutoRTQA
+    infoVolTempl = spm_vol(P.MCTempl);
+    imgVolTempl  = spm_read_vols(infoVolTempl);
+    dimTemplMotCorr     = infoVolTempl.dim;
+    matTemplMotCorr     = infoVolTempl.mat;
 
-[slNrImg2DdimX, slNrImg2DdimY, img2DdimX, img2DdimY] = getMosaicDim(dimTemplMotCorr);
+    [slNrImg2DdimX, slNrImg2DdimY, img2DdimX, img2DdimY] = getMosaicDim(dimTemplMotCorr);
 
-if flags.isPSC || flags.isSVM || flags.isCorr || P.isRestingState
+else
+    imgVolTempl          = double(dicomread(P.MCTempl));
+    imgInfoTempl         = dicominfo(P.MCTempl);
+    dimTemplMotCorr      = double([P.MatrixSizeX, P.MatrixSizeY, P.NrOfSlices]);
+
+    if isfield(imgInfoTempl,'ImagePositionPatient') && isfield(imgInfoTempl,'ImageOrientationPatient')
+        matTemplMotCorr      = getMAT(imgInfoTempl, dimTemplMotCorr)
+    else
+        matTemplMotCorr      = eye(4,4);
+        matTemplMotCorr(:,4) = 1;
+    end
+
+    [slNrImg2DdimX, slNrImg2DdimY, img2DdimX, img2DdimY] = getMosaicDim(dimTemplMotCorr);
+    imgVolTempl          = img2Dvol3D(imgVolTempl, slNrImg2DdimX, slNrImg2DdimY, dimTemplMotCorr);
+
+end
+
+if flags.isPSC || flags.isSVM || flags.isCorr || P.isAutoRTQA
     iFile = P.NrROIs;
-    ROIs = evalin('base','ROIs');
+    if evalin('base','exist(''ROIs'')')
+        ROIs = evalin('base','ROIs');
+    else
+        ROIs = [];
+    end
+    if ~isfield(P,'DynROI') 
+        P.DynROI = false;
+    end
+    P.ROINames(iFile) = {'Whole brain'};
 elseif flags.isDCM
     iFile = 1;
 end

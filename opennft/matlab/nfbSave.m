@@ -70,7 +70,7 @@ if mainLoopData.statMapCreated
         n = mainLoopData.indVolNorm;
         var = rtQA_matlab.snrData.m2Smoothed ./ double(n-1);
         rtQA_matlab.snrData.snrVol = rtQA_matlab.snrData.meanSmoothed ./ (var.^.5);
-        if ~P.isRestingState
+        if ~P.isAutoRTQA
             meanBas = rtQA_matlab.cnrData.basData.meanSmoothed;
             meanCond = rtQA_matlab.cnrData.condData.meanSmoothed;
             varianceBas = rtQA_matlab.cnrData.basData.m2Smoothed / (rtQA_matlab.cnrData.basData.iteration - 1);
@@ -84,7 +84,7 @@ if mainLoopData.statMapCreated
 end
 
 % save feedback values
-if ~P.isRestingState
+if ~P.isAutoRTQA
     % check if vectNFBs exists
     if sum(strcmp(fieldnames(mainLoopData), 'vectNFBs')) == 1
         save([folder filesep P.SubjectID '_' ...
@@ -120,7 +120,7 @@ if flags.isDCM
     roiData.ROIsGlmAnat = evalin('base', 'ROIsGlmAnat');
     roiData.ROIoptimGlmAnat = evalin('base', 'ROIoptimGlmAnat');
 end
-if ~P.isRestingState
+if ~P.isAutoRTQA
     save([folder filesep P.SubjectID '_' ...
         num2str(P.NFRunNr) '_roiData' '.mat'], 'roiData');
 end

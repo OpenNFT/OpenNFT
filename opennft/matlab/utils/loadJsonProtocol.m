@@ -71,7 +71,7 @@ if ~P.isAutoRTQA
 
     %% Contrast and Conditions For Contrast encoding from .json Contrast specification
     if isfield(prt,'ContrastActivation')
-        if ~P.isRestingState
+        if ~P.isAutoRTQA
             conditionNames = cellfun(@(x) x.ConditionName, prt.ConditionIndex, 'UniformOutput',false);
             contrastString = textscan(prt.ContrastActivation,'%d*%s','Delimiter',';');
             P.ConditionForContrast = contrastString{2}';

@@ -172,7 +172,7 @@ P.isRegrIGLM = true;
 %% adding nuisance regressors to iGLM
 % Note, less efficient regressing out of the motion-related regressors than
 % offline GLM given the whole motion regressors at once.
-if ~P.isRestingState
+if ~P.isAutoRTQA
     P.isMotionRegr = true;
 else
     P.isMotionRegr = false;
@@ -197,7 +197,7 @@ if isfield(P,'ContrastActivation')
     mainLoopData.tContr.neg = -P.ContrastActivation;
 end
 
-if ~P.isRestingState
+if ~P.isAutoRTQA
     
     if ~P.iglmAR1
         % exclude constant regressor
@@ -240,14 +240,33 @@ mainLoopData.npv = 0;
 mainLoopData.statMapCreated = 0;
 
 %% Get motion realignment template data and volume
-infoVolTempl = spm_vol(P.MCTempl);
-mainLoopData.infoVolTempl = infoVolTempl;
-tmp_imgVolTempl  = spm_read_vols(infoVolTempl);
-dimTemplMotCorr     = infoVolTempl.dim;
-matTemplMotCorr     = infoVolTempl.mat;
+if ~P.isAutoRTQA
+    infoVolTempl = spm_vol(P.MCTempl);
+    mainLoopData.infoVolTempl = infoVolTempl;
+    tmp_imgVolTempl  = spm_read_vols(infoVolTempl);
+    dimTemplMotCorr     = infoVolTempl.dim;
+    matTemplMotCorr     = infoVolTempl.mat;
+
+else
+    imgVolTempl          = double(dicomread(P.MCTempl));
+    imgInfoTempl         = dicominfo(P.MCTempl);
+    dimTemplMotCorr      = double([P.MatrixSizeX, P.MatrixSizeY, P.NrOfSlices]);
+
+    if isfield(imgInfoTempl,'ImagePositionPatient') && isfield(imgInfoTempl,'ImageOrientationPatient')
+        matTemplMotCorr      = getMAT(imgInfoTempl, dimTemplMotCorr)
+    else
+        matTemplMotCorr      = eye(4,4);
+        matTemplMotCorr(:,4) = 1;
+    end
+
+    [slNrImg2DdimX, slNrImg2DdimY, img2DdimX, img2DdimY] = getMosaicDim(dimTemplMotCorr);
+    tmp_imgVolTempl      = img2Dvol3D(imgVolTempl, slNrImg2DdimX, slNrImg2DdimY, dimTemplMotCorr);
+
+end
+
 
 % number of regressors of no interest to correct with cGLM
-if ~P.isRestingState
+if ~P.isAutoRTQA
     % 6 MC regressors, linear trend, constant
     nrRegrToCorrect = 8;
 else
@@ -255,14 +274,14 @@ else
     nrRegrToCorrect = 2;
 end
 if ~P.isRegrIGLM
-    if ~P.isRestingState
+    if ~P.isAutoRTQA
         nrBasFctRegr = 1;
     else
         nrBasFctRegr = 6;
     end
 else
     nrHighPassRegr = size(mainLoopData.K.X0,2);
-    if ~P.isRestingState
+    if ~P.isAutoRTQA
         nrMotRegr = 6;
         if P.isHighPass && P.isMotionRegr && P.isLinRegr
             nrBasFctRegr = nrMotRegr+nrHighPassRegr+2;
@@ -343,7 +362,7 @@ if P.isRTQA
     rtQA_matlab.ROI(1:P.NrROIs) = ROI;
     rtQA_matlab.linRegr = zeros(P.NrROIs,duration);
 
-    if ~P.isRestingState
+    if ~P.isAutoRTQA
         rtQA_matlab.cnrData.cnrVol = [];
 
         rtQA_matlab.cnrData.basData.meanSmoothed = [];
@@ -411,7 +430,14 @@ mainLoopData.deg = deg;
 mainLoopData.b = b;
 
 % make output data folder
-P.nfbDataFolder = [P.WorkFolder filesep 'NF_Data_' num2str(P.NFRunNr)];
+if ~P.isAutoRTQA
+    P.nfbDataFolder = [P.WorkFolder filesep 'NF_Data_' num2str(P.NFRunNr)];
+else
+    watchFolderPath = strsplit(P.WatchFolder,'\');
+    watchFolderName = watchFolderPath{end};
+    P.nfbDataFolder = [P.WorkFolder filesep watchFolderName '_rtQA_Data_' num2str(P.NFRunNr)];
+end
+
 if ~exist(P.nfbDataFolder, 'dir')
     mkdir(P.nfbDataFolder);
 end

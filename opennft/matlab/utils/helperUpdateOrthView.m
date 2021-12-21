@@ -40,7 +40,7 @@ displBackgr = evalin('base', 'displBackgr');
 displayBgStruct = evalin('base', 'displayBgStruct');
 displayBgEpi = evalin('base', 'displayBgEpi');
 
-if strcmpi(bgType, 'bgEPI')
+if strcmpi(bgType, 'bgEPI') || P.isAutoRTQA
     displBackgr = displayBgEpi;
 else
     displBackgr = displayBgStruct;

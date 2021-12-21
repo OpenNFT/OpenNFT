@@ -256,7 +256,7 @@
               </property>
               <widget class="QWidget" name="shortParams">
                <property name="enabled">
-                <bool>false</bool>
+                <bool>true</bool>
                </property>
                <layout class="QVBoxLayout" name="verticalLayout_13">
                 <property name="leftMargin">
@@ -425,7 +425,7 @@
                 <item>
                  <widget class="QFrame" name="frameAutoRtqaParams">
                   <property name="enabled">
-                   <bool>true</bool>
+                   <bool>false</bool>
                   </property>
                   <layout class="QVBoxLayout" name="verticalLayout_9">
                    <property name="leftMargin">
@@ -523,7 +523,7 @@
                       </widget>
                      </item>
                      <item row="0" column="1">
-                      <layout class="QHBoxLayout" name="horizontalLayout_8" stretch="0,0,0,0,1,0,0,0,0,0,0,0,0">
+                      <layout class="QHBoxLayout" name="horizontalLayout_8" stretch="0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0">
                        <item>
                         <widget class="QSpinBox" name="sbNFRunNr3">
                          <property name="enabled">
@@ -547,7 +547,7 @@
                          </property>
                          <property name="sizeHint" stdset="0">
                           <size>
-                           <width>20</width>
+                           <width>10</width>
                            <height>20</height>
                           </size>
                          </property>
@@ -586,7 +586,7 @@
                          </property>
                          <property name="sizeHint" stdset="0">
                           <size>
-                           <width>20</width>
+                           <width>10</width>
                            <height>20</height>
                           </size>
                          </property>
@@ -608,7 +608,7 @@
                           <bool>false</bool>
                          </property>
                          <property name="maximum">
-                          <number>999999</number>
+                          <number>9999</number>
                          </property>
                         </widget>
                        </item>
@@ -622,7 +622,7 @@
                          </property>
                          <property name="sizeHint" stdset="0">
                           <size>
-                           <width>20</width>
+                           <width>10</width>
                            <height>20</height>
                           </size>
                          </property>
@@ -644,7 +644,7 @@
                           <bool>false</bool>
                          </property>
                          <property name="maximum">
-                          <number>999999</number>
+                          <number>9999</number>
                          </property>
                         </widget>
                        </item>
@@ -658,7 +658,99 @@
                          </property>
                          <property name="sizeHint" stdset="0">
                           <size>
-                           <width>20</width>
+                           <width>10</width>
+                           <height>20</height>
+                          </size>
+                         </property>
+                        </spacer>
+                       </item>
+                       <item>
+                        <widget class="QLabel" name="label_11">
+                         <property name="enabled">
+                          <bool>false</bool>
+                         </property>
+                         <property name="text">
+                          <string>Matrix Size [vx]</string>
+                         </property>
+                        </widget>
+                       </item>
+                       <item>
+                        <widget class="QSpinBox" name="sbMatrixSizeX3">
+                         <property name="enabled">
+                          <bool>false</bool>
+                         </property>
+                         <property name="maximum">
+                          <number>9999</number>
+                         </property>
+                        </widget>
+                       </item>
+                       <item>
+                        <widget class="QLabel" name="label_21">
+                         <property name="enabled">
+                          <bool>false</bool>
+                         </property>
+                         <property name="text">
+                          <string>x</string>
+                         </property>
+                        </widget>
+                       </item>
+                       <item>
+                        <widget class="QSpinBox" name="sbMatrixSizeY3">
+                         <property name="enabled">
+                          <bool>false</bool>
+                         </property>
+                         <property name="maximum">
+                          <number>9999</number>
+                         </property>
+                        </widget>
+                       </item>
+                       <item>
+                        <spacer name="horizontalSpacer_8">
+                         <property name="orientation">
+                          <enum>Qt::Horizontal</enum>
+                         </property>
+                         <property name="sizeType">
+                          <enum>QSizePolicy::Fixed</enum>
+                         </property>
+                         <property name="sizeHint" stdset="0">
+                          <size>
+                           <width>10</width>
+                           <height>20</height>
+                          </size>
+                         </property>
+                        </spacer>
+                       </item>
+                       <item>
+                        <widget class="QLabel" name="label_24">
+                         <property name="enabled">
+                          <bool>false</bool>
+                         </property>
+                         <property name="text">
+                          <string>Slices [n]</string>
+                         </property>
+                        </widget>
+                       </item>
+                       <item>
+                        <widget class="QSpinBox" name="sbSlicesNr3">
+                         <property name="enabled">
+                          <bool>false</bool>
+                         </property>
+                         <property name="maximum">
+                          <number>9999</number>
+                         </property>
+                        </widget>
+                       </item>
+                       <item>
+                        <spacer name="horizontalSpacer_7">
+                         <property name="orientation">
+                          <enum>Qt::Horizontal</enum>
+                         </property>
+                         <property name="sizeType">
+                          <enum>QSizePolicy::Fixed</enum>
+                         </property>
+                         <property name="sizeHint" stdset="0">
+                          <size>
+                           <width>10</width>
                            <height>20</height>
                           </size>
                          </property>
@@ -675,7 +767,7 @@
                         </widget>
                        </item>
                        <item>
-                        <spacer name="horizontalSpacer_7">
+                        <spacer name="horizontalSpacer_9">
                          <property name="orientation">
                           <enum>Qt::Horizontal</enum>
                          </property>

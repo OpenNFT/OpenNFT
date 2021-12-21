@@ -416,7 +416,6 @@ class OpenNFT(QWidget):
                 lambda: self.onChooseFolder('WatchFolder', self.leWatchFolder))
 
             self.btnStart.setEnabled(False)
-
         else:
             self.stackedWidget.setCurrentIndex(1)
             self.btnPlugins.setEnabled(False)
@@ -425,7 +424,7 @@ class OpenNFT(QWidget):
             self.btnStart.clicked.connect(self.start)
             self.btnStop.clicked.connect(self.stop)
             self.btnRTQA.clicked.connect(self.rtQA)
-            self.btnRTQA.setEnabled(True)
+            self.btnRTQA.setEnabled(False)
             self.btnStart.setEnabled(True)
 
             self.btnChooseWatchFolder3.clicked.connect(
@@ -433,10 +432,12 @@ class OpenNFT(QWidget):
             self.btnChooseRoiFolder.clicked.connect(
                 lambda: self.onChooseFolder('RoiFolder', self.leRoiFolder))
 
+            self.cbImageViewMode.model().item(1).setEnabled(False)
+
             if not config.SELECT_ROIS:
-                self.label_16.setEnabled(False)
-                self.leRoiFolder.setEnabled(False)
-                self.btnChooseRoiFolder.setEnabled(False)
+                self.label_16.setVisible(False)
+                self.leRoiFolder.setVisible(False)
+                self.btnChooseRoiFolder.setVisible(False)
 
         self.cbImageViewMode.currentIndexChanged.connect(self.onChangeImageViewMode)
         self.orthView.cursorPositionChanged.connect(self.onChangeOrthViewCursorPosition)
@@ -599,7 +600,10 @@ class OpenNFT(QWidget):
             'tRoiBoundaries': [],
             'cRoiBoundaries': [],
             'sRoiBoundaries': [],
-            'isRestingState': self.P['isRestingState'],
+            'isAutoRTQA': self.P['isAutoRTQA'],
+            'MatrixSizeX': self.P['MatrixSizeX'],
+            'MatrixSizeY': self.P['MatrixSizeY'],
+            'NrOfSlices': self.P['NrOfSlices'],
             'isIGLM': self.P['isIGLM'],
             'isROI': config.USE_ROI,
             'isRTQA': config.USE_RTQA
@@ -741,8 +745,11 @@ class OpenNFT(QWidget):
 
             self.files_exported.append(fname)
 
-        if config.AUTO_RTQA:
-            self.setup_auto_rtqa()
+        if config.AUTO_RTQA and not self.auto_rtqa_setup:
+            self.P['MCTempl'] = fname
+            self.eng.workspace['P'] = self.P
+            self.engSPM.workspace['P'] = self.P
+            self.setup_auto_rtqa(fname)
 
         # check file sequence
         if (not self.isOffline) and (not self.cbUseTCPData.isChecked()) and (len(self.files_processed) > 0):
@@ -979,14 +986,14 @@ class OpenNFT(QWidget):
             else:
                 isNewDCMBlock = False
 
-            if self.P['Type'] != 'DCM':
+            if self.P['Type'] != 'DCM' and not self.P['isAutoRTQA']:
                 dataNoRegGLM = np.squeeze(np.array(
                     self.eng.evalin('base', 'mainLoopData.noRegGlmProcTimeSeries(:,end)'), ndmin=2), axis=1)
             else:
                 dataNoRegGLM = np.array([])
 
             self.windowRTQA.calculateSNR(dataRaw, dataNoRegGLM, n, isNewDCMBlock)
-            if not self.P['isRestingState']:
+            if not self.P['isAutoRTQA']:
                 self.windowRTQA.calculateCNR(dataRaw, n, isNewDCMBlock)
             self.windowRTQA.calculateSpikes(dataGLM, n, posSpikes, negSpikes)
             self.windowRTQA.calculateMSE(n, dataGLM, dataProc[:, n])
@@ -1138,7 +1145,7 @@ class OpenNFT(QWidget):
         proc.clear()
         norm.clear()
 
-        if self.P['isRestingState']:
+        if self.P['isAutoRTQA']:
             grid = True
         else:
             grid = False
@@ -1161,7 +1168,7 @@ class OpenNFT(QWidget):
 
     # --------------------------------------------------------------------------
     def basicSetupPlot(self, plotitem, grid=True):
-        if not self.P['isRestingState']:
+        if not self.P['isAutoRTQA']:
             lastInds = np.zeros((self.musterInfo['condTotal'],))
             for i in range(self.musterInfo['condTotal']):
                 lastInds[i] = self.musterInfo['tmpCond' + str(i + 1)][-1][1]
@@ -1209,6 +1216,9 @@ class OpenNFT(QWidget):
         self.eng.workspace['mainLoopData'] = self.mainLoopData
         self.eng.workspace['rtQA_matlab'] = self.rtQA_matlab
 
+        self.resetDone = True
+        self.isInitialized = True
+
         if not config.AUTO_RTQA:
             self.frameParams.setEnabled(True)
             self.frameShortParams.setEnabled(True)
@@ -1216,6 +1226,7 @@ class OpenNFT(QWidget):
             self.pluginWindow = plugin.PluginWindow()
             self.btnPlugins.setEnabled(True)
         else:
+            self.frameAutoRtqaParams.setEnabled(True)
             self.btnChooseRoiFolder.setEnabled(True)
             self.btnChooseWatchFolder3.setEnabled(True)
             self.label_15.setEnabled(True)
@@ -1232,11 +1243,16 @@ class OpenNFT(QWidget):
             self.sbVolumesNr3.setEnabled(True)
             self.label_44.setEnabled(True)
             self.label_46.setEnabled(True)
+            self.label_11.setEnabled(True)
+            self.label_21.setEnabled(True)
+            self.label_24.setEnabled(True)
+            self.sbSkipVol3.setEnabled(True)
+            self.sbMatrixSizeX3.setEnabled(True)
+            self.sbMatrixSizeY3.setEnabled(True)
+            self.sbSlicesNr3.setEnabled(True)
             self.leFirstFile3.setEnabled(True)
-            # self.frameAutoRtqaParams.setEnabled(True)
-
-        self.resetDone = True
-        self.isInitialized = True
+            self.auto_rtqa_setup = False
+            self.presetup_auto_rtqa()
 
         logger.info("Initialization finished ({:.2f} s)", time.time() - ts)
 
@@ -1247,6 +1263,7 @@ class OpenNFT(QWidget):
         self.rtQA_matlab = {}
         self.reultFromHelper = None
         self.reachedFirstFile = False
+        self.auto_rtqa_setup = False
 
         self.eng.workspace['P'] = self.P
         self.eng.workspace['mainLoopData'] = self.mainLoopData
@@ -1323,7 +1340,7 @@ class OpenNFT(QWidget):
             self.P.update(self.eng.workspace['P'])
 
             logger.info("  Setup plots...")
-            if not self.P['isRestingState']:
+            if not self.P['isAutoRTQA']:
                 self.createMusterInfo()
 
             self.setupRoiPlots()
@@ -1454,7 +1471,8 @@ class OpenNFT(QWidget):
             self.isStopped = False
 
     # --------------------------------------------------------------------------
-    def setup_auto_rtqa(self):
+    def presetup_auto_rtqa(self):
+
         if not self.isInitialized:
             logger.error("Couldn't connect Matlab.\n PRESS INITIALIZE FIRST!")
             return
@@ -1462,7 +1480,11 @@ class OpenNFT(QWidget):
         with utils.timeit('Setup finished:'):
             logger.info("Setup application...")
 
+            self.btnRTQA.setEnabled(False)
             self.orthViewInitialize = True
+
+            if not self.resetDone:
+                self.reset()
 
             self.actualize_auto_rtqa()
             self.isOffline = self.cbOfflineMode3.isChecked()
@@ -1472,104 +1494,92 @@ class OpenNFT(QWidget):
             logger.info('memMapFile: {}', memMapFile)
             self.P['memMapFile'] = memMapFile
 
+            if not config.SELECT_ROIS:
+                self.P['NrROIs'] = 1
             self.eng.workspace['P'] = self.P
             self.engSPM.workspace['P'] = self.P
             self.previousIterStartTime = 0
             self.displaySamples = []
 
-            with utils.timeit("  Load protocol data:"):
-                self.loadJsonProtocol()
-
-            with utils.timeit("  Selecting ROI:"):
-                self.selectRoi()
-
-            self.P.update(self.eng.workspace['P'])
-
-            logger.info("  Setup plots...")
-            self.setupRoiPlots()
-            self.setupMcPlots()
-
-            with utils.timeit('  initMainLoopData:'):
-                self.initMainLoopData()
-
-            self.roiDict = dict()
-            self.selectedRoi = []
-            roi_menu = QMenu()
-            roi_menu.triggered.connect(self.onRoiChecked)
-            self.roiSelectorBtn.setMenu(roi_menu)
-            nrROIs = int(self.P['NrROIs'])
-            for i in range(nrROIs):
-                if self.P['isRTQA'] and i+1==nrROIs:
-                    roi = 'Whole brain ROI'
-                else:
-                    roi = 'ROI_{}'.format(i+1)
-                roi_action = roi_menu.addAction(roi)
-                roi_action.setCheckable(True)
-                if not (self.P['isRTQA'] and i+1==nrROIs):
-                    roi_action.setChecked(True)
-                    self.roiDict[roi] = True
-                    self.selectedRoi.append(i)
-
-            action = roi_menu.addAction("All")
-            action.setCheckable(False)
-
-            action = roi_menu.addAction("None")
-            action.setCheckable(False)
-
-            self.roiSelectorBtn.setEnabled(True)
-
             self.recorder.initialize(self.P['NrOfVolumes'])
-            self.eng.nfbInitReward(nargout=0)
 
-            self.initUdpSender()
+    # --------------------------------------------------------------------------
+    def setup_auto_rtqa(self, fname):
 
-            with utils.timeit("  Initialize plugins:"):
-                excPlugins = []
-                for i in range(len(self.plugins)):
-                    try:
-                        self.plugins[i].initialize()
-                    except KeyError as e:
-                        logger.warning("Initializing plugin '{}' failed - {} not found in settings".format(
-                            self.plugins[i].module.META['plugin_name'], str(e)))
-                        excPlugins.append(i)
-                for i in excPlugins:
-                    del self.plugins[i]
+        with utils.timeit("  Load protocol data:"):
+            self.loadJsonProtocol()
 
-            self.btnStart.setEnabled(True)
-            if self.P['isRTQA']:
+        with utils.timeit("  Selecting ROI:"):
+            self.selectRoi()
 
-                self.btnRTQA.setEnabled(True)
+        self.P.update(self.eng.workspace['P'])
 
-                if self.windowRTQA:
-                    self.windowRTQA.deleteLater()
+        logger.info("  Setup plots...")
+        self.setupRoiPlots()
+        self.setupMcPlots()
 
-                self.windowRTQA = rtqa.RTQAWindow(parent=self)
-                self.windowRTQA.volumeCheckBox.stateChanged.connect(self.onShowRtqaVol)
-                self.windowRTQA.volumeCheckBox.stateChanged.connect(self.onChangeNegMapPolicy)
-                self.windowRTQA.volumeCheckBox.stateChanged.connect(self.onInteractWithMapImage)
-                self.windowRTQA.volumeCheckBox.toggled.connect(self.updateOrthViewAsync)
-                self.windowRTQA.comboBox.currentIndexChanged.connect(self.onModeChanged)
-                self.eng.assignin('base', 'rtQAMode', self.windowRTQA.currentMode, nargout=0)
-                self.eng.assignin('base', 'isShowRtqaVol', self.windowRTQA.volumeCheckBox.isChecked(), nargout=0)
+        with utils.timeit('  initMainLoopData:'):
+            self.initMainLoopData()
 
-                self.windowRTQA.roiChecked(self.selectedRoi)
-                self.windowRTQA.isStopped = False
-
+        self.roiDict = dict()
+        self.selectedRoi = []
+        roi_menu = QMenu()
+        roi_menu.triggered.connect(self.onRoiChecked)
+        self.roiSelectorBtn.setMenu(roi_menu)
+        nrROIs = int(self.P['NrROIs'])
+        for i in range(nrROIs):
+            if not config.SELECT_ROIS and i+1==nrROIs:
+                roi = 'Whole brain ROI'
             else:
-                self.eng.assignin('base', 'rtQAMode', False, nargout=0)
-                self.eng.assignin('base', 'isShowRtqaVol', False, nargout=0)
+                roi = 'ROI_{}'.format(i+1)
+            roi_action = roi_menu.addAction(roi)
+            roi_action.setCheckable(True)
+            if not (config.SELECT_ROIS and i+1==nrROIs) or (not config.SELECT_ROIS and i+1==nrROIs):
+                roi_action.setChecked(True)
+                self.roiDict[roi] = True
+                self.selectedRoi.append(i)
 
-            self.onChangeNegMapPolicy()
-            self.eng.assignin('base', 'imageViewMode', int(self.imageViewMode), nargout=0)
-            self.eng.assignin('base', 'FIRST_SNR_VOLUME', config.FIRST_SNR_VOLUME, nargout=0)
-            self.cbImageViewMode.setEnabled(False)
-            self.cbImageViewMode.setCurrentIndex(0)
-            self.cbImageViewMode.model().item(2).setEnabled(False)
-            self.isStopped = False
+        action = roi_menu.addAction("All")
+        action.setCheckable(False)
+
+        action = roi_menu.addAction("None")
+        action.setCheckable(False)
+
+        self.roiSelectorBtn.setEnabled(True)
+
+        self.initUdpSender()
+
+        self.btnRTQA.setEnabled(True)
+
+        if self.windowRTQA:
+            self.windowRTQA.deleteLater()
+
+        self.windowRTQA = rtqa.RTQAWindow(parent=self)
+        self.windowRTQA.volumeCheckBox.stateChanged.connect(self.onShowRtqaVol)
+        self.windowRTQA.volumeCheckBox.stateChanged.connect(self.onChangeNegMapPolicy)
+        self.windowRTQA.volumeCheckBox.stateChanged.connect(self.onInteractWithMapImage)
+        self.windowRTQA.volumeCheckBox.toggled.connect(self.updateOrthViewAsync)
+        self.windowRTQA.comboBox.currentIndexChanged.connect(self.onModeChanged)
+        self.eng.assignin('base', 'rtQAMode', self.windowRTQA.currentMode, nargout=0)
+        self.eng.assignin('base', 'isShowRtqaVol', self.windowRTQA.volumeCheckBox.isChecked(), nargout=0)
+
+        self.windowRTQA.roiChecked(self.selectedRoi)
+        self.windowRTQA.isStopped = False
+
+        self.auto_rtqa_setup = True
+        self.onChangeNegMapPolicy()
+        self.eng.assignin('base', 'imageViewMode', int(self.imageViewMode), nargout=0)
+        self.eng.assignin('base', 'FIRST_SNR_VOLUME', config.FIRST_SNR_VOLUME, nargout=0)
+        self.cbImageViewMode.setCurrentIndex(0)
+        self.cbImageViewMode.model().item(1).setEnabled(False)
+        self.isStopped = False
 
     # --------------------------------------------------------------------------
     def start(self):
         logger.info("*** Started ***")
+
+        if self.P['isAutoRTQA']:
+            self.presetup_auto_rtqa()
 
         self.cbImageViewMode.setEnabled(True)
         self.pos_map_thresholds_widget.setEnabled(True)
@@ -1604,9 +1614,15 @@ class OpenNFT(QWidget):
             self.windowRTQA.isStopped = True
             self.eng.workspace['rtQA_python'] = self.windowRTQA.dataPacking()
         self.btnStop.setEnabled(False)
-        self.btnStart.setEnabled(False)
-        self.btnSetup.setEnabled(True)
-        self.btnPlugins.setEnabled(True)
+
+        if not self.P['isAutoRTQA']:
+            self.btnStart.setEnabled(False)
+            self.btnSetup.setEnabled(True)
+            self.btnPlugins.setEnabled(True)
+        else:
+            self.btnStart.setEnabled(True)
+            self.btnSetup.setEnabled(False)
+            self.btnPlugins.setEnabled(False)
 
         self.fs_observer.stop()
         self.call_timer.stop()
@@ -2075,10 +2091,13 @@ class OpenNFT(QWidget):
             self.sbImgSerNr3.setValue(int(self.settings.value('ImgSerNr', '1')))
             self.sbVolumesNr3.setValue(int(self.settings.value('NrOfVolumes')))
             self.sbSkipVol3.setValue(int(self.settings.value('nrSkipVol')))
+            self.sbSlicesNr3.setValue(int(self.settings.value('NrOfSlices')))
+            self.sbMatrixSizeX3.setValue(int(self.settings.value('MatrixSizeX')))
+            self.sbMatrixSizeY3.setValue(int(self.settings.value('MatrixSizeY')))
 
             self.cbOfflineMode3.setChecked(str(self.settings.value('OfflineMode', 'true')).lower() == 'true')
 
-            self.actualize_auto_rtqa
+            self.actualize_auto_rtqa()
 
     # --------------------------------------------------------------------------
     def loadJsonProtocol(self):
@@ -2087,7 +2106,7 @@ class OpenNFT(QWidget):
     # --------------------------------------------------------------------------
     def selectRoi(self):
 
-        if self.P['Type'] in ['PSC', 'SVM', 'Corr', 'None']:
+        if self.P['Type'] in ['PSC', 'SVM', 'Corr', 'None'] and config.SELECT_ROIS:
             if not Path(self.P['RoiFilesFolder']).is_dir():
                 logger.error("Couldn't find: " + self.P['RoiFilesFolder'])
                 return
@@ -2112,7 +2131,7 @@ class OpenNFT(QWidget):
             self.eng.selectROI(self.P['RoiFilesFolder'], nargout=0)
             self.engSPM.selectROI(self.P['RoiFilesFolder'], nargout=0)
 
-        if self.P['isRTQA'] and not self.P['isAutoRTQA']:
+        if self.P['isRTQA']:
             self.eng.epiWholeBrainROI(nargout=0)
             self.engSPM.epiWholeBrainROI(nargout=0)
 
@@ -2123,9 +2142,9 @@ class OpenNFT(QWidget):
         # --- top ---
         self.P['WatchFolder'] = self.leWatchFolder3.text()
         self.P['WorkFolder'] = str(Path(self.P['WatchFolder']).absolute().resolve().parent)
+        self.P['StructBgFile'] = ''
 
-
-        self.P['Type'] = "Auto_RTQA"
+        self.P['Type'] = "None"
         if config.SELECT_ROIS:
             self.P['RoiFilesFolder'] = self.leRoiFolder.text()
         else:
@@ -2134,9 +2153,13 @@ class OpenNFT(QWidget):
 
         self.P['ProjectName'] = "Auto_RTQA"
         self.P['SubjectID'] = "foo"
+        self.P['Prot'] = "Auto_RTQA"
         self.P['FirstFileNameTxt'] = self.leFirstFile3.text()
         self.P['ImgSerNr'] = self.sbImgSerNr3.value()
         self.P['NFRunNr'] = self.sbNFRunNr3.value()
+        self.P['NrOfSlices'] = self.sbSlicesNr3.value()
+        self.P['MatrixSizeX'] = self.sbMatrixSizeX3.value()
+        self.P['MatrixSizeY'] = self.sbMatrixSizeY3.value()
         self.P['NrOfVolumes'] = self.sbVolumesNr3.value()
         self.P['nrSkipVol'] = self.sbSkipVol3.value()
 
@@ -2164,12 +2187,17 @@ class OpenNFT(QWidget):
         self.P['isIGLM'] = config.USE_IGLM
         self.P['isZeroPadding'] = config.zeroPaddingFlag
         self.P['nrZeroPadVol'] = config.nrZeroPadVol
+        self.P['UseTCPData'] = False
+        self.P['TR'] = 1500
+        config.USE_UDP_FEEDBACK = False
+        self.P['getMAT'] = False
 
         # Update settings file
         self.settings.setValue('WorkFolder', self.P['WorkFolder'])
         self.settings.setValue('WatchFolder', self.P['WatchFolder'])
         self.settings.setValue('RoiFilesFolder', self.P['RoiFilesFolder'])
         self.settings.setValue('RoiAnatOperation', self.P['RoiAnatOperation'])
+        self.P['PlotFeedback'] = False
 
         self.settings.setValue('ImgSerNr', self.P['ImgSerNr'])
         self.settings.setValue('NFRunNr', self.P['NFRunNr'])
@@ -2179,6 +2207,9 @@ class OpenNFT(QWidget):
 
         self.settings.setValue('NrOfVolumes', self.P['NrOfVolumes'])
         self.settings.setValue('nrSkipVol', self.P['nrSkipVol'])
+        self.settings.setValue('NrOfSlices', self.P['NrOfSlices'])
+        self.settings.setValue('MatrixSizeX', self.P['MatrixSizeX'])
+        self.settings.setValue('MatrixSizeY', self.P['MatrixSizeY'])
         self.settings.setValue('OfflineMode', self.cbOfflineMode.isChecked())
 
     # --------------------------------------------------------------------------
@@ -2226,7 +2257,7 @@ class OpenNFT(QWidget):
         self.P['getMAT'] = self.cbgetMAT.isChecked()
         self.P['Prot'] = str(self.cbProt.currentText())
         self.P['Type'] = str(self.cbType.currentText())
-        self.P['isRestingState'] = bool(self.cbProt.currentText() == "Rest")
+        self.P['isAutoRTQA'] = False
         self.P['isRTQA'] = config.USE_RTQA
         self.P['isIGLM'] = config.USE_IGLM
         self.P['isZeroPadding'] = config.zeroPaddingFlag
@@ -2627,7 +2658,7 @@ class OpenNFT(QWidget):
             items.remove(m)
 
         plotitem.autoRange(items=items)
-        if self.P['isRestingState']:
+        if self.P['isAutoRTQA']:
             grid = True
         else:
             grid = False
@@ -2637,7 +2668,7 @@ class OpenNFT(QWidget):
     def drawMusterPlot(self, plotitem: pg.PlotItem):
         ylim = config.MUSTER_Y_LIMITS
 
-        if not self.P['isRestingState']:
+        if not self.P['isAutoRTQA']:
             self.computeMusterPlotData(ylim)
             muster = []
 
@@ -2741,8 +2772,10 @@ class OpenNFT(QWidget):
         if not config.AUTO_RTQA:
             self.settingFileName = self.appSettings.value(
                 'SettingFileName', self.settingFileName)
+            if self.settingFileName == str(config.AUTO_RTQA_SETTINGS):
+                self.settingFileName = ''
         else:
-            self.settingFileName = str(config.ROOT_PATH / 'configs' / 'auto_rtqa_settings.ini')
+            self.settingFileName = str(config.AUTO_RTQA_SETTINGS)
 
         self.appSettings.endGroup()
 
