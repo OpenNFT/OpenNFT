@@ -1678,7 +1678,7 @@ class OpenNFT(QWidget):
             self.eng.workspace['rtQA_python'] = self.windowRTQA.dataPacking()
         self.btnStop.setEnabled(False)
 
-        if not self.P['isAutoRTQA']:
+        if 'isAutoRTQA' in self.P and not self.P['isAutoRTQA']:
             self.btnStart.setEnabled(False)
             self.btnSetup.setEnabled(True)
             self.btnPlugins.setEnabled(True)
