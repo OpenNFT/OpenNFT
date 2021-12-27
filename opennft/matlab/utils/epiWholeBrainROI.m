@@ -16,13 +16,13 @@ function epiWholeBrainROI()
 P = evalin('base', 'P');
 flags = getFlagsType(P);
 
-if evalin( 'base', 'exist(''mainLoopData'',''var'') == 1' )
+if exist('mainLoopData','var') == 1
     mainLoopData = evalin('base', 'mainLoopData');
     imgVolTempl          = mainLoopData.imgVolTempl;
     dimTemplMotCorr      = mainLoopData.dimTemplMotCorr;
     matTemplMotCorr      = mainLoopData.matTemplMotCorr;
 else
-    if evalin( 'base', 'exist(''displayBgEpi'',''var'') == 1' )
+    if exist('displayBgEpi','var') == 1
         displayBgEpi = evalin('base','displayBgEpi');
     else
         displayBgEpiName = P.MCTempl;

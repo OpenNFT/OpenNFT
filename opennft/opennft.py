@@ -756,21 +756,6 @@ class OpenNFT(QWidget):
 
             self.files_exported.append(fname)
 
-        autoRTQAMCTempl = (self.iteration == self.P['nrSkipVol']+1) and config.AUTO_RTQA \
-            and not self.P['useEPITemplate'] and not self.autoRTQASetup
-
-        if autoRTQAMCTempl:
-            self.P['MCTempl'] = fname
-            self.eng.workspace['P'] = self.P
-            self.engSPM.workspace['P'] = self.P
-            self.setupAutoRTQA()
-            self.reachedFirstFile = True
-        elif self.P['useEPITemplate'] and not self.autoRTQASetup:
-            self.eng.workspace['P'] = self.P
-            self.engSPM.workspace['P'] = self.P
-            self.setupAutoRTQA()
-
-
         # check file sequence
         if (not self.isOffline) and (not self.cbUseTCPData.isChecked()) and (len(self.files_processed) > 0):
 
@@ -794,10 +779,18 @@ class OpenNFT(QWidget):
             else:
                 self.files_exported.remove(fname)
 
-        if config.AUTO_RTQA and not self.autoRTQASetup:
-            self.iteration += 1
-            self.isMainLoopEntered = False
-            return
+        autoRTQAMCTempl = (self.iteration == self.P['nrSkipVol']+1) and config.AUTO_RTQA \
+                          and not self.P['useEPITemplate'] and not self.autoRTQASetup
+
+        if autoRTQAMCTempl:
+            self.P['MCTempl'] = fname
+            self.eng.workspace['P'] = self.P
+            self.engSPM.workspace['P'] = self.P
+            self.setupAutoRTQA()
+        elif self.P['useEPITemplate'] and not self.autoRTQASetup:
+            self.eng.workspace['P'] = self.P
+            self.engSPM.workspace['P'] = self.P
+            self.setupAutoRTQA()
 
         # t2
         self.recorder.recordEvent(erd.Times.t2, self.iteration, time.time())
@@ -814,6 +807,13 @@ class OpenNFT(QWidget):
         if self.iteration > self.P['NrOfVolumes']:
             logger.info('Volumes limit reached')
             self.stop()
+            self.isMainLoopEntered = False
+            return
+
+        if config.AUTO_RTQA and not self.autoRTQASetup:
+
+            self.files_processed.append(fname)
+            self.iteration += 1
             self.isMainLoopEntered = False
             return
 

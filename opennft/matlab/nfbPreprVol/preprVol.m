@@ -14,6 +14,16 @@ function preprVol(inpFileName, indVol)
 
 P = evalin('base', 'P');
 mainLoopData = evalin('base', 'mainLoopData');
+
+if P.UseTCPData, tcp = evalin('base', 'tcp'); end
+
+if indVol <= P.nrSkipVol
+    if P.UseTCPData && (indVol > 1), while ~tcp.BytesAvailable, pause(0.01); end; [~, ~] = tcp.ReceiveScan; end
+    return;
+end
+
+flags = getFlagsType(P);
+
 if P.isRTQA
     isShowRtqaVol = evalin('base', 'isShowRtqaVol');
     rtQAMode = evalin('base', 'rtQAMode');
@@ -23,16 +33,6 @@ else
     isShowRtqaVol = false;
 end
 
-if P.UseTCPData, tcp = evalin('base', 'tcp'); end
-
-if indVol <= P.nrSkipVol
-    if P.UseTCPData && (indVol > 1), while ~tcp.BytesAvailable, pause(0.01); end; [~, ~] = tcp.ReceiveScan; end
-    return;
-% elseif indVol == P.nrSkipVol+1 && P.isAutoRTQA && ~P.useEPITemplate 
-%     reassignMCTemplate(inpFileName);
-end
-
-flags = getFlagsType(P);
 if flags.isDCM
     ROIsAnat = evalin('base', 'ROIsAnat');
     if P.isRTQA

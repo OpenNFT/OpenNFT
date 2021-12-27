@@ -23,7 +23,7 @@ flags = getFlagsType(P);
 displayBgStructName = P.StructBgFile;
 displayBgEpiName = P.MCTempl;
 
-if ~evalin( 'base', 'exist(''displayBgEpi'',''var'') == 1' )
+if ~(exist('displayBgEpi','var') == 1 )
     displayBgEpi = evalin('base','displayBgEpi');
 else
     if ~P.isAutoRTQA || (P.isAutoRTQA && P.useEPITemplate)
@@ -63,9 +63,7 @@ if flags.isDCM
     if P.isRTQA
         ROIs = evalin('base', 'ROIs');
         ROIsOverlay(end+1).vol = ROIs.vol;
-        ROIsOverlay(end).dim = ROIs.dim;
         ROIsOverlay(end).mat = ROIs.mat;
-        ROIsOverlay(end).voxelIndex = ROIs.voxelIndex;
     end
 end
 if flags.isPSC || flags.isSVM || flags.isCorr || P.isAutoRTQA
