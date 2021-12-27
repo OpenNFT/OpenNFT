@@ -16,30 +16,39 @@ function epiWholeBrainROI()
 P = evalin('base', 'P');
 flags = getFlagsType(P);
 
-if ~P.isAutoRTQA
-    infoVolTempl = spm_vol(P.MCTempl);
-    imgVolTempl  = spm_read_vols(infoVolTempl);
-    dimTemplMotCorr     = infoVolTempl.dim;
-    matTemplMotCorr     = infoVolTempl.mat;
-
-    [slNrImg2DdimX, slNrImg2DdimY, img2DdimX, img2DdimY] = getMosaicDim(dimTemplMotCorr);
-
+if evalin( 'base', 'exist(''mainLoopData'',''var'') == 1' )
+    mainLoopData = evalin('base', 'mainLoopData');
+    imgVolTempl          = mainLoopData.imgVolTempl;
+    dimTemplMotCorr      = mainLoopData.dimTemplMotCorr;
+    matTemplMotCorr      = mainLoopData.matTemplMotCorr;
 else
-    imgVolTempl          = double(dicomread(P.MCTempl));
-    imgInfoTempl         = dicominfo(P.MCTempl);
-    dimTemplMotCorr      = double([P.MatrixSizeX, P.MatrixSizeY, P.NrOfSlices]);
-
-    if isfield(imgInfoTempl,'ImagePositionPatient') && isfield(imgInfoTempl,'ImageOrientationPatient')
-        matTemplMotCorr      = getMAT(imgInfoTempl, dimTemplMotCorr)
+    if evalin( 'base', 'exist(''displayBgEpi'',''var'') == 1' )
+        displayBgEpi = evalin('base','displayBgEpi');
     else
-        matTemplMotCorr      = eye(4,4);
-        matTemplMotCorr(:,4) = 1;
+        displayBgEpiName = P.MCTempl;
+        if ~P.isAutoRTQA || (P.isAutoRTQA && P.useEPITemplate)
+            [displayBgEpi.voxelCoord, displayBgEpi.voxelIndex, ...
+                displayBgEpi.mat, displayBgEpi.dim, displayBgEpi.vol] = ...
+                readVol(displayBgEpiName);
+        else
+            displayBgEpi.vol          = double(dicomread(P.MCTempl));
+            displayBgEpi.dim          = double([P.MatrixSizeX, P.MatrixSizeY, P.NrOfSlices]);
+            imgInfoTempl              = dicominfo(P.MCTempl);
+            displayBgEpi.mat          = getMAT(imgInfoTempl, displayBgEpi.dim);
+
+            [slNrImg2DdimX, slNrImg2DdimY, img2DdimX, img2DdimY] = getMosaicDim(displayBgEpi.dim);
+            displayBgEpi.vol          = img2Dvol3D(displayBgEpi.vol, slNrImg2DdimX, slNrImg2DdimY, displayBgEpi.dim);
+        end
+        assignin('base', 'displayBgEpi', displayBgEpi);
+
     end
 
-    [slNrImg2DdimX, slNrImg2DdimY, img2DdimX, img2DdimY] = getMosaicDim(dimTemplMotCorr);
-    imgVolTempl          = img2Dvol3D(imgVolTempl, slNrImg2DdimX, slNrImg2DdimY, dimTemplMotCorr);
-
+    imgVolTempl          = displayBgEpi.vol;
+    dimTemplMotCorr      = displayBgEpi.dim;
+    matTemplMotCorr      = displayBgEpi.mat;
 end
+
+[slNrImg2DdimX, slNrImg2DdimY, img2DdimX, img2DdimY] = getMosaicDim(dimTemplMotCorr);
 
 if flags.isPSC || flags.isSVM || flags.isCorr || P.isAutoRTQA
     iFile = P.NrROIs;
@@ -48,7 +57,7 @@ if flags.isPSC || flags.isSVM || flags.isCorr || P.isAutoRTQA
     else
         ROIs = [];
     end
-    if ~isfield(P,'DynROI') 
+    if ~isfield(P,'DynROI')
         P.DynROI = false;
     end
     P.ROINames(iFile) = {'Whole brain'};
@@ -70,10 +79,10 @@ wholeBrainMaskThreshold = 30;
 smImgVolTempl(smImgVolTempl<wholeBrainMaskThreshold) = nan;
 
 if 0
-% check thresholded template
-mosaicSmImgVolTempl = vol3Dimg2D(smImgVolTempl, slNrImg2DdimX, ...
-             slNrImg2DdimY, img2DdimX, img2DdimY, ROIs(iFile).dim);
-figure, imshow(mosaicSmImgVolTempl,[])
+    % check thresholded template
+    mosaicSmImgVolTempl = vol3Dimg2D(smImgVolTempl, slNrImg2DdimX, ...
+        slNrImg2DdimY, img2DdimX, img2DdimY, ROIs(iFile).dim);
+    figure, imshow(mosaicSmImgVolTempl,[])
 end
 
 % histohram
@@ -81,10 +90,10 @@ nbins = 2^nextpow2(max(smImgVolTempl(:)));
 [N,edges] = histcounts(smImgVolTempl,1:nbins);
 
 % histogram fit with single exponent and single gaussian
-fun = @(b,x) b(1)*exp(-x*b(2)) + b(3)*exp(-(x - b(4)).^2/b(5));  
+fun = @(b,x) b(1)*exp(-x*b(2)) + b(3)*exp(-(x - b(4)).^2/b(5));
 
 % data
-xdata = edges(wholeBrainMaskThreshold:end-1); 
+xdata = edges(wholeBrainMaskThreshold:end-1);
 lxdata = length(xdata);
 ydata = N(wholeBrainMaskThreshold:end);
 
@@ -109,15 +118,15 @@ epiWholeBrainMask(indexEpiWholeBrainMask) = 1;
 
 % display mask
 if 0
-mosaicEpiWholeBrainMask = vol3Dimg2D(epiWholeBrainMask, slNrImg2DdimX, ...
-             slNrImg2DdimY, img2DdimX, img2DdimY, ROIs(iFile).dim);
-figure, imshow(mosaicEpiWholeBrainMask)
+    mosaicEpiWholeBrainMask = vol3Dimg2D(epiWholeBrainMask, slNrImg2DdimX, ...
+        slNrImg2DdimY, img2DdimX, img2DdimY, ROIs(iFile).dim);
+    figure, imshow(mosaicEpiWholeBrainMask)
 end
 
 % assign ROI
 ROIs(iFile).vol = epiWholeBrainMask;
 ROIs(iFile).voxelIndex = indexEpiWholeBrainMask;
-         
+
 % DVARS scaling is most frequent image value given fit
 P.scaleFactorDVARS = median(smImgVolTempl(indexEpiWholeBrainMask));
 

@@ -47,6 +47,7 @@ from loguru import logger
 
 import numpy as np
 import pyqtgraph as pg
+import pydicom
 
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
@@ -431,6 +432,7 @@ class OpenNFT(QWidget):
                 lambda: self.onChooseFolder('WatchFolder', self.leWatchFolder3))
             self.btnChooseRoiFolder.clicked.connect(
                 lambda: self.onChooseFolder('RoiFolder', self.leRoiFolder))
+            self.btnMCTempl3.clicked.connect(self.onChooseMCTemplFile)
 
             self.cbImageViewMode.model().item(1).setEnabled(False)
 
@@ -438,6 +440,11 @@ class OpenNFT(QWidget):
                 self.label_16.setVisible(False)
                 self.leRoiFolder.setVisible(False)
                 self.btnChooseRoiFolder.setVisible(False)
+
+            if not config.USE_EPI_TEMPLATE:
+                self.label_26.setVisible(False)
+                self.leMCTempl3.setVisible(False)
+                self.btnMCTempl3.setVisible(False)
 
         self.cbImageViewMode.currentIndexChanged.connect(self.onChangeImageViewMode)
         self.orthView.cursorPositionChanged.connect(self.onChangeOrthViewCursorPosition)
@@ -588,6 +595,9 @@ class OpenNFT(QWidget):
 
         self.eng.setupProcParams(nargout=0)
 
+        if self.P['isRTQA']:
+            self.selectWholeBrainRoi()
+
         with utils.timeit("Receiving 'P' from Matlab:"):
             self.P = self.eng.workspace['P']
 
@@ -601,6 +611,7 @@ class OpenNFT(QWidget):
             'cRoiBoundaries': [],
             'sRoiBoundaries': [],
             'isAutoRTQA': self.P['isAutoRTQA'],
+            'useEPITemplate': self.P['useEPITemplate'],
             'MatrixSizeX': self.P['MatrixSizeX'],
             'MatrixSizeY': self.P['MatrixSizeY'],
             'NrOfSlices': self.P['NrOfSlices'],
@@ -745,11 +756,20 @@ class OpenNFT(QWidget):
 
             self.files_exported.append(fname)
 
-        if config.AUTO_RTQA and not self.auto_rtqa_setup:
+        autoRTQAMCTempl = (self.iteration == self.P['nrSkipVol']+1) and config.AUTO_RTQA \
+            and not self.P['useEPITemplate'] and not self.autoRTQASetup
+
+        if autoRTQAMCTempl:
             self.P['MCTempl'] = fname
             self.eng.workspace['P'] = self.P
             self.engSPM.workspace['P'] = self.P
-            self.setup_auto_rtqa(fname)
+            self.setupAutoRTQA()
+            self.reachedFirstFile = True
+        elif self.P['useEPITemplate'] and not self.autoRTQASetup:
+            self.eng.workspace['P'] = self.P
+            self.engSPM.workspace['P'] = self.P
+            self.setupAutoRTQA()
+
 
         # check file sequence
         if (not self.isOffline) and (not self.cbUseTCPData.isChecked()) and (len(self.files_processed) > 0):
@@ -773,6 +793,11 @@ class OpenNFT(QWidget):
                 return
             else:
                 self.files_exported.remove(fname)
+
+        if config.AUTO_RTQA and not self.autoRTQASetup:
+            self.iteration += 1
+            self.isMainLoopEntered = False
+            return
 
         # t2
         self.recorder.recordEvent(erd.Times.t2, self.iteration, time.time())
@@ -799,7 +824,7 @@ class OpenNFT(QWidget):
 
         self.previousIterStartTime = startingTime
 
-        if self.iteration == 1:
+        if self.iteration == 1 or autoRTQAMCTempl:
             with utils.timeit('  setup after first volume:'):
                 self.eng.setupFirstVolume(fname, nargout=0)
                 self.engSPM.assignin('base', 'matTemplMotCorr',
@@ -1251,9 +1276,9 @@ class OpenNFT(QWidget):
             self.sbMatrixSizeY3.setEnabled(True)
             self.sbSlicesNr3.setEnabled(True)
             self.leFirstFile3.setEnabled(True)
-            self.auto_rtqa_setup = False
-            self.presetup_auto_rtqa()
+            self.presetupAutoRTQA()
 
+        self.autoRTQASetup = False
         logger.info("Initialization finished ({:.2f} s)", time.time() - ts)
 
     # --------------------------------------------------------------------------
@@ -1263,7 +1288,7 @@ class OpenNFT(QWidget):
         self.rtQA_matlab = {}
         self.reultFromHelper = None
         self.reachedFirstFile = False
-        self.auto_rtqa_setup = False
+        self.autoRTQASetup = False
 
         self.eng.workspace['P'] = self.P
         self.eng.workspace['mainLoopData'] = self.mainLoopData
@@ -1348,6 +1373,9 @@ class OpenNFT(QWidget):
 
             with utils.timeit('  initMainLoopData:'):
                 self.initMainLoopData()
+
+            if self.P['isRTQA']:
+                self.selectWholeBrainRoi()
 
             self.roiDict = dict()
             self.selectedRoi = []
@@ -1471,7 +1499,7 @@ class OpenNFT(QWidget):
             self.isStopped = False
 
     # --------------------------------------------------------------------------
-    def presetup_auto_rtqa(self):
+    def presetupAutoRTQA(self):
 
         if not self.isInitialized:
             logger.error("Couldn't connect Matlab.\n PRESS INITIALIZE FIRST!")
@@ -1486,7 +1514,7 @@ class OpenNFT(QWidget):
             if not self.resetDone:
                 self.reset()
 
-            self.actualize_auto_rtqa()
+            self.actualizeAutoRTQA()
             self.isOffline = self.cbOfflineMode3.isChecked()
 
             memMapFile = self.getFreeMemmapFilename()
@@ -1504,22 +1532,58 @@ class OpenNFT(QWidget):
             self.recorder.initialize(self.P['NrOfVolumes'])
 
     # --------------------------------------------------------------------------
-    def setup_auto_rtqa(self, fname):
+    def setupAutoRTQA(self):
+
+        if not self.P['useEPITemplate']:
+            dcm = pydicom.dcmread(self.P['MCTempl'])
+            if not (hasattr(dcm,'ImagePositionPatient') and hasattr(dcm,'ImageOrientationPatient')):
+                logger.error("DICOM template has no ImagePositionPatient and ImageOrientationPatient and could not be used as EPI template\nPlease, check DICOM export or use NII EPI template\n")
+                self.fFinNFB = False
+                self.stop()
+                return
 
         with utils.timeit("  Load protocol data:"):
             self.loadJsonProtocol()
 
         with utils.timeit("  Selecting ROI:"):
-            self.selectRoi()
+            if config.SELECT_ROIS:
+                self.selectRoi()
+
+        with utils.timeit('  initMainLoopData:'):
+            self.eng.setupProcParams(nargout=0)
+
+            if self.P['isRTQA']:
+                self.selectWholeBrainRoi()
+
+            with utils.timeit("Receiving 'P' from Matlab:"):
+                self.P = self.eng.workspace['P']
+
+            # init OrthoView in helper
+            self.spmHelperP = {
+                'Type': self.P['Type'],
+                'StructBgFile': str(Path(self.P['StructBgFile'])),
+                'MCTempl': str(Path(self.P['MCTempl'])),
+                'memMapFile': self.eng.evalin('base', 'P.memMapFile'),
+                'tRoiBoundaries': [],
+                'cRoiBoundaries': [],
+                'sRoiBoundaries': [],
+                'isAutoRTQA': self.P['isAutoRTQA'],
+                'useEPITemplate': self.P['useEPITemplate'],
+                'MatrixSizeX': self.P['MatrixSizeX'],
+                'MatrixSizeY': self.P['MatrixSizeY'],
+                'NrOfSlices': self.P['NrOfSlices'],
+                'isIGLM': self.P['isIGLM'],
+                'isROI': config.USE_ROI,
+                'isRTQA': config.USE_RTQA
+            }
+
+            self.engSPM.helperPrepareOrthView(self.spmHelperP, 'bgEPI', nargout=0)
 
         self.P.update(self.eng.workspace['P'])
 
         logger.info("  Setup plots...")
         self.setupRoiPlots()
         self.setupMcPlots()
-
-        with utils.timeit('  initMainLoopData:'):
-            self.initMainLoopData()
 
         self.roiDict = dict()
         self.selectedRoi = []
@@ -1528,13 +1592,13 @@ class OpenNFT(QWidget):
         self.roiSelectorBtn.setMenu(roi_menu)
         nrROIs = int(self.P['NrROIs'])
         for i in range(nrROIs):
-            if not config.SELECT_ROIS and i+1==nrROIs:
+            if not config.SELECT_ROIS or i+1==nrROIs:
                 roi = 'Whole brain ROI'
             else:
                 roi = 'ROI_{}'.format(i+1)
             roi_action = roi_menu.addAction(roi)
             roi_action.setCheckable(True)
-            if not (config.SELECT_ROIS and i+1==nrROIs) or (not config.SELECT_ROIS and i+1==nrROIs):
+            if config.SELECT_ROIS and not (i+1==nrROIs) or not config.SELECT_ROIS:
                 roi_action.setChecked(True)
                 self.roiDict[roi] = True
                 self.selectedRoi.append(i)
@@ -1566,9 +1630,8 @@ class OpenNFT(QWidget):
         self.windowRTQA.roiChecked(self.selectedRoi)
         self.windowRTQA.isStopped = False
 
-        self.auto_rtqa_setup = True
+        self.autoRTQASetup = True
         self.onChangeNegMapPolicy()
-        self.eng.assignin('base', 'imageViewMode', int(self.imageViewMode), nargout=0)
         self.eng.assignin('base', 'FIRST_SNR_VOLUME', config.FIRST_SNR_VOLUME, nargout=0)
         self.cbImageViewMode.setCurrentIndex(0)
         self.cbImageViewMode.model().item(1).setEnabled(False)
@@ -1579,7 +1642,7 @@ class OpenNFT(QWidget):
         logger.info("*** Started ***")
 
         if self.P['isAutoRTQA']:
-            self.presetup_auto_rtqa()
+            self.presetupAutoRTQA()
 
         self.cbImageViewMode.setEnabled(True)
         self.pos_map_thresholds_widget.setEnabled(True)
@@ -1673,7 +1736,6 @@ class OpenNFT(QWidget):
     # --------------------------------------------------------------------------
     def rtQA(self):
         self.windowRTQA.show()
-        config.USE_RTQA = True
 
     # --------------------------------------------------------------------------
     def onShowRtqaVol(self):
@@ -1828,7 +1890,10 @@ class OpenNFT(QWidget):
 
         fname = str(Path(fname))
         if fname:
-            self.leMCTempl.setText(fname)
+            if self.P['isAutoRTQA'] and self.P['useEPITemplate']:
+                self.leMCTempl3.setText(fname)
+            else:
+                self.leMCTempl.setText(fname)
             self.P['MCTempl'] = fname
 
     # --------------------------------------------------------------------------
@@ -2077,11 +2142,12 @@ class OpenNFT(QWidget):
             self.leWeightsFile.setText(str(self.settings.value('WeightsFileName', '')))
 
             self.actualize
-
         else:
             self.leWatchFolder3.setText(self.settings.value('WatchFolder', ''))
             if config.SELECT_ROIS:
                 self.leRoiFolder.setText(self.settings.value('RoiFolder', ''))
+            if config.USE_EPI_TEMPLATE:
+                self.leMCTempl3.setText(self.settings.value('MCTempl', ''))
             self.leRoiAnatOperation.setText(self.settings.value('RoiAnatOperation', 'mean(norm_percValues)'))
 
             self.leProjName.setText(self.settings.value('ProjectName', ''))
@@ -2097,7 +2163,7 @@ class OpenNFT(QWidget):
 
             self.cbOfflineMode3.setChecked(str(self.settings.value('OfflineMode', 'true')).lower() == 'true')
 
-            self.actualize_auto_rtqa()
+            self.actualizeAutoRTQA()
 
     # --------------------------------------------------------------------------
     def loadJsonProtocol(self):
@@ -2106,7 +2172,7 @@ class OpenNFT(QWidget):
     # --------------------------------------------------------------------------
     def selectRoi(self):
 
-        if self.P['Type'] in ['PSC', 'SVM', 'Corr', 'None'] and config.SELECT_ROIS:
+        if self.P['Type'] in ['PSC', 'SVM', 'Corr', 'None']:
             if not Path(self.P['RoiFilesFolder']).is_dir():
                 logger.error("Couldn't find: " + self.P['RoiFilesFolder'])
                 return
@@ -2127,21 +2193,23 @@ class OpenNFT(QWidget):
             self.eng.selectROI(p, nargout=0)
             self.engSPM.selectROI(p, nargout=0)
 
-        if config.SELECT_ROIS and self.P['isAutoRTQA']:
-            self.eng.selectROI(self.P['RoiFilesFolder'], nargout=0)
-            self.engSPM.selectROI(self.P['RoiFilesFolder'], nargout=0)
+    # --------------------------------------------------------------------------
+    def selectWholeBrainRoi(self):
 
-        if self.P['isRTQA']:
-            self.eng.epiWholeBrainROI(nargout=0)
-            self.engSPM.epiWholeBrainROI(nargout=0)
+        self.eng.epiWholeBrainROI(nargout=0)
+        self.engSPM.epiWholeBrainROI(nargout=0)
 
     # --------------------------------------------------------------------------
-    def actualize_auto_rtqa(self):
+    def actualizeAutoRTQA(self):
         logger.info("  Actualizing:")
 
         # --- top ---
         self.P['WatchFolder'] = self.leWatchFolder3.text()
         self.P['WorkFolder'] = str(Path(self.P['WatchFolder']).absolute().resolve().parent)
+        if config.USE_EPI_TEMPLATE:
+            self.P['MCTempl'] = self.leMCTempl3.text()
+        else:
+            self.P['MCTempl'] = []
         self.P['StructBgFile'] = ''
 
         self.P['Type'] = "None"
@@ -2182,6 +2250,7 @@ class OpenNFT(QWidget):
         self.P['FirstFileName'] = template.format(**fields)
 
         self.P['DataType'] = "DICOM"
+        self.P['useEPITemplate'] = config.USE_EPI_TEMPLATE
         self.P['isAutoRTQA'] = True
         self.P['isRTQA'] = True
         self.P['isIGLM'] = config.USE_IGLM
@@ -2195,7 +2264,8 @@ class OpenNFT(QWidget):
         # Update settings file
         self.settings.setValue('WorkFolder', self.P['WorkFolder'])
         self.settings.setValue('WatchFolder', self.P['WatchFolder'])
-        self.settings.setValue('RoiFilesFolder', self.P['RoiFilesFolder'])
+        self.settings.setValue('MCTempl', self.P['MCTempl'])
+        self.settings.setValue('RoiFolder', self.P['RoiFilesFolder'])
         self.settings.setValue('RoiAnatOperation', self.P['RoiAnatOperation'])
         self.P['PlotFeedback'] = False
 
@@ -2260,6 +2330,7 @@ class OpenNFT(QWidget):
         self.P['isAutoRTQA'] = False
         self.P['isRTQA'] = config.USE_RTQA
         self.P['isIGLM'] = config.USE_IGLM
+        self.P['useEPITemplate'] = config.USE_EPI_TEMPLATE
         self.P['isZeroPadding'] = config.zeroPaddingFlag
         self.P['nrZeroPadVol'] = config.nrZeroPadVol
 

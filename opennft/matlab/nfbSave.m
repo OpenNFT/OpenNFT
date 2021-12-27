@@ -25,7 +25,11 @@ end
 
 flags = getFlagsType(P);
 
-folder = P.nfbDataFolder;
+if isfield(P, 'nfbDataFolder')
+    folder = P.nfbDataFolder;
+else
+    return;
+end
 
 % save rtqa data
 if P.isRTQA

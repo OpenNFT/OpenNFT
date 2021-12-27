@@ -23,31 +23,31 @@ flags = getFlagsType(P);
 displayBgStructName = P.StructBgFile;
 displayBgEpiName = P.MCTempl;
 
-if ~P.isAutoRTQA
-    [displayBgEpi.voxelCoord, displayBgEpi.voxelIndex, ...
-        displayBgEpi.mat, displayBgEpi.dim, displayBgEpi.vol] = ...
-        readVol(displayBgEpiName);
+if ~evalin( 'base', 'exist(''displayBgEpi'',''var'') == 1' )
+    displayBgEpi = evalin('base','displayBgEpi');
+else
+    if ~P.isAutoRTQA || (P.isAutoRTQA && P.useEPITemplate)
+        [displayBgEpi.voxelCoord, displayBgEpi.voxelIndex, ...
+            displayBgEpi.mat, displayBgEpi.dim, displayBgEpi.vol] = ...
+            readVol(displayBgEpiName);
+    else
+        displayBgEpi.vol          = double(dicomread(P.MCTempl));
+        displayBgEpi.dim          = double([P.MatrixSizeX, P.MatrixSizeY, P.NrOfSlices]);
+        imgInfoTempl              = dicominfo(P.MCTempl);
+        displayBgEpi.mat          = getMAT(imgInfoTempl, displayBgEpi.dim);
 
+        [slNrImg2DdimX, slNrImg2DdimY, img2DdimX, img2DdimY] = getMosaicDim(displayBgEpi.dim);
+        displayBgEpi.vol          = img2Dvol3D(displayBgEpi.vol, slNrImg2DdimX, slNrImg2DdimY, displayBgEpi.dim);
+
+    end
+end
+
+if ~P.isAutoRTQA
     [displayBgStruct.voxelCoord, displayBgStruct.voxelIndex, ...
         displayBgStruct.mat, displayBgStruct.dim, displayBgStruct.vol] = ...
         readVol(displayBgStructName);
 else
-    displayBgEpi.vol          = double(dicomread(P.MCTempl));
-    displayBgEpi.dim      = double([P.MatrixSizeX, P.MatrixSizeY, P.NrOfSlices]);
-
-    imgInfoTempl         = dicominfo(P.MCTempl);
-    if isfield(imgInfoTempl,'ImagePositionPatient') && isfield(imgInfoTempl,'ImageOrientationPatient')
-        displayBgEpi.mat      = getMAT(imgInfoTempl, displayBgEpi.dim)
-    else
-        displayBgEpi.mat      = eye(4,4);
-        displayBgEpi.mat(:,4) = 1;
-    end
-
-    [slNrImg2DdimX, slNrImg2DdimY, img2DdimX, img2DdimY] = getMosaicDim(displayBgEpi.dim);
-    displayBgEpi.vol          = img2Dvol3D(displayBgEpi.vol, slNrImg2DdimX, slNrImg2DdimY, displayBgEpi.dim);
-
     displayBgStruct = [];
-
 end
 
 if ~strcmp(bgType, 'BgStruct')
@@ -81,11 +81,7 @@ strParam.Space = spm_matrix([0 0 0  0 pi -pi/2])*strParam.Space;
 
 %% get bounding box and resolution
 if isempty(strParam.bb)
-    if ~P.isAutoRTQA
-        strParam.maxBB = maxbb(displayBgEpiName);
-    else
-        strParam.maxBB = maxbb_autoRTQA(displayBgEpi.dim,displayBgEpi.mat);
-    end
+    strParam.maxBB = maxbb(displayBgEpi.dim,displayBgEpi.mat);
     strParam.bb = strParam.maxBB;
 end
 resolution(displBackgr.mat);
@@ -433,25 +429,12 @@ img(img > cml) = cml;
 img(~isfinite(img))  = miscol;
 return;
 
-function bb = maxbb(fileName)
-global strParam
-mn = [Inf Inf Inf];
-mx = -mn;
-premul = strParam.Space \ strParam.premul;
-bb = spm_get_bbox(fileName, 'fv', premul);
-mx = max([bb ; mx]);
-mn = min([bb ; mn]);
-bb = [mn ; mx];
-return;
-
-function bb = maxbb_autoRTQA(dim, mat)
+function bb = maxbb(dim, mat)
 global strParam
 mn = [Inf Inf Inf];
 mx = -mn;
 premul = strParam.Space \ strParam.premul;
 
-P = spm_imatrix(mat);
-vx = P(7:9);
 corners = [
     1    1    1    1
     1    1    dim(3) 1

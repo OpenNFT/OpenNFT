@@ -186,6 +186,27 @@ P.isHighPass = true;
 P.isLinRegr = true;
 P.linRegr = zscore((1:double(P.NrOfVolumes-P.nrSkipVol))');
 
+%% Get motion realignment template data and volume
+if ~P.isAutoRTQA || (P.isAutoRTQA && P.useEPITemplate)
+    infoVolTempl = spm_vol(P.MCTempl);
+    mainLoopData.infoVolTempl = infoVolTempl;
+    tmp_imgVolTempl  = spm_read_vols(infoVolTempl);
+    dimTemplMotCorr     = infoVolTempl.dim;
+    matTemplMotCorr     = infoVolTempl.mat;
+
+else
+    imgVolTempl          = double(dicomread(P.MCTempl));
+    imgInfoTempl         = dicominfo(P.MCTempl);
+    dimTemplMotCorr      = double([P.MatrixSizeX, P.MatrixSizeY, P.NrOfSlices]);
+    matTemplMotCorr      = getMAT(imgInfoTempl, dimTemplMotCorr);
+
+    [slNrImg2DdimX, slNrImg2DdimY, img2DdimX, img2DdimY] = getMosaicDim(dimTemplMotCorr);
+    tmp_imgVolTempl      = img2Dvol3D(imgVolTempl, slNrImg2DdimX, slNrImg2DdimY, dimTemplMotCorr);
+
+end
+
+P.meanVolTemplate = mean2(mean(tmp_imgVolTempl,1));
+
 SPM = setupSPM(P);
 % TODO: To check
 % High-pass filter
@@ -238,32 +259,6 @@ end
 mainLoopData.mf = [];
 mainLoopData.npv = 0;
 mainLoopData.statMapCreated = 0;
-
-%% Get motion realignment template data and volume
-if ~P.isAutoRTQA
-    infoVolTempl = spm_vol(P.MCTempl);
-    mainLoopData.infoVolTempl = infoVolTempl;
-    tmp_imgVolTempl  = spm_read_vols(infoVolTempl);
-    dimTemplMotCorr     = infoVolTempl.dim;
-    matTemplMotCorr     = infoVolTempl.mat;
-
-else
-    imgVolTempl          = double(dicomread(P.MCTempl));
-    imgInfoTempl         = dicominfo(P.MCTempl);
-    dimTemplMotCorr      = double([P.MatrixSizeX, P.MatrixSizeY, P.NrOfSlices]);
-
-    if isfield(imgInfoTempl,'ImagePositionPatient') && isfield(imgInfoTempl,'ImageOrientationPatient')
-        matTemplMotCorr      = getMAT(imgInfoTempl, dimTemplMotCorr)
-    else
-        matTemplMotCorr      = eye(4,4);
-        matTemplMotCorr(:,4) = 1;
-    end
-
-    [slNrImg2DdimX, slNrImg2DdimY, img2DdimX, img2DdimY] = getMosaicDim(dimTemplMotCorr);
-    tmp_imgVolTempl      = img2Dvol3D(imgVolTempl, slNrImg2DdimX, slNrImg2DdimY, dimTemplMotCorr);
-
-end
-
 
 % number of regressors of no interest to correct with cGLM
 if ~P.isAutoRTQA
