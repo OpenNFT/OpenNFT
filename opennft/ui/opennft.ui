@@ -248,10 +248,16 @@
             </property>
             <item>
              <widget class="QStackedWidget" name="stackedWidget">
+              <property name="enabled">
+               <bool>true</bool>
+              </property>
               <property name="currentIndex">
                <number>0</number>
               </property>
               <widget class="QWidget" name="shortParams">
+               <property name="enabled">
+                <bool>true</bool>
+               </property>
                <layout class="QVBoxLayout" name="verticalLayout_13">
                 <property name="leftMargin">
                  <number>0</number>
@@ -400,6 +406,9 @@
                </layout>
               </widget>
               <widget class="QWidget" name="autoRtqaParams">
+               <property name="enabled">
+                <bool>true</bool>
+               </property>
                <layout class="QVBoxLayout" name="verticalLayout_14">
                 <property name="leftMargin">
                  <number>0</number>
@@ -414,7 +423,10 @@
                  <number>0</number>
                 </property>
                 <item>
-                 <widget class="QFrame" name="verticalFrame">
+                 <widget class="QFrame" name="frameAutoRtqaParams">
+                  <property name="enabled">
+                   <bool>false</bool>
+                  </property>
                   <layout class="QVBoxLayout" name="verticalLayout_9">
                    <property name="leftMargin">
                     <number>0</number>
@@ -430,24 +442,7 @@
                    </property>
                    <item>
                     <layout class="QGridLayout" name="gridLayout_12" columnstretch="0,0,0">
-                     <item row="1" column="0">
-                      <widget class="QLabel" name="label_15">
-                       <property name="enabled">
-                        <bool>false</bool>
-                       </property>
-                       <property name="text">
-                        <string>MRI Watch folder</string>
-                       </property>
-                      </widget>
-                     </item>
-                     <item row="1" column="1">
-                      <widget class="QLineEdit" name="leWatchFolder3">
-                       <property name="enabled">
-                        <bool>false</bool>
-                       </property>
-                      </widget>
-                     </item>
-                     <item row="1" column="2">
+                     <item row="0" column="2">
                       <widget class="QPushButton" name="btnChooseWatchFolder3">
                        <property name="enabled">
                         <bool>false</bool>
@@ -463,7 +458,7 @@
                        </property>
                       </widget>
                      </item>
-                     <item row="2" column="0">
+                     <item row="1" column="0">
                       <widget class="QLabel" name="label_16">
                        <property name="enabled">
                         <bool>false</bool>
@@ -473,18 +468,58 @@
                        </property>
                       </widget>
                      </item>
-                     <item row="2" column="1">
+                     <item row="1" column="1">
                       <widget class="QLineEdit" name="leRoiFolder">
                        <property name="enabled">
                         <bool>false</bool>
                        </property>
                       </widget>
                      </item>
-                     <item row="2" column="2">
+                     <item row="0" column="0">
+                      <widget class="QLabel" name="label_15">
+                       <property name="enabled">
+                        <bool>false</bool>
+                       </property>
+                       <property name="text">
+                        <string>MRI Watch folder</string>
+                       </property>
+                      </widget>
+                     </item>
+                     <item row="1" column="2">
                       <widget class="QPushButton" name="btnChooseRoiFolder">
                        <property name="enabled">
                         <bool>false</bool>
                        </property>
+                       <property name="maximumSize">
+                        <size>
+                         <width>32</width>
+                         <height>16777215</height>
+                        </size>
+                       </property>
+                       <property name="text">
+                        <string>...</string>
+                       </property>
+                      </widget>
+                     </item>
+                     <item row="0" column="1">
+                      <widget class="QLineEdit" name="leWatchFolder3">
+                       <property name="enabled">
+                        <bool>false</bool>
+                       </property>
+                      </widget>
+                     </item>
+                     <item row="2" column="0">
+                      <widget class="QLabel" name="label_26">
+                       <property name="text">
+                        <string>EPI Template</string>
+                       </property>
+                      </widget>
+                     </item>
+                     <item row="2" column="1">
+                      <widget class="QLineEdit" name="leMCTempl3"/>
+                     </item>
+                     <item row="2" column="2">
+                      <widget class="QPushButton" name="btnMCTempl3">
                        <property name="maximumSize">
                         <size>
                          <width>32</width>
@@ -511,7 +546,7 @@
                       </widget>
                      </item>
                      <item row="0" column="1">
-                      <layout class="QHBoxLayout" name="horizontalLayout_8" stretch="0,0,0,0,1,0,0,0,0,0,0">
+                      <layout class="QHBoxLayout" name="horizontalLayout_8" stretch="0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0">
                        <item>
                         <widget class="QSpinBox" name="sbNFRunNr3">
                          <property name="enabled">
@@ -535,7 +570,7 @@
                          </property>
                          <property name="sizeHint" stdset="0">
                           <size>
-                           <width>20</width>
+                           <width>10</width>
                            <height>20</height>
                           </size>
                          </property>
@@ -574,7 +609,7 @@
                          </property>
                          <property name="sizeHint" stdset="0">
                           <size>
-                           <width>20</width>
+                           <width>10</width>
                            <height>20</height>
                           </size>
                          </property>
@@ -595,6 +630,9 @@
                          <property name="enabled">
                           <bool>false</bool>
                          </property>
+                         <property name="maximum">
+                          <number>9999</number>
+                         </property>
                         </widget>
                        </item>
                        <item>
@@ -607,7 +645,7 @@
                          </property>
                          <property name="sizeHint" stdset="0">
                           <size>
-                           <width>20</width>
+                           <width>10</width>
                            <height>20</height>
                           </size>
                          </property>
@@ -628,10 +666,131 @@
                          <property name="enabled">
                           <bool>false</bool>
                          </property>
+                         <property name="maximum">
+                          <number>9999</number>
+                         </property>
                         </widget>
                        </item>
                        <item>
                         <spacer name="horizontalSpacer_6">
+                         <property name="orientation">
+                          <enum>Qt::Horizontal</enum>
+                         </property>
+                         <property name="sizeType">
+                          <enum>QSizePolicy::Fixed</enum>
+                         </property>
+                         <property name="sizeHint" stdset="0">
+                          <size>
+                           <width>10</width>
+                           <height>20</height>
+                          </size>
+                         </property>
+                        </spacer>
+                       </item>
+                       <item>
+                        <widget class="QLabel" name="label_11">
+                         <property name="enabled">
+                          <bool>false</bool>
+                         </property>
+                         <property name="text">
+                          <string>Matrix Size [vx]</string>
+                         </property>
+                        </widget>
+                       </item>
+                       <item>
+                        <widget class="QSpinBox" name="sbMatrixSizeX3">
+                         <property name="enabled">
+                          <bool>false</bool>
+                         </property>
+                         <property name="maximum">
+                          <number>9999</number>
+                         </property>
+                        </widget>
+                       </item>
+                       <item>
+                        <widget class="QLabel" name="label_21">
+                         <property name="enabled">
+                          <bool>false</bool>
+                         </property>
+                         <property name="text">
+                          <string>x</string>
+                         </property>
+                        </widget>
+                       </item>
+                       <item>
+                        <widget class="QSpinBox" name="sbMatrixSizeY3">
+                         <property name="enabled">
+                          <bool>false</bool>
+                         </property>
+                         <property name="maximum">
+                          <number>9999</number>
+                         </property>
+                        </widget>
+                       </item>
+                       <item>
+                        <spacer name="horizontalSpacer_8">
+                         <property name="orientation">
+                          <enum>Qt::Horizontal</enum>
+                         </property>
+                         <property name="sizeType">
+                          <enum>QSizePolicy::Fixed</enum>
+                         </property>
+                         <property name="sizeHint" stdset="0">
+                          <size>
+                           <width>10</width>
+                           <height>20</height>
+                          </size>
+                         </property>
+                        </spacer>
+                       </item>
+                       <item>
+                        <widget class="QLabel" name="label_24">
+                         <property name="enabled">
+                          <bool>false</bool>
+                         </property>
+                         <property name="text">
+                          <string>Slices [n]</string>
+                         </property>
+                        </widget>
+                       </item>
+                       <item>
+                        <widget class="QSpinBox" name="sbSlicesNr3">
+                         <property name="enabled">
+                          <bool>false</bool>
+                         </property>
+                         <property name="maximum">
+                          <number>9999</number>
+                         </property>
+                        </widget>
+                       </item>
+                       <item>
+                        <spacer name="horizontalSpacer_7">
+                         <property name="orientation">
+                          <enum>Qt::Horizontal</enum>
+                         </property>
+                         <property name="sizeType">
+                          <enum>QSizePolicy::Fixed</enum>
+                         </property>
+                         <property name="sizeHint" stdset="0">
+                          <size>
+                           <width>10</width>
+                           <height>20</height>
+                          </size>
+                         </property>
+                        </spacer>
+                       </item>
+                       <item>
+                        <widget class="QCheckBox" name="cbOfflineMode3">
+                         <property name="enabled">
+                          <bool>false</bool>
+                         </property>
+                         <property name="text">
+                          <string>Offline mode</string>
+                         </property>
+                        </widget>
+                       </item>
+                       <item>
+                        <spacer name="horizontalSpacer_9">
                          <property name="orientation">
                           <enum>Qt::Horizontal</enum>
                          </property>
@@ -1005,7 +1164,7 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>1084</width>
+            <width>1523</width>
             <height>800</height>
            </rect>
           </property>

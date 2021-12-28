@@ -37,12 +37,12 @@ end
 
 flags = getFlagsType(P);
 
-if (strcmp(P.Prot, 'Inter') ||  strcmp(P.Prot, 'Cont') || strcmp(P.Prot, 'ContTask') || strcmp(P.Prot, 'Rest'))  && ...
+if (strcmp(P.Prot, 'Inter') ||  strcmp(P.Prot, 'Cont') || strcmp(P.Prot, 'ContTask') || strcmp(P.Prot, 'Auto_RTQA'))  && ...
         (flags.isPSC ||  flags.isSVM || flags.isCorr || flags.isNone)
     
     mainLoopData.indVolNorm = indVol - P.nrSkipVol;
     
-    if P.isRestingState
+    if P.isAutoRTQA
         assignin('base', 'mainLoopData', mainLoopData);
         return;
     end
@@ -158,7 +158,7 @@ if strcmp(P.Prot, 'InterBlock') && flags.isDCM
     displayData.displayStage = 'instruction';
 end
 
-if P.isRestingState
+if P.isAutoRTQA
     displayData.feedbackType = 'none';
 end
 

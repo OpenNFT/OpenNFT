@@ -12,7 +12,7 @@ function offlineImageSwitch
         ROIs = evalin('base', 'ROIs');
         indx = ROIs(end).voxelIndex;
         rtqaVol = rtQA_matlab.rtqaVol;
-        if ~rtQAMode || P.isRestingState
+        if ~rtQAMode || P.isAutoRTQA
             rtqaVol(indx) = rtQA_matlab.snrData.snrVol(indx);
         else
             rtqaVol(indx) = rtQA_matlab.cnrData.cnrVol(indx);

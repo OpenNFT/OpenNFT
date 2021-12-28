@@ -52,7 +52,7 @@ else
     tmp_max = median(sKalmanProcTimeSeries(end-nrElem:end));
     tmp_min = median(sKalmanProcTimeSeries(1:nrElem+1));
 end
-if ~P.isRestingState
+if ~P.isAutoRTQA
     if (indVol<=P.basBlockLength) || (indVol < lengthSlWind)
         % First period or user defined time scaleTimeSeries
         % max

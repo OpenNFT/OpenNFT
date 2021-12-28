@@ -14,15 +14,6 @@ function preprVol(inpFileName, indVol)
 
 P = evalin('base', 'P');
 mainLoopData = evalin('base', 'mainLoopData');
-imageViewMode = evalin('base', 'imageViewMode');
-if P.isRTQA
-    isShowRtqaVol = evalin('base', 'isShowRtqaVol');
-    rtQAMode = evalin('base', 'rtQAMode');
-    rtQA_matlab = evalin('base', 'rtQA_matlab');
-    FIRST_SNR_VOLUME = evalin('base', 'FIRST_SNR_VOLUME');
-else
-    isShowRtqaVol = false;
-end
 
 if P.UseTCPData, tcp = evalin('base', 'tcp'); end
 
@@ -32,6 +23,16 @@ if indVol <= P.nrSkipVol
 end
 
 flags = getFlagsType(P);
+
+if P.isRTQA
+    isShowRtqaVol = evalin('base', 'isShowRtqaVol');
+    rtQAMode = evalin('base', 'rtQAMode');
+    rtQA_matlab = evalin('base', 'rtQA_matlab');
+    FIRST_SNR_VOLUME = evalin('base', 'FIRST_SNR_VOLUME');
+else
+    isShowRtqaVol = false;
+end
+
 if flags.isDCM
     ROIsAnat = evalin('base', 'ROIsAnat');
     if P.isRTQA
@@ -168,7 +169,7 @@ end
 tStopMC = toc(tStartMotCorr);
 
 %% Smoothing
-if flags.isPSC || flags.isSVM || flags.isCorr || P.isRestingState
+if flags.isPSC || flags.isSVM || flags.isCorr || P.isAutoRTQA
     gKernel = [5 5 5] ./ dicomInfoVox;
 end
 if flags.isDCM
@@ -192,7 +193,7 @@ if P.isRTQA && indVolNorm > FIRST_SNR_VOLUME
     
     [ rtQA_matlab.snrData ] = snr_calc(indVolNorm,  smReslVol, rtQA_matlab.snrData);
     
-    if ~P.isRestingState
+    if ~P.isAutoRTQA
         [ rtQA_matlab.cnrData ] = cnr_calc(indVolNorm, smReslVol, rtQA_matlab.cnrData);
     end
         
@@ -204,7 +205,7 @@ if P.isRTQA && indVolNorm > FIRST_SNR_VOLUME
         ROIs = evalin('base', 'ROIs');
         indx = ROIs(end).voxelIndex;
         rtqaVol = rtQA_matlab.rtqaVol;
-        if ~rtQAMode || P.isRestingState
+        if ~rtQAMode || P.isAutoRTQA
             rtqaVol(indx) = rtQA_matlab.snrData.snrVol(indx);
         else
             rtqaVol(indx) = rtQA_matlab.cnrData.cnrVol(indx);
@@ -341,7 +342,7 @@ if flags.isIGLM
         mainLoopData.statMap3D_neg = statMap3D_neg;
     end
     
-    if flags.isPSC || flags.isSVM || flags.isCorr || P.isRestingState
+    if flags.isPSC || flags.isSVM || flags.isCorr || P.isAutoRTQA
         indIglm = indVolNorm;
     end
     if flags.isDCM
@@ -377,7 +378,7 @@ if flags.isIGLM
     if P.iglmAR1
         tmpRegr = arRegr(P.aAR1,tmpRegr);
     end
-    if ~P.isRestingState
+    if ~P.isAutoRTQA
         % combine with prepared basFct design regressors
         basFctRegr = [basFct(1:indIglm,:), tmpRegr];
     else

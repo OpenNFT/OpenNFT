@@ -29,9 +29,10 @@ class RTQAWindow(QtWidgets.QWidget):
         self.nrROIs = sz
         self.musterInfo = parent.musterInfo
 
-        if parent.P['isRestingState']:
+        if parent.P['isAutoRTQA']:
             xrange = (parent.P['NrOfVolumes'] - parent.P['nrSkipVol'])
             self.comboBox.model().item(2).setEnabled(False)
+            self.comboBox.model().item(6).setEnabled(False)
             self.indBas = 0
             self.indCond = 0
         else:
@@ -46,7 +47,6 @@ class RTQAWindow(QtWidgets.QWidget):
         xrange = int(xrange)
 
         # main class data initialization block
-        self.prot = parent.P['Prot']
         self._fd = FD(xrange)
         self.offsetMCParam = np.zeros((6,1))
         self.names = ['X', 'Y', 'Z', 'Pitch', 'Roll', 'Yaw', 'FD']
@@ -162,7 +162,7 @@ class RTQAWindow(QtWidgets.QWidget):
         p.setYRange(-1, 1, padding=0.0)
 
         # CNR, means and variances plots and labels
-        if not parent.P['isRestingState']:
+        if not parent.P['isAutoRTQA']:
 
             self.cnrPlot = pg.PlotWidget(self)
             self.cnrPlot.setBackground((255, 255, 255))

@@ -20,8 +20,10 @@ PLUGIN_PATH = ROOT_PATH / 'plugins'
 OpenNFT_ICON = ROOT_PATH / 'ui' / 'images' / 'appicon.png'
 MATLAB_FUNCTIONS_PATH = ROOT_PATH / 'matlab'
 
-AUTO_RTQA = True
-SELECT_ROIS = True
+AUTO_RTQA = False
+SELECT_ROIS = False
+USE_EPI_TEMPLATE = False
+AUTO_RTQA_SETTINGS = ROOT_PATH / 'configs' / 'auto_rtqa_settings.ini'
 
 # Matlab sessions
 MAIN_MATLAB_NAME = 'MATLAB_NFB_MAIN'

@@ -92,7 +92,6 @@ else
     m.Data.imgVolTempl = imgVolTempl;
 end
 
-
 if P.isRTQA
     mainLoopData.procVol = zeros(dimVol);
 end

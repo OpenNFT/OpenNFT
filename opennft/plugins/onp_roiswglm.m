@@ -92,7 +92,7 @@ else % run
         if P.cglmAR1
             tmpRegr = arRegr(P.aAR1,tmpRegr);
         end
-        if ~P.isRestingState
+        if ~P.isAutoRTQA
             cX0 = [spmDesign(1:tmp_ind_end,:) tmpRegr];
         else
             cX0 = tmpRegr;

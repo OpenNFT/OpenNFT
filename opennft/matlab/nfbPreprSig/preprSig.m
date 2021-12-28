@@ -33,7 +33,7 @@ if flags.isDCM
     end
     ROIsGroup = evalin('base', 'ROIsGroup');
 end
-if flags.isPSC || flags.isSVM || flags.isCorr || P.isRestingState
+if flags.isPSC || flags.isSVM || flags.isCorr || P.isAutoRTQA
     ROIs = evalin('base', 'ROIs');
 end
 if flags.isSVM
@@ -49,7 +49,7 @@ indVolNorm = double(indVolNorm);
 rawTimeSeries = mainLoopData.rawTimeSeries;
 
 % number of regressors of no interest to correct with cGLM
-if ~P.isRestingState
+if ~P.isAutoRTQA
     % 6 MC regressors, linear trend, constant
     nrRegrToCorrect = 8; 
 else
@@ -60,7 +60,7 @@ end
 for indRoi = 1:P.NrROIs
     
     %% Get Raw time-series
-    if flags.isPSC || flags.isCorr || P.isRestingState
+    if flags.isPSC || flags.isCorr || P.isAutoRTQA
         rawTimeSeries(indRoi, indVolNorm) = mean(...
             mainLoopData.procVol(ROIs(indRoi).voxelIndex));
     end
@@ -140,7 +140,7 @@ for indRoi = 1:P.NrROIs
     % to avoid NaNs given algnment to zero, see preprVol()
     P.motCorrParam(1,:) = 0.00001;
     
-    if flags.isPSC || flags.isSVM || flags.isCorr || P.isRestingState
+    if flags.isPSC || flags.isSVM || flags.isCorr || P.isAutoRTQA
         % continuous cGLM corrections
         tmp_ind_end = indVolNorm;
         tmp_begin = 1;
@@ -173,7 +173,7 @@ for indRoi = 1:P.NrROIs
     % 2.2. exemplary step-wise addition of regressors, step = total nr of
     % Regressors, which may require a justification for particular project
     regrStep = P.nrBasFct + nrRegrToCorrect;
-    if flags.isPSC || flags.isSVM || flags.isCorr || P.isRestingState
+    if flags.isPSC || flags.isSVM || flags.isCorr || P.isAutoRTQA
         if (tmp_ind_end < regrStep)
             tmpRegr = ones(tmp_ind_end,1);
             if P.cglmAR1
@@ -210,7 +210,7 @@ for indRoi = 1:P.NrROIs
             if P.cglmAR1
                 tmpRegr = arRegr(P.aAR1,tmpRegr);
             end
-            if ~P.isRestingState
+            if ~P.isAutoRTQA
                 cX0 = [tmpRegr mainLoopData.signalPreprocGlmDesign(1:tmp_ind_end,:)];
                 betaReg = pinv(cX0) * tmp_rawTimeSeries;
                 tmp_glmProcTimeSeries = (tmp_rawTimeSeries - ...
@@ -309,14 +309,14 @@ end
 for indRoi = 1:P.NrROIs
 
     % 3. modified Kalman low-pass filter + spike identification & correction
-    if flags.isPSC || flags.isSVM || flags.isDCM || flags.isCorr || P.isRestingState
+    if flags.isPSC || flags.isSVM || flags.isDCM || flags.isCorr || P.isAutoRTQA
         tmpStd = std(mainLoopData.glmProcTimeSeries(indRoi,:));
     end
     if flags.isDCM
         mainLoopData.S(indRoi).Q = .25*tmpStd^2;
         mainLoopData.S(indRoi).R = tmpStd^2;
     end
-    if flags.isPSC || flags.isSVM || flags.isCorr || P.isRestingState
+    if flags.isPSC || flags.isSVM || flags.isCorr || P.isAutoRTQA
         % See Koush 2012 for setting the constants
         mainLoopData.S(indRoi).Q = .25*tmpStd^2;
         mainLoopData.S(indRoi).R = tmpStd^2;
@@ -333,7 +333,7 @@ for indRoi = 1:P.NrROIs
     rtQA_matlab.kalmanSpikesNeg(indRoi,indVolNorm) = mainLoopData.fNegatDerivSpike(indRoi);
 
     %4. Scaling
-    if ~P.isRestingState
+    if ~P.isAutoRTQA
         slWind = P.basBlockLength*P.nrBlocksInSlidingWindow;
     else
         slWind = P.NrOfVolumes - P.nrSkipVol;

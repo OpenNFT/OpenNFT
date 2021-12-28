@@ -23,13 +23,32 @@ flags = getFlagsType(P);
 displayBgStructName = P.StructBgFile;
 displayBgEpiName = P.MCTempl;
 
-[displayBgEpi.voxelCoord, displayBgEpi.voxelIndex, ...
-    displayBgEpi.mat, displayBgEpi.dim, displayBgEpi.vol] = ...
-    readVol(displayBgEpiName);
+if ~(exist('displayBgEpi','var') == 1 )
+    displayBgEpi = evalin('base','displayBgEpi');
+else
+    if ~P.isAutoRTQA || (P.isAutoRTQA && P.useEPITemplate)
+        [displayBgEpi.voxelCoord, displayBgEpi.voxelIndex, ...
+            displayBgEpi.mat, displayBgEpi.dim, displayBgEpi.vol] = ...
+            readVol(displayBgEpiName);
+    else
+        displayBgEpi.vol          = double(dicomread(P.MCTempl));
+        displayBgEpi.dim          = double([P.MatrixSizeX, P.MatrixSizeY, P.NrOfSlices]);
+        imgInfoTempl              = dicominfo(P.MCTempl);
+        displayBgEpi.mat          = getMAT(imgInfoTempl, displayBgEpi.dim);
 
-[displayBgStruct.voxelCoord, displayBgStruct.voxelIndex, ...
-    displayBgStruct.mat, displayBgStruct.dim, displayBgStruct.vol] = ...
-    readVol(displayBgStructName);
+        [slNrImg2DdimX, slNrImg2DdimY, img2DdimX, img2DdimY] = getMosaicDim(displayBgEpi.dim);
+        displayBgEpi.vol          = img2Dvol3D(displayBgEpi.vol, slNrImg2DdimX, slNrImg2DdimY, displayBgEpi.dim);
+
+    end
+end
+
+if ~P.isAutoRTQA
+    [displayBgStruct.voxelCoord, displayBgStruct.voxelIndex, ...
+        displayBgStruct.mat, displayBgStruct.dim, displayBgStruct.vol] = ...
+        readVol(displayBgStructName);
+else
+    displayBgStruct = [];
+end
 
 if ~strcmp(bgType, 'BgStruct')
     displBackgr = displayBgEpi;
@@ -44,12 +63,10 @@ if flags.isDCM
     if P.isRTQA
         ROIs = evalin('base', 'ROIs');
         ROIsOverlay(end+1).vol = ROIs.vol;
-        ROIsOverlay(end).dim = ROIs.dim;
         ROIsOverlay(end).mat = ROIs.mat;
-        ROIsOverlay(end).voxelIndex = ROIs.voxelIndex;
     end
 end
-if flags.isPSC || flags.isSVM || flags.isCorr || P.isRestingState
+if flags.isPSC || flags.isSVM || flags.isCorr || P.isAutoRTQA
     ROIs = evalin('base', 'ROIs');
     ROIsOverlay = ROIs;
 end
@@ -61,9 +78,9 @@ strParam = struct('n', 0, 'bb',[],'Space',eye(4),'centre',[0 0 0],'mode',1,...
 strParam.Space = spm_matrix([0 0 0  0 pi -pi/2])*strParam.Space;
 
 %% get bounding box and resolution
-if isempty(strParam.bb),
-     strParam.maxBB = maxbb(displayBgEpiName);
-     strParam.bb = strParam.maxBB;
+if isempty(strParam.bb)
+    strParam.maxBB = maxbb(displayBgEpi.dim,displayBgEpi.mat);
+    strParam.bb = strParam.maxBB;
 end
 resolution(displBackgr.mat);
 
@@ -410,12 +427,28 @@ img(img > cml) = cml;
 img(~isfinite(img))  = miscol;
 return;
 
-function bb = maxbb(fileName)
+function bb = maxbb(dim, mat)
 global strParam
 mn = [Inf Inf Inf];
 mx = -mn;
 premul = strParam.Space \ strParam.premul;
-bb = spm_get_bbox(fileName, 'fv', premul);
+
+corners = [
+    1    1    1    1
+    1    1    dim(3) 1
+    1    dim(2) 1    1
+    1    dim(2) dim(3) 1
+    dim(1) 1    1    1
+    dim(1) 1    dim(3) 1
+    dim(1) dim(2) 1    1
+    dim(1) dim(2) dim(3) 1
+    ]';
+XYZ = mat(1:3, :) * corners;
+XYZ = premul(1:3, :) * [XYZ; ones(1, size(XYZ, 2))];
+
+bb = [min(XYZ, [], 2)'
+      max(XYZ, [], 2)'];
+
 mx = max([bb ; mx]);
 mn = min([bb ; mn]);
 bb = [mn ; mx];
