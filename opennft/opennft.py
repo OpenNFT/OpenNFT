@@ -1472,6 +1472,10 @@ class OpenNFT(QWidget):
             if not self.resetDone:
                 self.reset()
 
+            self.orth_view_input = multiprocessing.Manager().dict()
+            self.orth_view_input["ready"] = False
+            self.orth_view_input["done"] = False
+
             self.actualizeAutoRTQA()
             self.isOffline = self.cbOfflineMode3.isChecked()
 
@@ -1483,7 +1487,6 @@ class OpenNFT(QWidget):
             if not config.SELECT_ROIS:
                 self.P['NrROIs'] = 1
             self.eng.workspace['P'] = self.P
-            # self.engSPM.workspace['P'] = self.P
             self.previousIterStartTime = 0
             self.displaySamples = []
 
@@ -1511,7 +1514,7 @@ class OpenNFT(QWidget):
             self.eng.setupProcParams(nargout=0)
 
             if self.P['isRTQA']:
-                self.eng.epiWholeBrainROI()
+                self.eng.epiWholeBrainROI(nargout=0)
 
             with utils.timeit("Receiving 'P' from Matlab:"):
                 self.P = self.eng.workspace['P']
@@ -1611,7 +1614,10 @@ class OpenNFT(QWidget):
         self.orth_view_input["is_rtqa"] = False
         self.orth_view_input["is_neg"] = self.negMapCheckBox.isChecked()
         self.orth_view_input["is_ROI"] = config.USE_ROI
-        self.orth_view_input["anat_volume"] = self.P['StructBgFile']
+        if config.AUTO_RTQA:
+            self.orth_view_input["anat_volume"] = None
+        else:
+            self.orth_view_input["anat_volume"] = self.P['StructBgFile']
         self.orth_view_input["epi_volume"] = self.P['MCTempl']
         self.orth_view_input["rtQA_volume"] = str(self.eng.evalin('base', 'P.memMapFile')).replace('shared', 'RTQAVol')
         self.orth_view_input["stat_volume"] = str(self.eng.evalin('base', 'P.memMapFile')).replace('shared', 'statVol')

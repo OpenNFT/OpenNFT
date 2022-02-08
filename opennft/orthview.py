@@ -15,10 +15,11 @@ class OrthView(mp.Process):
         self.input_data = input
         self.output_data = output
 
-        anat_name = self.input_data["anat_volume"]
-        anat_data = nib.load(anat_name, mmap=False)
-        self.anat_volume = np.array(anat_data.get_fdata(), order="F")
-        self.mat_anat = anat_data.affine
+        if not (self.input_data["anat_volume"] is None):
+            anat_name = self.input_data["anat_volume"]
+            anat_data = nib.load(anat_name, mmap=False)
+            self.anat_volume = np.array(anat_data.get_fdata(), order="F")
+            self.mat_anat = anat_data.affine
 
         epi_name = self.input_data["epi_volume"]
 
