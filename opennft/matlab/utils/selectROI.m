@@ -120,7 +120,7 @@ if flags.isDCM
     assignin('base', 'ROIoptimGlmAnat', []);
 end
 
-% increasing ROIs number due to whole brain region that will be initialized later (for rtQA only)
+% For rtQA, nrROIs includes whole-brain EPI ROI initialized in epiWholeBrainROI.m
 if P.isRTQA
     P.NrROIs = P.NrROIs + 1;
 end

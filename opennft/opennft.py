@@ -1565,9 +1565,9 @@ class OpenNFT(QWidget):
         ROI_mats = np.zeros((nrROIs, 4, 4))
         if self.P['Type'] == 'DCM':
             if self.P['isRTQA']:
-                # in case of DCM+rtQA, ROIs stored in ROIsAnat, but whole brain ROI in ROIs
-                # we need to transfer all regions from ROIsAnat and wbROI from ROIs
-                # see selectROI.m, line 125
+                # For DCM+rtQA, ROIs are stored in ROIsAnat and whole-brain EPI ROI is in ROIs.
+                # ROIsAnat and whole-brain EPI ROI are transferred from Matlab.
+                # For definition of nrROIs, see selectROI.m
                 for i in range(nrROIs - 1):
                     ROI_vols[i] = np.array(self.eng.evalin('base', 'ROIsAnat(' + str(i + 1) + ').vol'), ndmin=3)
                     ROI_mats[i] = np.array(self.eng.evalin('base', 'ROIsAnat(' + str(i + 1) + ').mat'), ndmin=2)
