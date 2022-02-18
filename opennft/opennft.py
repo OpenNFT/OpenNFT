@@ -161,14 +161,6 @@ class OpenNFT(QWidget):
         self.orthView = projview.ProjectionsWidget(self)
         self.layoutOrthView.addWidget(self.orthView)
 
-        self.mosaic_background_image_reader = mmapimage.MosaicImageReader(image_name='imgVolTempl')
-        self.mosaic_pos_map_image_reader = mmapimage.MosaicImageReader(image_name='statMap')
-        self.mosaic_neg_map_image_reader = mmapimage.MosaicImageReader(image_name='statMap_neg')
-
-        self.proj_background_images_reader = mmapimage.ProjectionImagesReader()
-        self.proj_pos_map_images_reader = mmapimage.ProjectionImagesReader()
-        self.proj_neg_map_images_reader = mmapimage.ProjectionImagesReader()
-
         self.pos_map_thresholds_widget = mapimagewidget.MapImageThresholdsWidget(self)
         self.neg_map_thresholds_widget = mapimagewidget.MapImageThresholdsWidget(self, colormap='Blues_r')
 
@@ -262,16 +254,7 @@ class OpenNFT(QWidget):
         self.stop()
         self.hide()
 
-        self.mosaic_background_image_reader.clear()
-        self.mosaic_pos_map_image_reader.clear()
-        self.mosaic_neg_map_image_reader.clear()
-
-        self.proj_background_images_reader.clear()
-        self.proj_pos_map_images_reader.clear()
-        self.proj_neg_map_images_reader.clear()
-
         self.eng = None
-        # self.engSPM = None
         if self.orth_view:
             self.orth_view.terminate()
         self.orth_view = None
@@ -1270,14 +1253,6 @@ class OpenNFT(QWidget):
         self.pos_map_thresholds_widget.reset()
         self.neg_map_thresholds_widget.reset()
 
-        self.mosaic_background_image_reader.clear()
-        self.mosaic_pos_map_image_reader.clear()
-        self.mosaic_neg_map_image_reader.clear()
-
-        self.proj_background_images_reader.clear()
-        self.proj_pos_map_images_reader.clear()
-        self.proj_neg_map_images_reader.clear()
-
         self.mosaicImageView.clear()
         self.orthView.clear()
 
@@ -1593,8 +1568,8 @@ class OpenNFT(QWidget):
                 for i in range(nrROIs - 1):
                     ROI_vols[i] = np.array(self.eng.evalin('base', 'ROIsAnat(' + str(i + 1) + ').vol'), ndmin=3)
                     ROI_mats[i] = np.array(self.eng.evalin('base', 'ROIsAnat(' + str(i + 1) + ').mat'), ndmin=2)
-                ROI_vols[nrROIs] = np.array(self.eng.evalin('base', 'ROIs(end).vol'), ndmin=3)
-                ROI_mats[nrROIs] = np.array(self.eng.evalin('base', 'ROIs(end).mat'), ndmin=2)
+                ROI_vols[nrROIs-1] = np.array(self.eng.evalin('base', 'ROIs(end).vol'), ndmin=3)
+                ROI_mats[nrROIs-1] = np.array(self.eng.evalin('base', 'ROIs(end).mat'), ndmin=2)
             else:
                 for i in range(nrROIs):
                     ROI_vols[i] = np.array(self.eng.evalin('base', 'ROIsAnat(' + str(i + 1) + ').vol'), ndmin=3)
@@ -1946,9 +1921,6 @@ class OpenNFT(QWidget):
 
     # --------------------------------------------------------------------------
     def updateOrthViewAsync(self):
-        # if not self.engSPM:
-        #     return
-
         if not self.orth_view:
             return
 
@@ -1958,10 +1930,6 @@ class OpenNFT(QWidget):
             bgType = 'BgStruct'
 
         rtqa = self.windowRTQA.volumeCheckBox.isChecked() if self.windowRTQA else False
-
-        # self.orthViewUpdateFuture = self.engSPM.helperUpdateOrthView(
-        #     self.currentCursorPos, self.currentProjection.value, bgType,
-        #     rtqa, background=True, nargout=0)
 
         if not self.orth_view_input["ready"]:
             self.orth_view_input["cursor_pus"] = self.currentCursorPos
@@ -1992,15 +1960,22 @@ class OpenNFT(QWidget):
             self.displayMosaicImage()
 
         for proj in projview.ProjectionType:
-            pos_map_image = self.proj_pos_map_images_reader.proj_image(proj)
+
+            if proj == projview.ProjectionType.transversal:
+                pos_map_image = self.orth_view_output['overlay_t']
+                neg_map_image = self.orth_view_output['neg_overlay_t']
+            elif proj == projview.ProjectionType.sagittal:
+                pos_map_image = self.orth_view_output['overlay_s']
+                neg_map_image = self.orth_view_output['neg_overlay_s']
+            elif proj == projview.ProjectionType.coronal:
+                pos_map_image = self.orth_view_output['overlay_c']
+                neg_map_image = self.orth_view_output['neg_overlay_c']
 
             if pos_map_image is not None:
                 rgba_pos_map_image = self.pos_map_thresholds_widget.compute_rgba(pos_map_image)
 
                 if rgba_pos_map_image is not None:
                     self.orthView.set_pos_map_image(proj, rgba_pos_map_image)
-
-            neg_map_image = self.proj_neg_map_images_reader.proj_image(proj)
 
             if neg_map_image is not None:
                 rgba_neg_map_image = self.neg_map_thresholds_widget.compute_rgba(neg_map_image)
@@ -2010,16 +1985,10 @@ class OpenNFT(QWidget):
 
     # --------------------------------------------------------------------------
     def onCheckOrthViewUpdated(self):
-        # if not self.orthViewUpdateFuture or not self.orthViewUpdateFuture.done():
-        #     return
-
         if not self.orth_view_input["done"]:
             return
 
         self.orthViewUpdateInProgress = True
-
-        # with utils.timeit('Getting new orthview projections...'):
-        # self.readOrthViewImages()
 
         # SNR/Stat map display
         is_stat_map_created = bool(self.eng.evalin('base', 'mainLoopData.statMapCreated'))
@@ -2046,10 +2015,7 @@ class OpenNFT(QWidget):
                     pos_map_image = self.orth_view_output['overlay_c']
                     neg_map_image = self.orth_view_output['neg_overlay_c']
 
-                # pos_map_image = self.proj_pos_map_images_reader.proj_image(proj)
                 pos_maps_values = np.append(pos_maps_values, pos_map_image.ravel())
-
-                # neg_map_image = self.proj_neg_map_images_reader.proj_image(proj)
                 neg_maps_values = np.append(neg_maps_values, neg_map_image.ravel())
 
                 if pos_maps_values.size > 0:
@@ -2058,9 +2024,6 @@ class OpenNFT(QWidget):
                     self.neg_map_thresholds_widget.compute_thresholds(neg_maps_values)
 
         for proj in projview.ProjectionType:
-            # bg_image = self.proj_background_images_reader.proj_image(proj)
-            #
-            # pos_map_image = self.proj_pos_map_images_reader.proj_image(proj)
 
             if proj == projview.ProjectionType.transversal:
                 bg_image = self.orth_view_output['back_t']
@@ -2077,8 +2040,6 @@ class OpenNFT(QWidget):
 
             self.orthView.set_background_image(proj, bg_image)
             rgba_pos_map_image = self.pos_map_thresholds_widget.compute_rgba(pos_map_image)
-
-            # neg_map_image = self.proj_neg_map_images_reader.proj_image(proj)
             rgba_neg_map_image = self.neg_map_thresholds_widget.compute_rgba(neg_map_image)
 
             if rgba_pos_map_image is not None:
@@ -2086,10 +2047,6 @@ class OpenNFT(QWidget):
 
             if rgba_neg_map_image is not None:
                 self.orthView.set_neg_map_image(proj, rgba_neg_map_image)
-
-        # self.orthView.set_roi(projview.ProjectionType.transversal, [self.spmHelperP['tRoiBoundaries'][i] for i in self.selectedRoi], self.selectedRoi)
-        # self.orthView.set_roi(projview.ProjectionType.coronal, [self.spmHelperP['cRoiBoundaries'][i] for i in self.selectedRoi], self.selectedRoi)
-        # self.orthView.set_roi(projview.ProjectionType.sagittal, [self.spmHelperP['sRoiBoundaries'][i] for i in self.selectedRoi], self.selectedRoi)
 
         roi_t = [None] * int(self.P['NrROIs'])
         roi_c = [None] * int(self.P['NrROIs'])
@@ -2109,7 +2066,6 @@ class OpenNFT(QWidget):
         self.orthViewInitialize = False
         self.orthViewUpdateInProgress = False
         self.orth_view_input["done"] = False
-        # self.orthViewUpdateFuture = None
 
     # --------------------------------------------------------------------------
     def loadSettingsFromSetFile(self):
