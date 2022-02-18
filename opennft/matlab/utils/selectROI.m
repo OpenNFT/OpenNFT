@@ -120,6 +120,7 @@ if flags.isDCM
     assignin('base', 'ROIoptimGlmAnat', []);
 end
 
+% increasing ROIs number due to whole brain region that will be initialized later (for rtQA only)
 if P.isRTQA
     P.NrROIs = P.NrROIs + 1;
 end
