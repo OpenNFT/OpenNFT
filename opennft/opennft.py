@@ -73,8 +73,11 @@ from opennft import (
     plugin,
     utils,
     rtqa,
+    orthview,
     eventrecorder as erd,
 )
+
+import cv2
 
 if config.USE_MRPULSE:
     from opennft import mrpulse
@@ -158,14 +161,6 @@ class OpenNFT(QWidget):
         self.orthView = projview.ProjectionsWidget(self)
         self.layoutOrthView.addWidget(self.orthView)
 
-        self.mosaic_background_image_reader = mmapimage.MosaicImageReader(image_name='imgVolTempl')
-        self.mosaic_pos_map_image_reader = mmapimage.MosaicImageReader(image_name='statMap')
-        self.mosaic_neg_map_image_reader = mmapimage.MosaicImageReader(image_name='statMap_neg')
-
-        self.proj_background_images_reader = mmapimage.ProjectionImagesReader()
-        self.proj_pos_map_images_reader = mmapimage.ProjectionImagesReader()
-        self.proj_neg_map_images_reader = mmapimage.ProjectionImagesReader()
-
         self.pos_map_thresholds_widget = mapimagewidget.MapImageThresholdsWidget(self)
         self.neg_map_thresholds_widget = mapimagewidget.MapImageThresholdsWidget(self, colormap='Blues_r')
 
@@ -207,7 +202,9 @@ class OpenNFT(QWidget):
         self.files_exported = []
 
         self.eng = None
-        self.engSPM = None
+        self.orth_view = None
+        self.orth_view_input = None
+        self.orth_view_output = None
 
         self.plugins = []
 
@@ -222,7 +219,6 @@ class OpenNFT(QWidget):
         self.mlMainHelper = matlab_helpers[config.MAIN_MATLAB_NAME]
         if config.USE_PTB_HELPER:
             self.mlPtbDcmHelper = matlab_helpers[config.PTB_MATLAB_NAME]
-        self.mlSpmHelper = matlab_helpers[config.SPM_MATLAB_NAME]
         self.mlModelHelper = matlab_helpers.get(config.MODEL_HELPER_MATLAB_NAME)
 
         if config.USE_PTB_HELPER:
@@ -258,16 +254,10 @@ class OpenNFT(QWidget):
         self.stop()
         self.hide()
 
-        self.mosaic_background_image_reader.clear()
-        self.mosaic_pos_map_image_reader.clear()
-        self.mosaic_neg_map_image_reader.clear()
-
-        self.proj_background_images_reader.clear()
-        self.proj_pos_map_images_reader.clear()
-        self.proj_neg_map_images_reader.clear()
-
         self.eng = None
-        self.engSPM = None
+        if self.orth_view:
+            self.orth_view.terminate()
+        self.orth_view = None
 
         if runmatlab.is_shared_matlab():
             runmatlab.detach_matlab()
@@ -596,49 +586,10 @@ class OpenNFT(QWidget):
         self.eng.setupProcParams(nargout=0)
 
         if self.P['isRTQA']:
-            self.selectWholeBrainRoi()
+            self.eng.epiWholeBrainROI(nargout=0)
 
         with utils.timeit("Receiving 'P' from Matlab:"):
             self.P = self.eng.workspace['P']
-
-        # init OrthoView in helper
-        self.spmHelperP = {
-            'Type': self.P['Type'],
-            'StructBgFile': str(Path(self.P['StructBgFile'])),
-            'MCTempl': str(Path(self.P['MCTempl'])),
-            'memMapFile': self.eng.evalin('base', 'P.memMapFile'),
-            'tRoiBoundaries': [],
-            'cRoiBoundaries': [],
-            'sRoiBoundaries': [],
-            'isAutoRTQA': self.P['isAutoRTQA'],
-            'useEPITemplate': self.P['useEPITemplate'],
-            'MatrixSizeX': self.P['MatrixSizeX'],
-            'MatrixSizeY': self.P['MatrixSizeY'],
-            'NrOfSlices': self.P['NrOfSlices'],
-            'isIGLM': self.P['isIGLM'],
-            'isROI': config.USE_ROI,
-            'isRTQA': config.USE_RTQA
-        }
-
-        self.engSPM.helperPrepareOrthView(self.spmHelperP, 'bgEPI', nargout=0)
-
-    # --------------------------------------------------------------------------
-    def readOrthViewImages(self):
-        memmap_fname = self.eng.evalin('base', 'P.memMapFile')
-
-        # background anat or epi
-        background_memmap_fname = memmap_fname.replace('shared', 'BackgOrthView')
-        self.proj_background_images_reader.read(background_memmap_fname, self.engSPM)
-
-        # SNR or stat map
-        pos_map_memmap_fname = memmap_fname.replace('shared', 'OrthView')
-        self.proj_pos_map_images_reader.read(pos_map_memmap_fname, self.engSPM)
-
-        neg_map_memmap_fname = memmap_fname.replace('shared', 'OrthView_neg')
-        self.proj_neg_map_images_reader.read(neg_map_memmap_fname, self.engSPM)
-
-        # ROI from helperP
-        self.spmHelperP = self.engSPM.workspace['helperP']
 
     # --------------------------------------------------------------------------
     def displayScreen(self):
@@ -785,11 +736,9 @@ class OpenNFT(QWidget):
         if autoRTQAMCTempl:
             self.P['MCTempl'] = fname
             self.eng.workspace['P'] = self.P
-            self.engSPM.workspace['P'] = self.P
             self.setupAutoRTQA()
         elif self.P['useEPITemplate'] and not self.autoRTQASetup:
             self.eng.workspace['P'] = self.P
-            self.engSPM.workspace['P'] = self.P
             self.setupAutoRTQA()
 
         # t2
@@ -827,12 +776,6 @@ class OpenNFT(QWidget):
         if self.iteration == 1 or autoRTQAMCTempl:
             with utils.timeit('  setup after first volume:'):
                 self.eng.setupFirstVolume(fname, nargout=0)
-                self.engSPM.assignin('base', 'matTemplMotCorr',
-                                     self.eng.evalin('base', 'mainLoopData.matTemplMotCorr'),
-                                     nargout=0)
-                self.engSPM.assignin('base', 'dimTemplMotCorr',
-                                     self.eng.evalin('base', 'mainLoopData.dimTemplMotCorr'),
-                                     nargout=0)
 
         # Main logic
         # data preprocessing
@@ -1219,7 +1162,6 @@ class OpenNFT(QWidget):
         logger.info('Using Matlab session "{}" as MAIN', self.mlMainHelper.name)
         if config.USE_PTB_HELPER:
             logger.info('Using Matlab session "{}" for PTB', self.mlPtbDcmHelper.name)
-        logger.info('Using Matlab session "{}" for SPM', self.mlSpmHelper.name)
 
         if config.USE_MATLAB_MODEL_HELPER:
             logger.info('Using Matlab session "{}" for Model Helper', self.mlModelHelper.name)
@@ -1230,12 +1172,10 @@ class OpenNFT(QWidget):
             logger.warning('There is no main Matlab model helper. DCM calculation is not possible.')
         if config.USE_PTB_HELPER:
             self.mlPtbDcmHelper.prepare()
-        self.mlSpmHelper.prepare()
         if config.USE_MATLAB_MODEL_HELPER:
             self.mlModelHelper.prepare()
 
         self.eng = self.mlMainHelper.engine
-        self.engSPM = self.mlSpmHelper.engine
 
         self.eng.workspace['P'] = self.P
         self.eng.workspace['mainLoopData'] = self.mainLoopData
@@ -1289,6 +1229,9 @@ class OpenNFT(QWidget):
         self.reultFromHelper = None
         self.reachedFirstFile = False
         self.autoRTQASetup = False
+        self.orth_view.terminate()
+        self.orth_view_input = None
+        self.orth_view_output = None
 
         self.eng.workspace['P'] = self.P
         self.eng.workspace['mainLoopData'] = self.mainLoopData
@@ -1309,14 +1252,6 @@ class OpenNFT(QWidget):
 
         self.pos_map_thresholds_widget.reset()
         self.neg_map_thresholds_widget.reset()
-
-        self.mosaic_background_image_reader.clear()
-        self.mosaic_pos_map_image_reader.clear()
-        self.mosaic_neg_map_image_reader.clear()
-
-        self.proj_background_images_reader.clear()
-        self.proj_pos_map_images_reader.clear()
-        self.proj_neg_map_images_reader.clear()
 
         self.mosaicImageView.clear()
         self.orthView.clear()
@@ -1352,7 +1287,6 @@ class OpenNFT(QWidget):
             self.P['memMapFile'] = memMapFile
 
             self.eng.workspace['P'] = self.P
-            self.engSPM.workspace['P'] = self.P
             self.previousIterStartTime = 0
             self.displaySamples = []
 
@@ -1374,8 +1308,7 @@ class OpenNFT(QWidget):
             with utils.timeit('  initMainLoopData:'):
                 self.initMainLoopData()
 
-            if self.P['isRTQA']:
-                self.selectWholeBrainRoi()
+            self.orth_view_init()
 
             self.roiDict = dict()
             self.selectedRoi = []
@@ -1514,6 +1447,10 @@ class OpenNFT(QWidget):
             if not self.resetDone:
                 self.reset()
 
+            self.orth_view_input = multiprocessing.Manager().dict()
+            self.orth_view_input["ready"] = False
+            self.orth_view_input["done"] = False
+
             self.actualizeAutoRTQA()
             self.isOffline = self.cbOfflineMode3.isChecked()
 
@@ -1525,7 +1462,6 @@ class OpenNFT(QWidget):
             if not config.SELECT_ROIS:
                 self.P['NrROIs'] = 1
             self.eng.workspace['P'] = self.P
-            self.engSPM.workspace['P'] = self.P
             self.previousIterStartTime = 0
             self.displaySamples = []
 
@@ -1553,37 +1489,18 @@ class OpenNFT(QWidget):
             self.eng.setupProcParams(nargout=0)
 
             if self.P['isRTQA']:
-                self.selectWholeBrainRoi()
+                self.eng.epiWholeBrainROI(nargout=0)
 
             with utils.timeit("Receiving 'P' from Matlab:"):
                 self.P = self.eng.workspace['P']
-
-            # init OrthoView in helper
-            self.spmHelperP = {
-                'Type': self.P['Type'],
-                'StructBgFile': str(Path(self.P['StructBgFile'])),
-                'MCTempl': str(Path(self.P['MCTempl'])),
-                'memMapFile': self.eng.evalin('base', 'P.memMapFile'),
-                'tRoiBoundaries': [],
-                'cRoiBoundaries': [],
-                'sRoiBoundaries': [],
-                'isAutoRTQA': self.P['isAutoRTQA'],
-                'useEPITemplate': self.P['useEPITemplate'],
-                'MatrixSizeX': self.P['MatrixSizeX'],
-                'MatrixSizeY': self.P['MatrixSizeY'],
-                'NrOfSlices': self.P['NrOfSlices'],
-                'isIGLM': self.P['isIGLM'],
-                'isROI': config.USE_ROI,
-                'isRTQA': config.USE_RTQA
-            }
-
-            self.engSPM.helperPrepareOrthView(self.spmHelperP, 'bgEPI', nargout=0)
 
         self.P.update(self.eng.workspace['P'])
 
         logger.info("  Setup plots...")
         self.setupRoiPlots()
         self.setupMcPlots()
+
+        self.orth_view_init()
 
         self.roiDict = dict()
         self.selectedRoi = []
@@ -1636,6 +1553,73 @@ class OpenNFT(QWidget):
         self.cbImageViewMode.setCurrentIndex(0)
         self.cbImageViewMode.model().item(1).setEnabled(False)
         self.isStopped = False
+
+    # --------------------------------------------------------------------------
+    def orth_view_init(self):
+
+        nrROIs = int(self.eng.evalin('base', 'P.NrROIs'))
+        x = self.P['MatrixSizeX']
+        y = self.P['MatrixSizeY']
+        z = self.P['NrOfSlices']
+        ROI_vols = np.zeros((nrROIs, x, y, z))
+        ROI_mats = np.zeros((nrROIs, 4, 4))
+        if self.P['Type'] == 'DCM':
+            if self.P['isRTQA']:
+                # For DCM+rtQA, ROIs are stored in ROIsAnat and whole-brain EPI ROI is in ROIs.
+                # ROIsAnat and whole-brain EPI ROI are transferred from Matlab.
+                # For definition of nrROIs, see selectROI.m
+                for i in range(nrROIs - 1):
+                    ROI_vols[i] = np.array(self.eng.evalin('base', 'ROIsAnat(' + str(i + 1) + ').vol'), ndmin=3)
+                    ROI_mats[i] = np.array(self.eng.evalin('base', 'ROIsAnat(' + str(i + 1) + ').mat'), ndmin=2)
+                ROI_vols[nrROIs-1] = np.array(self.eng.evalin('base', 'ROIs(end).vol'), ndmin=3)
+                ROI_mats[nrROIs-1] = np.array(self.eng.evalin('base', 'ROIs(end).mat'), ndmin=2)
+            else:
+                for i in range(nrROIs):
+                    ROI_vols[i] = np.array(self.eng.evalin('base', 'ROIsAnat(' + str(i + 1) + ').vol'), ndmin=3)
+                    ROI_mats[i] = np.array(self.eng.evalin('base', 'ROIsAnat(' + str(i + 1) + ').mat'), ndmin=2)
+        else:
+            for i in range(nrROIs):
+                ROI_vols[i] = np.array(self.eng.evalin('base', 'ROIs(' + str(i + 1) + ').vol'), ndmin=3)
+                ROI_mats[i] = np.array(self.eng.evalin('base', 'ROIs(' + str(i + 1) + ').mat'), ndmin=2)
+
+        # # shared variables for OrthView process
+        self.orth_view_input = multiprocessing.Manager().dict()
+        self.orth_view_input["ROI_vols"] = ROI_vols
+        self.orth_view_input["ROI_mats"] = ROI_mats
+        self.orth_view_input["cursor_pus"] = []
+        self.orth_view_input["flags_planes"] = []
+        self.orth_view_input["bg_type"] = 'bgEPI'
+        self.orth_view_input["is_rtqa"] = False
+        self.orth_view_input["is_neg"] = self.negMapCheckBox.isChecked()
+        self.orth_view_input["is_ROI"] = config.USE_ROI
+        if config.AUTO_RTQA:
+            self.orth_view_input["anat_volume"] = None
+        else:
+            self.orth_view_input["anat_volume"] = self.P['StructBgFile']
+        self.orth_view_input["epi_volume"] = self.P['MCTempl']
+        self.orth_view_input["rtQA_volume"] = str(self.eng.evalin('base', 'P.memMapFile')).replace('shared', 'RTQAVol')
+        self.orth_view_input["stat_volume"] = str(self.eng.evalin('base', 'P.memMapFile')).replace('shared', 'statVol')
+        self.orth_view_input["mat"] = np.array(self.eng.evalin('base', 'mainLoopData.matTemplMotCorr'))
+        self.orth_view_input["dim"] = tuple([x, y, z])
+        self.orth_view_input["ready"] = False
+        self.orth_view_input["done"] = False
+
+        self.orth_view_output = multiprocessing.Manager().dict()
+        self.orth_view_output["ROI_t"] = np.zeros((1, 1))
+        self.orth_view_output["ROI_c"] = np.zeros((1, 1))
+        self.orth_view_output["ROI_s"] = np.zeros((1, 1))
+        self.orth_view_output["back_t"] = np.zeros((1, 1))
+        self.orth_view_output["back_c"] = np.zeros((1, 1))
+        self.orth_view_output["back_s"] = np.zeros((1, 1))
+        self.orth_view_output["overlay_t"] = np.zeros((1, 1))
+        self.orth_view_output["overlay_c"] = np.zeros((1, 1))
+        self.orth_view_output["overlay_s"] = np.zeros((1, 1))
+        self.orth_view_output["neg_overlay_t"] = np.zeros((1, 1))
+        self.orth_view_output["neg_overlay_c"] = np.zeros((1, 1))
+        self.orth_view_output["neg_overlay_s"] = np.zeros((1, 1))
+
+        self.orth_view = orthview.OrthView(self.orth_view_input, self.orth_view_output)
+        self.orth_view.start()
 
     # --------------------------------------------------------------------------
     def start(self):
@@ -1782,10 +1766,6 @@ class OpenNFT(QWidget):
             self.windowRTQA.onComboboxChanged()
             self.eng.assignin('base', 'rtQAMode', self.windowRTQA.currentMode, nargout=0)
             self.onShowRtqaVol()
-
-        # if not self.btnSetup.isEnabled():
-        #     self.updateOrthViewAsync()
-        #     self.onInteractWithMapImage()
 
         if self.isStopped:
             self.eng.offlineImageSwitch(nargout=0)
@@ -1944,7 +1924,7 @@ class OpenNFT(QWidget):
 
     # --------------------------------------------------------------------------
     def updateOrthViewAsync(self):
-        if not self.engSPM:
+        if not self.orth_view:
             return
 
         if self.imageViewMode == ImageViewMode.orthviewEPI:
@@ -1954,9 +1934,13 @@ class OpenNFT(QWidget):
 
         rtqa = self.windowRTQA.volumeCheckBox.isChecked() if self.windowRTQA else False
 
-        self.orthViewUpdateFuture = self.engSPM.helperUpdateOrthView(
-            self.currentCursorPos, self.currentProjection.value, bgType,
-            rtqa, background=True, nargout=0)
+        if not self.orth_view_input["ready"]:
+            self.orth_view_input["cursor_pus"] = self.currentCursorPos
+            self.orth_view_input["flags_planes"] = self.currentProjection.value
+            self.orth_view_input["bg_type"] = bgType
+            self.orth_view_input["is_rtqa"] = rtqa
+            self.orth_view_input["is_neg"] = self.negMapCheckBox.isChecked()
+            self.orth_view_input["ready"] = True
 
     # --------------------------------------------------------------------------
     def onChangeOrthViewCursorPosition(self, pos, proj):
@@ -1979,15 +1963,22 @@ class OpenNFT(QWidget):
             self.displayMosaicImage()
 
         for proj in projview.ProjectionType:
-            pos_map_image = self.proj_pos_map_images_reader.proj_image(proj)
+
+            if proj == projview.ProjectionType.transversal:
+                pos_map_image = self.orth_view_output['overlay_t']
+                neg_map_image = self.orth_view_output['neg_overlay_t']
+            elif proj == projview.ProjectionType.sagittal:
+                pos_map_image = self.orth_view_output['overlay_s']
+                neg_map_image = self.orth_view_output['neg_overlay_s']
+            elif proj == projview.ProjectionType.coronal:
+                pos_map_image = self.orth_view_output['overlay_c']
+                neg_map_image = self.orth_view_output['neg_overlay_c']
 
             if pos_map_image is not None:
                 rgba_pos_map_image = self.pos_map_thresholds_widget.compute_rgba(pos_map_image)
 
                 if rgba_pos_map_image is not None:
                     self.orthView.set_pos_map_image(proj, rgba_pos_map_image)
-
-            neg_map_image = self.proj_neg_map_images_reader.proj_image(proj)
 
             if neg_map_image is not None:
                 rgba_neg_map_image = self.neg_map_thresholds_widget.compute_rgba(neg_map_image)
@@ -1997,13 +1988,10 @@ class OpenNFT(QWidget):
 
     # --------------------------------------------------------------------------
     def onCheckOrthViewUpdated(self):
-        if not self.orthViewUpdateFuture or not self.orthViewUpdateFuture.done():
+        if not self.orth_view_input["done"]:
             return
 
         self.orthViewUpdateInProgress = True
-
-        # with utils.timeit('Getting new orthview projections...'):
-        self.readOrthViewImages()
 
         # SNR/Stat map display
         is_stat_map_created = bool(self.eng.evalin('base', 'mainLoopData.statMapCreated'))
@@ -2019,25 +2007,42 @@ class OpenNFT(QWidget):
             neg_maps_values = np.array([], dtype=np.uint8)
 
             for proj in projview.ProjectionType:
-                pos_map_image = self.proj_pos_map_images_reader.proj_image(proj)
-                pos_maps_values = np.append(pos_maps_values, pos_map_image.ravel())
 
-                neg_map_image = self.proj_neg_map_images_reader.proj_image(proj)
+                if proj == projview.ProjectionType.transversal:
+                    pos_map_image = self.orth_view_output['overlay_t']
+                    neg_map_image = self.orth_view_output['neg_overlay_t']
+                elif proj == projview.ProjectionType.sagittal:
+                    pos_map_image = self.orth_view_output['overlay_s']
+                    neg_map_image = self.orth_view_output['neg_overlay_s']
+                elif proj == projview.ProjectionType.coronal:
+                    pos_map_image = self.orth_view_output['overlay_c']
+                    neg_map_image = self.orth_view_output['neg_overlay_c']
+
+                pos_maps_values = np.append(pos_maps_values, pos_map_image.ravel())
                 neg_maps_values = np.append(neg_maps_values, neg_map_image.ravel())
 
                 if pos_maps_values.size > 0:
                     self.pos_map_thresholds_widget.compute_thresholds(pos_maps_values)
-                if neg_maps_values.size > 0:
+                if self.negMapCheckBox.isChecked() and neg_maps_values.size > 0:
                     self.neg_map_thresholds_widget.compute_thresholds(neg_maps_values)
 
         for proj in projview.ProjectionType:
-            bg_image = self.proj_background_images_reader.proj_image(proj)
+
+            if proj == projview.ProjectionType.transversal:
+                bg_image = self.orth_view_output['back_t']
+                pos_map_image = self.orth_view_output['overlay_t']
+                neg_map_image = self.orth_view_output['neg_overlay_t']
+            elif proj == projview.ProjectionType.sagittal:
+                bg_image = self.orth_view_output['back_s']
+                pos_map_image = self.orth_view_output['overlay_s']
+                neg_map_image = self.orth_view_output['neg_overlay_s']
+            elif proj == projview.ProjectionType.coronal:
+                bg_image = self.orth_view_output['back_c']
+                pos_map_image = self.orth_view_output['overlay_c']
+                neg_map_image = self.orth_view_output['neg_overlay_c']
+
             self.orthView.set_background_image(proj, bg_image)
-
-            pos_map_image = self.proj_pos_map_images_reader.proj_image(proj)
             rgba_pos_map_image = self.pos_map_thresholds_widget.compute_rgba(pos_map_image)
-
-            neg_map_image = self.proj_neg_map_images_reader.proj_image(proj)
             rgba_neg_map_image = self.neg_map_thresholds_widget.compute_rgba(neg_map_image)
 
             if rgba_pos_map_image is not None:
@@ -2046,16 +2051,24 @@ class OpenNFT(QWidget):
             if rgba_neg_map_image is not None:
                 self.orthView.set_neg_map_image(proj, rgba_neg_map_image)
 
-        self.orthView.set_roi(projview.ProjectionType.transversal, [self.spmHelperP['tRoiBoundaries'][i] for i in self.selectedRoi], self.selectedRoi)
-        self.orthView.set_roi(projview.ProjectionType.coronal, [self.spmHelperP['cRoiBoundaries'][i] for i in self.selectedRoi], self.selectedRoi)
-        self.orthView.set_roi(projview.ProjectionType.sagittal, [self.spmHelperP['sRoiBoundaries'][i] for i in self.selectedRoi], self.selectedRoi)
+        roi_t = [None] * int(self.P['NrROIs'])
+        roi_c = [None] * int(self.P['NrROIs'])
+        roi_s = [None] * int(self.P['NrROIs'])
+        for i in self.selectedRoi:
+            roi_t[i] = self.orth_view_output["ROI_t"][i]
+            roi_c[i] = self.orth_view_output["ROI_c"][i]
+            roi_s[i] = self.orth_view_output["ROI_s"][i]
+
+        self.orthView.set_roi(projview.ProjectionType.transversal, roi_t, self.selectedRoi)
+        self.orthView.set_roi(projview.ProjectionType.coronal, roi_c, self.selectedRoi)
+        self.orthView.set_roi(projview.ProjectionType.sagittal, roi_s, self.selectedRoi)
 
         if self.orthViewInitialize:
             self.orthView.reset_view()
 
         self.orthViewInitialize = False
         self.orthViewUpdateInProgress = False
-        self.orthViewUpdateFuture = None
+        self.orth_view_input["done"] = False
 
     # --------------------------------------------------------------------------
     def loadSettingsFromSetFile(self):
@@ -2178,7 +2191,6 @@ class OpenNFT(QWidget):
                 return
 
             self.eng.selectROI(self.P['RoiFilesFolder'], nargout=0)
-            self.engSPM.selectROI(self.P['RoiFilesFolder'], nargout=0)
 
             if self.P['Type'] == 'Corr':
                 if int(self.eng.evalin('base', 'P.NrROIs')) < 2:
@@ -2191,13 +2203,6 @@ class OpenNFT(QWidget):
         elif self.P['Type'] == 'DCM':
             p = [self.P['RoiAnatFolder'], self.P['RoiGroupFolder']]
             self.eng.selectROI(p, nargout=0)
-            self.engSPM.selectROI(p, nargout=0)
-
-    # --------------------------------------------------------------------------
-    def selectWholeBrainRoi(self):
-
-        self.eng.epiWholeBrainROI(nargout=0)
-        self.engSPM.epiWholeBrainROI(nargout=0)
 
     # --------------------------------------------------------------------------
     def actualizeAutoRTQA(self):

@@ -120,6 +120,7 @@ if flags.isDCM
     assignin('base', 'ROIoptimGlmAnat', []);
 end
 
+% For rtQA, nrROIs includes whole-brain EPI ROI initialized in epiWholeBrainROI.m
 if P.isRTQA
     P.NrROIs = P.NrROIs + 1;
 end

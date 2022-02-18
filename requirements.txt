@@ -6,6 +6,8 @@ pyniexp @ https://github.com/tiborauer/pyniexp/tarball/master
 watchdog>=0.9.0
 loguru>=0.2.5
 scipy>=1.3.1
+python-rtspm>=0.2.0
+opencv-python>=4.5.5.62
 
 pywin32>=224 ; platform_system == 'Windows'
 pyHook @ https://github.com/OpenNFT/OpenNFT/releases/download/v1.0rc0/pyHook-1.5.1-cp36-cp36m-win_amd64.whl ; platform_system == 'Windows' and python_version == '3.6'

@@ -37,11 +37,6 @@ def get_matlab_helpers() -> typing.Dict[str, mlproc.MatlabSharedEngineHelper]:
                 startup_options=config.MAIN_MATLAB_STARTUP_OPTIONS,
             )),
 
-            # Matlab helper process for GUI data estimation
-            (config.SPM_MATLAB_NAME, create_matlab_helper(
-                engine_name=config.SPM_MATLAB_NAME,
-                startup_options=config.SPM_MATLAB_STARTUP_OPTIONS,
-            )),
         ]
 
         # Matlab helper process for display using Psychtoolbox (aka Ptb)

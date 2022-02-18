@@ -104,18 +104,21 @@ class ProjectionImageView(pg.ViewBox):
 
         for region_bounds, c in zip(roi_bounds, colors):
             for piece_coords in region_bounds:
-                coords = np.array(piece_coords)
+                coords = np.array(piece_coords, ndmin=2)
                 if coords.size == 0:
                     continue
 
-                y = coords[:, 0]
-                x = coords[:, 1]
+                y = coords[:, 1]
+                y = np.append(y, y[0])
+                x = coords[:, 0]
+                x = np.append(x, x[0])
 
                 pen = pg.mkPen(color=c, width=config.ROI_PLOT_WIDTH)
                 item = pg.PlotCurveItem(x=x, y=y, pen=pen)
 
                 self._roi_plotdataitems.append(item)
                 self.addItem(item)
+
 
     def clear(self):
         self._image_shape = [0, 0]
