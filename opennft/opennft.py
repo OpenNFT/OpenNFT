@@ -416,7 +416,6 @@ class OpenNFT(QWidget):
             self.btnStop.clicked.connect(self.stop)
             self.btnRTQA.clicked.connect(self.rtQA)
             self.btnRTQA.setEnabled(False)
-            self.btnStart.setEnabled(True)
 
             self.btnChooseWatchFolder3.clicked.connect(
                 lambda: self.onChooseFolder('WatchFolder', self.leWatchFolder3))
@@ -1216,6 +1215,7 @@ class OpenNFT(QWidget):
             self.sbMatrixSizeY3.setEnabled(True)
             self.sbSlicesNr3.setEnabled(True)
             self.leFirstFile3.setEnabled(True)
+            self.btnStart.setEnabled(True)
             self.presetupAutoRTQA()
 
         self.autoRTQASetup = False
