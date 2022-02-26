@@ -116,8 +116,12 @@ epiWholeBrainMask = zeros(dimTemplMotCorr);
 indexEpiWholeBrainMask = find(smImgVolTempl>threshEpiWholeBrainMask);
 epiWholeBrainMask(indexEpiWholeBrainMask) = 1;
 
-% display mask
+% display histogram and mask
 if 0
+    xfit = wholeBrainMaskThreshold:nbins;
+    figure,plot(xdata,ydata,'k.'),hold on,
+    plot(xfit,fun(fitResults,xfit),'b-', 'linewidth', 2)
+
     mosaicEpiWholeBrainMask = vol3Dimg2D(epiWholeBrainMask, slNrImg2DdimX, ...
         slNrImg2DdimY, img2DdimX, img2DdimY, ROIs(iFile).dim);
     figure, imshow(mosaicEpiWholeBrainMask)
