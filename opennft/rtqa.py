@@ -5,6 +5,7 @@ from PyQt5 import QtCore
 from PyQt5 import uic
 
 import numpy as np
+import multiprocessing as mp
 import pyqtgraph as pg
 import matlab
 import itertools
@@ -14,35 +15,40 @@ from opennft import config
 from opennft.rtqa_fdm import FD
 
 
-class RTQAWindow(QtWidgets.QWidget):
+class RTQAWindow(QtWidgets.QWidget, mp.Process):
     """Real-time quality assessment GUI and methods application class
     """
 
     # --------------------------------------------------------------------------
-    def __init__(self, parent=None):
-        super().__init__(parent=parent, flags=QtCore.Qt.Window)
+    def __init__(self, input, output):
+        super(RTQAWindow, self).__init__(flags=QtCore.Qt.Window)
+        mp.Process.__init__(self)
 
         uic.loadUi(utils.get_ui_file('rtqa.ui'), self)
 
-        # parent data transfer block
-        sz = int(parent.P['NrROIs'])
-        self.nrROIs = sz
-        self.musterInfo = parent.musterInfo
+        self.input = input
+        self.output = output
 
-        if parent.P['isAutoRTQA']:
-            xrange = (parent.P['NrOfVolumes'] - parent.P['nrSkipVol'])
+        # parent data transfer block
+        sz = int(input["nr_rois"])
+        self.nrROIs = sz
+        self.musterInfo = input["muster_info"]
+        self.first_snr_vol = config.FIRST_SNR_VOLUME
+
+        if input["is_auto_rtqa"]:
+            xrange = input["xrange"]
             self.comboBox.model().item(2).setEnabled(False)
             self.comboBox.model().item(6).setEnabled(False)
             self.indBas = 0
             self.indCond = 0
         else:
-            lastInds = np.zeros((self.musterInfo['condTotal'],))
-            for i in range(self.musterInfo['condTotal']):
-                lastInds[i] = self.musterInfo['tmpCond' + str(i + 1)][-1][1]
-            parent.computeMusterPlotData(config.MUSTER_Y_LIMITS)
+            lastInds = np.zeros((self.musterInfo["condTotal"],))
+            for i in range(self.musterInfo["condTotal"]):
+                lastInds[i] = self.musterInfo["tmpCond" + str(i + 1)][-1][1]
+            self.computeMusterPlotData(config.MUSTER_Y_LIMITS)
             xrange = max(lastInds)
-            self.indBas = np.array(parent.P['inds'][0]) - 1
-            self.indCond = np.array(parent.P['inds'][1]) - 1
+            self.indBas = np.array(input["ind_bas"]) - 1
+            self.indCond = np.array(input["ind_cond"]) - 1
 
         xrange = int(xrange)
 
@@ -53,7 +59,6 @@ class RTQAWindow(QtWidgets.QWidget):
         self.iterBas = 0
         self.iterCond = 0
         self.init = True
-        self.isStopped = True
         self.iteration = 1
         self.blockIter = 0
         self.noRegBlockIter = 0
@@ -81,6 +86,15 @@ class RTQAWindow(QtWidgets.QWidget):
         self.linTrendCoeff = np.zeros((sz, xrange))
         self.checkedBoxesInd = []
         self.currentMode = 0
+
+        self.volume_data = {"mean_vol": [],
+                            "m2_vol": [],
+                            "snr_vol": [],
+                            "mean_bas_vol": [],
+                            "m2_bas_vol": [],
+                            "mean_cond_vol": [],
+                            "m2_cond_vol": [],
+                            "cnr_vol": []}
 
         # Additional GUI elements connection and initialization
         groupBoxLayout = self.roiGroupBox.layout()
@@ -162,7 +176,7 @@ class RTQAWindow(QtWidgets.QWidget):
         p.setYRange(-1, 1, padding=0.0)
 
         # CNR, means and variances plots and labels
-        if not parent.P['isAutoRTQA']:
+        if not input["is_auto_rtqa"]:
 
             self.cnrPlot = pg.PlotWidget(self)
             self.cnrPlot.setBackground((255, 255, 255))
@@ -239,6 +253,43 @@ class RTQAWindow(QtWidgets.QWidget):
         self.makeTextValueLabel(self.fdLabel, names, pens)
 
         self.onComboboxChanged()
+        self.volumeCheckBox.stateChanged.connect(self.onShowRtqaVol)
+
+    # --------------------------------------------------------------------------
+    def run(self):
+
+        while True:
+
+            ready = self.input["ready"]
+
+            if ready:
+
+                n = self.input["iteration"]
+                for i in range(self.nrROIs):
+                    self.linTrendCoeff[i,n] = self.input["beta_coeff"]
+
+                volume = np.memmap(self.rtqa_input["volume"], dtype=np.float64)
+
+                if self.input["is_new_dcm_block"]:
+                    self.blockIter = 0
+                    self.iterBas = 0
+                    self.iterCond = 0
+
+                if n>self.first_snr_vol:
+                    self.calculate_rtqa_volume(volume, n)
+                self.calculate_rtqa_ts(n)
+
+                self.roiChecked()
+                self.plotRTQA(n)
+                self.plotDisplacements(self.input["mc_ts"],self.input["is_new_dcm_block"])
+
+                self.blockIter += 1
+                if n in self.indBas:
+                    self.iterBas += 1
+                if n in self.indCond:
+                    self.iterCond += 1
+
+                self.input["ready"] = False
 
     # --------------------------------------------------------------------------
     def closeEvent(self, event):
@@ -256,6 +307,15 @@ class RTQAWindow(QtWidgets.QWidget):
         p.installEventFilter(self)
         p.disableAutoRange(axis=pg.ViewBox.XAxis)
         p.setXRange(1, xrange, padding=0.0)
+
+    # --------------------------------------------------------------------------
+    def onShowRtqaVol(self):
+
+        state = self.comboBox.currentIndex()
+        if state == 0:
+            self.output["rtqa_vol"] = self.volume_data["snr_vol"]
+        elif state == 2:
+            self.output["rtqa_vol"] = self.volume_data["cnr_vol"]
 
     # --------------------------------------------------------------------------
     def onComboboxChanged(self):
@@ -348,20 +408,48 @@ class RTQAWindow(QtWidgets.QWidget):
         label.setText(legendText)
 
     # --------------------------------------------------------------------------
-    def roiChecked(self, roiChecked):
+    def roiChecked(self):
         """ Redrawing plots when the set of selected ROIs is changed even if run is stopped
         """
 
-        self.checkedBoxesInd = roiChecked
+        self.checkedBoxesInd = self.input["roi_checked"]
         for i in range(len(self.selectedRoiLabels)):
-            if i in roiChecked:
+            if i in self.checkedBoxesInd:
                 self.selectedRoiLabels[i].setVisible(True)
             else:
                 self.selectedRoiLabels[i].setVisible(False)
 
         self.init = True
-        if self.isStopped and self.iteration!=1:
+        if self.input["is_stopped"] and self.iteration!=1:
             self.plotRTQA(self.iteration+1)
+
+    # --------------------------------------------------------------------------
+    def computeMusterPlotData(self, ylim):
+        singleY = np.array([ylim[0], ylim[1], ylim[1], ylim[0]])
+
+        def computeConds(nrCond, tmpCond):
+            xCond = np.zeros(nrCond * 4, dtype=np.float64)
+            yCond = np.zeros(nrCond * 4, dtype=np.float64)
+
+            for k in range(nrCond):
+                i = slice(k * 4, (k + 1) * 4)
+
+                xCond[i] = np.array([
+                    tmpCond[k][0] - 1,
+                    tmpCond[k][0] - 1,
+                    tmpCond[k][1],
+                    tmpCond[k][1],
+                ])
+
+                yCond[i] = singleY
+
+            return xCond, yCond
+
+        for cond in range(self.musterInfo['condTotal']):
+            xCond, yCond = computeConds(self.musterInfo['nrCond' + str(cond + 1)],
+                                        self.musterInfo['tmpCond' + str(cond + 1)])
+            self.musterInfo['xCond' + str(cond + 1)] = xCond
+            self.musterInfo['yCond' + str(cond + 1)] = yCond
 
     # --------------------------------------------------------------------------
     def drawMusterPlot(self, plotitem):
@@ -770,63 +858,106 @@ class RTQAWindow(QtWidgets.QWidget):
         self.makeTextValueLabel(self.dvarsLabel, names, pens, lineBreak='<br>')
 
     # --------------------------------------------------------------------------
-    def snr(self, rMean, rVar, m2, rSNR, blockIter, data, indexVolume, isNewDCMBlock):
-        """ Recursive time-series SNR calculation
+    def calculate_rtqa_volume(self, volume, index_volume):
 
-        :param data: new value of raw time-series
-        :param indexVolume: current volume index
-        :param isNewDCMBlock: flag of new dcm block
+        self.volume_data["snr_vol"], _, _, _ = self.snr(self.volume_data["mean_vol"],
+                                                        self.volume_data["m2_vol"], volume, self.blockIter)
+
+        if self.comboBox.model().item(2).isEnabled():
+            self.volume_data["cnr_vol"], _, _, _, _, _, _ = self.cnr(self.volume_data["mean_bas_vol"],
+                                                            self.volume_data["m2_bas_vol"],
+                                                            self.volume_data["mean_cond_vol"],
+                                                            self.volume_data["m2_cond_vol"],
+                                                            volume, self.iterBas, self.iterCond, index_volume)
+
+        self.input["rtqa_vol_ready"] = True
+
+    # --------------------------------------------------------------------------
+    def calculate_rtqa_ts(self, index_volume):
+
+        for roi in range(self.nrROIs):
+
+            # AR(1) was not applied.
+            self.rSNR[roi, index_volume], self.rMean[roi, index_volume], \
+            self.m2[roi, index_volume], self.rVar[roi, index_volume] = self.snr(self.rMean[roi, index_volume-1],
+                                                                                self.m2[roi, index_volume-1],
+                                                                                self.input["raw_ts"][roi],
+                                                                                self.blockIter)
+            # GLM regressors were estimated for time-series with AR(1) applied
+            if self.input["no_reg_glm_ts"].any():
+                self.rNoRegSNR[roi, index_volume], self.rNoRegMean[roi, index_volume],\
+                self.noRegM2[roi, index_volume], \
+                self.rNoRegVar[roi, index_volume] = self.snr(self.rNoRegMean[roi, index_volume-1],
+                                                             self.noRegM2[roi, index_volume-1],
+                                                             self.input["no_reg_glm_ts"][roi], self.noRegBlockIter)
+
+            if self.comboBox.model().item(2).isEnabled():
+
+                self.rCNR[roi, index_volume], self.meanBas[roi, index_volume], \
+                self.m2Bas[roi], self.varBas[roi, index_volume], \
+                self.meanCond[roi, index_volume], self.m2Cond[roi], \
+                self.varCond[roi, index_volume] = self.cnr(self.meanBas[roi, index_volume-1], self.m2Bas[roi],
+                                                           self.meanCond[roi, index_volume-1], self.m2Cond[roi],
+                                                           self.input["raw_ts"][roi], self.iterBas, self.iterCond,
+                                                           index_volume)
+
+        self.calculateSpikes(self.input["glm_ts"], index_volume, self.input["pos_spikes"], self.input["neg_spikes"])
+        self.calculateMSE(index_volume, self.input["glm_ts"], self.input["proc_ts"])
+        self.calculateDVARS(self.input["dvars_value"], self.input["is_new_dcm_block"])
+
+    # --------------------------------------------------------------------------
+    def snr(self, rMean, m2, data, blockIter):
+        """ Recursive SNR calculation
+
+        :param rMean: previous mean value of input data
+        :param m2: ptrvious squared mean difference of input data
+        :param data: input data
+        :param blockIter: iteration number
         :return: calculated SNR are written in RTQA class
         """
 
-        sz = data.size
-        if isNewDCMBlock:
-            blockIter = 0
-
         if blockIter:
 
-            for i in range(sz):
-                rMean[i, indexVolume] = rMean[i, indexVolume - 1] + (
-                        data[i] - rMean[i, indexVolume - 1]) / (blockIter + 1)
-                m2[i] = m2[i] + (data[i] - rMean[i, indexVolume - 1]) * (
-                        data[i] - rMean[i, indexVolume])
-                rVar[i, indexVolume] = m2[i] / blockIter
-                rSNR[i, indexVolume] = rMean[i, indexVolume] / (rVar[i, indexVolume] ** (.5))
-
+            prevMean = rMean
+            rMean = prevMean + (data - prevMean) / (blockIter + 1)
+            m2 = m2 + (data - prevMean) * (data - rMean)
+            rVar = m2 / blockIter
+            rSNR = rMean / (rVar ** (.5))
             blockIter += 1
 
         else:
 
-            rVar[:, indexVolume] = np.zeros((sz,))
-            m2 = np.zeros((sz,))
-            rMean[:, indexVolume] = data
+            rMean = data
+            m2 = np.zeros(data.shape)
+            rVar = np.zeros(data.shape)
+            rSNR = np.zeros(data.shape)
             blockIter = 1
 
         if blockIter < 8:
-            rSNR[:, indexVolume] = np.zeros((sz,))
+            rSNR = 0
 
-        return rMean, rVar, m2, rSNR, blockIter
-
-    # --------------------------------------------------------------------------
-    def calculateSNR(self, data, dataNoReg, indexVolume, isNewDCMBlock):
-
-        sz = data.size
-
-        # AR(1) was not applied.
-        self.rMean, self.rVar, self.m2, self.rSNR, self.blockIter = self.snr(self.rMean, self.rVar, self.m2,
-                                                                             self.rSNR, self.blockIter, data,
-                                                                             indexVolume, isNewDCMBlock)
-
-        # GLM regressors were estimated for time-series with AR(1) applied
-        if dataNoReg.any():
-            self.rNoRegMean, self.rNoRegVar, self.noRegM2, \
-            self.rNoRegSNR, self.noRegBlockIter = self.snr(self.rNoRegMean, self.rNoRegVar, self.noRegM2, self.rNoRegSNR,
-                                                           self.noRegBlockIter, dataNoReg, indexVolume, isNewDCMBlock)
-
-        self.iteration = indexVolume
+        return rSNR, rMean, m2, rVar,
 
     # --------------------------------------------------------------------------
-    def calculateCNR(self, data, indexVolume, isNewDCMBlock):
+    # def calculateSNR(self, data, dataNoReg, indexVolume, isNewDCMBlock):
+    #
+    #     sz = data.size
+    #
+    #     # AR(1) was not applied.
+    #     self.rMean, self.rVar, self.m2, self.rSNR, self.blockIter = self.snr(self.rMean, self.rVar, self.m2,
+    #                                                                          self.rSNR, self.blockIter, data,
+    #                                                                          indexVolume, isNewDCMBlock)
+    #
+    #     # GLM regressors were estimated for time-series with AR(1) applied
+    #     if dataNoReg.any():
+    #         self.rNoRegMean, self.rNoRegVar, self.noRegM2, \
+    #         self.rNoRegSNR, self.noRegBlockIter = self.snr(self.rNoRegMean, self.rNoRegVar, self.noRegM2, self.rNoRegSNR,
+    #                                                        self.noRegBlockIter, dataNoReg, indexVolume, isNewDCMBlock)
+    #
+    #     self.iteration = indexVolume
+
+    # --------------------------------------------------------------------------
+    def cnr(self, meanBas, m2Bas, meanCond, m2Cond, data, iterBas, iterCond, indexVolume):
         """ Recursive time-series CNR calculation
 
         :param data: new value of raw time-series
@@ -835,65 +966,39 @@ class RTQAWindow(QtWidgets.QWidget):
         :return: calculated CNR are written in RTQA class
         """
 
-        sz = data.size
-
-        if isNewDCMBlock:
-            self.iterBas = 0
-            self.iterCond = 0
-            return
-
         if indexVolume in self.indBas:
-            if not self.iterBas:
-                self.meanBas[:, indexVolume] = data
-                self.varBas[:, indexVolume] = np.zeros(sz)
-                self.m2Bas = np.zeros(sz)
-                self.iterBas += 1
+            if not iterBas:
+                meanBas = data
+                m2Bas = 0
+                varBas = 0
+                iterBas += 1
 
             else:
-
-                for i in range(sz):
-                    self.meanBas[i, indexVolume] = self.meanBas[i, indexVolume - 1] + (
-                                data[i] - self.meanBas[i, indexVolume - 1]) / (self.iterBas + 1)
-                    self.m2Bas[i] = self.m2Bas[i] + (data[i] - self.meanBas[i, indexVolume - 1]) * (
-                                data[i] - self.meanBas[i, indexVolume])
-                    self.varBas[i, indexVolume] = self.m2Bas[i] / self.iterBas
-
-                self.iterBas += 1
-
-        else:
-
-            self.meanBas[:, indexVolume] = self.meanBas[:, indexVolume - 1]
-            self.varBas[:, indexVolume] = self.varBas[:, indexVolume - 1]
+                prevMeanBas = meanBas
+                meanBas = meanBas + (data - meanBas) / (iterBas + 1)
+                m2Bas = m2Bas + (data - prevMeanBas) * (data - meanBas)
+                varBas = m2Bas / iterBas
+                iterBas += 1
 
         if indexVolume in self.indCond:
-
-            if not self.iterCond:
-                self.meanCond[:, indexVolume] = data
-                self.varCond[:, indexVolume] = np.zeros(sz)
-                self.m2Cond = np.zeros(sz)
-                self.iterCond += 1
-
+            if not iterCond:
+                meanCond = 0
+                m2Cond = 0
+                varCond = 0
+                iterCond += 1
             else:
+                prevMeanCond = meanCond
+                meanCond = meanCond + (data - meanCond) / (iterCond + 1)
+                m2Cond = m2Cond + (data - prevMeanCond) * (data - meanCond)
+                varCond = m2Cond / iterCond
+                iterCond += 1
 
-                for i in range(sz):
-                    self.meanCond[i, indexVolume] = self.meanCond[i, indexVolume - 1] + (
-                                data[i] - self.meanCond[i, indexVolume - 1]) / (self.iterCond + 1)
-                    self.m2Cond[i] = self.m2Cond[i] + (data[i] - self.meanCond[i, indexVolume - 1]) * (
-                                data[i] - self.meanCond[i, indexVolume])
-                    self.varCond[i, indexVolume] = self.m2Cond[i] / self.iterCond
-
-                self.iterCond += 1
-
+        if iterCond:
+            rCNR = (meanCond - meanBas) / (np.sqrt(varCond + varBas))
         else:
+            rCNR = 0
 
-            self.meanCond[:, indexVolume] = self.meanCond[:, indexVolume - 1]
-            self.varCond[:, indexVolume] = self.varCond[:, indexVolume - 1]
-
-        if self.iterCond:
-
-            for i in range(sz):
-                self.rCNR[i, indexVolume] = (self.meanCond[i, indexVolume] - self.meanBas[i, indexVolume]) / (
-                    np.sqrt(self.varCond[i, indexVolume] + self.varBas[i, indexVolume]))
+        return rCNR, meanBas, m2Bas, varBas, meanCond, m2Cond, varCond
 
     # --------------------------------------------------------------------------
     def calculateSpikes(self, data, indexVolume, posSpikes, negSpikes):

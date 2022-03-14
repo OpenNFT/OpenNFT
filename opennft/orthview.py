@@ -63,8 +63,7 @@ class OrthView(mp.Process):
 
                 # overlay (pos/neg stat or rtQA)
                 if flags[1]:
-                    filename = self.input_data["rtQA_volume"]
-                    overlay_vol = np.memmap(filename, dtype=np.float64, shape=self.input_data["dim"], order='F')
+                    overlay_vol = self.input_data["rtQA_volume"]
                 else:
                     filename = self.input_data["stat_volume"]
                     overlay_vol = np.memmap(filename, dtype=np.float64, shape=self.input_data["dim"],
