@@ -257,7 +257,7 @@ if flags.isDCM
         mainLoopData.vectNFBs(indNFTrial) = logBF;
         mainLoopData.flagEndDCM = 1;
         tmp_fbVal = mainLoopData.logBF(indNFTrial);
-        dispValue = round(P.MaxFeedbackVal*tmp_fbVal, P.FeedbackValDec);
+        mainLoopData.dispValue = round(P.MaxFeedbackVal*tmp_fbVal, P.FeedbackValDec);
 
         % calculating monetory reward value
         if mainLoopData.dispValue > thReward
