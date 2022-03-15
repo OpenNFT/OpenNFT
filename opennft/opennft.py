@@ -912,7 +912,8 @@ class OpenNFT(QWidget):
             if config.USE_UDP_FEEDBACK:
                 logger.info('Sending by UDP - dispValue = {}', self.displayData['dispValue'])
                 self.udpSender.send_data(self.displayData['dispValue'])
-            self.displaySamples.append(self.displayData['dispValue'])
+            if self.P['Type'] != 'DCM' or int(self.eng.evalin('base', 'mainLoopData.flagEndDCM')) == 0:
+                self.displaySamples.append(self.displayData['dispValue'])
 
         # main logic end
 
