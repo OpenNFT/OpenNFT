@@ -1,0 +1,388 @@
+# -*- coding: utf-8 -*-
+import numpy as np
+import matlab
+
+from opennft import config
+
+
+class RTQACalculation():
+
+    def __init__(self, input, output):
+
+        super(RTQACalculation, self).__init__()
+
+        self.input = input
+        self.output = output
+
+        # parent data transfer block
+        sz = int(input["nr_rois"])
+        self.nrROIs = sz
+        self.first_snr_vol = config.FIRST_SNR_VOLUME
+
+        if input["is_auto_rtqa"]:
+            xrange = int(input["xrange"])
+            self.indBas = 0
+            self.indCond = 0
+        else:
+            lastInds = np.zeros((input["muster_info"]["condTotal"],))
+            for i in range(input["muster_info"]["condTotal"]):
+                lastInds[i] = input["muster_info"]["tmpCond" + str(i + 1)][-1][1]
+            xrange = int(max(lastInds))
+            self.indBas = np.array(input["ind_bas"]) - 1
+            self.indCond = np.array(input["ind_cond"]) - 1
+
+        self.xrange = xrange
+
+        # main class data initialization block
+        self.FD = np.array([])
+        self.meanFD = 0
+        self.MD = np.array([])
+        self.meanMD = 0
+        self.blockIter = 1
+        self.excFD = [0, 0]
+        self.excVD = 0
+        self.excFDIndexes_1 = np.array([-1])
+        self.excFDIndexes_2 = np.array([-1])
+        self.excMDIndexes = np.array([-1])
+        self.rsqDispl = np.array([0])
+        self.offsetMCParam = np.zeros((6, 1))
+        self.mc_params = np.array([[1e-05,1e-05,1e-05,1e-05,1e-05,1e-05]]).astype(np.float)
+        self.radius = config.DEFAULT_FD_RADIUS
+        self.threshold = config.DEFAULT_FD_THRESHOLDS
+        self.iterBas = 0
+        self.iterCond = 0
+        self.init = True
+        self.iteration = 1
+        self.blockIter = 0
+        self.noRegBlockIter = 0
+        self.rMean = np.zeros((sz, xrange))
+        self.m2 = np.zeros((sz, 1))
+        self.rVar = np.zeros((sz, xrange))
+        self.rSNR = np.zeros((sz, xrange))
+        self.rNoRegMean = np.zeros((sz, xrange))
+        self.noRegM2 = np.zeros((sz, 1))
+        self.rNoRegVar = np.zeros((sz, xrange))
+        self.rNoRegSNR = np.zeros((sz, xrange))
+        self.meanBas = np.zeros((sz, xrange))
+        self.varBas = np.zeros((sz, xrange))
+        self.m2Bas = np.zeros((sz, 1))
+        self.meanCond = np.zeros((sz, xrange))
+        self.varCond = np.zeros((sz, xrange))
+        self.m2Cond = np.zeros((sz, 1))
+        self.rCNR = np.zeros((sz, xrange))
+        self.glmProcTimeSeries = np.zeros((sz, xrange))
+        self.posSpikes = dict.fromkeys(['{:d}'.format(x) for x in range(sz)], np.array(0))
+        self.negSpikes = dict.fromkeys(['{:d}'.format(x) for x in range(sz)], np.array(0))
+        self.rMSE = np.zeros((sz, xrange))
+        self.DVARS = np.zeros((0, 1))
+        self.excDVARS = 0
+        self.linTrendCoeff = np.zeros((sz, xrange))
+        self.checkedBoxesInd = []
+        self.currentMode = 0
+
+        self.volume_data = {"mean_vol": [],
+                            "m2_vol": [],
+                            "snr_vol": [],
+                            "mean_bas_vol": [],
+                            "m2_bas_vol": [],
+                            "mean_cond_vol": [],
+                            "m2_cond_vol": [],
+                            "cnr_vol": []}
+
+    # --------------------------------------------------------------------------
+    def calculate_rtqa(self):
+
+        n = self.input["iteration"]
+        for i in range(self.nrROIs):
+            self.linTrendCoeff[i,n] = self.input["beta_coeff"]
+
+        volume = np.memmap(self.input["volume"], dtype=np.float64)
+
+        if self.input["is_new_dcm_block"]:
+            self.blockIter = 0
+            self.iterBas = 0
+            self.iterCond = 0
+
+        if n>self.first_snr_vol:
+            self.calculate_rtqa_volume(volume, n)
+        self.calculate_rtqa_ts(n)
+        self.calc_mc()
+
+        self.blockIter += 1
+        if n in self.indBas:
+            self.iterBas += 1
+        if n in self.indCond:
+            self.iterCond += 1
+
+        self.input["ready"] = False
+
+    # --------------------------------------------------------------------------
+    def calculate_rtqa_volume(self, volume, index_volume):
+
+        self.volume_data["snr_vol"], _, _, _ = self.snr(self.volume_data["mean_vol"],
+                                                        self.volume_data["m2_vol"], volume, self.blockIter)
+
+        if not self.input["is_auto_rtqa"]:
+            self.volume_data["cnr_vol"], _, _, _, _, _, _ = self.cnr(self.volume_data["mean_bas_vol"],
+                                                                     self.volume_data["m2_bas_vol"],
+                                                                     self.volume_data["mean_cond_vol"],
+                                                                     self.volume_data["m2_cond_vol"],
+                                                                     volume, self.iterBas, self.iterCond,
+                                                                     index_volume)
+
+        self.input["rtqa_vol_ready"] = True
+
+    # --------------------------------------------------------------------------
+    def calculate_rtqa_ts(self, index_volume):
+
+        for roi in range(self.nrROIs):
+
+            # AR(1) was not applied.
+            self.rSNR[roi, index_volume], self.rMean[roi, index_volume], \
+            self.m2[roi, index_volume], self.rVar[roi, index_volume] = self.snr(self.rMean[roi, index_volume - 1],
+                                                                                self.m2[roi, index_volume - 1],
+                                                                                self.input["raw_ts"][roi],
+                                                                                self.blockIter)
+            # GLM regressors were estimated for time-series with AR(1) applied
+            if self.input["no_reg_glm_ts"].any():
+                self.rNoRegSNR[roi, index_volume], self.rNoRegMean[roi, index_volume], \
+                self.noRegM2[roi, index_volume], \
+                self.rNoRegVar[roi, index_volume] = self.snr(self.rNoRegMean[roi, index_volume - 1],
+                                                             self.noRegM2[roi, index_volume - 1],
+                                                             self.input["no_reg_glm_ts"][roi], self.noRegBlockIter)
+
+            if not self.input["is_auto_rtqa"]:
+                self.rCNR[roi, index_volume], self.meanBas[roi, index_volume], \
+                self.m2Bas[roi], self.varBas[roi, index_volume], \
+                self.meanCond[roi, index_volume], self.m2Cond[roi], \
+                self.varCond[roi, index_volume] = self.cnr(self.meanBas[roi, index_volume - 1], self.m2Bas[roi],
+                                                           self.meanCond[roi, index_volume - 1], self.m2Cond[roi],
+                                                           self.input["raw_ts"][roi], self.iterBas, self.iterCond,
+                                                           index_volume)
+
+        self.calculateSpikes(self.input["glm_ts"], index_volume, self.input["pos_spikes"], self.input["neg_spikes"])
+        self.calculateMSE(index_volume, self.input["glm_ts"], self.input["proc_ts"])
+        self.calculateDVARS(self.input["dvars_value"], self.input["is_new_dcm_block"])
+
+    # --------------------------------------------------------------------------
+    def snr(self, rMean, m2, data, blockIter):
+        """ Recursive SNR calculation
+
+        :param rMean: previous mean value of input data
+        :param m2: ptrvious squared mean difference of input data
+        :param data: input data
+        :param blockIter: iteration number
+        :return: calculated SNR are written in RTQA class
+        """
+
+        if blockIter:
+
+            prevMean = rMean
+            rMean = prevMean + (data - prevMean) / (blockIter + 1)
+            m2 = m2 + (data - prevMean) * (data - rMean)
+            rVar = m2 / blockIter
+            rSNR = rMean / (rVar ** (.5))
+            blockIter += 1
+
+        else:
+
+            rMean = data
+            m2 = np.zeros(data.shape)
+            rVar = np.zeros(data.shape)
+            rSNR = np.zeros(data.shape)
+            blockIter = 1
+
+        if blockIter < 8:
+            rSNR = 0
+
+        return rSNR, rMean, m2, rVar,
+
+    # --------------------------------------------------------------------------
+    def cnr(self, meanBas, m2Bas, meanCond, m2Cond, data, iterBas, iterCond, indexVolume):
+        """ Recursive time-series CNR calculation
+
+        :param data: new value of raw time-series
+        :param indexVolume: current volume index
+        :param isNewDCMBlock: flag of new dcm block
+        :return: calculated CNR are written in RTQA class
+        """
+
+        if indexVolume in self.indBas:
+            if not iterBas:
+                meanBas = data
+                m2Bas = 0
+                varBas = 0
+                iterBas += 1
+
+            else:
+                prevMeanBas = meanBas
+                meanBas = meanBas + (data - meanBas) / (iterBas + 1)
+                m2Bas = m2Bas + (data - prevMeanBas) * (data - meanBas)
+                varBas = m2Bas / iterBas
+                iterBas += 1
+
+        if indexVolume in self.indCond:
+            if not iterCond:
+                meanCond = 0
+                m2Cond = 0
+                varCond = 0
+                iterCond += 1
+            else:
+                prevMeanCond = meanCond
+                meanCond = meanCond + (data - meanCond) / (iterCond + 1)
+                m2Cond = m2Cond + (data - prevMeanCond) * (data - meanCond)
+                varCond = m2Cond / iterCond
+                iterCond += 1
+
+        if iterCond:
+            rCNR = (meanCond - meanBas) / (np.sqrt(varCond + varBas))
+        else:
+            rCNR = 0
+
+        return rCNR, meanBas, m2Bas, varBas, meanCond, m2Cond, varCond
+
+    # FD computation
+    def _di(self, i):
+        return np.array(self.mc_params[i][0:3])
+    def _ri(self, i):
+        return np.array(self.mc_params[i][3:6])
+    def _ij_FD(self, i, j):  # displacement from i to j
+        return sum(np.absolute(self._di(j) - self._di(i))) + \
+               sum(np.absolute(self._ri(j) - self._ri(i))) * self.radius
+    def all_fd(self):
+        i = len(self.mc_params) - 1
+
+        if not self.isNewDCMBlock:
+            self.FD = np.append(self.FD, self._ij_FD(i - 1, i))
+            self.meanFD = self.meanFD + (self.FD[-1] - self.meanFD) / self.blockIter
+        else:
+            self.FD = np.append(self.FD, 0)
+            self.meanFD = 0
+
+        if self.FD[-1] >= self.threshold[1]:
+            self.excFD[0] += 1
+
+            if self.excFDIndexes_1[-1] == -1:
+                self.excFDIndexes_1 = np.array([i - 1])
+            else:
+                self.excFDIndexes_1 = np.append(self.excFDIndexes_1, i - 1)
+
+            if self.FD[-1] >= self.threshold[2]:
+                self.excFD[1] += 1
+
+                if self.excFDIndexes_2[-1] == -1:
+                    self.excFDIndexes_2 = np.array([i - 1])
+                else:
+                    self.excFDIndexes_2 = np.append(self.excFDIndexes_2, i - 1)
+    def micro_displacement(self):
+
+        n = len(self.mc_params) - 1
+        sqDispl = 0
+
+        if not self.isNewDCMBlock:
+
+            for i in range(3):
+                sqDispl += self.mc_params[n, i] ** 2
+
+            self.rsqDispl = np.append(self.rsqDispl, np.sqrt(sqDispl))
+
+            self.MD = np.append(self.MD, abs(self.rsqDispl[-2] - self.rsqDispl[-1]))
+            self.meanMD = self.meanMD + (self.MD[-1] - self.meanMD) / self.blockIter
+
+        else:
+            self.MD = np.append(self.MD, 0)
+            self.meanMD = 0
+
+        if self.MD[-1] >= self.threshold[0]:
+            self.excVD += 1
+            if self.excMDIndexes[-1] == -1:
+                self.excMDIndexes = np.array([n - 1])
+            else:
+                self.excMDIndexes = np.append(self.excMDIndexes, n - 1)
+    def calc_mc(self):
+
+        self.mc_params = np.vstack((self.mc_params, self.input["mc_ts"]))
+        self.micro_displacement()
+        self.all_fd()
+
+    # --------------------------------------------------------------------------
+    def calculateSpikes(self, data, indexVolume, posSpikes, negSpikes):
+        """ Spikes and GLM signal recording
+
+        :param data: signal values after GLM process
+        :param indexVolume: current volume index
+        :param posSpikes: flags of positive spikes
+        :param negSpikes: flags of negative spikes
+        """
+
+        sz, l = data.shape
+        self.glmProcTimeSeries[:, indexVolume] = data[:, 0]
+
+        for i in range(sz):
+            if posSpikes[i] == 1:
+                if self.posSpikes[str(i)].any():
+                    self.posSpikes[str(i)] = np.append(self.posSpikes[str(i)], indexVolume)
+                else:
+                    self.posSpikes[str(i)] = np.array([indexVolume])
+            if negSpikes[i] == 1 and l > 2:
+                if self.negSpikes[str(i)].any():
+                    self.negSpikes[str(i)] = np.append(self.negSpikes[str(i)], indexVolume)
+                else:
+                    self.negSpikes[str(i)] = np.array([indexVolume])
+
+    # --------------------------------------------------------------------------
+    def calculateMSE(self, indexVolume, inputSignal, outputSignal):
+        """ Low pass filter performance estimated by recursive mean squared error
+
+        :param indexVolume: current volume index
+        :param inputSignal: signal value before filtration
+        :param outputSignal: signal value after filtration
+
+        """
+
+        sz = inputSignal.size
+        n = self.blockIter - 1
+
+        for i in range(sz):
+            self.rMSE[i, indexVolume] = (n / (n + 1)) * self.rMSE[i, indexVolume - 1] + (
+                        (inputSignal[i] - outputSignal[i]) ** 2) / (n + 1)
+
+    # --------------------------------------------------------------------------
+    def calculateDVARS(self, dvarsValue, isNewDCMBlock):
+
+        if self.iteration == 0 or isNewDCMBlock:
+            self.DVARS = np.append(self.DVARS, 0)
+        else:
+            self.DVARS = np.append(self.DVARS, dvarsValue)
+
+        if self.DVARS[-1] > config.DEFAULT_DVARS_THRESHOLD:
+            self.excDVARS = self.excDVARS + 1
+
+    # --------------------------------------------------------------------------
+    def dataPacking(self):
+        """ Packaging of python RTQA data for following save
+        """
+
+        tsRTQA = dict.fromkeys(['rMean', 'rVar', 'rSNR', 'rNoRegSNR',
+                                'meanBas', 'varBas', 'meanCond', 'varCond', 'rCNR',
+                                'excFDIndexes_1', 'excFDIndexes_2', 'excMDIndexes',
+                                'FD', 'MD', 'DVARS', 'rMSE'])
+
+        tsRTQA['rMean'] = matlab.double(self.rMean.tolist())
+        tsRTQA['rVar'] = matlab.double(self.rVar.tolist())
+        tsRTQA['rSNR'] = matlab.double(self.rSNR.tolist())
+        tsRTQA['rNoRegSNR'] = matlab.double(self.rNoRegSNR.tolist())
+        tsRTQA['meanBas'] = matlab.double(self.meanBas.tolist())
+        tsRTQA['varBas'] = matlab.double(self.varBas.tolist())
+        tsRTQA['meanCond'] = matlab.double(self.meanCond.tolist())
+        tsRTQA['varCond'] = matlab.double(self.varCond.tolist())
+        tsRTQA['rCNR'] = matlab.double(self.rCNR.tolist())
+        tsRTQA['excFDIndexes_1'] = matlab.double(self.excFDIndexes_1.tolist())
+        tsRTQA['excFDIndexes_2'] = matlab.double(self.excFDIndexes_2.tolist())
+        tsRTQA['excMDIndexes'] = matlab.double(self.excMDIndexes.tolist())
+        tsRTQA['FD'] = matlab.double(self.FD.tolist())
+        tsRTQA['MD'] = matlab.double(self.MD.tolist())
+        tsRTQA['DVARS'] = matlab.double(self.DVARS.tolist())
+        tsRTQA['rMSE'] = matlab.double(self.rMSE.tolist())
+
+        return tsRTQA
