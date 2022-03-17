@@ -197,7 +197,12 @@ if ~P.isAutoRTQA || (P.isAutoRTQA && P.useEPITemplate)
 else
     imgVolTempl          = double(dicomread(P.MCTempl));
     imgInfoTempl         = dicominfo(P.MCTempl);
-    dimTemplMotCorr      = double([P.MatrixSizeX, P.MatrixSizeY, P.NrOfSlices]);
+    if imgInfoTempl.NumberOfFrames == 1
+        dimTemplMotCorr = double([P.MatrixSizeX, P.MatrixSizeY, P.NrOfSlices]);
+    else
+        dimTemplMotCorr = [imgInfoTempl.Rows, imgInfoTempl.Columns, imgInfoTempl.NumberOfFrames];
+    end
+   
     matTemplMotCorr      = getMAT(imgInfoTempl, dimTemplMotCorr);
 
     [slNrImg2DdimX, slNrImg2DdimY, img2DdimX, img2DdimY] = getMosaicDim(dimTemplMotCorr);

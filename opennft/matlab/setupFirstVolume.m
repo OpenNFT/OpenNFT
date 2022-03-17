@@ -33,12 +33,18 @@ else
     switch P.DataType
         case 'DICOM'
             dicomInfoVol = dicominfo(inpFileName); %spm_dicom_headers(inpFileName); dicomInfoVol = dicomInfoVol{1};
-            mxAct      = double(dicomInfoVol.AcquisitionMatrix(1));
-            if (mxAct == 0)
-                mxAct = double(dicomInfoVol.AcquisitionMatrix(3));
+            if dicomInfoVol.NumberOfFrames == 1
+                P.isDicom2D = 1;
+                mxAct      = double(dicomInfoVol.AcquisitionMatrix(1));
+                if (mxAct == 0)
+                    mxAct = double(dicomInfoVol.AcquisitionMatrix(3));
+                end
+                MatrixSizeX_Act = mxAct;
+                dimVol = [MatrixSizeX_Act, MatrixSizeX_Act, double(P.NrOfSlices)];
+            else
+                P.isDicom2D = 0;
+                dimVol = [double(dicomInfoVol.Rows), double(dicomInfoVol.Columns), double(dicomInfoVol.NumberOfFrames)];
             end
-            MatrixSizeX_Act = mxAct;
-            dimVol = [MatrixSizeX_Act, MatrixSizeX_Act, double(P.NrOfSlices)];
             if P.getMAT
                 matVol = getMAT(dicomInfoVol, dimVol);
                 dicomInfoVox   = [dicomInfoVol.PixelSpacing; ...
