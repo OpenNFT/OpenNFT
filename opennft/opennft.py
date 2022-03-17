@@ -475,6 +475,7 @@ class OpenNFT(QWidget):
         self.onChangeNegMapVisible()
         self.onChangeUseUDPFeedback()
 
+    # --------------------------------------------------------------------------
     def onChangeFBType(self, value):
         if value=='DCM':
             self.cbFeedbackPlot.setChecked(False)
