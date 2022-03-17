@@ -441,6 +441,8 @@ class OpenNFT(QWidget):
         self.call_timer.timeout.connect(self.callMainLoopIteration)
         self.orthViewUpdateCheckTimer.timeout.connect(self.onCheckOrthViewUpdated)
 
+        self.cbType.currentTextChanged.connect(self.onChangeFBType)
+
         self.cbDataType.currentTextChanged.connect(self.onChangeDataType)
         self.onChangeDataType()
 
@@ -472,6 +474,13 @@ class OpenNFT(QWidget):
         self.onChangePosMapVisible()
         self.onChangeNegMapVisible()
         self.onChangeUseUDPFeedback()
+
+    def onChangeFBType(self, value):
+        if value=='DCM':
+            self.cbFeedbackPlot.setChecked(False)
+            self.cbFeedbackPlot.setEnabled(False)
+        else:
+            self.cbFeedbackPlot.setEnabled(True)
 
     # --------------------------------------------------------------------------
     def onChangePosMapVisible(self):
@@ -912,8 +921,8 @@ class OpenNFT(QWidget):
             if config.USE_UDP_FEEDBACK:
                 logger.info('Sending by UDP - dispValue = {}', self.displayData['dispValue'])
                 self.udpSender.send_data(self.displayData['dispValue'])
-            if self.P['Type'] != 'DCM' or int(self.eng.evalin('base', 'mainLoopData.flagEndDCM')) == 0:
-                self.displaySamples.append(self.displayData['dispValue'])
+
+            self.displaySamples.append(self.displayData['dispValue'])
 
         # main logic end
 
@@ -2676,7 +2685,7 @@ class OpenNFT(QWidget):
         dataRaw = np.array(self.outputSamples[key], ndmin=2)[self.selectedRoi,:]
         dataProc = np.array(self.outputSamples['kalmanProcTimeSeries'], ndmin=2)[self.selectedRoi,:]
         dataNorm = np.array(self.outputSamples['scalProcTimeSeries'], ndmin=2)[self.selectedRoi,:]
-        if self.P['PlotFeedback']:
+        if self.P['PlotFeedback'] and self.P['Type'] != 'DCM':
             dataNorm = np.concatenate(
                 (dataNorm, np.array([self.displaySamples]) / self.P['MaxFeedbackVal'])
             )
