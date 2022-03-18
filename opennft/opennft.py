@@ -1595,6 +1595,7 @@ class OpenNFT(QWidget):
 
         # # shared variables for OrthView process
         self.orth_view_input = multiprocessing.Manager().dict()
+        self.orth_view_input["nr_ROIs"] = nrROIs
         self.orth_view_input["ROI_vols"] = ROI_vols
         self.orth_view_input["ROI_mats"] = ROI_mats
         self.orth_view_input["cursor_pus"] = []
@@ -1881,7 +1882,7 @@ class OpenNFT(QWidget):
 
         fname = str(Path(fname))
         if fname:
-            if self.P['isAutoRTQA'] and self.P['useEPITemplate']:
+            if config.AUTO_RTQA and config.USE_EPI_TEMPLATE:
                 self.leMCTempl3.setText(fname)
             else:
                 self.leMCTempl.setText(fname)
@@ -2267,8 +2268,8 @@ class OpenNFT(QWidget):
 
         self.P['DataType'] = "DICOM"
         self.P['useEPITemplate'] = config.USE_EPI_TEMPLATE
-        self.P['isAutoRTQA'] = True
-        self.P['isRTQA'] = True
+        self.P['isAutoRTQA'] = config.AUTO_RTQA
+        self.P['isRTQA'] = config.USE_RTQA
         self.P['isIGLM'] = config.USE_IGLM
         self.P['isZeroPadding'] = config.zeroPaddingFlag
         self.P['nrZeroPadVol'] = config.nrZeroPadVol
@@ -2343,7 +2344,7 @@ class OpenNFT(QWidget):
         self.P['getMAT'] = self.cbgetMAT.isChecked()
         self.P['Prot'] = str(self.cbProt.currentText())
         self.P['Type'] = str(self.cbType.currentText())
-        self.P['isAutoRTQA'] = False
+        self.P['isAutoRTQA'] = config.AUTO_RTQA
         self.P['isRTQA'] = config.USE_RTQA
         self.P['isIGLM'] = config.USE_IGLM
         self.P['useEPITemplate'] = config.USE_EPI_TEMPLATE
