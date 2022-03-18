@@ -2686,7 +2686,7 @@ class OpenNFT(QWidget):
         dataRaw = np.array(self.outputSamples[key], ndmin=2)[self.selectedRoi,:]
         dataProc = np.array(self.outputSamples['kalmanProcTimeSeries'], ndmin=2)[self.selectedRoi,:]
         dataNorm = np.array(self.outputSamples['scalProcTimeSeries'], ndmin=2)[self.selectedRoi,:]
-        if self.P['PlotFeedback'] and self.P['Type'] != 'DCM':
+        if self.P['PlotFeedback']:
             dataNorm = np.concatenate(
                 (dataNorm, np.array([self.displaySamples]) / self.P['MaxFeedbackVal'])
             )
