@@ -441,6 +441,8 @@ class OpenNFT(QWidget):
         self.call_timer.timeout.connect(self.callMainLoopIteration)
         self.orthViewUpdateCheckTimer.timeout.connect(self.onCheckOrthViewUpdated)
 
+        self.cbType.currentTextChanged.connect(self.onChangeFBType)
+
         self.cbDataType.currentTextChanged.connect(self.onChangeDataType)
         self.onChangeDataType()
 
@@ -472,6 +474,14 @@ class OpenNFT(QWidget):
         self.onChangePosMapVisible()
         self.onChangeNegMapVisible()
         self.onChangeUseUDPFeedback()
+
+    # --------------------------------------------------------------------------
+    def onChangeFBType(self, value):
+        if value=='DCM':
+            self.cbFeedbackPlot.setChecked(False)
+            self.cbFeedbackPlot.setEnabled(False)
+        else:
+            self.cbFeedbackPlot.setEnabled(True)
 
     # --------------------------------------------------------------------------
     def onChangePosMapVisible(self):
@@ -912,6 +922,7 @@ class OpenNFT(QWidget):
             if config.USE_UDP_FEEDBACK:
                 logger.info('Sending by UDP - dispValue = {}', self.displayData['dispValue'])
                 self.udpSender.send_data(self.displayData['dispValue'])
+
             self.displaySamples.append(self.displayData['dispValue'])
 
         # main logic end
