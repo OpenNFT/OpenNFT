@@ -2062,13 +2062,13 @@ class OpenNFT(QWidget):
             if rgba_neg_map_image is not None:
                 self.orthView.set_neg_map_image(proj, rgba_neg_map_image)
 
-        roi_t = [None] * int(self.P['NrROIs'])
-        roi_c = [None] * int(self.P['NrROIs'])
-        roi_s = [None] * int(self.P['NrROIs'])
+        roi_t = []
+        roi_c = []
+        roi_s = []
         for i in self.selectedRoi:
-            roi_t[i] = self.orth_view_output["ROI_t"][i]
-            roi_c[i] = self.orth_view_output["ROI_c"][i]
-            roi_s[i] = self.orth_view_output["ROI_s"][i]
+            roi_t.append(self.orth_view_output["ROI_t"][i])
+            roi_c.append(self.orth_view_output["ROI_c"][i])
+            roi_s.append(self.orth_view_output["ROI_s"][i])
 
         self.orthView.set_roi(projview.ProjectionType.transversal, roi_t, self.selectedRoi)
         self.orthView.set_roi(projview.ProjectionType.coronal, roi_c, self.selectedRoi)
