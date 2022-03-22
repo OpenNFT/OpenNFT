@@ -449,6 +449,8 @@ class OpenNFT(QWidget):
         self.call_timer.timeout.connect(self.callMainLoopIteration)
         self.orthViewUpdateCheckTimer.timeout.connect(self.onCheckOrthViewUpdated)
 
+        self.cbType.currentTextChanged.connect(self.onChangeFBType)
+
         self.cbDataType.currentTextChanged.connect(self.onChangeDataType)
         self.onChangeDataType()
 
@@ -480,6 +482,14 @@ class OpenNFT(QWidget):
         self.onChangePosMapVisible()
         self.onChangeNegMapVisible()
         self.onChangeUseUDPFeedback()
+
+    # --------------------------------------------------------------------------
+    def onChangeFBType(self, value):
+        if value=='DCM':
+            self.cbFeedbackPlot.setChecked(False)
+            self.cbFeedbackPlot.setEnabled(False)
+        else:
+            self.cbFeedbackPlot.setEnabled(True)
 
     # --------------------------------------------------------------------------
     def onChangePosMapVisible(self):
@@ -920,6 +930,7 @@ class OpenNFT(QWidget):
             if config.USE_UDP_FEEDBACK:
                 logger.info('Sending by UDP - dispValue = {}', self.displayData['dispValue'])
                 self.udpSender.send_data(self.displayData['dispValue'])
+
             self.displaySamples.append(self.displayData['dispValue'])
 
         # main logic end
@@ -1681,6 +1692,7 @@ class OpenNFT(QWidget):
 
         # # shared variables for OrthView process
         self.orth_view_input = multiprocessing.Manager().dict()
+        self.orth_view_input["nr_ROIs"] = nrROIs
         self.orth_view_input["ROI_vols"] = ROI_vols
         self.orth_view_input["ROI_mats"] = ROI_mats
         self.orth_view_input["cursor_pus"] = []
@@ -1968,7 +1980,7 @@ class OpenNFT(QWidget):
 
         fname = str(Path(fname))
         if fname:
-            if self.P['isAutoRTQA'] and self.P['useEPITemplate']:
+            if config.AUTO_RTQA and config.USE_EPI_TEMPLATE:
                 self.leMCTempl3.setText(fname)
             else:
                 self.leMCTempl.setText(fname)
@@ -2151,13 +2163,13 @@ class OpenNFT(QWidget):
             if rgba_neg_map_image is not None:
                 self.orthView.set_neg_map_image(proj, rgba_neg_map_image)
 
-        roi_t = [None] * int(self.P['NrROIs'])
-        roi_c = [None] * int(self.P['NrROIs'])
-        roi_s = [None] * int(self.P['NrROIs'])
+        roi_t = []
+        roi_c = []
+        roi_s = []
         for i in self.selectedRoi:
-            roi_t[i] = self.orth_view_output["ROI_t"][i]
-            roi_c[i] = self.orth_view_output["ROI_c"][i]
-            roi_s[i] = self.orth_view_output["ROI_s"][i]
+            roi_t.append(self.orth_view_output["ROI_t"][i])
+            roi_c.append(self.orth_view_output["ROI_c"][i])
+            roi_s.append(self.orth_view_output["ROI_s"][i])
 
         self.orthView.set_roi(projview.ProjectionType.transversal, roi_t, self.selectedRoi)
         self.orthView.set_roi(projview.ProjectionType.coronal, roi_c, self.selectedRoi)
@@ -2356,8 +2368,8 @@ class OpenNFT(QWidget):
 
         self.P['DataType'] = "DICOM"
         self.P['useEPITemplate'] = config.USE_EPI_TEMPLATE
-        self.P['isAutoRTQA'] = True
-        self.P['isRTQA'] = True
+        self.P['isAutoRTQA'] = config.AUTO_RTQA
+        self.P['isRTQA'] = config.USE_RTQA
         self.P['isIGLM'] = config.USE_IGLM
         self.P['isZeroPadding'] = config.zeroPaddingFlag
         self.P['nrZeroPadVol'] = config.nrZeroPadVol
@@ -2432,7 +2444,7 @@ class OpenNFT(QWidget):
         self.P['getMAT'] = self.cbgetMAT.isChecked()
         self.P['Prot'] = str(self.cbProt.currentText())
         self.P['Type'] = str(self.cbType.currentText())
-        self.P['isAutoRTQA'] = False
+        self.P['isAutoRTQA'] = config.AUTO_RTQA
         self.P['isRTQA'] = config.USE_RTQA
         self.P['isIGLM'] = config.USE_IGLM
         self.P['useEPITemplate'] = config.USE_EPI_TEMPLATE

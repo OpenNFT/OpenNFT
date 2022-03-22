@@ -94,7 +94,12 @@ switch P.DataType
             while isempty(dcmData) || contains(lastwarn,'Suspicious fragmentary file')
                 dcmData = double(dicomread(inpFileName));
             end
-            dcmData = img2Dvol3D(dcmData, slNrImg2DdimX, slNrImg2DdimY, dimVol);
+            if ~P.isDicom2D
+                % for strange 4D Siemens XA30 data format
+                dcmData = squeeze(dcmData);
+            else
+                dcmData = img2Dvol3D(dcmData, slNrImg2DdimX, slNrImg2DdimY, dimVol);
+            end
         end
         R(2,1).mat = matVol;
         if P.isZeroPadding

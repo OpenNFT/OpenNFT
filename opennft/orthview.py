@@ -204,7 +204,7 @@ class OrthView(mp.Process):
             neg_overlay_imgc = None
             neg_overlay_imgs = None
 
-        nrROIs = ROI_vols.shape[0]
+        nrROIs = self.input_data["nr_ROIs"]
         ROI_t = [None]*nrROIs
         ROI_c = [None]*nrROIs
         ROI_s = [None]*nrROIs
