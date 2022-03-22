@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-
 from PyQt5 import QtWidgets
 from PyQt5 import QtCore
 from PyQt5 import uic
@@ -11,15 +10,14 @@ import itertools
 
 from opennft import utils
 from opennft import config
-from opennft.rtqa_fdm import FD
 
 
 class RTQAWindow(QtWidgets.QWidget):
-    """Real-time quality assessment GUI and methods application class
+    """Real-time quality assessment GUI class
     """
 
     # --------------------------------------------------------------------------
-    def __init__(self, input, output, rtqa_calc):
+    def __init__(self, rtqa_calc, input, output):
         super(RTQAWindow, self).__init__(flags=QtCore.Qt.Window)
         mp.Process.__init__(self)
 
@@ -34,6 +32,8 @@ class RTQAWindow(QtWidgets.QWidget):
         sz = int(input["nr_rois"])
         self.nrROIs = sz
         self.musterInfo = input["muster_info"]
+        self.motion_names = ['X', 'Y', 'Z', 'Pitch', 'Roll', 'Yaw', 'FD']
+        self.init = True
 
         if input["is_auto_rtqa"]:
             self.comboBox.model().item(2).setEnabled(False)
@@ -181,14 +181,14 @@ class RTQAWindow(QtWidgets.QWidget):
         names = ['Translationals: ']
         pens = [config.PLOT_PEN_COLORS[6]]
         for i in range(3):
-            names.append(self.names[i])
+            names.append(self.motion_names[i])
             pens.append(config.PLOT_PEN_COLORS[i])
         self.makeTextValueLabel(self.tdLabel, names, pens)
 
         names = ['Rotations: ']
         pens = [config.PLOT_PEN_COLORS[6]]
         for i in range(3):
-            names.append(self.names[i + 3])
+            names.append(self.motion_names[i + 3])
             pens.append(config.PLOT_PEN_COLORS[i + 3])
         self.makeTextValueLabel(self.rdLabel, names, pens)
 
@@ -437,69 +437,73 @@ class RTQAWindow(QtWidgets.QWidget):
                 plotitem.setYRange(np.min(data).astype(np.float32), np.max(data).astype(np.float32), padding=0.0)
 
     # --------------------------------------------------------------------------
-    def plotRTQA(self, n):
+    def plotRTQA(self):
         """ Encapsulated plots drawing
 
         :param n: last volume index
         """
 
-        self.labelsUpdate()
+        if self.rtqa_calc.input["calc_ready"]:
 
-        # SNR plot
-        plotitem = self.snrPlot.getPlotItem()
-        data = self.rtqa_calc.rSNR[self.rtqa_calc.checkedBoxesInd, 0:n]
-        self.plotTs(self.init, plotitem, data, self.checkedBoxesInd)
+            n = self.rtqa_calc.input["iteration"]
 
-        if self.comboBox.model().item(2).isEnabled():
-            # CNR plot
-            plotitem = self.cnrPlot.getPlotItem()
-            data = self.rtqa_calc.rCNR[self.checkedBoxesInd, 0:n]
-            self.plotTs(self.init, plotitem, data, self.checkedBoxesInd)
+            self.labelsUpdate()
+            checkedBoxesInd = self.rtqa_calc.input["roi_checked"]
+            # SNR plot
+            plotitem = self.snrPlot.getPlotItem()
+            data = self.rtqa_calc.rSNR[checkedBoxesInd, 0:n]
+            self.plotTs(self.init, plotitem, data, checkedBoxesInd)
 
-            # Means plot
-            plotitem = self.meanPlot.getPlotItem()
-            data = np.append(self.rtqa_calc.rMean[self.checkedBoxesInd, 0:n], self.rtqa_calc.meanBas[self.checkedBoxesInd, 0:n], axis=0)
-            data = np.append(data, self.rtqa_calc.meanCond[self.checkedBoxesInd, 0:n], axis=0)
-            color = np.array(config.ROI_PLOT_COLORS)[self.checkedBoxesInd]
-            color = np.append(color, np.array(config.ROI_PLOT_COLORS)[self.checkedBoxesInd])
-            color = np.append(color, np.array(config.ROI_PLOT_COLORS)[self.checkedBoxesInd])
-            style = [QtCore.Qt.SolidLine, QtCore.Qt.DashLine, QtCore.Qt.DashDotDotLine]
-            self.plotStatValues(self.init, plotitem, data, color, style)
+            if self.comboBox.model().item(2).isEnabled():
+                # CNR plot
+                plotitem = self.cnrPlot.getPlotItem()
+                data = self.rtqa_calc.rCNR[checkedBoxesInd, 0:n]
+                self.plotTs(self.init, plotitem, data, checkedBoxesInd)
 
-            # Variances plot
-            plotitem = self.varPlot.getPlotItem()
-            data = np.append(self.rtqa_calc.rVar[self.checkedBoxesInd, 0:n], self.rtqa_calc.varBas[self.checkedBoxesInd, 0:n], axis=0)
-            data = np.append(data, self.rtqa_calc.varCond[self.checkedBoxesInd, 0:n], axis=0)
-            self.plotStatValues(self.init, plotitem, data, color, style)
+                # Means plot
+                plotitem = self.meanPlot.getPlotItem()
+                data = np.append(self.rtqa_calc.rMean[checkedBoxesInd, 0:n], self.rtqa_calc.meanBas[checkedBoxesInd, 0:n], axis=0)
+                data = np.append(data, self.rtqa_calc.meanCond[checkedBoxesInd, 0:n], axis=0)
+                color = np.array(config.ROI_PLOT_COLORS)[checkedBoxesInd]
+                color = np.append(color, np.array(config.ROI_PLOT_COLORS)[checkedBoxesInd])
+                color = np.append(color, np.array(config.ROI_PLOT_COLORS)[checkedBoxesInd])
+                style = [QtCore.Qt.SolidLine, QtCore.Qt.DashLine, QtCore.Qt.DashDotDotLine]
+                self.plotStatValues(self.init, plotitem, data, color, style)
 
-        # Spikes plot
-        plotitem = self.spikesPlot.getPlotItem()
-        data = self.rtqa_calc.glmProcTimeSeries[self.checkedBoxesInd, 0:n]
-        self.plotSpikes(self.init, plotitem, data, self.checkedBoxesInd)
+                # Variances plot
+                plotitem = self.varPlot.getPlotItem()
+                data = np.append(self.rtqa_calc.rVar[checkedBoxesInd, 0:n], self.rtqa_calc.varBas[checkedBoxesInd, 0:n], axis=0)
+                data = np.append(data, self.rtqa_calc.varCond[checkedBoxesInd, 0:n], axis=0)
+                self.plotStatValues(self.init, plotitem, data, color, style)
 
-        # Kalman filter MSE plot
-        plotitem = self.msePlot.getPlotItem()
-        data = self.rtqa_calc.rMSE[self.checkedBoxesInd, 0:n]
-        self.plotTs(self.init, plotitem, data, self.checkedBoxesInd)
+            # Spikes plot
+            plotitem = self.spikesPlot.getPlotItem()
+            data = self.rtqa_calc.glmProcTimeSeries[checkedBoxesInd, 0:n]
+            self.plotSpikes(self.init, plotitem, data, checkedBoxesInd)
 
-        # Linear trend coefficients plot
-        plotitem = self.trendPlot.getPlotItem()
-        data = self.rtqa_calc.linTrendCoeff[self.checkedBoxesInd, 0:n]
-        self.plotTs(self.init, plotitem, data, self.checkedBoxesInd)
+            # Kalman filter MSE plot
+            plotitem = self.msePlot.getPlotItem()
+            data = self.rtqa_calc.rMSE[checkedBoxesInd, 0:n]
+            self.plotTs(self.init, plotitem, data, checkedBoxesInd)
 
-        # No regulation SNR plot
-        plotitem = self.noRegSnrPlot.getPlotItem()
-        data = self.rtqa_calc.rNoRegSNR[self.checkedBoxesInd, 0:n]
-        self.plotTs(self.init, plotitem, data, self.checkedBoxesInd)
+            # Linear trend coefficients plot
+            plotitem = self.trendPlot.getPlotItem()
+            data = self.rtqa_calc.linTrendCoeff[checkedBoxesInd, 0:n]
+            self.plotTs(self.init, plotitem, data, checkedBoxesInd)
 
-        # DVARS plot
-        plotitem = self.dvarsPlot.getPlotItem()
-        plotitem.clear()
-        plotitem.plot(y=self.rtqa_calc.DVARS, pen=config.PLOT_PEN_COLORS[0], name='DVARS')
-        plotitem.plot(x=np.arange(1, self.rtqa_calc.xrange+1, dtype=np.float64), y=config.DEFAULT_DVARS_THRESHOLD * np.ones(self.rtqa_calc.xrange),
-                        pen=config.PLOT_PEN_COLORS[2], name='thr')
+            # No regulation SNR plot
+            plotitem = self.noRegSnrPlot.getPlotItem()
+            data = self.rtqa_calc.rNoRegSNR[checkedBoxesInd, 0:n]
+            self.plotTs(self.init, plotitem, data, checkedBoxesInd)
 
-        self.init = False
+            # DVARS plot
+            plotitem = self.dvarsPlot.getPlotItem()
+            plotitem.clear()
+            plotitem.plot(y=self.rtqa_calc.DVARS, pen=config.PLOT_PEN_COLORS[0], name='DVARS')
+            plotitem.plot(x=np.arange(1, self.rtqa_calc.xrange+1, dtype=np.float64), y=config.DEFAULT_DVARS_THRESHOLD * np.ones(self.rtqa_calc.xrange),
+                            pen=config.PLOT_PEN_COLORS[2], name='thr')
+
+            self.init = False
 
     # --------------------------------------------------------------------------
     def plotStatValues(self, init, plotitem, data, color, style):
@@ -588,7 +592,7 @@ class RTQAWindow(QtWidgets.QWidget):
         for i, c in zip(range(sz), np.array(config.ROI_PLOT_COLORS)[checkedBoxesInd]):
 
             roiInd = checkedBoxesInd[i]
-            if self.posSpikes[str(roiInd)].any():
+            if self.rtqa_calc.posSpikes[str(roiInd)].any():
                 brush = pg.mkBrush(color=c)
                 p = plotitem.scatterPlot(symbol='o', size=20, brush=brush)
                 plots.append(p)
@@ -608,7 +612,7 @@ class RTQAWindow(QtWidgets.QWidget):
 
                 plots[-1].setData(x=x1, y=y, connect='pairs')
 
-            if self.negSpikes[str(roiInd)].any():
+            if self.rtqa_calc.negSpikes[str(roiInd)].any():
                 brush = pg.mkBrush(color=c)
                 p = plotitem.scatterPlot(symbol='d', size=20, brush=brush)
                 plots.append(p)
@@ -639,32 +643,33 @@ class RTQAWindow(QtWidgets.QWidget):
     # --------------------------------------------------------------------------
     def draw_mc_plots(self, mdFlag):
 
-        x = np.arange(1, self.data.shape[0] + 1, dtype=np.float64)
+        if self.rtqa_calc.mc_params.any():
+            x = np.arange(1, self.rtqa_calc.mc_params.shape[0] + 1, dtype=np.float64)
 
-        self.translatPlot.clear()
-        self.rotatPlot.clear()
-        self.fdPlot.clear()
+            self.translatPlot.clear()
+            self.rotatPlot.clear()
+            self.fdPlot.clear()
 
-        for i in range(0, 3):
-            self.translatPlot.plot(x=x, y=self.data[:, i], pen=config.PLOT_PEN_COLORS[i], name=self.names[i])
+            for i in range(0, 3):
+                self.translatPlot.plot(x=x, y=self.rtqa_calc.mc_params[:, i], pen=config.PLOT_PEN_COLORS[i], name=self.motion_names[i])
 
-        for i in range(3, 6):
-            self.rotatPlot.plot(x=x, y=self.data[:, i]*50, pen=config.PLOT_PEN_COLORS[i], name=self.names[i])
+            for i in range(3, 6):
+                self.rotatPlot.plot(x=x, y=self.rtqa_calc.mc_params[:, i]*50, pen=config.PLOT_PEN_COLORS[i], name=self.motion_names[i])
 
-        x = np.arange(1, self.data.shape[0], dtype=np.float64)
+            x = np.arange(1, self.rtqa_calc.mc_params.shape[0], dtype=np.float64)
 
-        if mdFlag:
-            self.fdPlot.setLabel('left', "MD [mm]")
-            self.fdPlot.plot(x=x, y=self.MD, pen=config.PLOT_PEN_COLORS[0], name='MD')
-            self.fdPlot.plot(x=np.arange(0, self.xmax, dtype=np.float64), y=self.threshold[0] * np.ones(self.xmax),
-                            pen=config.PLOT_PEN_COLORS[2], name='thr')
-        else:
-            self.fdPlot.setLabel('left', "FD [mm]")
-            self.fdPlot.plot(x=x, y=self.FD, pen=config.PLOT_PEN_COLORS[0], name='FD')
-            thresholds = self.threshold[1:3]
-            for i, t in enumerate(thresholds):
-                self.fdPlot.plot(x=np.arange(0, self.xmax, dtype=np.float64), y=float(t) * np.ones(self.xmax),
-                                pen=config.PLOT_PEN_COLORS[i + 1], name='thr' + str(i))
+            if mdFlag:
+                self.fdPlot.setLabel('left', "MD [mm]")
+                self.fdPlot.plot(x=x, y=self.rtqa_calc.MD, pen=config.PLOT_PEN_COLORS[0], name='MD')
+                self.fdPlot.plot(x=np.arange(0, self.rtqa_calc.xrange, dtype=np.float64), y=self.rtqa_calc.threshold[0] * np.ones(self.rtqa_calc.xrange),
+                                pen=config.PLOT_PEN_COLORS[2], name='thr')
+            else:
+                self.fdPlot.setLabel('left', "FD [mm]")
+                self.fdPlot.plot(x=x, y=self.rtqa_calc.FD, pen=config.PLOT_PEN_COLORS[0], name='FD')
+                thresholds = self.rtqa_calc.threshold[1:3]
+                for i, t in enumerate(thresholds):
+                    self.fdPlot.plot(x=np.arange(0, self.rtqa_calc.xrange, dtype=np.float64), y=float(t) * np.ones(self.rtqa_calc.xrange),
+                                    pen=config.PLOT_PEN_COLORS[i + 1], name='thr' + str(i))
 
     # --------------------------------------------------------------------------
     def labelsUpdate(self):
@@ -727,7 +732,7 @@ class RTQAWindow(QtWidgets.QWidget):
         names.append('<br><u>Offset MC parameters</u> ')
         pens.append(config.PLOT_PEN_COLORS[6])
         for i in range(6):
-            names.append('{0:.3e}'.format(self.rtqa_calc.offsetMCParam[0][i]))
+            names.append('{0:.3e}'.format(self.rtqa_calc.offsetMCParam[i][0]))
             pens.append(config.PLOT_PEN_COLORS[6])
         self.makeTextValueLabel(self.mcmdValuesLabel, names, pens, lineBreak='<br>')
 

@@ -72,7 +72,8 @@ from opennft import (
     mapimagewidget,
     plugin,
     utils,
-    rtqa,
+    rtqa_gui,
+    rtqa_calc,
     orthview,
     eventrecorder as erd,
 )
@@ -246,6 +247,7 @@ class OpenNFT(QWidget):
         self.readAppSettings()
         self.initialize(start=False)
 
+        self.calc_rtqa = None
         self.windowRTQA = None
         self.isStopped = False
 
@@ -260,6 +262,10 @@ class OpenNFT(QWidget):
         if self.orth_view:
             self.orth_view.terminate()
         self.orth_view = None
+
+        if self.calc_rtqa:
+            self.calc_rtqa.terminate()
+        self.calc_rtqa = None
 
         if runmatlab.is_shared_matlab():
             runmatlab.detach_matlab()
@@ -972,7 +978,10 @@ class OpenNFT(QWidget):
             self.rtqa_input["neg_spikes"] = negSpikes
             self.rtqa_input["is_new_dcm_block"] = isNewDCMBlock
             self.rtqa_input["iteration"] = n
-            self.rtqa_input["ready"] = True
+            self.rtqa_input["roi_checked"] = self.selectedRoi
+            self.rtqa_input["data_ready"] = True
+            self.windowRTQA.plotRTQA()
+            self.rtqa_input["calc_ready"] = False
 
             # self.windowRTQA.calculateSNR(dataRaw, dataNoRegGLM, n, isNewDCMBlock)
             # if not self.P['isAutoRTQA']:
@@ -1430,7 +1439,8 @@ class OpenNFT(QWidget):
                 self.rtqa_input["ind_cond"] = np.array(self.P["inds"][1])
                 self.rtqa_input["volume"] = self.P["memMapFile"]
                 self.rtqa_input["is_stopped"] = False
-                self.rtqa_input["ready"] = False
+                self.rtqa_input["data_ready"] = False
+                self.rtqa_input["calc_ready"] = False
                 self.rtqa_input["roi_changed"] = False
                 self.rtqa_input["raw_ts"] = []
                 self.rtqa_input["glm_ts"] = []
@@ -1455,8 +1465,9 @@ class OpenNFT(QWidget):
                 if self.windowRTQA:
                     self.windowRTQA.deleteLater()
 
-                self.windowRTQA = rtqa.RTQAWindow(self.rtqa_input, self.rtqa_output)
-                self.windowRTQA.start()
+                self.calc_rtqa = rtqa_calc.RTQACalculation(self.rtqa_input, self.rtqa_output)
+                self.windowRTQA = rtqa_gui.RTQAWindow(self.calc_rtqa, self.rtqa_input, self.rtqa_output)
+                self.calc_rtqa.start()
 
                 # self.windowRTQA.volumeCheckBox.stateChanged.connect(self.onShowRtqaVol)
                 # self.windowRTQA.volumeCheckBox.stateChanged.connect(self.onChangeNegMapPolicy)
@@ -1581,20 +1592,57 @@ class OpenNFT(QWidget):
 
         self.btnRTQA.setEnabled(True)
 
+        self.rtqa_input = multiprocessing.Manager().dict()
+        self.rtqa_input["nr_rois"] = self.P["NrROIs"]
+        self.rtqa_input["muster_info"] = self.musterInfo
+        self.rtqa_input["xrange"] = self.P['NrOfVolumes'] - self.P['nrSkipVol']
+        self.rtqa_input["is_auto_rtqa"] = self.P["isAutoRTQA"]
+        self.rtqa_input["roi_checked"] = self.selectedRoi
+        self.rtqa_input["ind_bas"] = np.array(self.P["inds"][0])
+        self.rtqa_input["ind_cond"] = np.array(self.P["inds"][1])
+        self.rtqa_input["volume"] = self.P["memMapFile"]
+        self.rtqa_input["is_stopped"] = False
+        self.rtqa_input["data_ready"] = False
+        self.rtqa_input["calc_ready"] = False
+        self.rtqa_input["roi_changed"] = False
+        self.rtqa_input["raw_ts"] = []
+        self.rtqa_input["glm_ts"] = []
+        self.rtqa_input["no_reg_glm_ts"] = []
+        self.rtqa_input["proc_ts"] = []
+        self.rtqa_input["mc_ts"] = []
+        self.rtqa_input["dvars_value"] = []
+        self.rtqa_input["offset_mc"] = []
+        self.rtqa_input["beta_coeff"] = []
+        self.rtqa_input["pos_spikes"] = []
+        self.rtqa_input["neg_spikes"] = []
+        self.rtqa_input["is_new_dcm_block"] = True
+        self.rtqa_input["iteration"] = 0
+        self.rtqa_input["rtqa_vol_ready"] = False
+
+        self.rtqa_output = multiprocessing.Manager().dict()
+        self.rtqa_output["rtqa_vol"] = []
+        self.rtqa_output["show_vol"] = False
+
+        self.btnRTQA.setEnabled(True)
+
         if self.windowRTQA:
             self.windowRTQA.deleteLater()
 
-        self.windowRTQA = rtqa.RTQAWindow(parent=self)
-        self.windowRTQA.volumeCheckBox.stateChanged.connect(self.onShowRtqaVol)
-        self.windowRTQA.volumeCheckBox.stateChanged.connect(self.onChangeNegMapPolicy)
-        self.windowRTQA.volumeCheckBox.stateChanged.connect(self.onInteractWithMapImage)
-        self.windowRTQA.volumeCheckBox.toggled.connect(self.updateOrthViewAsync)
-        self.windowRTQA.comboBox.currentIndexChanged.connect(self.onModeChanged)
-        self.eng.assignin('base', 'rtQAMode', self.windowRTQA.currentMode, nargout=0)
-        self.eng.assignin('base', 'isShowRtqaVol', self.windowRTQA.volumeCheckBox.isChecked(), nargout=0)
+        self.calc_rtqa = rtqa_calc.RTQACalculation(self.rtqa_input, self.rtqa_output)
+        self.windowRTQA = rtqa_gui.RTQAWindow(self.calc_rtqa, self.rtqa_input, self.rtqa_output)
+        self.calc_rtqa.start()
 
-        self.windowRTQA.roiChecked(self.selectedRoi)
-        self.windowRTQA.isStopped = False
+        # self.windowRTQA = rtqa.RTQAWindow(parent=self)
+        # self.windowRTQA.volumeCheckBox.stateChanged.connect(self.onShowRtqaVol)
+        # self.windowRTQA.volumeCheckBox.stateChanged.connect(self.onChangeNegMapPolicy)
+        # self.windowRTQA.volumeCheckBox.stateChanged.connect(self.onInteractWithMapImage)
+        # self.windowRTQA.volumeCheckBox.toggled.connect(self.updateOrthViewAsync)
+        # self.windowRTQA.comboBox.currentIndexChanged.connect(self.onModeChanged)
+        # self.eng.assignin('base', 'rtQAMode', self.windowRTQA.currentMode, nargout=0)
+        # self.eng.assignin('base', 'isShowRtqaVol', self.windowRTQA.volumeCheckBox.isChecked(), nargout=0)
+        #
+        # self.windowRTQA.roiChecked(self.selectedRoi)
+        # self.windowRTQA.isStopped = False
 
         self.autoRTQASetup = True
         self.onChangeNegMapPolicy()
@@ -1708,7 +1756,7 @@ class OpenNFT(QWidget):
         self.isStopped = True
         if self.windowRTQA:
             self.windowRTQA.isStopped = True
-            self.eng.workspace['rtQA_python'] = self.windowRTQA.dataPacking()
+            self.eng.workspace['rtQA_python'] = self.calc_rtqa.dataPacking()
         self.btnStop.setEnabled(False)
 
         if 'isAutoRTQA' in self.P and not self.P['isAutoRTQA']:
@@ -1802,7 +1850,8 @@ class OpenNFT(QWidget):
 
         self.selectedRoi = np.where(list(self.roiDict.values()))[0]
         if self.windowRTQA:
-            self.windowRTQA.roiChecked(self.selectedRoi)
+            self.rtqa_input["roi_checked"] = self.selectedRoi
+            # self.windowRTQA.roiChecked(self.selectedRoi)
 
         self.drawRoiPlots(True)
         if self.isStopped:

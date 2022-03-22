@@ -1,16 +1,20 @@
 # -*- coding: utf-8 -*-
 import numpy as np
 import matlab
+import multiprocessing as mp
 
 from opennft import config
+from loguru import logger
 
 
-class RTQACalculation():
+class RTQACalculation(mp.Process):
+    """Real-time quality assessment methods class
+    """
 
+    # --------------------------------------------------------------------------
     def __init__(self, input, output):
 
-        super(RTQACalculation, self).__init__()
-
+        mp.Process.__init__(self)
         self.input = input
         self.output = output
 
@@ -51,12 +55,11 @@ class RTQACalculation():
         self.threshold = config.DEFAULT_FD_THRESHOLDS
         self.iterBas = 0
         self.iterCond = 0
-        self.init = True
         self.iteration = 1
         self.blockIter = 0
         self.noRegBlockIter = 0
         self.rMean = np.zeros((sz, xrange))
-        self.m2 = np.zeros((sz, 1))
+        self.m2 = np.zeros((sz, xrange))
         self.rVar = np.zeros((sz, xrange))
         self.rSNR = np.zeros((sz, xrange))
         self.rNoRegMean = np.zeros((sz, xrange))
@@ -74,7 +77,7 @@ class RTQACalculation():
         self.posSpikes = dict.fromkeys(['{:d}'.format(x) for x in range(sz)], np.array(0))
         self.negSpikes = dict.fromkeys(['{:d}'.format(x) for x in range(sz)], np.array(0))
         self.rMSE = np.zeros((sz, xrange))
-        self.DVARS = np.zeros((0, 1))
+        self.DVARS = np.zeros((1, ))
         self.excDVARS = 0
         self.linTrendCoeff = np.zeros((sz, xrange))
         self.checkedBoxesInd = []
@@ -89,14 +92,30 @@ class RTQACalculation():
                             "m2_cond_vol": [],
                             "cnr_vol": []}
 
+    def run(self):
+
+        while True:
+
+            if self.input["data_ready"]:
+                self.calculate_rtqa()
+                self.input["data_ready"] = False
+                self.input["calc_ready"] = True
+
     # --------------------------------------------------------------------------
     def calculate_rtqa(self):
 
         n = self.input["iteration"]
         for i in range(self.nrROIs):
-            self.linTrendCoeff[i,n] = self.input["beta_coeff"]
+            self.linTrendCoeff[i,n] = self.input["beta_coeff"][i]
 
         volume = np.memmap(self.input["volume"], dtype=np.float64)
+        if n == 0:
+            self.volume_data["mean_vol"] = np.zeros(volume.shape)
+            self.volume_data["m2_vol"] = np.zeros(volume.shape)
+            self.volume_data["mean_bas_vol"] = np.zeros(volume.shape)
+            self.volume_data["m2_bas_vol"] = np.zeros(volume.shape)
+            self.volume_data["mean_cond_vol"] = np.zeros(volume.shape)
+            self.volume_data["m2_cond_vol"] = np.zeros(volume.shape)
 
         if self.input["is_new_dcm_block"]:
             self.blockIter = 0
@@ -106,6 +125,7 @@ class RTQACalculation():
         if n>self.first_snr_vol:
             self.calculate_rtqa_volume(volume, n)
         self.calculate_rtqa_ts(n)
+
         self.calc_mc()
 
         self.blockIter += 1
@@ -113,8 +133,6 @@ class RTQACalculation():
             self.iterBas += 1
         if n in self.indCond:
             self.iterCond += 1
-
-        self.input["ready"] = False
 
     # --------------------------------------------------------------------------
     def calculate_rtqa_volume(self, volume, index_volume):
@@ -146,9 +164,9 @@ class RTQACalculation():
             # GLM regressors were estimated for time-series with AR(1) applied
             if self.input["no_reg_glm_ts"].any():
                 self.rNoRegSNR[roi, index_volume], self.rNoRegMean[roi, index_volume], \
-                self.noRegM2[roi, index_volume], \
+                self.noRegM2[roi], \
                 self.rNoRegVar[roi, index_volume] = self.snr(self.rNoRegMean[roi, index_volume - 1],
-                                                             self.noRegM2[roi, index_volume - 1],
+                                                             self.noRegM2[roi],
                                                              self.input["no_reg_glm_ts"][roi], self.noRegBlockIter)
 
             if not self.input["is_auto_rtqa"]:
@@ -207,6 +225,9 @@ class RTQACalculation():
         :return: calculated CNR are written in RTQA class
         """
 
+        varBas = 0
+        varCond = 0
+
         if indexVolume in self.indBas:
             if not iterBas:
                 meanBas = data
@@ -241,20 +262,26 @@ class RTQACalculation():
 
         return rCNR, meanBas, m2Bas, varBas, meanCond, m2Cond, varCond
 
-    # FD computation
+    # --------------------------------------------------------------------------
     def _di(self, i):
         return np.array(self.mc_params[i][0:3])
+
+    # --------------------------------------------------------------------------
     def _ri(self, i):
         return np.array(self.mc_params[i][3:6])
+
+    # --------------------------------------------------------------------------
     def _ij_FD(self, i, j):  # displacement from i to j
         return sum(np.absolute(self._di(j) - self._di(i))) + \
                sum(np.absolute(self._ri(j) - self._ri(i))) * self.radius
+
+    # --------------------------------------------------------------------------
     def all_fd(self):
         i = len(self.mc_params) - 1
 
-        if not self.isNewDCMBlock:
+        if not self.input["is_new_dcm_block"]:
             self.FD = np.append(self.FD, self._ij_FD(i - 1, i))
-            self.meanFD = self.meanFD + (self.FD[-1] - self.meanFD) / self.blockIter
+            self.meanFD = self.meanFD + (self.FD[-1] - self.meanFD) / (self.blockIter + 1)
         else:
             self.FD = np.append(self.FD, 0)
             self.meanFD = 0
@@ -274,12 +301,14 @@ class RTQACalculation():
                     self.excFDIndexes_2 = np.array([i - 1])
                 else:
                     self.excFDIndexes_2 = np.append(self.excFDIndexes_2, i - 1)
+
+    # --------------------------------------------------------------------------
     def micro_displacement(self):
 
         n = len(self.mc_params) - 1
         sqDispl = 0
 
-        if not self.isNewDCMBlock:
+        if not self.input["is_new_dcm_block"]:
 
             for i in range(3):
                 sqDispl += self.mc_params[n, i] ** 2
@@ -287,7 +316,7 @@ class RTQACalculation():
             self.rsqDispl = np.append(self.rsqDispl, np.sqrt(sqDispl))
 
             self.MD = np.append(self.MD, abs(self.rsqDispl[-2] - self.rsqDispl[-1]))
-            self.meanMD = self.meanMD + (self.MD[-1] - self.meanMD) / self.blockIter
+            self.meanMD = self.meanMD + (self.MD[-1] - self.meanMD) / (self.blockIter + 1)
 
         else:
             self.MD = np.append(self.MD, 0)
@@ -299,6 +328,8 @@ class RTQACalculation():
                 self.excMDIndexes = np.array([n - 1])
             else:
                 self.excMDIndexes = np.append(self.excMDIndexes, n - 1)
+
+    # --------------------------------------------------------------------------
     def calc_mc(self):
 
         self.mc_params = np.vstack((self.mc_params, self.input["mc_ts"]))
@@ -341,7 +372,7 @@ class RTQACalculation():
         """
 
         sz = inputSignal.size
-        n = self.blockIter - 1
+        n = self.blockIter
 
         for i in range(sz):
             self.rMSE[i, indexVolume] = (n / (n + 1)) * self.rMSE[i, indexVolume - 1] + (
@@ -351,7 +382,10 @@ class RTQACalculation():
     def calculateDVARS(self, dvarsValue, isNewDCMBlock):
 
         if self.iteration == 0 or isNewDCMBlock:
-            self.DVARS = np.append(self.DVARS, 0)
+            if self.iteration == 0:
+                self.DVARS = np.zeros((1,))
+            else:
+                self.DVARS = np.append(self.DVARS, 0)
         else:
             self.DVARS = np.append(self.DVARS, dvarsValue)
 
