@@ -982,7 +982,7 @@ class OpenNFT(QWidget):
             self.rtqa_input["glm_ts"] = dataGLM
             self.rtqa_input["no_reg_glm_ts"] = dataNoRegGLM
             self.rtqa_input["proc_ts"] = dataProc[:, n]
-            self.rtqa_input["mc_ts"] = dataMC
+            self.rtqa_input["mc_ts"] = dataMC[n, :]
             self.rtqa_input["dvars_value"] = dvarsValue
             self.rtqa_input["beta_coeff"] = betaCoeff
             self.rtqa_input["pos_spikes"] = posSpikes
@@ -1443,8 +1443,10 @@ class OpenNFT(QWidget):
                 self.rtqa_input = multiprocessing.Manager().dict()
                 self.rtqa_input["nr_rois"] = self.P["NrROIs"]
                 self.rtqa_input["dim"] = tuple([self.P['MatrixSizeX'], self.P['MatrixSizeY'], self.P['NrOfSlices']])
-                self.rtqa_input["wb_roi_indexes"] = np.array(self.eng.evalin('base', 'ROIs(end).voxelCoord'),
-                                                             dtype=np.int32, ndmin=2)
+                wb_roi_indexes = np.array(self.eng.evalin('base', 'ROIs(end).voxelCoord'), dtype=np.int32, ndmin=2)
+                wb_mask = np.zeros(self.rtqa_input["dim"])
+                wb_mask[wb_roi_indexes] = 1
+                self.rtqa_input["wb_mask"] = wb_mask.astype(np.int32)
                 self.rtqa_input["muster_info"] = self.musterInfo
                 self.rtqa_input["xrange"] = self.P['NrOfVolumes'] - self.P['nrSkipVol']
                 self.rtqa_input["is_auto_rtqa"] = self.P["isAutoRTQA"]
@@ -1513,19 +1515,9 @@ class OpenNFT(QWidget):
                 self.windowRTQA.volumeCheckBox.stateChanged.connect(self.onInteractWithMapImage)
                 self.windowRTQA.volumeCheckBox.toggled.connect(self.updateOrthViewAsync)
                 self.windowRTQA.comboBox.currentIndexChanged.connect(self.onModeChanged)
-                # self.eng.assignin('base', 'rtQAMode', self.windowRTQA.currentMode, nargout=0)
-                # self.eng.assignin('base', 'isShowRtqaVol', self.windowRTQA.volumeCheckBox.isChecked(), nargout=0)
-                #
-                # self.windowRTQA.roiChecked(self.selectedRoi)
-                # self.windowRTQA.isStopped = False
-            #
-            # else:
-            #     self.eng.assignin('base', 'rtQAMode', False, nargout=0)
-            #     self.eng.assignin('base', 'isShowRtqaVol', False, nargout=0)
 
             self.onChangeNegMapPolicy()
             self.eng.assignin('base', 'imageViewMode', int(self.imageViewMode), nargout=0)
-            self.eng.assignin('base', 'FIRST_SNR_VOLUME', config.FIRST_SNR_VOLUME, nargout=0)
             self.cbImageViewMode.setEnabled(False)
             self.cbImageViewMode.setCurrentIndex(0)
             self.isStopped = False
@@ -1634,6 +1626,10 @@ class OpenNFT(QWidget):
         self.rtqa_input = multiprocessing.Manager().dict()
         self.rtqa_input["nr_rois"] = self.P["NrROIs"]
         self.rtqa_input["dim"] = tuple([self.P['MatrixSizeX'], self.P['MatrixSizeY'], self.P['NrOfSlices']])
+        wb_roi_indexes = np.array(self.eng.evalin('base', 'ROIs(end).voxelCoord'), dtype=np.int32, ndmin=2)
+        wb_mask = np.zeros(self.rtqa_input["dim"])
+        wb_mask[wb_roi_indexes] = 1
+        self.rtqa_input["wb_mask"] = wb_mask
         self.rtqa_input["muster_info"] = self.musterInfo
         self.rtqa_input["xrange"] = self.P['NrOfVolumes'] - self.P['nrSkipVol']
         self.rtqa_input["is_auto_rtqa"] = self.P["isAutoRTQA"]
@@ -1711,7 +1707,6 @@ class OpenNFT(QWidget):
 
         self.autoRTQASetup = True
         self.onChangeNegMapPolicy()
-        self.eng.assignin('base', 'FIRST_SNR_VOLUME', config.FIRST_SNR_VOLUME, nargout=0)
         self.cbImageViewMode.setCurrentIndex(0)
         self.cbImageViewMode.model().item(1).setEnabled(False)
         self.isStopped = False
@@ -1928,7 +1923,6 @@ class OpenNFT(QWidget):
             self.onShowRtqaVol()
 
         if self.isStopped:
-            # self.eng.offlineImageSwitch(nargout=0)
             self.updateOrthViewAsync()
             self.onInteractWithMapImage()
 

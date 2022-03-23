@@ -252,7 +252,7 @@ class RTQAWindow(QtWidgets.QWidget):
                 names.append(name + ':  ' + '{0:.3f}'.format(float(self.output["rSNR"][i][self.input["iteration"]])))
                 pens.append(pg.mkPen(color=config.ROI_PLOT_COLORS[i], width=1.2))
             self.makeTextValueLabel(self.valuesLabel, names, pens, lineBreak='<br>')
-            self.currentMode = 0
+            self.input["which_vol"] = 0
 
         # CNR state
         elif state == 2:
@@ -270,7 +270,7 @@ class RTQAWindow(QtWidgets.QWidget):
                 names.append(name + ':  ' + '{0:.3f}'.format(float(self.output["rCNR"][i][self.input["iteration"]])))
                 pens.append(pg.mkPen(color=config.ROI_PLOT_COLORS[i], width=1.2))
             self.makeTextValueLabel(self.valuesLabel, names, pens, lineBreak='<br>')
-            self.currentMode = 2
+            self.input["which_vol"] = 2
 
         if state == 1 or state == 7:
             self.roiGroupBox.setVisible(False)
@@ -506,7 +506,7 @@ class RTQAWindow(QtWidgets.QWidget):
             plotitem.plot(x=np.arange(1, self.xrange+1, dtype=np.float64), y=config.DEFAULT_DVARS_THRESHOLD * np.ones(self.xrange),
                             pen=config.PLOT_PEN_COLORS[2], name='thr')
 
-            # self.draw_mc_plots(self.mcrRadioButton.isChecked())
+            self.draw_mc_plots(self.mcrRadioButton.isChecked())
 
             self.init = False
 

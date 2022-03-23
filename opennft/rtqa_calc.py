@@ -80,18 +80,19 @@ class RTQACalculation(mp.Process):
         self.DVARS = np.zeros((1, ))
         self.excDVARS = 0
         self.linTrendCoeff = np.zeros((sz, xrange))
-        self.checkedBoxesInd = []
-        self.currentMode = 0
 
         self.volume_data = {"mean_vol": [],
                             "m2_vol": [],
                             "var_vol": [],
+                            "iter": 0,
                             "mean_bas_vol": [],
                             "m2_bas_vol": [],
                             "var_bas_vol": [],
+                            "iter_bas": 0,
                             "mean_cond_vol": [],
                             "m2_cond_vol": [],
-                            "var_cond_vol": []
+                            "var_cond_vol": [],
+                            "iter_cond": 0
                             }
 
         self.output["rSNR"] = self.rSNR
@@ -157,45 +158,35 @@ class RTQACalculation(mp.Process):
     # --------------------------------------------------------------------------
     def calculate_rtqa(self):
 
-        n = self.input["iteration"]
+        iteration = self.input["iteration"]
         for i in range(self.nrROIs):
-            self.linTrendCoeff[i][n] = self.input["beta_coeff"][i]
+            self.linTrendCoeff[i][iteration] = self.input["beta_coeff"][i]
 
         volume = np.memmap(self.input["volume"], dtype=np.float64, shape=self.input["dim"], order="F")
-        calc_volume = np.zeros(volume.shape, order="F")
-        wb_roi_indexes = self.input["wb_roi_indexes"]
-
-        calc_volume[wb_roi_indexes[:, 0], wb_roi_indexes[:, 1], wb_roi_indexes[:, 2]] = volume[wb_roi_indexes[:, 0],
-                                                                                               wb_roi_indexes[:, 1],
-                                                                                               wb_roi_indexes[:, 2]]
-
-        if n == 0:
-            self.volume_data["mean_vol"] = np.zeros(volume.shape, order="F")
-            self.volume_data["m2_vol"] = np.zeros(volume.shape, order="F")
-            self.volume_data["var_vol"] = np.zeros(volume.shape, order="F")
-            self.volume_data["mean_bas_vol"] = np.zeros(volume.shape, order="F")
-            self.volume_data["m2_bas_vol"] = np.zeros(volume.shape, order="F")
-            self.volume_data["var_bas_vol"] = np.zeros(volume.shape, order="F")
-            self.volume_data["mean_cond_vol"] = np.zeros(volume.shape, order="F")
-            self.volume_data["m2_cond_vol"] = np.zeros(volume.shape, order="F")
-            self.volume_data["var_cond_vol"] = np.zeros(volume.shape, order="F")
 
         if self.input["is_new_dcm_block"]:
             self.blockIter = 0
             self.iterBas = 0
             self.iterCond = 0
+            self.volume_data["iter"] = 0
+            self.volume_data["iter_bas"] = 0
+            self.volume_data["iter_cond"] = 0
 
-        if n>self.first_snr_vol:
-            self.calculate_rtqa_volume(volume, n)
-        self.calculate_rtqa_ts(n)
+        if iteration == 0:
+                self.volume_data["mean_vol"] = np.zeros(volume.shape, order="F")
+                self.volume_data["m2_vol"] = np.zeros(volume.shape, order="F")
+                self.volume_data["var_vol"] = np.zeros(volume.shape, order="F")
+                self.volume_data["mean_bas_vol"] = np.zeros(volume.shape, order="F")
+                self.volume_data["m2_bas_vol"] = np.zeros(volume.shape, order="F")
+                self.volume_data["var_bas_vol"] = np.zeros(volume.shape, order="F")
+                self.volume_data["mean_cond_vol"] = np.zeros(volume.shape, order="F")
+                self.volume_data["m2_cond_vol"] = np.zeros(volume.shape, order="F")
+                self.volume_data["var_cond_vol"] = np.zeros(volume.shape, order="F")
 
+        if iteration > self.first_snr_vol:
+            self.calculate_rtqa_volume(volume, iteration)
+        self.calculate_rtqa_ts(iteration)
         self.calc_mc()
-
-        self.blockIter += 1
-        if n in self.indBas:
-            self.iterBas += 1
-        if n in self.indCond:
-            self.iterCond += 1
 
     # --------------------------------------------------------------------------
     def calculate_rtqa_volume(self, volume, index_volume):
@@ -203,9 +194,8 @@ class RTQACalculation(mp.Process):
         self.output["snr_vol"], self.volume_data["mean_vol"], \
         self.volume_data["m2_vol"], self.volume_data["var_vol"] = self.snr(self.volume_data["mean_vol"],
                                                                            self.volume_data["m2_vol"],
-                                                                           volume, self.blockIter)
-
-        savemat("debug_vol.mat", {"snr_vol": self.output["snr_vol"], "mean_vol": self.volume_data["mean_vol"], "var_vol": self.volume_data["var_vol"]})
+                                                                           volume, self.volume_data["iter"])
+        self.volume_data["iter"] += 1
 
         if not self.input["is_auto_rtqa"]:
             self.output["cnr_vol"], self.volume_data["mean_bas_vol"], self.volume_data["m2_bas_vol"], \
@@ -216,7 +206,11 @@ class RTQACalculation(mp.Process):
                                                         self.volume_data["mean_cond_vol"],
                                                         self.volume_data["m2_cond_vol"],
                                                         self.volume_data["var_cond_vol"],
-                                                        volume, self.iterBas, self.iterCond, index_volume)
+                                                        volume, self.volume_data["iter_bas"], self.volume_data["iter_cond"], index_volume)
+            if index_volume in self.indBas:
+                self.volume_data["iter_bas"] += 1
+            if index_volume in self.indCond:
+                self.volume_data["iter_cond"] += 1
 
         self.input["rtqa_vol_ready"] = True
 
@@ -231,6 +225,7 @@ class RTQACalculation(mp.Process):
                                                                                 self.m2[roi, index_volume - 1],
                                                                                 self.input["raw_ts"][roi],
                                                                                 self.blockIter)
+
             # GLM regressors were estimated for time-series with AR(1) applied
             if self.input["no_reg_glm_ts"].any():
                 self.rNoRegSNR[roi, index_volume], self.rNoRegMean[roi, index_volume], \
@@ -249,6 +244,13 @@ class RTQACalculation(mp.Process):
                                                            self.varCond[roi, index_volume-1],
                                                            self.input["raw_ts"][roi], self.iterBas, self.iterCond,
                                                            index_volume)
+
+        self.blockIter += 1
+        if not self.input["is_auto_rtqa"]:
+            if index_volume in self.indBas:
+                self.iterBas += 1
+            if index_volume in self.indCond:
+                self.iterCond += 1
 
         self.calculateSpikes(self.input["glm_ts"], index_volume, self.input["pos_spikes"], self.input["neg_spikes"])
         self.calculateMSE(index_volume, self.input["glm_ts"], self.input["proc_ts"])

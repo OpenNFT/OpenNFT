@@ -25,13 +25,8 @@ end
 flags = getFlagsType(P);
 
 if P.isRTQA
-%    isShowRtqaVol = evalin('base', 'isShowRtqaVol');
-%    rtQAMode = evalin('base', 'rtQAMode');
     rtQA_matlab = evalin('base', 'rtQA_matlab');
-%    FIRST_SNR_VOLUME = evalin('base', 'FIRST_SNR_VOLUME');
-%else
-%    isShowRtqaVol = false;
-%end
+end
 
 if flags.isDCM
     ROIsAnat = evalin('base', 'ROIsAnat');
@@ -187,49 +182,6 @@ spm_smooth(reslVol, smReslVol, gKernel);
 
 % statMap2D_pos = zeros(img2DdimY, img2DdimX);
 
-% RTQA calculations of SNR and CNR
-%if P.isRTQA && indVolNorm > FIRST_SNR_VOLUME
-%
-%    if flags.isDCM && ~isempty(find(P.beginDCMblock == indVol-P.nrSkipVol,1))
-%        rtQA_matlab.snrData.iteration = 0;
-%        rtQA_matlab.cnrData.basData.iteration = 0;
-%        rtQA_matlab.cnrData.condData.iteration = 0;
-%    end
-%
-%    [ rtQA_matlab.snrData ] = snr_calc(indVolNorm,  smReslVol, rtQA_matlab.snrData);
-%
-%    if ~P.isAutoRTQA
-%        [ rtQA_matlab.cnrData ] = cnr_calc(indVolNorm, smReslVol, rtQA_matlab.cnrData);
-%    end
-%
-%    rtQA_matlab.snrMapCreated = 1;
-%
-%    % Transfer data for following visualization
-%    if isShowRtqaVol
-%
-%        ROIs = evalin('base', 'ROIs');
-%        indx = ROIs(end).voxelIndex;
-%        rtqaVol = rtQA_matlab.rtqaVol;
-%        if ~rtQAMode || P.isAutoRTQA
-%            rtqaVol(indx) = rtQA_matlab.snrData.snrVol(indx);
-%        else
-%            rtqaVol(indx) = rtQA_matlab.cnrData.cnrVol(indx);
-%        end
-%
-%        fname = strrep(P.memMapFile, 'shared', 'RTQAVol');
-%        m_out = evalin('base', 'mmrtQAVol');
-%        m_out.Data.rtQAVol = rtqaVol;
-%
-%        rtQA_matlab.snrMapCreated = 1;
-%
-%    end
-%else
-%
-%    rtQA_matlab.snrMapCreated = 0;
-%
-%end
-    
-
 % DVARS calulcation and new volume assign
 if flags.isDCM && ~P.smForDCM
     % for DCM without smoothing
@@ -305,10 +257,6 @@ if flags.isIGLM
 
         if ~fLockedTempl
             % assign Template
-%            max_smReslVol = max(smReslVol(:));
-%            min_smReslVol = min(smReslVol(:));
-%            normSmReslVol = (smReslVol-min_smReslVol) / ...
-%                (max_smReslVol-min_smReslVol);
             mainLoopData.imgVolTempl = smReslVol;
             assignin('base', 'imgVolTempl', smReslVol)
             m = evalin('base', 'mmImgVolTempl');
@@ -318,10 +266,6 @@ if flags.isIGLM
     else
         %% Initialize variables
         % assign Template
-%        max_smReslVol = max(smReslVol(:));
-%        min_smReslVol = min(smReslVol(:));
-%        normSmReslVol = (smReslVol-min_smReslVol) / ...
-%            (max_smReslVol-min_smReslVol);
         mainLoopData.imgVolTempl = smReslVol;
         assignin('base', 'imgVolTempl', smReslVol)
         m = evalin('base', 'mmImgVolTempl');
