@@ -1442,6 +1442,9 @@ class OpenNFT(QWidget):
 
                 self.rtqa_input = multiprocessing.Manager().dict()
                 self.rtqa_input["nr_rois"] = self.P["NrROIs"]
+                self.rtqa_input["dim"] = tuple([self.P['MatrixSizeX'], self.P['MatrixSizeY'], self.P['NrOfSlices']])
+                self.rtqa_input["wb_roi_indexes"] = np.array(self.eng.evalin('base', 'ROIs(end).voxelCoord'),
+                                                             dtype=np.int32, ndmin=2)
                 self.rtqa_input["muster_info"] = self.musterInfo
                 self.rtqa_input["xrange"] = self.P['NrOfVolumes'] - self.P['nrSkipVol']
                 self.rtqa_input["is_auto_rtqa"] = self.P["isAutoRTQA"]
@@ -1465,11 +1468,36 @@ class OpenNFT(QWidget):
                 self.rtqa_input["neg_spikes"] = []
                 self.rtqa_input["is_new_dcm_block"] = True
                 self.rtqa_input["iteration"] = 0
+                self.rtqa_input["which_vol"] = []
                 self.rtqa_input["rtqa_vol_ready"] = False
 
                 self.rtqa_output = multiprocessing.Manager().dict()
-                self.rtqa_output["rtqa_vol"] = []
+                self.rtqa_output["snr_vol"] = np.zeros(self.rtqa_input["dim"])
+                self.rtqa_output["cnr_vol"] = np.zeros(self.rtqa_input["dim"])
                 self.rtqa_output["show_vol"] = False
+                self.rtqa_output["rSNR"] = []
+                self.rtqa_output["rCNR"] = []
+                self.rtqa_output["rMean"] = []
+                self.rtqa_output["meanBas"] = []
+                self.rtqa_output["meanCond"] = []
+                self.rtqa_output["rVar"] = []
+                self.rtqa_output["varBas"] = []
+                self.rtqa_output["varCond"] = []
+                self.rtqa_output["glmProcTimeSeries"] = []
+                self.rtqa_output["rMSE"] = []
+                self.rtqa_output["linTrendCoeff"] = []
+                self.rtqa_output["rNoRegSNR"] = []
+                self.rtqa_output["DVARS"] = []
+                self.rtqa_output["excDVARS"] = []
+                self.rtqa_output["mc_params"] = []
+                self.rtqa_output["FD"] = []
+                self.rtqa_output["MD"] = []
+                self.rtqa_output["meanFD"] = []
+                self.rtqa_output["meanMD"] = []
+                self.rtqa_output["excFD"] = []
+                self.rtqa_output["excMD"] = []
+                self.rtqa_output["posSpikes"] = []
+                self.rtqa_output["negSpikes"] = []
 
                 self.btnRTQA.setEnabled(True)
 
@@ -1480,11 +1508,11 @@ class OpenNFT(QWidget):
                 self.windowRTQA = rtqa_gui.RTQAWindow(self.calc_rtqa, self.rtqa_input, self.rtqa_output)
                 self.calc_rtqa.start()
 
-                # self.windowRTQA.volumeCheckBox.stateChanged.connect(self.onShowRtqaVol)
-                # self.windowRTQA.volumeCheckBox.stateChanged.connect(self.onChangeNegMapPolicy)
-                # self.windowRTQA.volumeCheckBox.stateChanged.connect(self.onInteractWithMapImage)
-                # self.windowRTQA.volumeCheckBox.toggled.connect(self.updateOrthViewAsync)
-                # self.windowRTQA.comboBox.currentIndexChanged.connect(self.onModeChanged)
+                self.windowRTQA.volumeCheckBox.stateChanged.connect(self.onShowRtqaVol)
+                self.windowRTQA.volumeCheckBox.stateChanged.connect(self.onChangeNegMapPolicy)
+                self.windowRTQA.volumeCheckBox.stateChanged.connect(self.onInteractWithMapImage)
+                self.windowRTQA.volumeCheckBox.toggled.connect(self.updateOrthViewAsync)
+                self.windowRTQA.comboBox.currentIndexChanged.connect(self.onModeChanged)
                 # self.eng.assignin('base', 'rtQAMode', self.windowRTQA.currentMode, nargout=0)
                 # self.eng.assignin('base', 'isShowRtqaVol', self.windowRTQA.volumeCheckBox.isChecked(), nargout=0)
                 #
@@ -1605,6 +1633,7 @@ class OpenNFT(QWidget):
 
         self.rtqa_input = multiprocessing.Manager().dict()
         self.rtqa_input["nr_rois"] = self.P["NrROIs"]
+        self.rtqa_input["dim"] = tuple([self.P['MatrixSizeX'], self.P['MatrixSizeY'], self.P['NrOfSlices']])
         self.rtqa_input["muster_info"] = self.musterInfo
         self.rtqa_input["xrange"] = self.P['NrOfVolumes'] - self.P['nrSkipVol']
         self.rtqa_input["is_auto_rtqa"] = self.P["isAutoRTQA"]
@@ -1628,11 +1657,36 @@ class OpenNFT(QWidget):
         self.rtqa_input["neg_spikes"] = []
         self.rtqa_input["is_new_dcm_block"] = True
         self.rtqa_input["iteration"] = 0
+        self.rtqa_input["which_vol"] = []
         self.rtqa_input["rtqa_vol_ready"] = False
 
         self.rtqa_output = multiprocessing.Manager().dict()
-        self.rtqa_output["rtqa_vol"] = []
+        self.rtqa_output["snr_vol"] = np.zeros(self.rtqa_input["dim"])
+        self.rtqa_output["cnr_vol"] = []
         self.rtqa_output["show_vol"] = False
+        self.rtqa_output["rSNR"] = []
+        self.rtqa_output["rCNR"] = []
+        self.rtqa_output["rMean"] = []
+        self.rtqa_output["meanBas"] = []
+        self.rtqa_output["meanCond"] = []
+        self.rtqa_output["rVar"] = []
+        self.rtqa_output["varBas"] = []
+        self.rtqa_output["varCond"] = []
+        self.rtqa_output["glmProcTimeSeries"] = []
+        self.rtqa_output["rMSE"] = []
+        self.rtqa_output["linTrendCoeff"] = []
+        self.rtqa_output["rNoRegSNR"] = []
+        self.rtqa_output["DVARS"] = []
+        self.rtqa_output["excDVARS"] = []
+        self.rtqa_output["mc_params"] = []
+        self.rtqa_output["FD"] = []
+        self.rtqa_output["MD"] = []
+        self.rtqa_output["meanFD"] = []
+        self.rtqa_output["meanMD"] = []
+        self.rtqa_output["excFD"] = []
+        self.rtqa_output["excMD"] = []
+        self.rtqa_output["posSpikes"] = []
+        self.rtqa_output["negSpikes"] = []
 
         self.btnRTQA.setEnabled(True)
 
@@ -1767,7 +1821,7 @@ class OpenNFT(QWidget):
 
         self.isStopped = True
         if self.windowRTQA:
-            self.windowRTQA.isStopped = True
+            self.rtqa_input["is_stopped"] = True
             self.eng.workspace['rtQA_python'] = self.calc_rtqa.dataPacking()
         self.btnStop.setEnabled(False)
 
@@ -1833,9 +1887,6 @@ class OpenNFT(QWidget):
     # --------------------------------------------------------------------------
     def onShowRtqaVol(self):
 
-        is_rtqa_volume = self.rtqa_output["show_vol"]
-        # self.eng.assignin('base', 'isShowRtqaVol', is_rtqa_volume, nargout=0)
-
         if self.isStopped:
             # self.eng.offlineImageSwitch(nargout=0)
             if self.imageViewMode == ImageViewMode.mosaic:
@@ -1863,7 +1914,7 @@ class OpenNFT(QWidget):
         self.selectedRoi = np.where(list(self.roiDict.values()))[0]
         if self.windowRTQA:
             self.rtqa_input["roi_checked"] = self.selectedRoi
-            # self.windowRTQA.roiChecked(self.selectedRoi)
+            self.windowRTQA.roiChecked()
 
         self.drawRoiPlots(True)
         if self.isStopped:
@@ -1874,7 +1925,6 @@ class OpenNFT(QWidget):
 
         if self.windowRTQA:
             self.windowRTQA.onComboboxChanged()
-            # self.eng.assignin('base', 'rtQAMode', self.windowRTQA.currentMode, nargout=0)
             self.onShowRtqaVol()
 
         if self.isStopped:
@@ -2049,9 +2099,9 @@ class OpenNFT(QWidget):
             self.orth_view_input["flags_planes"] = self.currentProjection.value
             self.orth_view_input["bg_type"] = bgType
             self.orth_view_input["is_rtqa"] = rtqa
-            self.orth_view_input["rtQA_volume"] = self.rtqa_output["rtqa_vol"] if self.windowRTQA else []
+            if self.windowRTQA:
+                self.orth_view_input["rtQA_volume"] = self.rtqa_output["snr_vol"] if self.rtqa_input["which_vol"] == 0 else self.rtqa_output["cnr_vol"]
             self.orth_view_input["is_neg"] = self.negMapCheckBox.isChecked()
-            self.orth_view_input["ready"] = True
             self.orth_view_input["ready"] = True
 
     # --------------------------------------------------------------------------
@@ -2619,7 +2669,7 @@ class OpenNFT(QWidget):
         is_stat_map_created = bool(self.eng.evalin('base', 'mainLoopData.statMapCreated'))
         if self.windowRTQA:
             is_rtqa_volume_checked = self.windowRTQA.volumeCheckBox.isChecked()
-            is_snr_map_created = bool(self.eng.evalin('base', 'rtQA_matlab.snrMapCreated'))
+            is_snr_map_created = self.rtqa_input["rtqa_vol_ready"]
         else:
             is_rtqa_volume_checked = False
             is_snr_map_created = False
@@ -2642,11 +2692,7 @@ class OpenNFT(QWidget):
 
                 else:
 
-                    filename_pat = self.eng.evalin('base', 'P.memMapFile')
-                    filename = filename_pat.replace('shared', 'RTQAVol')
-
-                    posVol = np.memmap(filename, dtype=np.float64, shape=tuple(dim3D), offset=0, order='F')
-                    posVol = np.array(posVol)
+                    posVol = self.rtqa_output["snr_vol"] if self.rtqa_input["which_vol"] == 0 else self.rtqa_output["cnr_vol"]
 
         if posVol is not None:
 

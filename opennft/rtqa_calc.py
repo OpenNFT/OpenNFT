@@ -4,6 +4,7 @@ import matlab
 import multiprocessing as mp
 
 from opennft import config
+from scipy.io import savemat
 from loguru import logger
 
 
@@ -44,12 +45,11 @@ class RTQACalculation(mp.Process):
         self.meanMD = 0
         self.blockIter = 1
         self.excFD = [0, 0]
-        self.excVD = 0
+        self.excMD = 0
         self.excFDIndexes_1 = np.array([-1])
         self.excFDIndexes_2 = np.array([-1])
         self.excMDIndexes = np.array([-1])
         self.rsqDispl = np.array([0])
-        self.offsetMCParam = np.zeros((6, 1))
         self.mc_params = np.array([[1e-05,1e-05,1e-05,1e-05,1e-05,1e-05]]).astype(np.float)
         self.radius = config.DEFAULT_FD_RADIUS
         self.threshold = config.DEFAULT_FD_THRESHOLDS
@@ -85,37 +85,100 @@ class RTQACalculation(mp.Process):
 
         self.volume_data = {"mean_vol": [],
                             "m2_vol": [],
-                            "snr_vol": [],
+                            "var_vol": [],
                             "mean_bas_vol": [],
                             "m2_bas_vol": [],
+                            "var_bas_vol": [],
                             "mean_cond_vol": [],
                             "m2_cond_vol": [],
-                            "cnr_vol": []}
+                            "var_cond_vol": []
+                            }
 
+        self.output["rSNR"] = self.rSNR
+        self.output["rCNR"] = self.rCNR
+        self.output["rMean"] = self.rMean
+        self.output["meanBas"] = self.meanBas
+        self.output["meanCond"] = self.meanCond
+        self.output["rVar"] = self.rVar
+        self.output["varBas"] = self.varBas
+        self.output["varCond"] = self.varCond
+        self.output["glmProcTimeSeries"] = self.glmProcTimeSeries
+        self.output["rMSE"] = self.rMSE
+        self.output["linTrendCoeff"] = self.linTrendCoeff
+        self.output["rNoRegSNR"] = self.rNoRegSNR
+        self.output["DVARS"] = self.DVARS
+        self.output["excDVARS"] = self.excDVARS
+        self.output["mc_params"] = self.mc_params
+        self.output["mc_offset"] = np.zeros((6,1))
+        self.output["FD"] = self.FD
+        self.output["MD"] = self.MD
+        self.output["meanFD"] = self.meanFD
+        self.output["meanMD"] = self.meanMD
+        self.output["excFD"] = self.excFD
+        self.output["excMD"] = self.excMD
+        self.output["posSpikes"] = self.posSpikes
+        self.output["negSpikes"] = self.negSpikes
+
+    # --------------------------------------------------------------------------
     def run(self):
 
         while True:
 
             if self.input["data_ready"]:
                 self.calculate_rtqa()
+
                 self.input["data_ready"] = False
                 self.input["calc_ready"] = True
+
+                self.output["rSNR"] = self.rSNR
+                self.output["rCNR"] = self.rCNR
+                self.output["rMean"] = self.rMean
+                self.output["meanBas"] = self.meanBas
+                self.output["meanCond"] = self.meanCond
+                self.output["rVar"] = self.rVar
+                self.output["varBas"] = self.varBas
+                self.output["varCond"] = self.varCond
+                self.output["glmProcTimeSeries"] = self.glmProcTimeSeries
+                self.output["rMSE"] = self.rMSE
+                self.output["linTrendCoeff"] = self.linTrendCoeff
+                self.output["rNoRegSNR"] = self.rNoRegSNR
+                self.output["DVARS"] = self.DVARS
+                self.output["excDVARS"] = self.excDVARS
+                self.output["mc_params"] = self.mc_params
+                self.output["FD"] = self.FD
+                self.output["MD"] = self.MD
+                self.output["meanFD"] = self.meanFD
+                self.output["meanMD"] = self.meanMD
+                self.output["excFD"] = self.excFD
+                self.output["excMD"] = self.excMD
+                self.output["posSpikes"] = self.posSpikes
+                self.output["negSpikes"] = self.negSpikes
 
     # --------------------------------------------------------------------------
     def calculate_rtqa(self):
 
         n = self.input["iteration"]
         for i in range(self.nrROIs):
-            self.linTrendCoeff[i,n] = self.input["beta_coeff"][i]
+            self.linTrendCoeff[i][n] = self.input["beta_coeff"][i]
 
-        volume = np.memmap(self.input["volume"], dtype=np.float64)
+        volume = np.memmap(self.input["volume"], dtype=np.float64, shape=self.input["dim"], order="F")
+        calc_volume = np.zeros(volume.shape, order="F")
+        wb_roi_indexes = self.input["wb_roi_indexes"]
+
+        calc_volume[wb_roi_indexes[:, 0], wb_roi_indexes[:, 1], wb_roi_indexes[:, 2]] = volume[wb_roi_indexes[:, 0],
+                                                                                               wb_roi_indexes[:, 1],
+                                                                                               wb_roi_indexes[:, 2]]
+
         if n == 0:
-            self.volume_data["mean_vol"] = np.zeros(volume.shape)
-            self.volume_data["m2_vol"] = np.zeros(volume.shape)
-            self.volume_data["mean_bas_vol"] = np.zeros(volume.shape)
-            self.volume_data["m2_bas_vol"] = np.zeros(volume.shape)
-            self.volume_data["mean_cond_vol"] = np.zeros(volume.shape)
-            self.volume_data["m2_cond_vol"] = np.zeros(volume.shape)
+            self.volume_data["mean_vol"] = np.zeros(volume.shape, order="F")
+            self.volume_data["m2_vol"] = np.zeros(volume.shape, order="F")
+            self.volume_data["var_vol"] = np.zeros(volume.shape, order="F")
+            self.volume_data["mean_bas_vol"] = np.zeros(volume.shape, order="F")
+            self.volume_data["m2_bas_vol"] = np.zeros(volume.shape, order="F")
+            self.volume_data["var_bas_vol"] = np.zeros(volume.shape, order="F")
+            self.volume_data["mean_cond_vol"] = np.zeros(volume.shape, order="F")
+            self.volume_data["m2_cond_vol"] = np.zeros(volume.shape, order="F")
+            self.volume_data["var_cond_vol"] = np.zeros(volume.shape, order="F")
 
         if self.input["is_new_dcm_block"]:
             self.blockIter = 0
@@ -137,16 +200,23 @@ class RTQACalculation(mp.Process):
     # --------------------------------------------------------------------------
     def calculate_rtqa_volume(self, volume, index_volume):
 
-        self.volume_data["snr_vol"], _, _, _ = self.snr(self.volume_data["mean_vol"],
-                                                        self.volume_data["m2_vol"], volume, self.blockIter)
+        self.output["snr_vol"], self.volume_data["mean_vol"], \
+        self.volume_data["m2_vol"], self.volume_data["var_vol"] = self.snr(self.volume_data["mean_vol"],
+                                                                           self.volume_data["m2_vol"],
+                                                                           volume, self.blockIter)
+
+        savemat("debug_vol.mat", {"snr_vol": self.output["snr_vol"], "mean_vol": self.volume_data["mean_vol"], "var_vol": self.volume_data["var_vol"]})
 
         if not self.input["is_auto_rtqa"]:
-            self.volume_data["cnr_vol"], _, _, _, _, _, _ = self.cnr(self.volume_data["mean_bas_vol"],
-                                                                     self.volume_data["m2_bas_vol"],
-                                                                     self.volume_data["mean_cond_vol"],
-                                                                     self.volume_data["m2_cond_vol"],
-                                                                     volume, self.iterBas, self.iterCond,
-                                                                     index_volume)
+            self.output["cnr_vol"], self.volume_data["mean_bas_vol"], self.volume_data["m2_bas_vol"], \
+            self.volume_data["var_bas_vol"], self.volume_data["mean_cond_vol"], self.volume_data["m2_cond_vol"], \
+            self.volume_data["var_cond_vol"] = self.cnr(self.volume_data["mean_bas_vol"],
+                                                        self.volume_data["m2_bas_vol"],
+                                                        self.volume_data["var_bas_vol"],
+                                                        self.volume_data["mean_cond_vol"],
+                                                        self.volume_data["m2_cond_vol"],
+                                                        self.volume_data["var_cond_vol"],
+                                                        volume, self.iterBas, self.iterCond, index_volume)
 
         self.input["rtqa_vol_ready"] = True
 
@@ -167,14 +237,16 @@ class RTQACalculation(mp.Process):
                 self.noRegM2[roi], \
                 self.rNoRegVar[roi, index_volume] = self.snr(self.rNoRegMean[roi, index_volume - 1],
                                                              self.noRegM2[roi],
-                                                             self.input["no_reg_glm_ts"][roi], self.noRegBlockIter)
+                                                             self.input["no_reg_glm_ts"][roi], self.blockIter)
 
             if not self.input["is_auto_rtqa"]:
                 self.rCNR[roi, index_volume], self.meanBas[roi, index_volume], \
                 self.m2Bas[roi], self.varBas[roi, index_volume], \
                 self.meanCond[roi, index_volume], self.m2Cond[roi], \
                 self.varCond[roi, index_volume] = self.cnr(self.meanBas[roi, index_volume - 1], self.m2Bas[roi],
+                                                           self.varBas[roi, index_volume-1],
                                                            self.meanCond[roi, index_volume - 1], self.m2Cond[roi],
+                                                           self.varCond[roi, index_volume-1],
                                                            self.input["raw_ts"][roi], self.iterBas, self.iterCond,
                                                            index_volume)
 
@@ -205,18 +277,18 @@ class RTQACalculation(mp.Process):
         else:
 
             rMean = data
-            m2 = np.zeros(data.shape)
-            rVar = np.zeros(data.shape)
-            rSNR = np.zeros(data.shape)
+            m2 = np.zeros(data.shape, order="F")
+            rVar = np.zeros(data.shape, order="F")
+            rSNR = np.zeros(data.shape, order="F")
             blockIter = 1
 
-        if blockIter < 8:
+        if not isinstance(data, np.ndarray) and blockIter < 8:
             rSNR = 0
 
         return rSNR, rMean, m2, rVar,
 
     # --------------------------------------------------------------------------
-    def cnr(self, meanBas, m2Bas, meanCond, m2Cond, data, iterBas, iterCond, indexVolume):
+    def cnr(self, meanBas, m2Bas, varBas, meanCond, m2Cond, varCond, data, iterBas, iterCond, indexVolume):
         """ Recursive time-series CNR calculation
 
         :param data: new value of raw time-series
@@ -225,14 +297,11 @@ class RTQACalculation(mp.Process):
         :return: calculated CNR are written in RTQA class
         """
 
-        varBas = 0
-        varCond = 0
-
         if indexVolume in self.indBas:
             if not iterBas:
                 meanBas = data
-                m2Bas = 0
-                varBas = 0
+                m2Bas = np.zeros(data.shape, order="F")
+                varBas = np.zeros(data.shape, order="F")
                 iterBas += 1
 
             else:
@@ -244,9 +313,9 @@ class RTQACalculation(mp.Process):
 
         if indexVolume in self.indCond:
             if not iterCond:
-                meanCond = 0
-                m2Cond = 0
-                varCond = 0
+                meanCond = data
+                m2Cond = np.zeros(data.shape, order="F")
+                varCond = np.zeros(data.shape, order="F")
                 iterCond += 1
             else:
                 prevMeanCond = meanCond
@@ -258,7 +327,7 @@ class RTQACalculation(mp.Process):
         if iterCond:
             rCNR = (meanCond - meanBas) / (np.sqrt(varCond + varBas))
         else:
-            rCNR = 0
+            rCNR = np.zeros(data.shape, order="F")
 
         return rCNR, meanBas, m2Bas, varBas, meanCond, m2Cond, varCond
 
@@ -323,7 +392,7 @@ class RTQACalculation(mp.Process):
             self.meanMD = 0
 
         if self.MD[-1] >= self.threshold[0]:
-            self.excVD += 1
+            self.excMD += 1
             if self.excMDIndexes[-1] == -1:
                 self.excMDIndexes = np.array([n - 1])
             else:
@@ -332,7 +401,11 @@ class RTQACalculation(mp.Process):
     # --------------------------------------------------------------------------
     def calc_mc(self):
 
-        self.mc_params = np.vstack((self.mc_params, self.input["mc_ts"]))
+        if self.input["iteration"] == 0:
+            self.output["mc_offset"] = self.input["offset_mc"]
+            self.mc_params = self.output["mc_offset"]
+        else:
+            self.mc_params = np.vstack((self.mc_params, self.input["mc_ts"]))
         self.micro_displacement()
         self.all_fd()
 
