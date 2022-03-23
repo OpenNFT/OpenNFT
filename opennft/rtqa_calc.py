@@ -55,7 +55,7 @@ class RTQACalculation(mp.Process):
         self.threshold = config.DEFAULT_FD_THRESHOLDS
         self.iterBas = 0
         self.iterCond = 0
-        self.iteration = 1
+        self.iteration = 0
         self.blockIter = 0
         self.noRegBlockIter = 0
         self.rMean = np.zeros((sz, xrange))
@@ -254,7 +254,7 @@ class RTQACalculation(mp.Process):
 
         self.calculateSpikes(self.input["glm_ts"], index_volume, self.input["pos_spikes"], self.input["neg_spikes"])
         self.calculateMSE(index_volume, self.input["glm_ts"], self.input["proc_ts"])
-        self.calculateDVARS(self.input["dvars_value"], self.input["is_new_dcm_block"])
+        self.calculateDVARS(self.input["dvars_value"], index_volume, self.input["is_new_dcm_block"])
 
     # --------------------------------------------------------------------------
     def snr(self, rMean, m2, data, blockIter):
@@ -454,13 +454,12 @@ class RTQACalculation(mp.Process):
                         (inputSignal[i] - outputSignal[i]) ** 2) / (n + 1)
 
     # --------------------------------------------------------------------------
-    def calculateDVARS(self, dvarsValue, isNewDCMBlock):
+    def calculateDVARS(self, dvarsValue, index_volume, isNewDCMBlock):
 
-        if self.iteration == 0 or isNewDCMBlock:
-            if self.iteration == 0:
-                self.DVARS = np.zeros((1,))
-            else:
-                self.DVARS = np.append(self.DVARS, 0)
+        logger.debug("DVARS START")
+        logger.debug("Iteration = {}", index_volume)
+        if index_volume == 0 or isNewDCMBlock:
+            self.DVARS = np.append(self.DVARS, 0)
         else:
             self.DVARS = np.append(self.DVARS, dvarsValue)
 
