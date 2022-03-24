@@ -80,6 +80,7 @@ class RTQACalculation(mp.Process):
         self.DVARS = np.zeros((1, ))
         self.excDVARS = 0
         self.linTrendCoeff = np.zeros((sz, xrange))
+        self.prevVol = np.array([])
 
         self.volume_data = {"mean_vol": [],
                             "m2_vol": [],
@@ -126,10 +127,14 @@ class RTQACalculation(mp.Process):
         while True:
 
             if self.input["data_ready"]:
+                logger.debug("Calculating iteration {}...", self.input["iteration"])
+
                 self.calculate_rtqa()
 
                 self.input["data_ready"] = False
                 self.input["calc_ready"] = True
+
+                logger.debug("Calculating iteration {} is done", self.input["iteration"])
 
                 self.output["rSNR"] = self.rSNR
                 self.output["rCNR"] = self.rCNR
@@ -160,7 +165,7 @@ class RTQACalculation(mp.Process):
 
         iteration = self.input["iteration"]
         for i in range(self.nrROIs):
-            self.linTrendCoeff[i][iteration] = self.input["beta_coeff"][i]
+            self.linTrendCoeff[i][iteration] = self.input["beta_coeff"][i][-1]
 
         volume = np.memmap(self.input["volume"], dtype=np.float64, shape=self.input["dim"], order="F")
 
@@ -173,19 +178,20 @@ class RTQACalculation(mp.Process):
             self.volume_data["iter_cond"] = 0
 
         if iteration == 0:
-                self.volume_data["mean_vol"] = np.zeros(volume.shape, order="F")
-                self.volume_data["m2_vol"] = np.zeros(volume.shape, order="F")
-                self.volume_data["var_vol"] = np.zeros(volume.shape, order="F")
-                self.volume_data["mean_bas_vol"] = np.zeros(volume.shape, order="F")
-                self.volume_data["m2_bas_vol"] = np.zeros(volume.shape, order="F")
-                self.volume_data["var_bas_vol"] = np.zeros(volume.shape, order="F")
-                self.volume_data["mean_cond_vol"] = np.zeros(volume.shape, order="F")
-                self.volume_data["m2_cond_vol"] = np.zeros(volume.shape, order="F")
-                self.volume_data["var_cond_vol"] = np.zeros(volume.shape, order="F")
+            self.volume_data["mean_vol"] = np.zeros(volume.shape, order="F")
+            self.volume_data["m2_vol"] = np.zeros(volume.shape, order="F")
+            self.volume_data["var_vol"] = np.zeros(volume.shape, order="F")
+            self.volume_data["mean_bas_vol"] = np.zeros(volume.shape, order="F")
+            self.volume_data["m2_bas_vol"] = np.zeros(volume.shape, order="F")
+            self.volume_data["var_bas_vol"] = np.zeros(volume.shape, order="F")
+            self.volume_data["mean_cond_vol"] = np.zeros(volume.shape, order="F")
+            self.volume_data["m2_cond_vol"] = np.zeros(volume.shape, order="F")
+            self.volume_data["var_cond_vol"] = np.zeros(volume.shape, order="F")
 
         if iteration > self.first_snr_vol:
             self.calculate_rtqa_volume(volume, iteration)
         self.calculate_rtqa_ts(iteration)
+        # self.calculateDVARS(volume[self.input["wb_roi_indexes"]], iteration, self.input["is_new_dcm_block"])
         self.calc_mc()
 
     # --------------------------------------------------------------------------
@@ -219,12 +225,16 @@ class RTQACalculation(mp.Process):
 
         for roi in range(self.nrROIs):
 
+            data = self.input["raw_ts"][roi]
+            data_noreg = self.input["no_reg_glm_ts"][roi]
+
             # AR(1) was not applied.
-            self.rSNR[roi, index_volume], self.rMean[roi, index_volume], \
-            self.m2[roi, index_volume], self.rVar[roi, index_volume] = self.snr(self.rMean[roi, index_volume - 1],
-                                                                                self.m2[roi, index_volume - 1],
-                                                                                self.input["raw_ts"][roi],
-                                                                                self.blockIter)
+            self.rSNR[roi, index_volume], \
+            self.rMean[roi, index_volume], \
+            self.m2[roi, index_volume], \
+            self.rVar[roi, index_volume] = self.snr(self.rMean[roi, index_volume - 1],
+                                                              self.m2[roi, index_volume - 1],
+                                                              data, self.blockIter)
 
             # GLM regressors were estimated for time-series with AR(1) applied
             if self.input["no_reg_glm_ts"].any():
@@ -232,7 +242,7 @@ class RTQACalculation(mp.Process):
                 self.noRegM2[roi], \
                 self.rNoRegVar[roi, index_volume] = self.snr(self.rNoRegMean[roi, index_volume - 1],
                                                              self.noRegM2[roi],
-                                                             self.input["no_reg_glm_ts"][roi], self.blockIter)
+                                                             data_noreg, self.blockIter)
 
             if not self.input["is_auto_rtqa"]:
                 self.rCNR[roi, index_volume], self.meanBas[roi, index_volume], \
@@ -242,7 +252,7 @@ class RTQACalculation(mp.Process):
                                                            self.varBas[roi, index_volume-1],
                                                            self.meanCond[roi, index_volume - 1], self.m2Cond[roi],
                                                            self.varCond[roi, index_volume-1],
-                                                           self.input["raw_ts"][roi], self.iterBas, self.iterCond,
+                                                           data, self.iterBas, self.iterCond,
                                                            index_volume)
 
         self.blockIter += 1
@@ -252,9 +262,14 @@ class RTQACalculation(mp.Process):
             if index_volume in self.indCond:
                 self.iterCond += 1
 
-        self.calculateSpikes(self.input["glm_ts"], index_volume, self.input["pos_spikes"], self.input["neg_spikes"])
-        self.calculateMSE(index_volume, self.input["glm_ts"], self.input["proc_ts"])
+        data_glm = self.input["glm_ts"]
+        data_proc = self.input["proc_ts"]
+        data_pos_spikes = self.input["pos_spikes"]
+        data_neg_spikes = self.input["neg_spikes"]
+
+        self.calculateSpikes(data_glm, index_volume, data_pos_spikes, data_neg_spikes)
         self.calculateDVARS(self.input["dvars_value"], index_volume, self.input["is_new_dcm_block"])
+        self.calculateMSE(index_volume, data_glm, data_proc)
 
     # --------------------------------------------------------------------------
     def snr(self, rMean, m2, data, blockIter):
@@ -453,13 +468,37 @@ class RTQACalculation(mp.Process):
             self.rMSE[i, indexVolume] = (n / (n + 1)) * self.rMSE[i, indexVolume - 1] + (
                         (inputSignal[i] - outputSignal[i]) ** 2) / (n + 1)
 
+    # # --------------------------------------------------------------------------
+    # def calculateDVARS(self, volume, index_volume, isNewDCMBlock):
+    #
+    #     logger.debug("DVARS iteration: {}", index_volume)
+    #
+    #     if self.prevVol.size == 0:
+    #         dvars_diff = (volume / self.input["dvars_scale"]) ** 2
+    #     else:
+    #         dvars_diff = ((self.prevVol - volume) / self.input["dvars_scale"]) ** 2
+    #     dvars_value = 100 * (np.mean(dvars_diff, axis=None)) ** .5
+    #
+    #     self.prevVol = volume
+    #
+    #     if index_volume == 0 or isNewDCMBlock:
+    #         self.DVARS = np.append(self.DVARS, 0)
+    #     else:
+    #         self.DVARS = np.append(self.DVARS, dvars_value)
+    #
+    #     if self.DVARS[-1] > config.DEFAULT_DVARS_THRESHOLD:
+    #         self.excDVARS = self.excDVARS + 1
+
     # --------------------------------------------------------------------------
     def calculateDVARS(self, dvarsValue, index_volume, isNewDCMBlock):
 
-        logger.debug("DVARS START")
-        logger.debug("Iteration = {}", index_volume)
+        logger.debug("DVARS calculation... {}", index_volume)
+
         if index_volume == 0 or isNewDCMBlock:
-            self.DVARS = np.append(self.DVARS, 0)
+            if index_volume == 0:
+                self.DVARS = np.zeros((1,))
+            else:
+                self.DVARS = np.append(self.DVARS, 0)
         else:
             self.DVARS = np.append(self.DVARS, dvarsValue)
 
@@ -474,23 +513,25 @@ class RTQACalculation(mp.Process):
         tsRTQA = dict.fromkeys(['rMean', 'rVar', 'rSNR', 'rNoRegSNR',
                                 'meanBas', 'varBas', 'meanCond', 'varCond', 'rCNR',
                                 'excFDIndexes_1', 'excFDIndexes_2', 'excMDIndexes',
-                                'FD', 'MD', 'DVARS', 'rMSE'])
+                                'FD', 'MD', 'DVARS', 'rMSE', 'snrVol', 'cnrVol'])
 
-        tsRTQA['rMean'] = matlab.double(self.rMean.tolist())
-        tsRTQA['rVar'] = matlab.double(self.rVar.tolist())
-        tsRTQA['rSNR'] = matlab.double(self.rSNR.tolist())
-        tsRTQA['rNoRegSNR'] = matlab.double(self.rNoRegSNR.tolist())
-        tsRTQA['meanBas'] = matlab.double(self.meanBas.tolist())
-        tsRTQA['varBas'] = matlab.double(self.varBas.tolist())
-        tsRTQA['meanCond'] = matlab.double(self.meanCond.tolist())
-        tsRTQA['varCond'] = matlab.double(self.varCond.tolist())
-        tsRTQA['rCNR'] = matlab.double(self.rCNR.tolist())
+        tsRTQA['rMean'] = matlab.double(self.output["rMean"].tolist())
+        tsRTQA['rVar'] = matlab.double(self.output["rVar"].tolist())
+        tsRTQA['rSNR'] = matlab.double(self.output["rSNR"].tolist())
+        tsRTQA['rNoRegSNR'] = matlab.double(self.output["rNoRegSNR"].tolist())
+        tsRTQA['meanBas'] = matlab.double(self.output["meanBas"].tolist())
+        tsRTQA['varBas'] = matlab.double(self.output["varBas"].tolist())
+        tsRTQA['meanCond'] = matlab.double(self.output["meanCond"].tolist())
+        tsRTQA['varCond'] = matlab.double(self.output["varCond"].tolist())
+        tsRTQA['rCNR'] = matlab.double(self.output["rCNR"].tolist())
         tsRTQA['excFDIndexes_1'] = matlab.double(self.excFDIndexes_1.tolist())
         tsRTQA['excFDIndexes_2'] = matlab.double(self.excFDIndexes_2.tolist())
         tsRTQA['excMDIndexes'] = matlab.double(self.excMDIndexes.tolist())
-        tsRTQA['FD'] = matlab.double(self.FD.tolist())
-        tsRTQA['MD'] = matlab.double(self.MD.tolist())
-        tsRTQA['DVARS'] = matlab.double(self.DVARS.tolist())
-        tsRTQA['rMSE'] = matlab.double(self.rMSE.tolist())
+        tsRTQA['FD'] = matlab.double(self.output["FD"].tolist())
+        tsRTQA['MD'] = matlab.double(self.output["MD"].tolist())
+        tsRTQA['DVARS'] = matlab.double(self.output["DVARS"].tolist())
+        tsRTQA['rMSE'] = matlab.double(self.output["rMSE"].tolist())
+        tsRTQA['snrVol'] = matlab.double(self.output["snr_vol"].tolist())
+        tsRTQA['cnrVol'] = matlab.double(self.output["cnr_vol"].tolist())
 
         return tsRTQA

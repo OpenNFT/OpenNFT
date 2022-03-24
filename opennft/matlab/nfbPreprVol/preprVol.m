@@ -186,7 +186,7 @@ spm_smooth(reslVol, smReslVol, gKernel);
 if flags.isDCM && ~P.smForDCM
     % for DCM without smoothing
     if P.isRTQA
-        ROIs = evalin('base','ROIs');            
+        ROIs = evalin('base','ROIs');
         indROI = ROIs.voxelIndex;
         % on current iteration mainLoopData has previous volume
         dvarsDiff = ((reslVol(indROI) - mainLoopData.procVol(indROI)) ./ P.scaleFactorDVARS).^2;
@@ -197,13 +197,19 @@ if flags.isDCM && ~P.smForDCM
 else
     % for PSC/SVM/Resting state/DCM with smoothing
     if P.isRTQA
-        ROIs = evalin('base','ROIs');            
+        ROIs = evalin('base','ROIs');
         indROI = ROIs(end).voxelIndex;
         dvarsDiff = ((smReslVol(indROI) - mainLoopData.procVol(indROI)) ./ P.scaleFactorDVARS).^2;
         mainLoopData.dvarsValue = 100 * sqrt(mean(dvarsDiff(:)));
     end
     mainLoopData.procVol = smReslVol;
 end
+
+% assign Template
+mainLoopData.imgVolTempl = smReslVol;
+assignin('base', 'imgVolTempl', smReslVol)
+m = evalin('base', 'mmImgVolTempl');
+m.Data.imgVolTempl = smReslVol;
 
 % iGLM init
 nrVoxInVol = mainLoopData.nrVoxInVol;

@@ -951,16 +951,12 @@ class OpenNFT(QWidget):
             if n == 0:
                 offsetMCParam = np.array(self.eng.evalin('base','P.offsetMCParam'), ndmin=1)
                 self.rtqa_input["offset_mc"] = offsetMCParam
-                # self.windowRTQA.offsetMCParam = offsetMCParam
 
             if self.P['Type'] != 'DCM':
                 betaCoeff = np.array(
                     self.eng.evalin('base', 'rtQA_matlab.linRegr(:,mainLoopData.indVolNorm)'), ndmin=2)
             else:
                 betaCoeff = np.zeros((int(self.P['NrROIs']), 1))
-
-            # for i in range(int(self.P['NrROIs'])):
-            #     self.windowRTQA.linTrendCoeff[i, n] = betaCoeff[i]
 
             posSpikes = np.array(self.eng.evalin('base', 'rtQA_matlab.kalmanSpikesPos(:,mainLoopData.indVolNorm)'),
                                  ndmin=2)
@@ -983,8 +979,8 @@ class OpenNFT(QWidget):
             self.rtqa_input["no_reg_glm_ts"] = dataNoRegGLM
             self.rtqa_input["proc_ts"] = dataProc[:, n]
             self.rtqa_input["mc_ts"] = dataMC[n, :]
-            self.rtqa_input["dvars_value"] = dvarsValue
             self.rtqa_input["beta_coeff"] = betaCoeff
+            self.rtqa_input["dvars_value"] = dvarsValue
             self.rtqa_input["pos_spikes"] = posSpikes
             self.rtqa_input["neg_spikes"] = negSpikes
             self.rtqa_input["is_new_dcm_block"] = isNewDCMBlock
@@ -1446,6 +1442,7 @@ class OpenNFT(QWidget):
                 wb_roi_indexes = np.array(self.eng.evalin('base', 'ROIs(end).voxelCoord'), dtype=np.int32, ndmin=2)
                 wb_mask = np.zeros(self.rtqa_input["dim"])
                 wb_mask[wb_roi_indexes] = 1
+                self.rtqa_input["wb_roi_indexes"] = wb_roi_indexes
                 self.rtqa_input["wb_mask"] = wb_mask.astype(np.int32)
                 self.rtqa_input["muster_info"] = self.musterInfo
                 self.rtqa_input["xrange"] = self.P['NrOfVolumes'] - self.P['nrSkipVol']
@@ -1471,6 +1468,7 @@ class OpenNFT(QWidget):
                 self.rtqa_input["is_new_dcm_block"] = True
                 self.rtqa_input["iteration"] = 0
                 self.rtqa_input["which_vol"] = []
+                self.rtqa_input["dvars_scale"] = self.P["scaleFactorDVARS"]
                 self.rtqa_input["rtqa_vol_ready"] = False
 
                 self.rtqa_output = multiprocessing.Manager().dict()
@@ -1654,6 +1652,7 @@ class OpenNFT(QWidget):
         self.rtqa_input["is_new_dcm_block"] = True
         self.rtqa_input["iteration"] = 0
         self.rtqa_input["which_vol"] = []
+        self.rtqa_input["dvars_scale"] = self.P["scaleFactorDVARS"]
         self.rtqa_input["rtqa_vol_ready"] = False
 
         self.rtqa_output = multiprocessing.Manager().dict()

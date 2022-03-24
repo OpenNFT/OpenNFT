@@ -465,7 +465,8 @@ class RTQAWindow(QtWidgets.QWidget):
 
                 # Means plot
                 plotitem = self.meanPlot.getPlotItem()
-                data = np.append(self.output["rMean"][checkedBoxesInd, 0:n], self.output["meanBas"][checkedBoxesInd, 0:n], axis=0)
+                data = np.append(self.output["rMean"][checkedBoxesInd, 0:n],
+                                 self.output["meanBas"][checkedBoxesInd, 0:n], axis=0)
                 data = np.append(data, self.output["meanCond"][checkedBoxesInd, 0:n], axis=0)
                 color = np.array(config.ROI_PLOT_COLORS)[checkedBoxesInd]
                 color = np.append(color, np.array(config.ROI_PLOT_COLORS)[checkedBoxesInd])
@@ -475,7 +476,8 @@ class RTQAWindow(QtWidgets.QWidget):
 
                 # Variances plot
                 plotitem = self.varPlot.getPlotItem()
-                data = np.append(self.output["rVar"][checkedBoxesInd, 0:n], self.output["varBas"][checkedBoxesInd, 0:n], axis=0)
+                data = np.append(self.output["rVar"][checkedBoxesInd, 0:n],
+                                 self.output["varBas"][checkedBoxesInd, 0:n], axis=0)
                 data = np.append(data, self.output["varCond"][checkedBoxesInd, 0:n], axis=0)
                 self.plotStatValues(self.init, plotitem, data, color, style)
 
@@ -729,7 +731,7 @@ class RTQAWindow(QtWidgets.QWidget):
         names.append('<br><u>Offset MC parameters</u> ')
         pens.append(config.PLOT_PEN_COLORS[6])
         for i in range(6):
-            names.append('{0:.3e}'.format(self.output["mc_offset"][0][i]))
+            names.append('{0:.3e}'.format(self.input["offset_mc"][0][i]))
             pens.append(config.PLOT_PEN_COLORS[6])
         self.makeTextValueLabel(self.mcmdValuesLabel, names, pens, lineBreak='<br>')
 
