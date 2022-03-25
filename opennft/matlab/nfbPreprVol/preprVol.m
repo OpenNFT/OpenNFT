@@ -185,23 +185,23 @@ spm_smooth(reslVol, smReslVol, gKernel);
 % DVARS calulcation and new volume assign
 if flags.isDCM && ~P.smForDCM
     % for DCM without smoothing
-    if P.isRTQA
-        ROIs = evalin('base','ROIs');
-        indROI = ROIs.voxelIndex;
-        % on current iteration mainLoopData has previous volume
-        dvarsDiff = ((reslVol(indROI) - mainLoopData.procVol(indROI)) ./ P.scaleFactorDVARS).^2;
-        mainLoopData.dvarsValue = 100 * sqrt(mean(dvarsDiff(:)));
-    end
+%    if P.isRTQA
+%        ROIs = evalin('base','ROIs');
+%        indROI = ROIs.voxelIndex;
+%        % on current iteration mainLoopData has previous volume
+%        dvarsDiff = ((reslVol(indROI) - mainLoopData.procVol(indROI)) ./ P.scaleFactorDVARS).^2;
+%        mainLoopData.dvarsValue = 100 * sqrt(mean(dvarsDiff(:)));
+%    end
     % after DVARS calculation previous volume re-assign with current
     mainLoopData.procVol = reslVol;
 else
     % for PSC/SVM/Resting state/DCM with smoothing
-    if P.isRTQA
-        ROIs = evalin('base','ROIs');
-        indROI = ROIs(end).voxelIndex;
-        dvarsDiff = ((smReslVol(indROI) - mainLoopData.procVol(indROI)) ./ P.scaleFactorDVARS).^2;
-        mainLoopData.dvarsValue = 100 * sqrt(mean(dvarsDiff(:)));
-    end
+%    if P.isRTQA
+%        ROIs = evalin('base','ROIs');
+%        indROI = ROIs(end).voxelIndex;
+%        dvarsDiff = ((smReslVol(indROI) - mainLoopData.procVol(indROI)) ./ P.scaleFactorDVARS).^2;
+%        mainLoopData.dvarsValue = 100 * sqrt(mean(dvarsDiff(:)));
+%    end
     mainLoopData.procVol = smReslVol;
 end
 
@@ -261,21 +261,21 @@ if flags.isIGLM
         statMap3D_pos = mainLoopData.statMap3D_pos; % this structure is set with 0
         statMap3D_neg = mainLoopData.statMap3D_neg; % this structure is set with 0
 
-        if ~fLockedTempl
-            % assign Template
-            mainLoopData.imgVolTempl = smReslVol;
-            assignin('base', 'imgVolTempl', smReslVol)
-            m = evalin('base', 'mmImgVolTempl');
-            m.Data.imgVolTempl = smReslVol;
-        end
+%        if ~fLockedTempl
+%            % assign Template
+%            mainLoopData.imgVolTempl = smReslVol;
+%            assignin('base', 'imgVolTempl', smReslVol)
+%            m = evalin('base', 'mmImgVolTempl');
+%            m.Data.imgVolTempl = smReslVol;
+%        end
         
     else
         %% Initialize variables
         % assign Template
-        mainLoopData.imgVolTempl = smReslVol;
-        assignin('base', 'imgVolTempl', smReslVol)
-        m = evalin('base', 'mmImgVolTempl');
-        m.Data.imgVolTempl = smReslVol;
+%        mainLoopData.imgVolTempl = smReslVol;
+%        assignin('base', 'imgVolTempl', smReslVol)
+%        m = evalin('base', 'mmImgVolTempl');
+%        m.Data.imgVolTempl = smReslVol;
         
         pVal = mainLoopData.pVal;
         tContr = mainLoopData.tContr;

@@ -45,7 +45,7 @@ class RTQAWindow(QtWidgets.QWidget):
         # Additional GUI elements connection and initialization
         groupBoxLayout = self.roiGroupBox.layout()
         for i in range(sz):
-            if i == sz-1:
+            if i == sz - 1:
                 name = 'Whole brain ROI'
             else:
                 name = 'ROI_' + str(i + 1)
@@ -333,8 +333,8 @@ class RTQAWindow(QtWidgets.QWidget):
                 self.selectedRoiLabels[i].setVisible(False)
 
         self.init = True
-        if self.input["is_stopped"] and self.input["iteration"]!=1:
-            self.plotRTQA(self.input["iteration"]+1)
+        if self.input["is_stopped"] and self.input["iteration"] != 1:
+            self.plotRTQA(self.input["iteration"] + 1)
 
     # --------------------------------------------------------------------------
     def computeMusterPlotData(self, ylim):
@@ -448,17 +448,63 @@ class RTQAWindow(QtWidgets.QWidget):
         if self.input["calc_ready"]:
 
             n = self.input["iteration"]
-
-            self.labelsUpdate()
             self.roiChecked()
             checkedBoxesInd = self.input["roi_checked"]
-            # SNR plot
-            plotitem = self.snrPlot.getPlotItem()
-            data = self.output["rSNR"][checkedBoxesInd, 0:n]
-            self.plotTs(self.init, plotitem, data, checkedBoxesInd)
+            sz = self.nrROIs
+            indexVolume = n - 1
 
-            if self.comboBox.model().item(2).isEnabled():
-                # CNR plot
+            current_menu = self.comboBox.currentIndex()
+
+            if current_menu == 0:
+
+                # SNR plot
+                plotitem = self.snrPlot.getPlotItem()
+                data = self.output["rSNR"][checkedBoxesInd, 0:n]
+                self.plotTs(self.init, plotitem, data, checkedBoxesInd)
+
+                names = ['SNR ']
+                pens = [config.PLOT_PEN_COLORS[6]]
+                for i in range(sz):
+                    if i == sz - 1:
+                        name = 'Whole brain ROI'
+                    else:
+                        name = 'ROI_' + str(i + 1)
+                    names.append(name + ': ' + '{0:.3f}'.format(float(self.output["rSNR"][i, indexVolume])))
+                    pens.append(pg.mkPen(color=config.ROI_PLOT_COLORS[i], width=1.2))
+
+                self.makeTextValueLabel(self.valuesLabel, names, pens, lineBreak='<br>')
+
+            elif current_menu == 1:
+
+                self.draw_mc_plots(self.mcrRadioButton.isChecked())
+
+                names = ['<u>FD</u> ']
+                pens = [config.PLOT_PEN_COLORS[6]]
+                names.append('Threshold 1: ' + str(int(self.output["excFD"][0])))
+                pens.append(config.PLOT_PEN_COLORS[1])
+                names.append('Threshold 2: ' + str(int(self.output["excFD"][1])))
+                pens.append(config.PLOT_PEN_COLORS[2])
+                names.append('<br><u>MD</u> ')
+                pens.append(config.PLOT_PEN_COLORS[6])
+                names.append('Threshold: ' + str(int(self.output["excMD"])))
+                pens.append(config.PLOT_PEN_COLORS[2])
+                names.append('<br><u>Mean FD</u> ')
+                pens.append(config.PLOT_PEN_COLORS[6])
+                names.append('{0:.3f}'.format(self.output["meanFD"]))
+                pens.append(config.PLOT_PEN_COLORS[6])
+                names.append('<br><u>Mean MD</u> ')
+                pens.append(config.PLOT_PEN_COLORS[6])
+                names.append('{0:.3f}'.format(self.output["meanMD"]))
+                pens.append(config.PLOT_PEN_COLORS[6])
+                names.append('<br><u>Offset MC parameters</u> ')
+                pens.append(config.PLOT_PEN_COLORS[6])
+                for i in range(6):
+                    names.append('{0:.3e}'.format(self.input["offset_mc"][0][i]))
+                    pens.append(config.PLOT_PEN_COLORS[6])
+                self.makeTextValueLabel(self.mcmdValuesLabel, names, pens, lineBreak='<br>')
+
+            elif current_menu == 2:
+
                 plotitem = self.cnrPlot.getPlotItem()
                 data = self.output["rCNR"][checkedBoxesInd, 0:n]
                 self.plotTs(self.init, plotitem, data, checkedBoxesInd)
@@ -481,34 +527,124 @@ class RTQAWindow(QtWidgets.QWidget):
                 data = np.append(data, self.output["varCond"][checkedBoxesInd, 0:n], axis=0)
                 self.plotStatValues(self.init, plotitem, data, color, style)
 
-            # Spikes plot
-            plotitem = self.spikesPlot.getPlotItem()
-            data = self.output["glmProcTimeSeries"][checkedBoxesInd, 0:n]
-            self.plotSpikes(self.init, plotitem, data, checkedBoxesInd)
+                names = ['СNR ']
+                pens = [config.PLOT_PEN_COLORS[6]]
+                for i in range(self.nrROIs):
+                    if i == sz - 1:
+                        name = 'Whole brain ROI'
+                    else:
+                        name = 'ROI_' + str(i + 1)
+                    names.append(name + ': ' + '{0:.3f}'.format(float(self.output["rCNR"][i][indexVolume - 1])))
+                    pens.append(pg.mkPen(color=config.ROI_PLOT_COLORS[i], width=1.2))
 
-            # Kalman filter MSE plot
-            plotitem = self.msePlot.getPlotItem()
-            data = self.output["rMSE"][checkedBoxesInd, 0:n]
-            self.plotTs(self.init, plotitem, data, checkedBoxesInd)
+                if self.comboBox.currentIndex() == 2:
+                    names.append('<br><br>Baseline values   --- ')
+                    pens.append(config.PLOT_PEN_COLORS[6])
+                    names.append('Condition values -··-··- ')
+                    pens.append(config.PLOT_PEN_COLORS[6])
 
-            # Linear trend coefficients plot
-            plotitem = self.trendPlot.getPlotItem()
-            data = self.output["linTrendCoeff"][checkedBoxesInd, 0:n]
-            self.plotTs(self.init, plotitem, data, checkedBoxesInd)
+                self.makeTextValueLabel(self.valuesLabel, names, pens, lineBreak='<br>')
 
-            # No regulation SNR plot
-            plotitem = self.noRegSnrPlot.getPlotItem()
-            data = self.output["rNoRegSNR"][checkedBoxesInd, 0:n]
-            self.plotTs(self.init, plotitem, data, checkedBoxesInd)
+            elif current_menu == 3:
 
-            # DVARS plot
-            plotitem = self.dvarsPlot.getPlotItem()
-            plotitem.clear()
-            plotitem.plot(y=self.output["DVARS"], pen=config.PLOT_PEN_COLORS[0], name='DVARS')
-            plotitem.plot(x=np.arange(1, self.xrange+1, dtype=np.float64), y=config.DEFAULT_DVARS_THRESHOLD * np.ones(self.xrange),
-                            pen=config.PLOT_PEN_COLORS[2], name='thr')
+                # Spikes plot
+                plotitem = self.spikesPlot.getPlotItem()
+                data = self.output["glmProcTimeSeries"][checkedBoxesInd, 0:n]
+                self.plotSpikes(self.init, plotitem, data, checkedBoxesInd)
 
-            self.draw_mc_plots(self.mcrRadioButton.isChecked())
+                # Spikes labels
+                cnt = 0
+                for i in range(sz):
+                    cnt = cnt + np.count_nonzero(self.output["posSpikes"][str(i)])
+                names = ['( Circles ) <br>Positive spikes: ' + str(int(cnt))]
+
+                cnt = 0
+                for i in range(sz):
+                    cnt = cnt + np.count_nonzero(self.output["negSpikes"][str(i)])
+                names.append('<br>( Diamonds )<br>Negative spikes: ' + str(int(cnt)))
+                pens = [config.PLOT_PEN_COLORS[6],
+                        config.PLOT_PEN_COLORS[6]]
+                self.makeTextValueLabel(self.spikesLabel, names, pens, lineBreak='<br>')
+
+            elif current_menu == 4:
+
+                # Kalman filter MSE plot
+                plotitem = self.msePlot.getPlotItem()
+                data = self.output["rMSE"][checkedBoxesInd, 0:n]
+                self.plotTs(self.init, plotitem, data, checkedBoxesInd)
+
+                # MSE label
+                names = ['MSE ']
+                pens = [config.PLOT_PEN_COLORS[6]]
+                for i in range(sz):
+                    if i == sz - 1:
+                        name = 'Whole brain ROI'
+                    else:
+                        name = 'ROI_' + str(i + 1)
+                    names.append(name + ': ' + '{0:.3f}'.format(float(self.output["rMSE"][i, indexVolume])))
+                    pens.append(pg.mkPen(color=config.ROI_PLOT_COLORS[i], width=1.2))
+
+                self.makeTextValueLabel(self.mseLabel, names, pens, lineBreak='<br>')
+
+            elif current_menu == 5:
+
+                # Linear trend coefficients plot
+                plotitem = self.trendPlot.getPlotItem()
+                data = self.output["linTrendCoeff"][checkedBoxesInd, 0:n]
+                self.plotTs(self.init, plotitem, data, checkedBoxesInd)
+
+                # Linear trend labels
+                names = ['Linear trend beta ']
+                pens = [config.PLOT_PEN_COLORS[6]]
+                for i in range(sz):
+                    if i == sz - 1:
+                        name = 'Whole brain ROI'
+                    else:
+                        name = 'ROI_' + str(i + 1)
+                    names.append(
+                        name + ': ' + '{0:.3f}'.format(float(self.output["linTrendCoeff"][i, indexVolume - 1])))
+                    pens.append(pg.mkPen(color=config.ROI_PLOT_COLORS[i], width=1.2))
+                self.makeTextValueLabel(self.trendLabel, names, pens, lineBreak='<br>')
+
+            elif current_menu == 6:
+
+                # No regulation SNR plot
+                plotitem = self.noRegSnrPlot.getPlotItem()
+                data = self.output["rNoRegSNR"][checkedBoxesInd, 0:n]
+                self.plotTs(self.init, plotitem, data, checkedBoxesInd)
+
+                # No regulation SNR label
+                names = ['no reg SNR ']
+                pens = [config.PLOT_PEN_COLORS[6]]
+                for i in range(sz):
+                    if i == sz - 1:
+                        name = 'Whole brain ROI'
+                    else:
+                        name = 'ROI_' + str(i + 1)
+                    names.append(name + ': ' + '{0:.3f}'.format(float(self.output["rNoRegSNR"][i, indexVolume])))
+                    pens.append(pg.mkPen(color=config.ROI_PLOT_COLORS[i], width=1.2))
+
+                self.makeTextValueLabel(self.noRegSnrValueLabel, names, pens, lineBreak='<br>')
+
+            elif current_menu == 7:
+
+                # DVARS plot
+                plotitem = self.dvarsPlot.getPlotItem()
+                plotitem.clear()
+                plotitem.plot(y=self.output["DVARS"], pen=config.PLOT_PEN_COLORS[0], name='DVARS')
+                plotitem.plot(x=np.arange(1, self.xrange + 1, dtype=np.float64),
+                              y=config.DEFAULT_DVARS_THRESHOLD * np.ones(self.xrange),
+                              pen=config.PLOT_PEN_COLORS[2], name='thr')
+
+                # DVARS label
+                names = ['DVARS ']
+                pens = [config.PLOT_PEN_COLORS[6]]
+                names.append('{0:.3f} '.format(float(self.output["DVARS"][-1])))
+                pens.append(config.PLOT_PEN_COLORS[6])
+                names.append('<br>Threshold : ' + str(int(self.output["excDVARS"])))
+                pens.append(config.PLOT_PEN_COLORS[6])
+
+                self.makeTextValueLabel(self.dvarsLabel, names, pens, lineBreak='<br>')
 
             self.init = False
 
@@ -637,7 +773,8 @@ class RTQAWindow(QtWidgets.QWidget):
             items.remove(m)
 
         if data.any():
-            plotitem.setYRange(np.min(self.output["glmProcTimeSeries"]) - 1, np.max(self.output["glmProcTimeSeries"]) + 1, padding=0.0)
+            plotitem.setYRange(np.min(self.output["glmProcTimeSeries"]) - 1,
+                               np.max(self.output["glmProcTimeSeries"]) + 1, padding=0.0)
 
     # --------------------------------------------------------------------------
     def draw_mc_plots(self, mdFlag):
@@ -650,151 +787,25 @@ class RTQAWindow(QtWidgets.QWidget):
             self.fdPlot.clear()
 
             for i in range(0, 3):
-                self.translatPlot.plot(x=x, y=self.output["mc_params"][:, i], pen=config.PLOT_PEN_COLORS[i], name=self.motion_names[i])
+                self.translatPlot.plot(x=x, y=self.output["mc_params"][:, i], pen=config.PLOT_PEN_COLORS[i],
+                                       name=self.motion_names[i])
 
             for i in range(3, 6):
-                self.rotatPlot.plot(x=x, y=self.output["mc_params"][:, i]*50, pen=config.PLOT_PEN_COLORS[i], name=self.motion_names[i])
+                self.rotatPlot.plot(x=x, y=self.output["mc_params"][:, i] * 50, pen=config.PLOT_PEN_COLORS[i],
+                                    name=self.motion_names[i])
 
-            x = np.arange(1, self.output["FD"].shape[0]+1, dtype=np.float64)
+            x = np.arange(1, self.output["FD"].shape[0] + 1, dtype=np.float64)
 
             if mdFlag:
                 self.fdPlot.setLabel('left', "MD [mm]")
                 self.fdPlot.plot(x=x, y=self.output["MD"], pen=config.PLOT_PEN_COLORS[0], name='MD')
-                self.fdPlot.plot(x=np.arange(0, self.xrange, dtype=np.float64), y=self.threshold[0] * np.ones(self.xrange),
-                                pen=config.PLOT_PEN_COLORS[2], name='thr')
+                self.fdPlot.plot(x=np.arange(0, self.xrange, dtype=np.float64),
+                                 y=self.threshold[0] * np.ones(self.xrange),
+                                 pen=config.PLOT_PEN_COLORS[2], name='thr')
             else:
                 self.fdPlot.setLabel('left', "FD [mm]")
                 self.fdPlot.plot(x=x, y=self.output["FD"], pen=config.PLOT_PEN_COLORS[0], name='FD')
                 thresholds = self.threshold[1:3]
                 for i, t in enumerate(thresholds):
                     self.fdPlot.plot(x=np.arange(0, self.xrange, dtype=np.float64), y=float(t) * np.ones(self.xrange),
-                                    pen=config.PLOT_PEN_COLORS[i + 1], name='thr' + str(i))
-
-    # --------------------------------------------------------------------------
-    def labelsUpdate(self):
-
-        sz = self.nrROIs
-        indexVolume = self.input["iteration"]-1
-
-        # SNR
-        if self.comboBox.currentIndex() == 0:
-            names = ['SNR ']
-            pens = [config.PLOT_PEN_COLORS[6]]
-            for i in range(sz):
-                if i == sz - 1:
-                    name = 'Whole brain ROI'
-                else:
-                    name = 'ROI_' + str(i + 1)
-                names.append(name + ': ' + '{0:.3f}'.format(float(self.output["rSNR"][i, indexVolume])))
-                pens.append(pg.mkPen(color=config.ROI_PLOT_COLORS[i], width=1.2))
-
-            self.makeTextValueLabel(self.valuesLabel, names, pens, lineBreak='<br>')
-        elif self.comboBox.currentIndex() == 2:
-            # CNR
-            names = ['СNR ']
-            pens = [config.PLOT_PEN_COLORS[6]]
-            for i in range(self.nrROIs):
-                if i == sz - 1:
-                    name = 'Whole brain ROI'
-                else:
-                    name = 'ROI_' + str(i + 1)
-                names.append(name + ': ' + '{0:.3f}'.format(float(self.output["rCNR"][i][indexVolume - 1])))
-                pens.append(pg.mkPen(color=config.ROI_PLOT_COLORS[i], width=1.2))
-
-            if self.comboBox.currentIndex() == 2:
-                names.append('<br><br>Baseline values   --- ')
-                pens.append(config.PLOT_PEN_COLORS[6])
-                names.append('Condition values -··-··- ')
-                pens.append(config.PLOT_PEN_COLORS[6])
-
-            self.makeTextValueLabel(self.valuesLabel, names, pens, lineBreak='<br>')
-
-        # MCMD
-        names = ['<u>FD</u> ']
-        pens = [config.PLOT_PEN_COLORS[6]]
-        names.append('Threshold 1: ' + str(int(self.output["excFD"][0])))
-        pens.append(config.PLOT_PEN_COLORS[1])
-        names.append('Threshold 2: ' + str(int(self.output["excFD"][1])))
-        pens.append(config.PLOT_PEN_COLORS[2])
-        names.append('<br><u>MD</u> ')
-        pens.append(config.PLOT_PEN_COLORS[6])
-        names.append('Threshold: ' + str(int(self.output["excMD"])))
-        pens.append(config.PLOT_PEN_COLORS[2])
-        names.append('<br><u>Mean FD</u> ')
-        pens.append(config.PLOT_PEN_COLORS[6])
-        names.append('{0:.3f}'.format(self.output["meanFD"]))
-        pens.append(config.PLOT_PEN_COLORS[6])
-        names.append('<br><u>Mean MD</u> ')
-        pens.append(config.PLOT_PEN_COLORS[6])
-        names.append('{0:.3f}'.format(self.output["meanMD"]))
-        pens.append(config.PLOT_PEN_COLORS[6])
-        names.append('<br><u>Offset MC parameters</u> ')
-        pens.append(config.PLOT_PEN_COLORS[6])
-        for i in range(6):
-            names.append('{0:.3e}'.format(self.input["offset_mc"][0][i]))
-            pens.append(config.PLOT_PEN_COLORS[6])
-        self.makeTextValueLabel(self.mcmdValuesLabel, names, pens, lineBreak='<br>')
-
-        # Spikes
-        cnt = 0
-        for i in range(sz):
-            cnt = cnt + np.count_nonzero(self.output["posSpikes"][str(i)])
-        names = ['( Circles ) <br>Positive spikes: ' + str(int(cnt))]
-
-        cnt = 0
-        for i in range(sz):
-            cnt = cnt + np.count_nonzero(self.output["negSpikes"][str(i)])
-        names.append('<br>( Diamonds )<br>Negative spikes: ' + str(int(cnt)))
-        pens = [config.PLOT_PEN_COLORS[6],
-                config.PLOT_PEN_COLORS[6]]
-        self.makeTextValueLabel(self.spikesLabel, names, pens, lineBreak='<br>')
-
-        # Linear trend
-        names = ['Linear trend beta ']
-        pens = [config.PLOT_PEN_COLORS[6]]
-        for i in range(sz):
-            if i == sz - 1:
-                name = 'Whole brain ROI'
-            else:
-                name = 'ROI_' + str(i + 1)
-            names.append(name + ': ' + '{0:.3f}'.format(float(self.output["linTrendCoeff"][i, indexVolume - 1])))
-            pens.append(pg.mkPen(color=config.ROI_PLOT_COLORS[i], width=1.2))
-        self.makeTextValueLabel(self.trendLabel, names, pens, lineBreak='<br>')
-
-        # MSE
-        names = ['MSE ']
-        pens = [config.PLOT_PEN_COLORS[6]]
-        for i in range(sz):
-            if i == sz - 1:
-                name = 'Whole brain ROI'
-            else:
-                name = 'ROI_' + str(i + 1)
-            names.append(name + ': ' + '{0:.3f}'.format(float(self.output["rMSE"][i, indexVolume])))
-            pens.append(pg.mkPen(color=config.ROI_PLOT_COLORS[i], width=1.2))
-
-        self.makeTextValueLabel(self.mseLabel, names, pens, lineBreak='<br>')
-
-        # no reg SNR
-        names = ['no reg SNR ']
-        pens = [config.PLOT_PEN_COLORS[6]]
-        for i in range(sz):
-            if i == sz - 1:
-                name = 'Whole brain ROI'
-            else:
-                name = 'ROI_' + str(i + 1)
-            names.append(name + ': ' + '{0:.3f}'.format(float(self.output["rNoRegSNR"][i, indexVolume])))
-            pens.append(pg.mkPen(color=config.ROI_PLOT_COLORS[i], width=1.2))
-
-        self.makeTextValueLabel(self.noRegSnrValueLabel, names, pens, lineBreak='<br>')
-
-        # DVARS
-        names = ['DVARS ']
-        pens = [config.PLOT_PEN_COLORS[6]]
-        names.append('{0:.3f} '.format(float(self.output["DVARS"][-1])))
-        pens.append(config.PLOT_PEN_COLORS[6])
-        names.append('<br>Threshold : ' + str(int(self.output["excDVARS"])))
-        pens.append(config.PLOT_PEN_COLORS[6])
-
-        self.makeTextValueLabel(self.dvarsLabel, names, pens, lineBreak='<br>')
-
-
+                                     pen=config.PLOT_PEN_COLORS[i + 1], name='thr' + str(i))

@@ -167,7 +167,7 @@ class RTQACalculation(mp.Process):
         for i in range(self.nrROIs):
             self.linTrendCoeff[i][iteration] = self.input["beta_coeff"][i][-1]
 
-        volume = np.memmap(self.input["volume"], dtype=np.float64, shape=self.input["dim"], order="F")
+        volume = np.memmap(self.input["volume"], dtype=np.float64, order="F")
 
         if self.input["is_new_dcm_block"]:
             self.blockIter = 0
@@ -191,20 +191,22 @@ class RTQACalculation(mp.Process):
         if iteration > self.first_snr_vol:
             self.calculate_rtqa_volume(volume, iteration)
         self.calculate_rtqa_ts(iteration)
-        # self.calculateDVARS(volume[self.input["wb_roi_indexes"]], iteration, self.input["is_new_dcm_block"])
+        self.calculateDVARS(volume[self.input["wb_roi_indexes"]], iteration, self.input["is_new_dcm_block"])
         self.calc_mc()
 
     # --------------------------------------------------------------------------
     def calculate_rtqa_volume(self, volume, index_volume):
 
-        self.output["snr_vol"], self.volume_data["mean_vol"], \
+        output_vol, self.volume_data["mean_vol"], \
         self.volume_data["m2_vol"], self.volume_data["var_vol"] = self.snr(self.volume_data["mean_vol"],
                                                                            self.volume_data["m2_vol"],
                                                                            volume, self.volume_data["iter"])
         self.volume_data["iter"] += 1
+        output_vol[self.input["wb_mask"]] = 0
+        self.output["snr_vol"] = output_vol.reshape(self.input["dim"], order="F")
 
         if not self.input["is_auto_rtqa"]:
-            self.output["cnr_vol"], self.volume_data["mean_bas_vol"], self.volume_data["m2_bas_vol"], \
+            output_vol, self.volume_data["mean_bas_vol"], self.volume_data["m2_bas_vol"], \
             self.volume_data["var_bas_vol"], self.volume_data["mean_cond_vol"], self.volume_data["m2_cond_vol"], \
             self.volume_data["var_cond_vol"] = self.cnr(self.volume_data["mean_bas_vol"],
                                                         self.volume_data["m2_bas_vol"],
@@ -213,6 +215,10 @@ class RTQACalculation(mp.Process):
                                                         self.volume_data["m2_cond_vol"],
                                                         self.volume_data["var_cond_vol"],
                                                         volume, self.volume_data["iter_bas"], self.volume_data["iter_cond"], index_volume)
+
+            output_vol[self.input["wb_mask"]] = 0
+            self.output["cnr_vol"] = output_vol.reshape(self.input["dim"], order="F")
+
             if index_volume in self.indBas:
                 self.volume_data["iter_bas"] += 1
             if index_volume in self.indCond:
@@ -268,7 +274,7 @@ class RTQACalculation(mp.Process):
         data_neg_spikes = self.input["neg_spikes"]
 
         self.calculateSpikes(data_glm, index_volume, data_pos_spikes, data_neg_spikes)
-        self.calculateDVARS(self.input["dvars_value"], index_volume, self.input["is_new_dcm_block"])
+        # self.calculateDVARS(self.input["dvars_value"], index_volume, self.input["is_new_dcm_block"])
         self.calculateMSE(index_volume, data_glm, data_proc)
 
     # --------------------------------------------------------------------------
@@ -468,42 +474,38 @@ class RTQACalculation(mp.Process):
             self.rMSE[i, indexVolume] = (n / (n + 1)) * self.rMSE[i, indexVolume - 1] + (
                         (inputSignal[i] - outputSignal[i]) ** 2) / (n + 1)
 
-    # # --------------------------------------------------------------------------
-    # def calculateDVARS(self, volume, index_volume, isNewDCMBlock):
-    #
-    #     logger.debug("DVARS iteration: {}", index_volume)
-    #
-    #     if self.prevVol.size == 0:
-    #         dvars_diff = (volume / self.input["dvars_scale"]) ** 2
-    #     else:
-    #         dvars_diff = ((self.prevVol - volume) / self.input["dvars_scale"]) ** 2
-    #     dvars_value = 100 * (np.mean(dvars_diff, axis=None)) ** .5
-    #
-    #     self.prevVol = volume
-    #
-    #     if index_volume == 0 or isNewDCMBlock:
-    #         self.DVARS = np.append(self.DVARS, 0)
-    #     else:
-    #         self.DVARS = np.append(self.DVARS, dvars_value)
-    #
-    #     if self.DVARS[-1] > config.DEFAULT_DVARS_THRESHOLD:
-    #         self.excDVARS = self.excDVARS + 1
-
     # --------------------------------------------------------------------------
-    def calculateDVARS(self, dvarsValue, index_volume, isNewDCMBlock):
+    def calculateDVARS(self, volume, index_volume, isNewDCMBlock):
 
-        logger.debug("DVARS calculation... {}", index_volume)
+        if self.prevVol.size == 0:
+            dvars_diff = (volume / self.input["dvars_scale"]) ** 2
+        else:
+            dvars_diff = ((self.prevVol - volume) / self.input["dvars_scale"]) ** 2
+        dvars_value = 100 * (np.mean(dvars_diff, axis=None)) ** .5
+
+        self.prevVol = volume
 
         if index_volume == 0 or isNewDCMBlock:
-            if index_volume == 0:
-                self.DVARS = np.zeros((1,))
-            else:
-                self.DVARS = np.append(self.DVARS, 0)
+            self.DVARS = np.append(self.DVARS, 0)
         else:
-            self.DVARS = np.append(self.DVARS, dvarsValue)
+            self.DVARS = np.append(self.DVARS, dvars_value)
 
         if self.DVARS[-1] > config.DEFAULT_DVARS_THRESHOLD:
             self.excDVARS = self.excDVARS + 1
+
+    # # --------------------------------------------------------------------------
+    # def calculateDVARS(self, dvarsValue, index_volume, isNewDCMBlock):
+    #
+    #     if index_volume == 0 or isNewDCMBlock:
+    #         if index_volume == 0:
+    #             self.DVARS = np.zeros((1,))
+    #         else:
+    #             self.DVARS = np.append(self.DVARS, 0)
+    #     else:
+    #         self.DVARS = np.append(self.DVARS, dvarsValue)
+    #
+    #     if self.DVARS[-1] > config.DEFAULT_DVARS_THRESHOLD:
+    #         self.excDVARS = self.excDVARS + 1
 
     # --------------------------------------------------------------------------
     def dataPacking(self):

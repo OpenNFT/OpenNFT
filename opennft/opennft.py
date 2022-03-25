@@ -944,7 +944,6 @@ class OpenNFT(QWidget):
             dataGLM = np.array(self.eng.evalin('base', 'mainLoopData.glmProcTimeSeries(:,end)'), ndmin=2)
             dataProc = np.array(self.outputSamples['kalmanProcTimeSeries'], ndmin=2)
             dataMC = np.array(self.outputSamples['motCorrParam'], ndmin=2)
-            dvarsValue = self.eng.evalin('base', 'mainLoopData.dvarsValue')
             n = len(dataRealRaw[0, :]) - 1
             dataRaw = dataRealRaw[:, n]
 
@@ -980,14 +979,14 @@ class OpenNFT(QWidget):
             self.rtqa_input["proc_ts"] = dataProc[:, n]
             self.rtqa_input["mc_ts"] = dataMC[n, :]
             self.rtqa_input["beta_coeff"] = betaCoeff
-            self.rtqa_input["dvars_value"] = dvarsValue
             self.rtqa_input["pos_spikes"] = posSpikes
             self.rtqa_input["neg_spikes"] = negSpikes
             self.rtqa_input["is_new_dcm_block"] = isNewDCMBlock
             self.rtqa_input["iteration"] = n
             self.rtqa_input["roi_checked"] = self.selectedRoi
             self.rtqa_input["data_ready"] = True
-            self.windowRTQA.plotRTQA()
+            if self.windowRTQA.isVisible():
+                self.windowRTQA.plotRTQA()
             self.rtqa_input["calc_ready"] = False
 
             # self.windowRTQA.calculateSNR(dataRaw, dataNoRegGLM, n, isNewDCMBlock)
@@ -1439,11 +1438,11 @@ class OpenNFT(QWidget):
                 self.rtqa_input = multiprocessing.Manager().dict()
                 self.rtqa_input["nr_rois"] = self.P["NrROIs"]
                 self.rtqa_input["dim"] = tuple([self.P['MatrixSizeX'], self.P['MatrixSizeY'], self.P['NrOfSlices']])
-                wb_roi_indexes = np.array(self.eng.evalin('base', 'ROIs(end).voxelCoord'), dtype=np.int32, ndmin=2)
-                wb_mask = np.zeros(self.rtqa_input["dim"])
-                wb_mask[wb_roi_indexes] = 1
-                self.rtqa_input["wb_roi_indexes"] = wb_roi_indexes
-                self.rtqa_input["wb_mask"] = wb_mask.astype(np.int32)
+                self.rtqa_input["wb_roi_indexes"] = np.array(self.eng.evalin('base', 'ROIs(end).voxelIndex'),
+                                                             dtype=np.int32, ndmin=2)
+                wb_mask = np.ones((self.P['MatrixSizeX']*self.P['MatrixSizeY']*self.P['NrOfSlices'],))
+                wb_mask[self.rtqa_input["wb_roi_indexes"]] = 0
+                self.rtqa_input["wb_mask"] = wb_mask.astype(bool)
                 self.rtqa_input["muster_info"] = self.musterInfo
                 self.rtqa_input["xrange"] = self.P['NrOfVolumes'] - self.P['nrSkipVol']
                 self.rtqa_input["is_auto_rtqa"] = self.P["isAutoRTQA"]
@@ -1460,7 +1459,6 @@ class OpenNFT(QWidget):
                 self.rtqa_input["no_reg_glm_ts"] = []
                 self.rtqa_input["proc_ts"] = []
                 self.rtqa_input["mc_ts"] = []
-                self.rtqa_input["dvars_value"] = []
                 self.rtqa_input["offset_mc"] = []
                 self.rtqa_input["beta_coeff"] = []
                 self.rtqa_input["pos_spikes"] = []
@@ -1624,10 +1622,8 @@ class OpenNFT(QWidget):
         self.rtqa_input = multiprocessing.Manager().dict()
         self.rtqa_input["nr_rois"] = self.P["NrROIs"]
         self.rtqa_input["dim"] = tuple([self.P['MatrixSizeX'], self.P['MatrixSizeY'], self.P['NrOfSlices']])
-        wb_roi_indexes = np.array(self.eng.evalin('base', 'ROIs(end).voxelCoord'), dtype=np.int32, ndmin=2)
-        wb_mask = np.zeros(self.rtqa_input["dim"])
-        wb_mask[wb_roi_indexes] = 1
-        self.rtqa_input["wb_mask"] = wb_mask
+        self.rtqa_input["wb_roi_indexes"] = np.array(self.eng.evalin('base', 'ROIs(end).voxelIndex'),
+                                                     dtype=np.int32, ndmin=2)
         self.rtqa_input["muster_info"] = self.musterInfo
         self.rtqa_input["xrange"] = self.P['NrOfVolumes'] - self.P['nrSkipVol']
         self.rtqa_input["is_auto_rtqa"] = self.P["isAutoRTQA"]
@@ -1644,7 +1640,6 @@ class OpenNFT(QWidget):
         self.rtqa_input["no_reg_glm_ts"] = []
         self.rtqa_input["proc_ts"] = []
         self.rtqa_input["mc_ts"] = []
-        self.rtqa_input["dvars_value"] = []
         self.rtqa_input["offset_mc"] = []
         self.rtqa_input["beta_coeff"] = []
         self.rtqa_input["pos_spikes"] = []
