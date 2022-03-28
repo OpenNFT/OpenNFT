@@ -1621,8 +1621,9 @@ class OpenNFT(QWidget):
         self.rtqa_input["xrange"] = self.P['NrOfVolumes'] - self.P['nrSkipVol']
         self.rtqa_input["is_auto_rtqa"] = self.P["isAutoRTQA"]
         self.rtqa_input["roi_checked"] = self.selectedRoi
-        self.rtqa_input["ind_bas"] = np.array(self.P["inds"][0])
-        self.rtqa_input["ind_cond"] = np.array(self.P["inds"][1])
+        if not config.AUTO_RTQA:
+            self.rtqa_input["ind_bas"] = np.array(self.P["inds"][0])
+            self.rtqa_input["ind_cond"] = np.array(self.P["inds"][1])
         self.rtqa_input["volume"] = self.P["memMapFile"]
         self.rtqa_input["is_stopped"] = False
         self.rtqa_input["data_ready"] = False
@@ -1727,7 +1728,7 @@ class OpenNFT(QWidget):
         self.orth_view_input["ROI_mats"] = ROI_mats
         self.orth_view_input["cursor_pus"] = []
         self.orth_view_input["flags_planes"] = []
-        self.orth_view_input["bg_type"] = 'bgEPI'
+        self.orth_view_input["bg_type"] = "bgEPI"
         self.orth_view_input["is_rtqa"] = False
         self.orth_view_input["is_neg"] = self.negMapCheckBox.isChecked()
         self.orth_view_input["is_ROI"] = config.USE_ROI
@@ -1736,6 +1737,10 @@ class OpenNFT(QWidget):
         else:
             self.orth_view_input["anat_volume"] = self.P['StructBgFile']
         self.orth_view_input["epi_volume"] = self.P['MCTempl']
+        if config.AUTO_RTQA and not config.USE_EPI_TEMPLATE:
+            self.orth_view_input["epi_volume_type"] = "dcm"
+        else:
+            self.orth_view_input["epi_volume_type"] = "nii"
         self.orth_view_input["rtQA_volume"] = []
         self.orth_view_input["stat_volume"] = str(self.eng.evalin('base', 'P.memMapFile')).replace('shared', 'statVol')
         self.orth_view_input["mat"] = np.array(self.eng.evalin('base', 'mainLoopData.matTemplMotCorr'))

@@ -41,6 +41,7 @@ class RTQAWindow(QtWidgets.QWidget):
             self.computeMusterPlotData(config.MUSTER_Y_LIMITS)
 
         xrange = rtqa_calc.xrange
+        self.xrange = xrange
 
         # Additional GUI elements connection and initialization
         groupBoxLayout = self.roiGroupBox.layout()
@@ -199,7 +200,6 @@ class RTQAWindow(QtWidgets.QWidget):
         self.makeTextValueLabel(self.fdLabel, names, pens)
 
         self.threshold = config.DEFAULT_FD_THRESHOLDS
-        self.xrange = xrange
         self.roiChecked()
         self.comboBox.currentIndexChanged.connect(self.onComboboxChanged)
         self.volumeCheckBox.stateChanged.connect(self.onShowRtqaVol)
