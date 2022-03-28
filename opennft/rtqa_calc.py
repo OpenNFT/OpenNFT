@@ -124,17 +124,15 @@ class RTQACalculation(mp.Process):
     # --------------------------------------------------------------------------
     def run(self):
 
+        np.seterr(divide='ignore', invalid='ignore')
+
         while True:
 
             if self.input["data_ready"]:
-                logger.debug("Calculating iteration {}...", self.input["iteration"])
-
                 self.calculate_rtqa()
 
                 self.input["data_ready"] = False
                 self.input["calc_ready"] = True
-
-                logger.debug("Calculating iteration {} is done", self.input["iteration"])
 
                 self.output["rSNR"] = self.rSNR
                 self.output["rCNR"] = self.rCNR
@@ -232,7 +230,6 @@ class RTQACalculation(mp.Process):
         for roi in range(self.nrROIs):
 
             data = self.input["raw_ts"][roi]
-            data_noreg = self.input["no_reg_glm_ts"][roi]
 
             # AR(1) was not applied.
             self.rSNR[roi, index_volume], \
@@ -244,6 +241,7 @@ class RTQACalculation(mp.Process):
 
             # GLM regressors were estimated for time-series with AR(1) applied
             if self.input["no_reg_glm_ts"].any():
+                data_noreg = self.input["no_reg_glm_ts"][roi]
                 self.rNoRegSNR[roi, index_volume], self.rNoRegMean[roi, index_volume], \
                 self.noRegM2[roi], \
                 self.rNoRegVar[roi, index_volume] = self.snr(self.rNoRegMean[roi, index_volume - 1],
@@ -274,7 +272,6 @@ class RTQACalculation(mp.Process):
         data_neg_spikes = self.input["neg_spikes"]
 
         self.calculateSpikes(data_glm, index_volume, data_pos_spikes, data_neg_spikes)
-        # self.calculateDVARS(self.input["dvars_value"], index_volume, self.input["is_new_dcm_block"])
         self.calculateMSE(index_volume, data_glm, data_proc)
 
     # --------------------------------------------------------------------------
@@ -285,7 +282,7 @@ class RTQACalculation(mp.Process):
         :param m2: ptrvious squared mean difference of input data
         :param data: input data
         :param blockIter: iteration number
-        :return: calculated SNR are written in RTQA class
+        :return: calculated rSNR, rMean, rM2 and rVariance
         """
 
         if blockIter:
@@ -317,7 +314,7 @@ class RTQACalculation(mp.Process):
         :param data: new value of raw time-series
         :param indexVolume: current volume index
         :param isNewDCMBlock: flag of new dcm block
-        :return: calculated CNR are written in RTQA class
+        :return: calculated rCNR, rMeans, rM2s and rVariances
         """
 
         if indexVolume in self.indBas:
@@ -492,20 +489,6 @@ class RTQACalculation(mp.Process):
 
         if self.DVARS[-1] > config.DEFAULT_DVARS_THRESHOLD:
             self.excDVARS = self.excDVARS + 1
-
-    # # --------------------------------------------------------------------------
-    # def calculateDVARS(self, dvarsValue, index_volume, isNewDCMBlock):
-    #
-    #     if index_volume == 0 or isNewDCMBlock:
-    #         if index_volume == 0:
-    #             self.DVARS = np.zeros((1,))
-    #         else:
-    #             self.DVARS = np.append(self.DVARS, 0)
-    #     else:
-    #         self.DVARS = np.append(self.DVARS, dvarsValue)
-    #
-    #     if self.DVARS[-1] > config.DEFAULT_DVARS_THRESHOLD:
-    #         self.excDVARS = self.excDVARS + 1
 
     # --------------------------------------------------------------------------
     def dataPacking(self):

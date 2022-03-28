@@ -277,6 +277,9 @@ class RTQAWindow(QtWidgets.QWidget):
         else:
             self.roiGroupBox.setVisible(True)
 
+        if self.input["is_stopped"] and self.input["iteration"] != 1:
+            self.plotRTQA()
+
     # --------------------------------------------------------------------------
     def onRadioButtonStateChanged(self):
         """ FD and MD mode change. Mode changing switch plots and plot title
@@ -333,8 +336,6 @@ class RTQAWindow(QtWidgets.QWidget):
                 self.selectedRoiLabels[i].setVisible(False)
 
         self.init = True
-        if self.input["is_stopped"] and self.input["iteration"] != 1:
-            self.plotRTQA(self.input["iteration"] + 1)
 
     # --------------------------------------------------------------------------
     def computeMusterPlotData(self, ylim):

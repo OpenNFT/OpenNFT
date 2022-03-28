@@ -989,16 +989,6 @@ class OpenNFT(QWidget):
                 self.windowRTQA.plotRTQA()
             self.rtqa_input["calc_ready"] = False
 
-            # self.windowRTQA.calculateSNR(dataRaw, dataNoRegGLM, n, isNewDCMBlock)
-            # if not self.P['isAutoRTQA']:
-            #     self.windowRTQA.calculateCNR(dataRaw, n, isNewDCMBlock)
-            # self.windowRTQA.calculateSpikes(dataGLM, n, posSpikes, negSpikes)
-            # self.windowRTQA.calculateMSE(n, dataGLM, dataProc[:, n])
-            # self.windowRTQA.calculateDVARS(dvarsValue, isNewDCMBlock)
-            #
-            # self.windowRTQA.plotRTQA(n + 1)
-            # self.windowRTQA.plotDisplacements(dataMC[n, :], isNewDCMBlock)
-
         if self.imageViewMode == ImageViewMode.mosaic:
             with utils.timeit('Display mosaic image:'):
                 self.displayMosaicImage()
@@ -1624,6 +1614,9 @@ class OpenNFT(QWidget):
         self.rtqa_input["dim"] = tuple([self.P['MatrixSizeX'], self.P['MatrixSizeY'], self.P['NrOfSlices']])
         self.rtqa_input["wb_roi_indexes"] = np.array(self.eng.evalin('base', 'ROIs(end).voxelIndex'),
                                                      dtype=np.int32, ndmin=2)
+        wb_mask = np.ones((self.P['MatrixSizeX'] * self.P['MatrixSizeY'] * self.P['NrOfSlices'],))
+        wb_mask[self.rtqa_input["wb_roi_indexes"]] = 0
+        self.rtqa_input["wb_mask"] = wb_mask.astype(bool)
         self.rtqa_input["muster_info"] = self.musterInfo
         self.rtqa_input["xrange"] = self.P['NrOfVolumes'] - self.P['nrSkipVol']
         self.rtqa_input["is_auto_rtqa"] = self.P["isAutoRTQA"]
@@ -1652,7 +1645,7 @@ class OpenNFT(QWidget):
 
         self.rtqa_output = multiprocessing.Manager().dict()
         self.rtqa_output["snr_vol"] = np.zeros(self.rtqa_input["dim"])
-        self.rtqa_output["cnr_vol"] = []
+        self.rtqa_output["cnr_vol"] = np.zeros(self.rtqa_input["dim"])
         self.rtqa_output["show_vol"] = False
         self.rtqa_output["rSNR"] = []
         self.rtqa_output["rCNR"] = []
@@ -1687,17 +1680,11 @@ class OpenNFT(QWidget):
         self.windowRTQA = rtqa_gui.RTQAWindow(self.calc_rtqa, self.rtqa_input, self.rtqa_output)
         self.calc_rtqa.start()
 
-        # self.windowRTQA = rtqa.RTQAWindow(parent=self)
-        # self.windowRTQA.volumeCheckBox.stateChanged.connect(self.onShowRtqaVol)
-        # self.windowRTQA.volumeCheckBox.stateChanged.connect(self.onChangeNegMapPolicy)
-        # self.windowRTQA.volumeCheckBox.stateChanged.connect(self.onInteractWithMapImage)
-        # self.windowRTQA.volumeCheckBox.toggled.connect(self.updateOrthViewAsync)
-        # self.windowRTQA.comboBox.currentIndexChanged.connect(self.onModeChanged)
-        # self.eng.assignin('base', 'rtQAMode', self.windowRTQA.currentMode, nargout=0)
-        # self.eng.assignin('base', 'isShowRtqaVol', self.windowRTQA.volumeCheckBox.isChecked(), nargout=0)
-        #
-        # self.windowRTQA.roiChecked(self.selectedRoi)
-        # self.windowRTQA.isStopped = False
+        self.windowRTQA.volumeCheckBox.stateChanged.connect(self.onShowRtqaVol)
+        self.windowRTQA.volumeCheckBox.stateChanged.connect(self.onChangeNegMapPolicy)
+        self.windowRTQA.volumeCheckBox.stateChanged.connect(self.onInteractWithMapImage)
+        self.windowRTQA.volumeCheckBox.toggled.connect(self.updateOrthViewAsync)
+        self.windowRTQA.comboBox.currentIndexChanged.connect(self.onModeChanged)
 
         self.autoRTQASetup = True
         self.onChangeNegMapPolicy()
@@ -1872,6 +1859,8 @@ class OpenNFT(QWidget):
     # --------------------------------------------------------------------------
     def rtQA(self):
         self.windowRTQA.show()
+        if self.isStopped:
+            self.windowRTQA.plotRTQA()
 
     # --------------------------------------------------------------------------
     def onShowRtqaVol(self):
@@ -1903,10 +1892,10 @@ class OpenNFT(QWidget):
         self.selectedRoi = np.where(list(self.roiDict.values()))[0]
         if self.windowRTQA:
             self.rtqa_input["roi_checked"] = self.selectedRoi
-            self.windowRTQA.roiChecked()
 
         self.drawRoiPlots(True)
         if self.isStopped:
+            self.windowRTQA.plotRTQA()
             self.updateOrthViewAsync()
 
     # --------------------------------------------------------------------------
