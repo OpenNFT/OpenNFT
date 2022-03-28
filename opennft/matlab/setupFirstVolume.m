@@ -81,12 +81,6 @@ statVol = zeros(dimVol);
 initMemmap(P.memMapFile, 'statVol', zeros(nrVoxInVol,2), 'double', ...
     'mmStatVol', {'double', size(statVol), 'posStatVol'; 'double', size(statVol), 'negStatVol'});
 
-if P.isRTQA
-    rtqaVol = zeros(dimVol);
-    initMemmap(P.memMapFile, 'RTQAVol', zeros(nrVoxInVol,1), 'double', ...
-        'mmrtQAVol', {'double', size(rtqaVol), 'rtQAVol'});
-end
-
 %% transfer background mosaic to Python
 imgVolTempl = mainLoopData.imgVolTempl;
 assignin('base', 'imgVolTempl', imgVolTempl);

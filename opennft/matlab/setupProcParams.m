@@ -349,30 +349,12 @@ if P.isRTQA
     rtQA_matlab.tGlmProcTimeSeries.pos = zeros(P.NrROIs,duration);
     rtQA_matlab.tGlmProcTimeSeries.neg = zeros(P.NrROIs,duration);
 
-    rtQA_matlab.snrData.snrVol = [];
-    rtQA_matlab.snrData.meanSmoothed = [];
-    rtQA_matlab.snrData.m2Smoothed = [];
-    rtQA_matlab.snrData.iteration = 0;
-
     ROI.betaRegr = zeros(duration, P.nrBasFct+nrRegrToCorrect);
     ROI.Bn = zeros(duration, P.nrBasFct+nrBasFctRegr);
     ROI.tn.pos = zeros(duration, 1);
     ROI.tn.neg = zeros(duration, 1);
-    
-    rtQA_matlab.ROI(1:P.NrROIs) = ROI;
-    rtQA_matlab.linRegr = zeros(P.NrROIs,duration);
 
     if ~P.isAutoRTQA
-        rtQA_matlab.cnrData.cnrVol = [];
-
-        rtQA_matlab.cnrData.basData.meanSmoothed = [];
-        rtQA_matlab.cnrData.basData.m2Smoothed = [];
-        rtQA_matlab.cnrData.basData.iteration = 0;
-
-        rtQA_matlab.cnrData.condData.meanSmoothed = [];
-        rtQA_matlab.cnrData.condData.m2Smoothed = [];
-        rtQA_matlab.cnrData.condData.iteration = 0;
-
         % indexes of baseline and condition for CNR calculation
         tmpindexesCond = find(SPM.xX.X(:,contains(SPM.xX.name, P.CondIndexNames( 2 )))>0.6); % Index for Regulation block == 2
         tmpindexesBas = find(SPM.xX.X(:,contains(SPM.xX.name, P.CondIndexNames( 2 )))<0.1); % Index for Regulation block == 2
@@ -390,11 +372,7 @@ if P.isRTQA
             indexesCond = tmpindexesCond-1;
         end
         P.inds = { indexesBas, indexesCond };
-        rtQA_matlab.cnrData.basData.indexesBas = indexesBas;
-        rtQA_matlab.cnrData.condData.indexesCond = indexesCond;
     end
-
-    rtQA_matlab.rtqaVol = zeros(dimTemplMotCorr);
 
 end
 
