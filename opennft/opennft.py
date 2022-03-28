@@ -2139,11 +2139,12 @@ class OpenNFT(QWidget):
 
         # SNR/Stat map display
         is_stat_map_created = bool(self.eng.evalin('base', 'mainLoopData.statMapCreated'))
-        is_snr_map_created = self.rtqa_input["rtqa_vol_ready"]
         if self.windowRTQA:
+            is_snr_map_created = self.rtqa_input["rtqa_vol_ready"]
             is_rtqa_volume_checked = self.rtqa_output["show_vol"]
         else:
             is_rtqa_volume_checked = False
+            is_snr_map_created = False
 
         if (self.imageViewMode != ImageViewMode.mosaic) and (is_stat_map_created and not is_rtqa_volume_checked
                                                              or is_snr_map_created and is_rtqa_volume_checked):
