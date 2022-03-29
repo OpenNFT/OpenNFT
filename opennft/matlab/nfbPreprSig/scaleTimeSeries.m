@@ -102,3 +102,6 @@ else
     end
 end
 outData = (inTimeSeries(indVol) - tmp_posMin) / (tmp_posMax - tmp_posMin);
+if isnan(outData)
+    outData = 0;
+end

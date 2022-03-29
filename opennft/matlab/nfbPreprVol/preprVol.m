@@ -191,11 +191,10 @@ else
     mainLoopData.procVol = smReslVol;
 end
 
-% assign Template
-mainLoopData.imgVolTempl = smReslVol;
-assignin('base', 'imgVolTempl', smReslVol)
-m = evalin('base', 'mmImgVolTempl');
-m.Data.imgVolTempl = smReslVol;
+% transfer preprocessed volume to Python
+assignin('base', 'preprVol', smReslVol)
+m = evalin('base', 'mmTransferVol');
+m.Data.transferVol = smReslVol;
 
 % iGLM init
 nrVoxInVol = mainLoopData.nrVoxInVol;
@@ -249,8 +248,6 @@ if flags.isIGLM
 
     else
         %% Initialize variables
-        % assign Template
-
         pVal = mainLoopData.pVal;
         tContr = mainLoopData.tContr;
 
