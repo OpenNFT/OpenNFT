@@ -35,7 +35,6 @@ end
 if P.isRTQA
     rtQA_matlab = evalin('base', 'rtQA_matlab');
     rtQA_python = evalin('base', 'rtQA_python');
-    rtQAMode = evalin('base', 'rtQAMode');
     save([folder '\rtQA_matlab.mat'], '-struct', 'rtQA_matlab');
     save([folder '\rtQA_python.mat'], '-struct', 'rtQA_python');
 end
@@ -71,17 +70,6 @@ if mainLoopData.statMapCreated
     statMap3D_neg(idxActVoxIGLM.neg) = statMapVect;
     
     if P.isRTQA
-        n = mainLoopData.indVolNorm;
-        var = rtQA_matlab.snrData.m2Smoothed ./ double(n-1);
-        rtQA_matlab.snrData.snrVol = rtQA_matlab.snrData.meanSmoothed ./ (var.^.5);
-        if ~P.isAutoRTQA
-            meanBas = rtQA_matlab.cnrData.basData.meanSmoothed;
-            meanCond = rtQA_matlab.cnrData.condData.meanSmoothed;
-            varianceBas = rtQA_matlab.cnrData.basData.m2Smoothed / (rtQA_matlab.cnrData.basData.iteration - 1);
-            varianceCond = rtQA_matlab.cnrData.condData.m2Smoothed / (rtQA_matlab.cnrData.condData.iteration - 1);
-            rtQA_matlab.cnrData.cnrVol = (meanCond - meanBas) ./ ((varianceBas + varianceCond).^.5);
-        end
-
         assignin('base', 'rtQA_matlab', rtQA_matlab);
      end
     
@@ -200,6 +188,6 @@ end
 disp('Saving done')
 
 % Clear workspace
-evalin('base', 'clear mmImgVolTempl;');
+evalin('base', 'clear mmTransferVol;');
 evalin('base', 'clear mmStatVol;');
 evalin('base', 'clear mmOrthView;');

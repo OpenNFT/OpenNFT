@@ -130,6 +130,8 @@ end
 % assign ROI
 ROIs(iFile).vol = epiWholeBrainMask;
 ROIs(iFile).voxelIndex = indexEpiWholeBrainMask;
+ROIs(iFile).voxelCoord = index2coord(indexEpiWholeBrainMask,dimTemplMotCorr);
+
 
 % DVARS scaling is most frequent image value given fit
 P.scaleFactorDVARS = median(smImgVolTempl(indexEpiWholeBrainMask));

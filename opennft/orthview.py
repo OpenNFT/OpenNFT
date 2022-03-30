@@ -2,8 +2,10 @@ import numpy as np
 import multiprocessing as mp
 import nibabel as nib
 import cv2
+import pydicom
 from scipy import linalg
 from rtspm import spm_imatrix, spm_matrix, spm_slice_vol
+from opennft.conversions import img2d_vol3d, get_mosaic_dim
 
 
 class OrthView(mp.Process):
@@ -15,6 +17,8 @@ class OrthView(mp.Process):
         self.input_data = input
         self.output_data = output
 
+        self.mat_epi = self.input_data["mat"]
+        self.dim = self.input_data["dim"]
         if not (self.input_data["anat_volume"] is None):
             anat_name = self.input_data["anat_volume"]
             anat_data = nib.load(anat_name, mmap=False)
@@ -23,10 +27,16 @@ class OrthView(mp.Process):
 
         epi_name = self.input_data["epi_volume"]
 
-        self.epi_volume = np.array(nib.load(epi_name, mmap=False).get_fdata(), order="F")
+        if self.input_data["epi_volume_type"] == "nii":
+            self.epi_volume = np.array(nib.load(epi_name, mmap=False).get_fdata(), order="F")
+        else:
+            epi_volume = np.array(pydicom.dcmread(epi_name).pixel_array, order='F')
+            if epi_volume.ndim == 2:
+                xdim_img_number, ydim_img_number, img2d_dimx, img2d_dimy = get_mosaic_dim(self.dim)
+                self.epi_volume = np.array(img2d_vol3d(epi_volume, xdim_img_number, ydim_img_number, self.dim), order='F')
+            else:
+                self.epi_volume = epi_volume
 
-        self.mat_epi = self.input_data["mat"]
-        self.dim = self.input_data["dim"]
 
         # ROIs
         if self.input_data["is_ROI"]:
@@ -52,6 +62,7 @@ class OrthView(mp.Process):
                          self.input_data["is_neg"], self.input_data["is_ROI"]]
 
                 # background
+
                 if flags[0] == "bgEPI":
                     back_volume = self.epi_volume
                     mat = self.mat_epi
@@ -63,8 +74,7 @@ class OrthView(mp.Process):
 
                 # overlay (pos/neg stat or rtQA)
                 if flags[1]:
-                    filename = self.input_data["rtQA_volume"]
-                    overlay_vol = np.memmap(filename, dtype=np.float64, shape=self.input_data["dim"], order='F')
+                    overlay_vol = self.input_data["rtQA_volume"]
                 else:
                     filename = self.input_data["stat_volume"]
                     overlay_vol = np.memmap(filename, dtype=np.float64, shape=self.input_data["dim"],

@@ -20,7 +20,7 @@ mask = "001_000008_000"
 # fns = [1, 2, 3, 4, 6, 5, 7, 8]
 fns = None
 
-testCase = 'PSC'
+testCase = 'SVM'
 
 if testCase == 'PSC':
     srcpath = 'C:/_RT/rtData/NF_PSC/NF_Run_1_src'

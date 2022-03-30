@@ -129,7 +129,7 @@ HIDE_TEST_BTN = True
 USE_RTQA = True
 USE_IGLM = True
 USE_ROI = True
-FIRST_SNR_VOLUME = 2
+FIRST_SNR_VOLUME = 1
 
 # zero padding settings
 zeroPaddingFlag = False
