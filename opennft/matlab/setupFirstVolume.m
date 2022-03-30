@@ -83,7 +83,7 @@ initMemmap(P.memMapFile, 'statVol', zeros(nrVoxInVol,2), 'double', ...
 
 %% transfer background mosaic to Python
 imgVolTempl = mainLoopData.imgVolTempl;
-assignin('base', 'preprVol', imgVolTempl);
+assignin('base', 'imgVolTempl', imgVolTempl);
 
 m = evalin('base', 'mmTransferVol');
 if P.isZeroPadding

@@ -2562,7 +2562,7 @@ class OpenNFT(QWidget):
         xdim, ydim, img2d_dimx, img2d_dimy = conversions.get_mosaic_dim(dim3D)
 
         if 'imgVolTempl' not in self.P:
-            if self.eng.evalin('base', 'length(preprVol)') > 0:
+            if self.eng.evalin('base', 'length(imgVolTempl)') > 0:
                 with utils.timeit('Getting background volume:'):
                     filename = self.eng.evalin('base', 'P.memMapFile')
                     imgVol = np.array(np.memmap(filename, dtype=np.float64, shape=tuple(dim3D), order='F'))
