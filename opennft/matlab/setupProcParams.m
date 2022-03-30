@@ -420,6 +420,16 @@ if ~exist(P.nfbDataFolder, 'dir')
     mkdir(P.nfbDataFolder);
 end
 
+nrVoxInVol = prod(dimTemplMotCorr);
+
+%% Init memmapfile transport
+% volume from root matlab to python GUI
+initMemmap(P.memMapFile, 'shared', zeros(nrVoxInVol,1), 'double', 'mmTransferVol', {'double', dimTemplMotCorr, 'transferVol'});
+
+% statVol from root matlab to helper matlab
+initMemmap(P.memMapFile, 'statVol', zeros(nrVoxInVol,2), 'double', ...
+    'mmStatVol', {'double', dimTemplMotCorr, 'posStatVol'; 'double', dimTemplMotCorr, 'negStatVol'});
+
 
 if P.isRTQA
     assignin('base', 'rtQA_matlab', rtQA_matlab);

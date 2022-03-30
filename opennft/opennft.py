@@ -2561,7 +2561,7 @@ class OpenNFT(QWidget):
         dim3D = tuple([self.P['MatrixSizeX'], self.P['MatrixSizeY'], self.P['NrOfSlices']])
         xdim, ydim, img2d_dimx, img2d_dimy = conversions.get_mosaic_dim(dim3D)
 
-        if 'imgVolTempl' not in self.P and self.iteration > 1:
+        if self.iteration > 1:
             if self.eng.evalin('base', 'length(imgVolTempl)') > 0:
                 with utils.timeit('Getting background volume:'):
                     filename = self.eng.evalin('base', 'P.memMapFile')

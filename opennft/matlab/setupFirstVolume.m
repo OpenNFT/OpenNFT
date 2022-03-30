@@ -71,16 +71,6 @@ end
 [slNrImg2DdimX, slNrImg2DdimY, img2DdimX, img2DdimY] = getMosaicDim(dimVol);
 nrVoxInVol = prod(dimVol);
 
-%% Init memmapfile transport
-% volume from root matlab to python GUI
-initMemmap(P.memMapFile, 'shared', zeros(nrVoxInVol,1), ...
-    'double', 'mmTransferVol', {'double', dimVol, 'transferVol'});
-
-% statVol from root matlab to helper matlab
-statVol = zeros(dimVol);
-initMemmap(P.memMapFile, 'statVol', zeros(nrVoxInVol,2), 'double', ...
-    'mmStatVol', {'double', size(statVol), 'posStatVol'; 'double', size(statVol), 'negStatVol'});
-
 %% transfer background mosaic to Python
 imgVolTempl = mainLoopData.imgVolTempl;
 assignin('base', 'imgVolTempl', imgVolTempl);
