@@ -1424,83 +1424,7 @@ class OpenNFT(QWidget):
 
             self.btnStart.setEnabled(True)
             if self.P['isRTQA']:
-
-                self.rtqa_input = multiprocessing.Manager().dict()
-                self.rtqa_input["nr_rois"] = self.P["NrROIs"]
-                self.rtqa_input["dim"] = tuple([self.P['MatrixSizeX'], self.P['MatrixSizeY'], self.P['NrOfSlices']])
-                self.rtqa_input["wb_roi_indexes"] = np.array(self.eng.evalin('base', 'ROIs(end).voxelIndex'),
-                                                             dtype=np.int32, ndmin=2)
-                wb_mask = np.ones((self.P['MatrixSizeX']*self.P['MatrixSizeY']*self.P['NrOfSlices'],))
-                wb_mask[self.rtqa_input["wb_roi_indexes"]] = 0
-                self.rtqa_input["wb_mask"] = wb_mask.astype(bool)
-                self.rtqa_input["muster_info"] = self.musterInfo
-                self.rtqa_input["xrange"] = self.P['NrOfVolumes'] - self.P['nrSkipVol']
-                self.rtqa_input["is_auto_rtqa"] = self.P["isAutoRTQA"]
-                self.rtqa_input["roi_checked"] = self.selectedRoi
-                self.rtqa_input["ind_bas"] = np.array(self.P["inds"][0])
-                self.rtqa_input["ind_cond"] = np.array(self.P["inds"][1])
-                self.rtqa_input["volume"] = self.P["memMapFile"]
-                self.rtqa_input["is_stopped"] = False
-                self.rtqa_input["data_ready"] = False
-                self.rtqa_input["calc_ready"] = False
-                self.rtqa_input["roi_changed"] = False
-                self.rtqa_input["raw_ts"] = []
-                self.rtqa_input["glm_ts"] = []
-                self.rtqa_input["no_reg_glm_ts"] = []
-                self.rtqa_input["proc_ts"] = []
-                self.rtqa_input["mc_ts"] = []
-                self.rtqa_input["offset_mc"] = []
-                self.rtqa_input["beta_coeff"] = []
-                self.rtqa_input["pos_spikes"] = []
-                self.rtqa_input["neg_spikes"] = []
-                self.rtqa_input["is_new_dcm_block"] = True
-                self.rtqa_input["iteration"] = 0
-                self.rtqa_input["which_vol"] = []
-                self.rtqa_input["dvars_scale"] = self.P["scaleFactorDVARS"]
-                self.rtqa_input["rtqa_vol_ready"] = False
-
-                self.rtqa_output = multiprocessing.Manager().dict()
-                self.rtqa_output["snr_vol"] = np.zeros(self.rtqa_input["dim"])
-                self.rtqa_output["cnr_vol"] = np.zeros(self.rtqa_input["dim"])
-                self.rtqa_output["show_vol"] = False
-                self.rtqa_output["rSNR"] = []
-                self.rtqa_output["rCNR"] = []
-                self.rtqa_output["rMean"] = []
-                self.rtqa_output["meanBas"] = []
-                self.rtqa_output["meanCond"] = []
-                self.rtqa_output["rVar"] = []
-                self.rtqa_output["varBas"] = []
-                self.rtqa_output["varCond"] = []
-                self.rtqa_output["glmProcTimeSeries"] = []
-                self.rtqa_output["rMSE"] = []
-                self.rtqa_output["linTrendCoeff"] = []
-                self.rtqa_output["rNoRegSNR"] = []
-                self.rtqa_output["DVARS"] = []
-                self.rtqa_output["excDVARS"] = []
-                self.rtqa_output["mc_params"] = []
-                self.rtqa_output["FD"] = []
-                self.rtqa_output["MD"] = []
-                self.rtqa_output["meanFD"] = []
-                self.rtqa_output["meanMD"] = []
-                self.rtqa_output["excFD"] = []
-                self.rtqa_output["excMD"] = []
-                self.rtqa_output["posSpikes"] = []
-                self.rtqa_output["negSpikes"] = []
-
-                self.btnRTQA.setEnabled(True)
-
-                if self.windowRTQA:
-                    self.windowRTQA.deleteLater()
-
-                self.calc_rtqa = rtqa_calc.RTQACalculation(self.rtqa_input, self.rtqa_output)
-                self.windowRTQA = rtqa_gui.RTQAWindow(self.calc_rtqa, self.rtqa_input, self.rtqa_output)
-                self.calc_rtqa.start()
-
-                self.windowRTQA.volumeCheckBox.stateChanged.connect(self.onShowRtqaVol)
-                self.windowRTQA.volumeCheckBox.stateChanged.connect(self.onChangeNegMapPolicy)
-                self.windowRTQA.volumeCheckBox.stateChanged.connect(self.onInteractWithMapImage)
-                self.windowRTQA.volumeCheckBox.toggled.connect(self.updateOrthViewAsync)
-                self.windowRTQA.comboBox.currentIndexChanged.connect(self.onModeChanged)
+                self.rtqa_init()
 
             self.onChangeNegMapPolicy()
             self.eng.assignin('base', 'imageViewMode', int(self.imageViewMode), nargout=0)
@@ -1607,85 +1531,7 @@ class OpenNFT(QWidget):
 
         self.initUdpSender()
 
-        self.btnRTQA.setEnabled(True)
-
-        self.rtqa_input = multiprocessing.Manager().dict()
-        self.rtqa_input["nr_rois"] = self.P["NrROIs"]
-        self.rtqa_input["dim"] = tuple([self.P['MatrixSizeX'], self.P['MatrixSizeY'], self.P['NrOfSlices']])
-        self.rtqa_input["wb_roi_indexes"] = np.array(self.eng.evalin('base', 'ROIs(end).voxelIndex'),
-                                                     dtype=np.int32, ndmin=2)
-        wb_mask = np.ones((self.P['MatrixSizeX'] * self.P['MatrixSizeY'] * self.P['NrOfSlices'],))
-        wb_mask[self.rtqa_input["wb_roi_indexes"]] = 0
-        self.rtqa_input["wb_mask"] = wb_mask.astype(bool)
-        self.rtqa_input["muster_info"] = self.musterInfo
-        self.rtqa_input["xrange"] = self.P['NrOfVolumes'] - self.P['nrSkipVol']
-        self.rtqa_input["is_auto_rtqa"] = self.P["isAutoRTQA"]
-        self.rtqa_input["roi_checked"] = self.selectedRoi
-        if not config.AUTO_RTQA:
-            self.rtqa_input["ind_bas"] = np.array(self.P["inds"][0])
-            self.rtqa_input["ind_cond"] = np.array(self.P["inds"][1])
-        self.rtqa_input["volume"] = self.P["memMapFile"]
-        self.rtqa_input["is_stopped"] = False
-        self.rtqa_input["data_ready"] = False
-        self.rtqa_input["calc_ready"] = False
-        self.rtqa_input["roi_changed"] = False
-        self.rtqa_input["raw_ts"] = []
-        self.rtqa_input["glm_ts"] = []
-        self.rtqa_input["no_reg_glm_ts"] = []
-        self.rtqa_input["proc_ts"] = []
-        self.rtqa_input["mc_ts"] = []
-        self.rtqa_input["offset_mc"] = []
-        self.rtqa_input["beta_coeff"] = []
-        self.rtqa_input["pos_spikes"] = []
-        self.rtqa_input["neg_spikes"] = []
-        self.rtqa_input["is_new_dcm_block"] = True
-        self.rtqa_input["iteration"] = 0
-        self.rtqa_input["which_vol"] = []
-        self.rtqa_input["dvars_scale"] = self.P["scaleFactorDVARS"]
-        self.rtqa_input["rtqa_vol_ready"] = False
-
-        self.rtqa_output = multiprocessing.Manager().dict()
-        self.rtqa_output["snr_vol"] = np.zeros(self.rtqa_input["dim"])
-        self.rtqa_output["cnr_vol"] = np.zeros(self.rtqa_input["dim"])
-        self.rtqa_output["show_vol"] = False
-        self.rtqa_output["rSNR"] = []
-        self.rtqa_output["rCNR"] = []
-        self.rtqa_output["rMean"] = []
-        self.rtqa_output["meanBas"] = []
-        self.rtqa_output["meanCond"] = []
-        self.rtqa_output["rVar"] = []
-        self.rtqa_output["varBas"] = []
-        self.rtqa_output["varCond"] = []
-        self.rtqa_output["glmProcTimeSeries"] = []
-        self.rtqa_output["rMSE"] = []
-        self.rtqa_output["linTrendCoeff"] = []
-        self.rtqa_output["rNoRegSNR"] = []
-        self.rtqa_output["DVARS"] = []
-        self.rtqa_output["excDVARS"] = []
-        self.rtqa_output["mc_params"] = []
-        self.rtqa_output["FD"] = []
-        self.rtqa_output["MD"] = []
-        self.rtqa_output["meanFD"] = []
-        self.rtqa_output["meanMD"] = []
-        self.rtqa_output["excFD"] = []
-        self.rtqa_output["excMD"] = []
-        self.rtqa_output["posSpikes"] = []
-        self.rtqa_output["negSpikes"] = []
-
-        self.btnRTQA.setEnabled(True)
-
-        if self.windowRTQA:
-            self.windowRTQA.deleteLater()
-
-        self.calc_rtqa = rtqa_calc.RTQACalculation(self.rtqa_input, self.rtqa_output)
-        self.windowRTQA = rtqa_gui.RTQAWindow(self.calc_rtqa, self.rtqa_input, self.rtqa_output)
-        self.calc_rtqa.start()
-
-        self.windowRTQA.volumeCheckBox.stateChanged.connect(self.onShowRtqaVol)
-        self.windowRTQA.volumeCheckBox.stateChanged.connect(self.onChangeNegMapPolicy)
-        self.windowRTQA.volumeCheckBox.stateChanged.connect(self.onInteractWithMapImage)
-        self.windowRTQA.volumeCheckBox.toggled.connect(self.updateOrthViewAsync)
-        self.windowRTQA.comboBox.currentIndexChanged.connect(self.onModeChanged)
+        self.rtqa_init()
 
         self.autoRTQASetup = True
         self.onChangeNegMapPolicy()
@@ -1767,7 +1613,84 @@ class OpenNFT(QWidget):
 
     # --------------------------------------------------------------------------
     def rtqa_init(self):
-        pass
+
+        self.btnRTQA.setEnabled(True)
+
+        self.rtqa_input = multiprocessing.Manager().dict()
+        self.rtqa_input["nr_rois"] = self.P["NrROIs"]
+        self.rtqa_input["dim"] = tuple([self.P['MatrixSizeX'], self.P['MatrixSizeY'], self.P['NrOfSlices']])
+        self.rtqa_input["wb_roi_indexes"] = np.array(self.eng.evalin('base', 'ROIs(end).voxelIndex'),
+                                                     dtype=np.int32, ndmin=2)
+        wb_mask = np.ones((self.P['MatrixSizeX'] * self.P['MatrixSizeY'] * self.P['NrOfSlices'],))
+        wb_mask[self.rtqa_input["wb_roi_indexes"]] = 0
+        self.rtqa_input["wb_mask"] = wb_mask.astype(bool)
+        self.rtqa_input["muster_info"] = self.musterInfo
+        self.rtqa_input["xrange"] = self.P['NrOfVolumes'] - self.P['nrSkipVol']
+        self.rtqa_input["is_auto_rtqa"] = self.P["isAutoRTQA"]
+        self.rtqa_input["roi_checked"] = self.selectedRoi
+        if not config.AUTO_RTQA:
+            self.rtqa_input["ind_bas"] = np.array(self.P["inds"][0])
+            self.rtqa_input["ind_cond"] = np.array(self.P["inds"][1])
+        self.rtqa_input["volume"] = self.P["memMapFile"]
+        self.rtqa_input["is_stopped"] = False
+        self.rtqa_input["data_ready"] = False
+        self.rtqa_input["calc_ready"] = False
+        self.rtqa_input["roi_changed"] = False
+        self.rtqa_input["raw_ts"] = []
+        self.rtqa_input["glm_ts"] = []
+        self.rtqa_input["no_reg_glm_ts"] = []
+        self.rtqa_input["proc_ts"] = []
+        self.rtqa_input["mc_ts"] = []
+        self.rtqa_input["offset_mc"] = []
+        self.rtqa_input["beta_coeff"] = []
+        self.rtqa_input["pos_spikes"] = []
+        self.rtqa_input["neg_spikes"] = []
+        self.rtqa_input["is_new_dcm_block"] = True
+        self.rtqa_input["iteration"] = 0
+        self.rtqa_input["which_vol"] = []
+        self.rtqa_input["dvars_scale"] = self.P["scaleFactorDVARS"]
+        self.rtqa_input["rtqa_vol_ready"] = False
+
+        self.rtqa_output = multiprocessing.Manager().dict()
+        self.rtqa_output["snr_vol"] = np.zeros(self.rtqa_input["dim"])
+        self.rtqa_output["cnr_vol"] = np.zeros(self.rtqa_input["dim"])
+        self.rtqa_output["show_vol"] = False
+        self.rtqa_output["rSNR"] = []
+        self.rtqa_output["rCNR"] = []
+        self.rtqa_output["rMean"] = []
+        self.rtqa_output["meanBas"] = []
+        self.rtqa_output["meanCond"] = []
+        self.rtqa_output["rVar"] = []
+        self.rtqa_output["varBas"] = []
+        self.rtqa_output["varCond"] = []
+        self.rtqa_output["glmProcTimeSeries"] = []
+        self.rtqa_output["rMSE"] = []
+        self.rtqa_output["linTrendCoeff"] = []
+        self.rtqa_output["rNoRegSNR"] = []
+        self.rtqa_output["DVARS"] = []
+        self.rtqa_output["excDVARS"] = []
+        self.rtqa_output["mc_params"] = []
+        self.rtqa_output["FD"] = []
+        self.rtqa_output["MD"] = []
+        self.rtqa_output["meanFD"] = []
+        self.rtqa_output["meanMD"] = []
+        self.rtqa_output["excFD"] = []
+        self.rtqa_output["excMD"] = []
+        self.rtqa_output["posSpikes"] = []
+        self.rtqa_output["negSpikes"] = []
+
+        if self.windowRTQA:
+            self.windowRTQA.deleteLater()
+
+        self.calc_rtqa = rtqa_calc.RTQACalculation(self.rtqa_input, self.rtqa_output)
+        self.windowRTQA = rtqa_gui.RTQAWindow(self.calc_rtqa, self.rtqa_input, self.rtqa_output)
+        self.calc_rtqa.start()
+
+        self.windowRTQA.volumeCheckBox.stateChanged.connect(self.onShowRtqaVol)
+        self.windowRTQA.volumeCheckBox.stateChanged.connect(self.onChangeNegMapPolicy)
+        self.windowRTQA.volumeCheckBox.stateChanged.connect(self.onInteractWithMapImage)
+        self.windowRTQA.volumeCheckBox.toggled.connect(self.updateOrthViewAsync)
+        self.windowRTQA.comboBox.currentIndexChanged.connect(self.onModeChanged)
 
     # --------------------------------------------------------------------------
     def start(self):
