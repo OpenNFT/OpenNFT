@@ -1766,6 +1766,10 @@ class OpenNFT(QWidget):
         self.orth_view.start()
 
     # --------------------------------------------------------------------------
+    def rtqa_init(self):
+        pass
+
+    # --------------------------------------------------------------------------
     def start(self):
         logger.info("*** Started ***")
 
@@ -2069,7 +2073,7 @@ class OpenNFT(QWidget):
         if not self.orth_view:
             return
 
-        if self.imageViewMode == ImageViewMode.orthviewEPI:
+        if self.imageViewMode == ImageViewMode.orthviewEPI or self.P['isAutoRTQA']:
             bgType = 'bgEPI'
         else:
             bgType = 'BgStruct'
@@ -2628,22 +2632,22 @@ class OpenNFT(QWidget):
 
     # --------------------------------------------------------------------------
     def displayMosaicImage(self):
-        imgVolTempl = None
+        imgVol = None
         posVol = None
         negVol = None
         dim3D = np.squeeze(self.eng.evalin('base', 'int32(mainLoopData.dimVol)'))
         xdim, ydim, img2d_dimx, img2d_dimy = conversions.get_mosaic_dim(dim3D)
 
         if 'imgVolTempl' not in self.P:
-            if self.eng.evalin('base', 'length(imgVolTempl)') > 0:
+            if self.eng.evalin('base', 'length(preprVol)') > 0:
                 with utils.timeit('Getting background volume:'):
                     filename = self.eng.evalin('base', 'P.memMapFile')
-                    imgVolTempl = np.array(np.memmap(filename, dtype=np.float64,shape=tuple(dim3D), order='F'))
-                    max_vol = np.max(imgVolTempl)
-                    min_vol = np.min(imgVolTempl)
-                    imgVolTempl = (imgVolTempl - min_vol) / (max_vol - min_vol)
-                    if imgVolTempl.size > 0:
-                        background_image = conversions.vol3d_img2d(imgVolTempl, xdim, ydim, img2d_dimx, img2d_dimy, dim3D)
+                    imgVol = np.array(np.memmap(filename, dtype=np.float64, shape=tuple(dim3D), order='F'))
+                    max_vol = np.max(imgVol)
+                    min_vol = np.min(imgVol)
+                    imgVol = (imgVol - min_vol) / (max_vol - min_vol)
+                    if imgVol.size > 0:
+                        background_image = conversions.vol3d_img2d(imgVol, xdim, ydim, img2d_dimx, img2d_dimy, dim3D)
                         self.mosaicImageView.set_background_image(background_image)
                     else:
                         return

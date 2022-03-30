@@ -74,7 +74,7 @@ nrVoxInVol = prod(dimVol);
 %% Init memmapfile transport
 % volume from root matlab to python GUI
 initMemmap(P.memMapFile, 'shared', zeros(nrVoxInVol,1), ...
-    'double', 'mmImgVolTempl', {'double', dimVol, 'imgVolTempl'});
+    'double', 'mmTransferVol', {'double', dimVol, 'transferVol'});
 
 % statVol from root matlab to helper matlab
 statVol = zeros(dimVol);
@@ -83,13 +83,13 @@ initMemmap(P.memMapFile, 'statVol', zeros(nrVoxInVol,2), 'double', ...
 
 %% transfer background mosaic to Python
 imgVolTempl = mainLoopData.imgVolTempl;
-assignin('base', 'imgVolTempl', imgVolTempl);
+assignin('base', 'preprVol', imgVolTempl);
 
-m = evalin('base', 'mmImgVolTempl');
+m = evalin('base', 'mmTransferVol');
 if P.isZeroPadding
-    m.Data.imgVolTempl = imgVolTempl(:,:,P.nrZeroPadVol+1:end-P.nrZeroPadVol);
+    m.Data.transferVol = imgVolTempl(:,:,P.nrZeroPadVol+1:end-P.nrZeroPadVol);
 else
-    m.Data.imgVolTempl = imgVolTempl;
+    m.Data.transferVol = imgVolTempl;
 end
 
 if P.isRTQA

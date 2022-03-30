@@ -33,7 +33,7 @@ class OrthView(mp.Process):
             epi_volume = np.array(pydicom.dcmread(epi_name).pixel_array, order='F')
             if epi_volume.ndim == 2:
                 xdim_img_number, ydim_img_number, img2d_dimx, img2d_dimy = get_mosaic_dim(self.dim)
-                self.epi_volume = img2d_vol3d(epi_volume, xdim_img_number, ydim_img_number, self.dim)
+                self.epi_volume = np.array(img2d_vol3d(epi_volume, xdim_img_number, ydim_img_number, self.dim), order='F')
             else:
                 self.epi_volume = epi_volume
 
