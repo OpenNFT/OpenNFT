@@ -2555,13 +2555,13 @@ class OpenNFT(QWidget):
 
     # --------------------------------------------------------------------------
     def displayMosaicImage(self):
-        imgVol = None
+        background_image = None
         posVol = None
         negVol = None
-        dim3D = np.squeeze(self.eng.evalin('base', 'int32(mainLoopData.dimVol)'))
+        dim3D = tuple([self.P['MatrixSizeX'], self.P['MatrixSizeY'], self.P['NrOfSlices']])
         xdim, ydim, img2d_dimx, img2d_dimy = conversions.get_mosaic_dim(dim3D)
 
-        if 'imgVolTempl' not in self.P:
+        if 'imgVolTempl' not in self.P and self.iteration > 1:
             if self.eng.evalin('base', 'length(imgVolTempl)') > 0:
                 with utils.timeit('Getting background volume:'):
                     filename = self.eng.evalin('base', 'P.memMapFile')
