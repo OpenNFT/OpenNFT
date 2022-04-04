@@ -5,10 +5,10 @@ import cv2
 import pydicom
 from scipy import linalg
 from rtspm import spm_imatrix, spm_matrix, spm_slice_vol
-from opennft.conversions import img2d_vol3d, get_mosaic_dim
+from opennft.conversions import img2d_vol3d, vol3d_img2d, get_mosaic_dim
 
 
-class OrthView(mp.Process):
+class VolViewFormation(mp.Process):
 
     def __init__(self, input, output):
         mp.Process.__init__(self)
@@ -19,6 +19,12 @@ class OrthView(mp.Process):
 
         self.mat_epi = self.input_data["mat"]
         self.dim = self.input_data["dim"]
+
+        self.xdim, self.ydim, self.img2d_dimx, self.img2d_dimy = get_mosaic_dim(self.dim)
+        self.output_data["mosaic_templ"] = np.zeros((self.img2d_dimx, self.img2d_dimy))
+        self.output_data["mosaic_pos_overlay"] = None
+        self.output_data["mosaic_neg_overlay"] = None
+
         if not (self.input_data["anat_volume"] is None):
             anat_name = self.input_data["anat_volume"]
             anat_data = nib.load(anat_name, mmap=False)
@@ -58,56 +64,88 @@ class OrthView(mp.Process):
             
             if ready:
 
-                flags = [self.input_data["bg_type"], self.input_data["is_rtqa"],
-                         self.input_data["is_neg"], self.input_data["is_ROI"]]
+                if self.input_data["view_mode"] == 0:
 
-                # background
+                    img_vol = np.array(np.memmap(self.input_data["memmap_volume"], dtype=np.float64, shape=self.dim, order='F'))
+                    max_vol = np.max(img_vol)
+                    min_vol = np.min(img_vol)
+                    img_vol = (img_vol - min_vol) / (max_vol - min_vol)
+                    self.output_data["mosaic_templ"] = vol3d_img2d(img_vol, self.xdim, self.ydim,
+                                                                   self.img2d_dimx, self.img2d_dimy, self.dim)
 
-                if flags[0] == "bgEPI":
-                    back_volume = self.epi_volume
-                    mat = self.mat_epi
-                else:
-                    back_volume = self.anat_volume
-                    mat = self.mat_anat
-
-                # affine matrix
-
-                # overlay (pos/neg stat or rtQA)
-                if flags[1]:
-                    overlay_vol = self.input_data["rtQA_volume"]
-                else:
-                    filename = self.input_data["stat_volume"]
-                    overlay_vol = np.memmap(filename, dtype=np.float64, shape=self.input_data["dim"],
-                                                    offset=0, order='F')
-                    if flags[2]:
-                        neg_overlay_vol = np.memmap(filename, dtype=np.float64, shape=self.input_data["dim"],
-                                                    offset=overlay_vol.size*overlay_vol.data.itemsize, order='F')
+                    if self.input_data["is_rtqa"]:
+                        overlay_vol = self.input_data["rtQA_volume"]
+                        overlay_img = vol3d_img2d(overlay_vol, self.xdim, self.ydim,
+                                                  self.img2d_dimx, self.img2d_dimy, self.dim)
+                        self.output_data["mosaic_pos_overlay"] = (overlay_img / np.max(overlay_img)) * 255
                     else:
-                        neg_overlay_vol = []
+                        filename = self.input_data["stat_volume"]
+                        overlay_vol = np.memmap(filename, dtype=np.float64, shape=self.input_data["dim"], offset=0, order='F')
+                        overlay_img = vol3d_img2d(overlay_vol, self.xdim, self.ydim,
+                                                  self.img2d_dimx, self.img2d_dimy, self.dim)
+                        self.output_data["mosaic_pos_overlay"] = (overlay_img / np.max(overlay_img)) * 255
 
-                ROI_vols = self.ROI_vols
-                ROI_mats = self.ROI_mats
+                        if self.input_data["is_neg"]:
+                            neg_overlay_vol = np.memmap(filename, dtype=np.float64, shape=self.input_data["dim"],
+                                                        offset=overlay_vol.size * overlay_vol.data.itemsize, order='F')
+                            neg_overlay_img = vol3d_img2d(overlay_vol, self.xdim, self.ydim,
+                                                          self.img2d_dimx, self.img2d_dimy, self.dim)
+                            self.output_data["mosaic_neg_overlay"] = (neg_overlay_img / np.max(neg_overlay_img)) * 255
 
-                cursor_pos = self.input_data["cursor_pus"]
-                flags_planes = self.input_data["flags_planes"]
+                    self.input_data["done_mosaic"] = True
 
-                proj = np.nonzero(flags_planes)
+                else:
 
-                new_coord = np.array([[0, 0],[0, 0],[0, 0]])
-                new_coord[proj,:] = cursor_pos
+                    flags = [self.input_data["bg_type"], self.input_data["is_rtqa"],
+                             self.input_data["is_neg"], self.input_data["is_ROI"]]
 
-                self.str_param['centre'] = self.findcent(new_coord, flags_planes)
-                # Display modes: [Background + Stat + ROIs, Background + Stat, Background + ROIs]
-                self.str_param['mode_displ'] = [1, 0, 0]
+                    # background
 
-                [self.output_data["back_t"], self.output_data["back_c"], self.output_data["back_s"],
-                 self.output_data["overlay_t"], self.output_data["overlay_c"], self.output_data["overlay_s"],
-                 self.output_data["neg_overlay_t"], self.output_data["neg_overlay_c"], self.output_data["neg_overlay_s"],
-                 self.output_data["ROI_t"], self.output_data["ROI_c"], self.output_data["ROI_s"]
-                ] = self.update_orth_view(back_volume, mat, overlay_vol, neg_overlay_vol, ROI_vols, ROI_mats, flags)
+                    if flags[0] == "bgEPI":
+                        back_volume = self.epi_volume
+                        mat = self.mat_epi
+                    else:
+                        back_volume = self.anat_volume
+                        mat = self.mat_anat
+
+                    # affine matrix
+
+                    # overlay (pos/neg stat or rtQA)
+                    if flags[1]:
+                        overlay_vol = self.input_data["rtQA_volume"]
+                    else:
+                        filename = self.input_data["stat_volume"]
+                        overlay_vol = np.memmap(filename, dtype=np.float64, shape=self.input_data["dim"],
+                                                        offset=0, order='F')
+                        if flags[2]:
+                            neg_overlay_vol = np.memmap(filename, dtype=np.float64, shape=self.input_data["dim"],
+                                                        offset=overlay_vol.size*overlay_vol.data.itemsize, order='F')
+                        else:
+                            neg_overlay_vol = []
+
+                    ROI_vols = self.ROI_vols
+                    ROI_mats = self.ROI_mats
+
+                    cursor_pos = self.input_data["cursor_pus"]
+                    flags_planes = self.input_data["flags_planes"]
+
+                    proj = np.nonzero(flags_planes)
+
+                    new_coord = np.array([[0, 0],[0, 0],[0, 0]])
+                    new_coord[proj,:] = cursor_pos
+
+                    self.str_param['centre'] = self.findcent(new_coord, flags_planes)
+                    # Display modes: [Background + Stat + ROIs, Background + Stat, Background + ROIs]
+                    self.str_param['mode_displ'] = [1, 0, 0]
+
+                    [self.output_data["back_t"], self.output_data["back_c"], self.output_data["back_s"],
+                     self.output_data["overlay_t"], self.output_data["overlay_c"], self.output_data["overlay_s"],
+                     self.output_data["neg_overlay_t"], self.output_data["neg_overlay_c"], self.output_data["neg_overlay_s"],
+                     self.output_data["ROI_t"], self.output_data["ROI_c"], self.output_data["ROI_s"]
+                    ] = self.update_orth_view(back_volume, mat, overlay_vol, neg_overlay_vol, ROI_vols, ROI_mats, flags)
+                    self.input_data["done_orth"] = True
 
                 self.input_data["ready"] = False
-                self.input_data["done"] = True
 
     def prepare_orth_view(self, mat, dim):
         # set structure for Display and draw a first overlay
