@@ -73,26 +73,30 @@ class VolViewFormation(mp.Process):
                     self.output_data["mosaic_templ"] = vol3d_img2d(img_vol, self.xdim, self.ydim,
                                                                    self.img2d_dimx, self.img2d_dimy, self.dim)
 
-                    if self.input_data["is_rtqa"]:
-                        overlay_vol = self.input_data["rtQA_volume"]
-                        overlay_img = vol3d_img2d(overlay_vol, self.xdim, self.ydim,
-                                                  self.img2d_dimx, self.img2d_dimy, self.dim)
-                        self.output_data["mosaic_pos_overlay"] = (overlay_img / np.max(overlay_img)) * 255
-                    else:
-                        filename = self.input_data["stat_volume"]
-                        overlay_vol = np.memmap(filename, dtype=np.float64, shape=self.input_data["dim"], offset=0, order='F')
-                        overlay_img = vol3d_img2d(overlay_vol, self.xdim, self.ydim,
-                                                  self.img2d_dimx, self.img2d_dimy, self.dim)
-                        self.output_data["mosaic_pos_overlay"] = (overlay_img / np.max(overlay_img)) * 255
+                    self.input_data["done_mosaic_templ"] = True
 
-                        if self.input_data["is_neg"]:
-                            neg_overlay_vol = np.memmap(filename, dtype=np.float64, shape=self.input_data["dim"],
-                                                        offset=overlay_vol.size * overlay_vol.data.itemsize, order='F')
-                            neg_overlay_img = vol3d_img2d(overlay_vol, self.xdim, self.ydim,
-                                                          self.img2d_dimx, self.img2d_dimy, self.dim)
-                            self.output_data["mosaic_neg_overlay"] = (neg_overlay_img / np.max(neg_overlay_img)) * 255
+                    if self.input_data["overlay_ready"]:
+                        if self.input_data["is_rtqa"]:
+                            overlay_vol = self.input_data["rtQA_volume"]
+                            overlay_img = vol3d_img2d(overlay_vol, self.xdim, self.ydim,
+                                                      self.img2d_dimx, self.img2d_dimy, self.dim)
+                            self.output_data["mosaic_pos_overlay"] = (overlay_img / np.max(overlay_img)) * 255
+                        else:
+                            filename = self.input_data["stat_volume"]
+                            overlay_vol = np.memmap(filename, dtype=np.float64, shape=self.input_data["dim"], offset=0, order='F')
+                            overlay_img = vol3d_img2d(overlay_vol, self.xdim, self.ydim,
+                                                      self.img2d_dimx, self.img2d_dimy, self.dim)
+                            self.output_data["mosaic_pos_overlay"] = (overlay_img / np.max(overlay_img)) * 255
 
-                    self.input_data["done_mosaic"] = True
+                            if self.input_data["is_neg"]:
+                                neg_overlay_vol = np.memmap(filename, dtype=np.float64, shape=self.input_data["dim"],
+                                                            offset=overlay_vol.size * overlay_vol.data.itemsize, order='F')
+                                neg_overlay_img = vol3d_img2d(overlay_vol, self.xdim, self.ydim,
+                                                              self.img2d_dimx, self.img2d_dimy, self.dim)
+                                self.output_data["mosaic_neg_overlay"] = (neg_overlay_img / np.max(neg_overlay_img)) * 255
+
+                        self.input_data["done_mosaic_overlay"] = True
+
 
                 else:
 

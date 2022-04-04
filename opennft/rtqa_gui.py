@@ -202,7 +202,6 @@ class RTQAWindow(QtWidgets.QWidget):
         self.threshold = config.DEFAULT_FD_THRESHOLDS
         self.roiChecked()
         self.comboBox.currentIndexChanged.connect(self.onComboboxChanged)
-        self.volumeCheckBox.stateChanged.connect(self.onShowRtqaVol)
 
     # --------------------------------------------------------------------------
     def closeEvent(self, event):
@@ -222,7 +221,7 @@ class RTQAWindow(QtWidgets.QWidget):
         p.setXRange(1, xrange, padding=0.0)
 
     # --------------------------------------------------------------------------
-    def onShowRtqaVol(self):
+    def rtQAVolState(self):
 
         state = self.comboBox.currentIndex()
         self.output["show_vol"] = self.volumeCheckBox.isChecked()

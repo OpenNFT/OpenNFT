@@ -797,25 +797,31 @@ class OpenNFT(QWidget):
         with utils.timeit('  preprocess fMRI Volume:'):
             self.eng.preprVol(fname, self.iteration, nargout=0)
 
-        if self.imageViewMode == ImageViewMode.mosaic:
-            self.view_form_input["is_rtqa"] = self.rtqa_output["show_vol"] if self.windowRTQA else False
-            if self.windowRTQA:
-                self.view_form_input["rtQA_volume"] = self.rtqa_output["snr_vol"] \
-                    if self.rtqa_input["which_vol"] == 0 else self.rtqa_output["cnr_vol"]
-            self.view_form_input["is_neg"] = self.negMapCheckBox.isChecked()
-            self.view_form_input["ready"] = True
-
         # t3
         self.recorder.recordEvent(erd.Times.t3, self.iteration, time.time())
         self.updatePlugins()
 
         if self.windowRTQA:
+            is_snr_map_created = self.rtqa_input["rtqa_vol_ready"]
             is_rtqa_volume = self.rtqa_output["show_vol"]
         else:
             is_rtqa_volume = False
+            is_snr_map_created = False
+
+        is_stat_map_created = bool(self.eng.evalin('base', 'mainLoopData.statMapCreated'))
+
+        if self.imageViewMode == ImageViewMode.mosaic:
+            self.view_form_input["is_rtqa"] = is_rtqa_volume
+            if self.windowRTQA and self.view_form_input["is_rtqa"]:
+                self.view_form_input["rtQA_volume"] = self.rtqa_output["snr_vol"] \
+                    if self.rtqa_input["which_vol"] == 0 else self.rtqa_output["cnr_vol"]
+            self.view_form_input["is_neg"] = self.negMapCheckBox.isChecked()
+            self.view_form_input["overlay_ready"] = (is_stat_map_created and not is_rtqa_volume) \
+                                                    or (is_snr_map_created and is_rtqa_volume)
+            self.view_form_input["ready"] = True
 
         if (is_rtqa_volume and config.FIRST_SNR_VOLUME < self.iteration) or\
-                (self.eng.evalin('base', 'mainLoopData.statMapCreated') == 1 and not is_rtqa_volume):
+                (is_stat_map_created and not is_rtqa_volume):
             self.updateOrthViewAsync()
 
         # spatio-temporal data processing
@@ -989,7 +995,7 @@ class OpenNFT(QWidget):
                 self.windowRTQA.plotRTQA()
             self.rtqa_input["calc_ready"] = False
 
-        if self.imageViewMode == ImageViewMode.mosaic:
+        if self.imageViewMode == ImageViewMode.mosaic and self.view_form_input["done_mosaic_templ"]:
             with utils.timeit('Display mosaic image:'):
                 self.displayMosaicImage()
 
@@ -1450,7 +1456,8 @@ class OpenNFT(QWidget):
 
             self.view_form_input = multiprocessing.Manager().dict()
             self.view_form_input["ready"] = False
-            self.view_form_input["done_mosaic"] = False
+            self.view_form_input["done_mosaic_templ"] = False
+            self.view_form_input["done_mosaic_overlay"] = False
             self.view_form_input["done_orth"] = False
 
             self.actualizeAutoRTQA()
@@ -1595,7 +1602,9 @@ class OpenNFT(QWidget):
         self.view_form_input["memmap_volume"] = self.P['memMapFile']
         self.view_form_input["view_mode"] = self.imageViewMode
         self.view_form_input["ready"] = False
-        self.view_form_input["done_mosaic"] = False
+        self.view_form_input["overlay_ready"] = False
+        self.view_form_input["done_mosaic_templ"] = False
+        self.view_form_input["done_mosaic_overlay"] = False
         self.view_form_input["done_orth"] = False
 
         self.view_form_output = multiprocessing.Manager().dict()
@@ -1695,7 +1704,6 @@ class OpenNFT(QWidget):
 
         self.windowRTQA.volumeCheckBox.stateChanged.connect(self.onShowRtqaVol)
         self.windowRTQA.volumeCheckBox.stateChanged.connect(self.onChangeNegMapPolicy)
-        self.windowRTQA.volumeCheckBox.stateChanged.connect(self.onInteractWithMapImage)
         self.windowRTQA.volumeCheckBox.toggled.connect(self.updateOrthViewAsync)
         self.windowRTQA.comboBox.currentIndexChanged.connect(self.onModeChanged)
 
@@ -1804,6 +1812,7 @@ class OpenNFT(QWidget):
     # --------------------------------------------------------------------------
     def onShowRtqaVol(self):
 
+        self.windowRTQA.rtQAVolState()
         if self.isStopped:
             if self.imageViewMode == ImageViewMode.mosaic:
                 self.displayMosaicImage()
@@ -2541,20 +2550,20 @@ class OpenNFT(QWidget):
     # --------------------------------------------------------------------------
     def displayMosaicImage(self):
 
-        if not self.view_form_input["done_mosaic"]:
-            return
-
-        if self.iteration > 1:
+        if self.view_form_input["done_mosaic_templ"] and self.iteration > 1:
             if self.eng.evalin('base', 'length(imgVolTempl)') > 0:
                 with utils.timeit('Getting background volume:'):
                     background_image = self.view_form_output["mosaic_templ"]
-                    if background_image.size > 0:
-                        self.mosaicImageView.set_background_image(background_image)
-                    else:
-                        return
+                if background_image.size > 0:
+                    self.mosaicImageView.set_background_image(background_image)
+                else:
+                    return
+
+            self.view_form_input["done_mosaic_templ"] = False
+
 
         # SNR/Stat map display
-        if self.view_form_output["mosaic_pos_overlay"] is not None:
+        if self.view_form_input["done_mosaic_overlay"]:
 
             pos_map_image = self.view_form_output["mosaic_pos_overlay"]
             self.pos_map_thresholds_widget.compute_thresholds(pos_map_image)
@@ -2562,21 +2571,21 @@ class OpenNFT(QWidget):
 
             if rgba_pos_map_image is not None:
                 self.mosaicImageView.set_pos_map_image(rgba_pos_map_image)
+
+            if self.negMapCheckBox.isChecked():
+
+                neg_map_image = self.view_form_output["mosaic_neg_overlay"]
+                self.neg_map_thresholds_widget.compute_thresholds(neg_map_image)
+                rgba_neg_map_image = self.neg_map_thresholds_widget.compute_rgba(neg_map_image)
+
+                if rgba_neg_map_image is not None:
+                    self.mosaicImageView.set_neg_map_image(rgba_neg_map_image)
+
+            self.view_form_input["done_mosaic_overlay"] = False
+
         else:
             self.mosaicImageView.clear_pos_map()
-
-        if self.view_form_output["mosaic_neg_overlay"] is not None:
-
-            neg_map_image = self.view_form_output["mosaic_neg_overlay"]
-            self.neg_map_thresholds_widget.compute_thresholds(neg_map_image)
-            rgba_neg_map_image = self.neg_map_thresholds_widget.compute_rgba(neg_map_image)
-
-            if rgba_neg_map_image is not None:
-                self.mosaicImageView.set_neg_map_image(rgba_neg_map_image)
-        else:
             self.mosaicImageView.clear_neg_map()
-
-        self.view_form_input["done_mosaic"] = False
 
     # --------------------------------------------------------------------------
     def createMusterInfo(self):
