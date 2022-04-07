@@ -1268,6 +1268,7 @@ class OpenNFT(QWidget):
         self.view_form_output = None
         self.rtqa_input = None
         self.rtqa_output = None
+        self.main_loop = None
 
         self.eng.workspace['P'] = self.P
         self.eng.workspace['mainLoopData'] = self.mainLoopData
