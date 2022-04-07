@@ -20,15 +20,18 @@ PLUGIN_PATH = ROOT_PATH / 'plugins'
 OpenNFT_ICON = ROOT_PATH / 'ui' / 'images' / 'appicon.png'
 MATLAB_FUNCTIONS_PATH = ROOT_PATH / 'matlab'
 
+AUTO_RTQA = False
+SELECT_ROIS = False
+USE_EPI_TEMPLATE = False
+AUTO_RTQA_SETTINGS = ROOT_PATH / 'configs' / 'auto_rtqa_settings.ini'
+
 # Matlab sessions
 MAIN_MATLAB_NAME = 'MATLAB_NFB_MAIN'
 PTB_MATLAB_NAME = 'MATLAB_NFB_PTB'
-SPM_MATLAB_NAME = 'MATLAB_NFB_SPM'
 MODEL_HELPER_MATLAB_NAME = 'MATLAB_NFB_MODEL_HELPER'
 
 MAIN_MATLAB_STARTUP_OPTIONS = '-nodesktop'
 PTB_MATLAB_STARTUP_OPTIONS = '-nodesktop'
-SPM_MATLAB_STARTUP_OPTIONS = '-nodesktop'
 MODEL_HELPER_MATLAB_STARTUP_OPTIONS = '-nodesktop'
 
 MATLAB_NAME_SUFFIX = ''
@@ -75,7 +78,9 @@ ROI_PLOT_COLORS = [
     pg.mkColor(140, 200, 240, 255),
     pg.mkColor(208, 208, 147, 255),
     pg.mkColor(147, 0, 0, 255),
-    pg.mkColor(0, 0, 0, 255)
+    pg.mkColor(100, 175, 0, 255),
+    pg.mkColor(147, 255, 0, 255),
+    pg.mkColor(120, 147, 147, 255)
 ]
 
 MUSTER_PEN_COLORS = [
@@ -124,15 +129,18 @@ HIDE_TEST_BTN = True
 USE_RTQA = True
 USE_IGLM = True
 USE_ROI = True
-FIRST_SNR_VOLUME = 2
+FIRST_SNR_VOLUME = 1
 
 # zero padding settings
-zeroPaddingFlag = True
+zeroPaddingFlag = False
 nrZeroPadVol = 3
 
 # FD defaults
 DEFAULT_FD_RADIUS = 50  # radius multiplying angular displacement in FD compution
 DEFAULT_FD_THRESHOLDS = [0.1, 0.2, 0.5]  # FD thresholds to display by default
+
+# DVARS
+DEFAULT_DVARS_THRESHOLD = 5
 
 # plot display defaults
 PLOT_BACKGROUND_COLOR = (255, 255, 255)

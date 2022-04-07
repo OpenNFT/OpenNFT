@@ -47,6 +47,7 @@ from loguru import logger
 
 import numpy as np
 import pyqtgraph as pg
+import pydicom
 
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
@@ -54,7 +55,7 @@ from watchdog.events import FileSystemEventHandler
 from pyniexp.connection import Udp
 from scipy.io import loadmat
 
-from PyQt5.QtWidgets import QApplication, QWidget, QFileDialog
+from PyQt5.QtWidgets import QApplication, QWidget, QFileDialog, QMenu
 from PyQt5.QtGui import QIcon, QPalette
 from PyQt5.QtCore import QSettings, QTimer, QEvent, QRegExp
 from PyQt5.uic import loadUi
@@ -62,6 +63,7 @@ from PyQt5.QtGui import QRegExpValidator
 
 from opennft import (
     config,
+    conversions,
     runmatlab,
     ptbscreen,
     mmapimage,
@@ -70,9 +72,13 @@ from opennft import (
     mapimagewidget,
     plugin,
     utils,
-    rtqa,
+    rtqa_gui,
+    rtqa_calc,
+    orthview,
     eventrecorder as erd,
 )
+
+import cv2
 
 if config.USE_MRPULSE:
     from opennft import mrpulse
@@ -156,19 +162,13 @@ class OpenNFT(QWidget):
         self.orthView = projview.ProjectionsWidget(self)
         self.layoutOrthView.addWidget(self.orthView)
 
-        self.mosaic_background_image_reader = mmapimage.MosaicImageReader(image_name='imgViewTempl')
-        self.mosaic_pos_map_image_reader = mmapimage.MosaicImageReader(image_name='statMap')
-        self.mosaic_neg_map_image_reader = mmapimage.MosaicImageReader(image_name='statMap_neg')
-
-        self.proj_background_images_reader = mmapimage.ProjectionImagesReader()
-        self.proj_pos_map_images_reader = mmapimage.ProjectionImagesReader()
-        self.proj_neg_map_images_reader = mmapimage.ProjectionImagesReader()
-
         self.pos_map_thresholds_widget = mapimagewidget.MapImageThresholdsWidget(self)
         self.neg_map_thresholds_widget = mapimagewidget.MapImageThresholdsWidget(self, colormap='Blues_r')
 
         self.layoutHotMapThresholds.addWidget(self.pos_map_thresholds_widget)
+        self.pos_map_thresholds_widget.setEnabled(False)
         self.layoutNegMapThresholds.addWidget(self.neg_map_thresholds_widget)
+        self.neg_map_thresholds_widget.setEnabled(False)
 
         self.mcPlot = self.createMcPlot()
 
@@ -203,7 +203,11 @@ class OpenNFT(QWidget):
         self.files_exported = []
 
         self.eng = None
-        self.engSPM = None
+        self.orth_view = None
+        self.orth_view_input = None
+        self.orth_view_output = None
+        self.rtqa_input = None
+        self.rtqa_output = None
 
         self.plugins = []
 
@@ -218,7 +222,6 @@ class OpenNFT(QWidget):
         self.mlMainHelper = matlab_helpers[config.MAIN_MATLAB_NAME]
         if config.USE_PTB_HELPER:
             self.mlPtbDcmHelper = matlab_helpers[config.PTB_MATLAB_NAME]
-        self.mlSpmHelper = matlab_helpers[config.SPM_MATLAB_NAME]
         self.mlModelHelper = matlab_helpers.get(config.MODEL_HELPER_MATLAB_NAME)
 
         if config.USE_PTB_HELPER:
@@ -244,6 +247,7 @@ class OpenNFT(QWidget):
         self.readAppSettings()
         self.initialize(start=False)
 
+        self.calc_rtqa = None
         self.windowRTQA = None
         self.isStopped = False
 
@@ -254,16 +258,14 @@ class OpenNFT(QWidget):
         self.stop()
         self.hide()
 
-        self.mosaic_background_image_reader.clear()
-        self.mosaic_pos_map_image_reader.clear()
-        self.mosaic_neg_map_image_reader.clear()
-
-        self.proj_background_images_reader.clear()
-        self.proj_pos_map_images_reader.clear()
-        self.proj_neg_map_images_reader.clear()
-
         self.eng = None
-        self.engSPM = None
+        if self.orth_view:
+            self.orth_view.terminate()
+        self.orth_view = None
+
+        if self.calc_rtqa:
+            self.calc_rtqa.terminate()
+        self.calc_rtqa = None
 
         if runmatlab.is_shared_matlab():
             runmatlab.detach_matlab()
@@ -374,53 +376,80 @@ class OpenNFT(QWidget):
         w_sizes = [self.width() // 2] * 2
         self.splitterMainHor.setSizes(w_sizes)
 
-        self.leFirstFile.textChanged.connect(lambda: self.textChangedDual(self.leFirstFile, self.leFirstFile2))
-        self.leFirstFile2.textChanged.connect(lambda: self.textChangedDual(self.leFirstFile2, self.leFirstFile))
-
-        self.pbMoreParameters.toggled.connect(self.onShowMoreParameters)
-
         self.btnInit.clicked.connect(lambda: self.initialize(start=True))
-        self.btnPlugins.clicked.connect(self.showPluginDlg)
-        self.btnPlugins.setEnabled(False)
-        self.btnSetup.clicked.connect(self.setup)
-        self.btnStart.clicked.connect(self.start)
-        self.btnStop.clicked.connect(self.stop)
-        self.btnRTQA.clicked.connect(self.rtQA)
-        self.btnRTQA.setEnabled(False)
 
-        self.btnChooseSetFile.clicked.connect(self.onChooseSetFile)
-        self.btnChooseSetFile2.clicked.connect(self.onChooseSetFile)
+        if not config.AUTO_RTQA:
+            self.btnPlugins.clicked.connect(self.showPluginDlg)
+            self.btnPlugins.setEnabled(False)
+            self.btnSetup.clicked.connect(self.setup)
+            self.btnStart.clicked.connect(self.start)
+            self.btnStop.clicked.connect(self.stop)
+            self.btnRTQA.clicked.connect(self.rtQA)
+            self.btnRTQA.setEnabled(False)
 
-        self.btnChooseProtocolFile.clicked.connect(self.onChooseProtocolFile)
+            self.leFirstFile.textChanged.connect(lambda: self.textChangedDual(self.leFirstFile, self.leFirstFile2))
+            self.leFirstFile2.textChanged.connect(lambda: self.textChangedDual(self.leFirstFile2, self.leFirstFile))
 
-        self.btnChhoseWeghts.clicked.connect(self.onChooseWeightsFile)
+            self.pbMoreParameters.toggled.connect(self.onShowMoreParameters)
 
-        self.btnChooseRoiAnatFolder.clicked.connect(
-            lambda: self.onChooseFolder('RoiAnatFolder', self.leRoiAnatFolder))
+            self.btnChooseSetFile.clicked.connect(self.onChooseSetFile)
+            self.btnChooseSetFile2.clicked.connect(self.onChooseSetFile)
 
-        self.btnChooseRoiGroupFolder.clicked.connect(
-            lambda: self.onChooseFolder('RoiGroupFolder', self.leRoiGroupFolder))
+            self.btnChooseProtocolFile.clicked.connect(self.onChooseProtocolFile)
 
-        self.btnChooseStructBgFile.clicked.connect(self.onChooseStructBgFile)
+            self.btnChhoseWeghts.clicked.connect(self.onChooseWeightsFile)
 
-        self.btnMCTempl.clicked.connect(self.onChooseMCTemplFile)
-        # self.btnTest.clicked.connect(self.onTest)
+            self.btnChooseRoiAnatFolder.clicked.connect(
+                lambda: self.onChooseFolder('RoiAnatFolder', self.leRoiAnatFolder))
 
-        self.btnChooseWorkFolder.clicked.connect(
-            lambda: self.onChooseFolder('WorkFolder', self.leWorkFolder))
-        self.btnChooseWatchFolder.clicked.connect(
-            lambda: self.onChooseFolder('WatchFolder', self.leWatchFolder))
+            self.btnChooseRoiGroupFolder.clicked.connect(
+                lambda: self.onChooseFolder('RoiGroupFolder', self.leRoiGroupFolder))
 
-        self.btnStart.setEnabled(False)
+            self.btnChooseStructBgFile.clicked.connect(self.onChooseStructBgFile)
 
-        # if config.HIDE_TEST_BTN:
-        #    self.btnTest.setVisible(False)
+            self.btnMCTempl.clicked.connect(self.onChooseMCTemplFile)
+
+            self.btnChooseWorkFolder.clicked.connect(
+                lambda: self.onChooseFolder('WorkFolder', self.leWorkFolder))
+            self.btnChooseWatchFolder.clicked.connect(
+                lambda: self.onChooseFolder('WatchFolder', self.leWatchFolder))
+
+            self.btnStart.setEnabled(False)
+        else:
+            self.stackedWidget.setCurrentIndex(1)
+            self.btnPlugins.setEnabled(False)
+            self.pbMoreParameters.setEnabled(False)
+            self.btnSetup.setEnabled(False)
+            self.btnStart.clicked.connect(self.start)
+            self.btnStop.clicked.connect(self.stop)
+            self.btnRTQA.clicked.connect(self.rtQA)
+            self.btnRTQA.setEnabled(False)
+
+            self.btnChooseWatchFolder3.clicked.connect(
+                lambda: self.onChooseFolder('WatchFolder', self.leWatchFolder3))
+            self.btnChooseRoiFolder.clicked.connect(
+                lambda: self.onChooseFolder('RoiFolder', self.leRoiFolder))
+            self.btnMCTempl3.clicked.connect(self.onChooseMCTemplFile)
+
+            self.cbImageViewMode.model().item(1).setEnabled(False)
+
+            if not config.SELECT_ROIS:
+                self.label_16.setVisible(False)
+                self.leRoiFolder.setVisible(False)
+                self.btnChooseRoiFolder.setVisible(False)
+
+            if not config.USE_EPI_TEMPLATE:
+                self.label_26.setVisible(False)
+                self.leMCTempl3.setVisible(False)
+                self.btnMCTempl3.setVisible(False)
 
         self.cbImageViewMode.currentIndexChanged.connect(self.onChangeImageViewMode)
         self.orthView.cursorPositionChanged.connect(self.onChangeOrthViewCursorPosition)
 
         self.call_timer.timeout.connect(self.callMainLoopIteration)
         self.orthViewUpdateCheckTimer.timeout.connect(self.onCheckOrthViewUpdated)
+
+        self.cbType.currentTextChanged.connect(self.onChangeFBType)
 
         self.cbDataType.currentTextChanged.connect(self.onChangeDataType)
         self.onChangeDataType()
@@ -455,6 +484,14 @@ class OpenNFT(QWidget):
         self.onChangeUseUDPFeedback()
 
     # --------------------------------------------------------------------------
+    def onChangeFBType(self, value):
+        if value=='DCM':
+            self.cbFeedbackPlot.setChecked(False)
+            self.cbFeedbackPlot.setEnabled(False)
+        else:
+            self.cbFeedbackPlot.setEnabled(True)
+
+    # --------------------------------------------------------------------------
     def onChangePosMapVisible(self):
         is_visible = self.posMapCheckBox.isChecked()
 
@@ -471,7 +508,7 @@ class OpenNFT(QWidget):
     # --------------------------------------------------------------------------
     def onChangeNegMapPolicy(self):
         if self.windowRTQA:
-            is_rtqa_volume = self.windowRTQA.volumeCheckBox.isChecked()
+            is_rtqa_volume = self.rtqa_output["show_vol"]
         else:
             is_rtqa_volume = False
         self.negMapCheckBox.setEnabled(not is_rtqa_volume)
@@ -565,42 +602,11 @@ class OpenNFT(QWidget):
 
         self.eng.setupProcParams(nargout=0)
 
+        if self.P['isRTQA']:
+            self.eng.epiWholeBrainROI(nargout=0)
+
         with utils.timeit("Receiving 'P' from Matlab:"):
             self.P = self.eng.workspace['P']
-
-        # init OrthoView in helper
-        self.spmHelperP = {
-            'Type': self.P['Type'],
-            'StructBgFile': str(Path(self.P['StructBgFile'])),
-            'MCTempl': str(Path(self.P['MCTempl'])),
-            'memMapFile': self.eng.evalin('base', 'P.memMapFile'),
-            'tRoiBoundaries': [],
-            'cRoiBoundaries': [],
-            'sRoiBoundaries': [],
-            'isRestingState': self.P['isRestingState'],
-            'isIGLM': self.P['isIGLM'],
-            'isROI': config.USE_ROI,
-        }
-
-        self.engSPM.helperPrepareOrthView(self.spmHelperP, 'bgEPI', nargout=0)
-
-    # --------------------------------------------------------------------------
-    def readOrthViewImages(self):
-        memmap_fname = self.eng.evalin('base', 'P.memMapFile')
-
-        # background anat or epi
-        background_memmap_fname = memmap_fname.replace('shared', 'BackgOrthView')
-        self.proj_background_images_reader.read(background_memmap_fname, self.engSPM)
-
-        # SNR or stat map
-        pos_map_memmap_fname = memmap_fname.replace('shared', 'OrthView')
-        self.proj_pos_map_images_reader.read(pos_map_memmap_fname, self.engSPM)
-
-        neg_map_memmap_fname = memmap_fname.replace('shared', 'OrthView_neg')
-        self.proj_neg_map_images_reader.read(neg_map_memmap_fname, self.engSPM)
-
-        # ROI from helperP
-        self.spmHelperP = self.engSPM.workspace['helperP']
 
     # --------------------------------------------------------------------------
     def displayScreen(self):
@@ -741,6 +747,17 @@ class OpenNFT(QWidget):
             else:
                 self.files_exported.remove(fname)
 
+        autoRTQAMCTempl = (self.iteration == self.P['nrSkipVol']+1) and config.AUTO_RTQA \
+                          and not self.P['useEPITemplate'] and not self.autoRTQASetup
+
+        if autoRTQAMCTempl:
+            self.P['MCTempl'] = fname
+            self.eng.workspace['P'] = self.P
+            self.setupAutoRTQA()
+        elif self.P['useEPITemplate'] and not self.autoRTQASetup:
+            self.eng.workspace['P'] = self.P
+            self.setupAutoRTQA()
+
         # t2
         self.recorder.recordEvent(erd.Times.t2, self.iteration, time.time())
 
@@ -759,6 +776,13 @@ class OpenNFT(QWidget):
             self.isMainLoopEntered = False
             return
 
+        if config.AUTO_RTQA and not self.autoRTQASetup:
+
+            self.files_processed.append(fname)
+            self.iteration += 1
+            self.isMainLoopEntered = False
+            return
+
         logger.info('Call iteration for file "{}"', Path(fname).name)
 
         # Start elapsed time
@@ -766,15 +790,9 @@ class OpenNFT(QWidget):
 
         self.previousIterStartTime = startingTime
 
-        if self.iteration == 1:
+        if self.iteration == 1 or autoRTQAMCTempl:
             with utils.timeit('  setup after first volume:'):
                 self.eng.setupFirstVolume(fname, nargout=0)
-                self.engSPM.assignin('base', 'matTemplMotCorr',
-                                     self.eng.evalin('base', 'mainLoopData.matTemplMotCorr'),
-                                     nargout=0)
-                self.engSPM.assignin('base', 'dimTemplMotCorr',
-                                     self.eng.evalin('base', 'mainLoopData.dimTemplMotCorr'),
-                                     nargout=0)
 
         # Main logic
         # data preprocessing
@@ -786,7 +804,7 @@ class OpenNFT(QWidget):
         self.updatePlugins()
 
         if self.windowRTQA:
-            is_rtqa_volume = self.windowRTQA.volumeCheckBox.isChecked()
+            is_rtqa_volume = self.rtqa_output["show_vol"]
         else:
             is_rtqa_volume = False
 
@@ -912,6 +930,7 @@ class OpenNFT(QWidget):
             if config.USE_UDP_FEEDBACK:
                 logger.info('Sending by UDP - dispValue = {}', self.displayData['dispValue'])
                 self.udpSender.send_data(self.displayData['dispValue'])
+
             self.displaySamples.append(self.displayData['dispValue'])
 
         # main logic end
@@ -926,16 +945,17 @@ class OpenNFT(QWidget):
             dataProc = np.array(self.outputSamples['kalmanProcTimeSeries'], ndmin=2)
             dataMC = np.array(self.outputSamples['motCorrParam'], ndmin=2)
             n = len(dataRealRaw[0, :]) - 1
-            data = dataRealRaw[:, n]
+            dataRaw = dataRealRaw[:, n]
+
+            if n == 0:
+                offsetMCParam = np.array(self.eng.evalin('base','P.offsetMCParam'), ndmin=1)
+                self.rtqa_input["offset_mc"] = offsetMCParam
 
             if self.P['Type'] != 'DCM':
                 betaCoeff = np.array(
-                    self.eng.evalin('base', 'cellfun(@(a)a(mainLoopData.indVolNorm,2),rtQA_matlab.betRegr)'), ndmin=2)
+                    self.eng.evalin('base', 'rtQA_matlab.linRegr(:,mainLoopData.indVolNorm)'), ndmin=2)
             else:
                 betaCoeff = np.zeros((int(self.P['NrROIs']), 1))
-
-            for i in range(int(self.P['NrROIs'])):
-                self.windowRTQA.linTrendCoeff[i, n] = betaCoeff[i]
 
             posSpikes = np.array(self.eng.evalin('base', 'rtQA_matlab.kalmanSpikesPos(:,mainLoopData.indVolNorm)'),
                                  ndmin=2)
@@ -947,20 +967,27 @@ class OpenNFT(QWidget):
             else:
                 isNewDCMBlock = False
 
-            if self.P['Type'] != 'DCM':
+            if self.P['Type'] != 'DCM' and not self.P['isAutoRTQA']:
                 dataNoRegGLM = np.squeeze(np.array(
                     self.eng.evalin('base', 'mainLoopData.noRegGlmProcTimeSeries(:,end)'), ndmin=2), axis=1)
             else:
                 dataNoRegGLM = np.array([])
 
-            self.windowRTQA.calculateSNR(data, dataNoRegGLM, n, isNewDCMBlock)
-            if not self.P['isRestingState']:
-                self.windowRTQA.calculateCNR(data, n, isNewDCMBlock)
-            self.windowRTQA.calculateSpikes(dataGLM, n, posSpikes, negSpikes)
-            self.windowRTQA.calculateMSE(n, dataGLM, dataProc[:, n])
-
-            self.windowRTQA.plotRTQA(n + 1)
-            self.windowRTQA.plotDisplacements(dataMC[n, :], isNewDCMBlock)
+            self.rtqa_input["raw_ts"] = dataRaw
+            self.rtqa_input["glm_ts"] = dataGLM
+            self.rtqa_input["no_reg_glm_ts"] = dataNoRegGLM
+            self.rtqa_input["proc_ts"] = dataProc[:, n]
+            self.rtqa_input["mc_ts"] = dataMC[n, :]
+            self.rtqa_input["beta_coeff"] = betaCoeff
+            self.rtqa_input["pos_spikes"] = posSpikes
+            self.rtqa_input["neg_spikes"] = negSpikes
+            self.rtqa_input["is_new_dcm_block"] = isNewDCMBlock
+            self.rtqa_input["iteration"] = n
+            self.rtqa_input["roi_checked"] = self.selectedRoi
+            self.rtqa_input["data_ready"] = True
+            if self.windowRTQA.isVisible():
+                self.windowRTQA.plotRTQA()
+            self.rtqa_input["calc_ready"] = False
 
         if self.imageViewMode == ImageViewMode.mosaic:
             with utils.timeit('Display mosaic image:'):
@@ -1105,7 +1132,7 @@ class OpenNFT(QWidget):
         proc.clear()
         norm.clear()
 
-        if self.P['isRestingState']:
+        if self.P['isAutoRTQA']:
             grid = True
         else:
             grid = False
@@ -1128,7 +1155,7 @@ class OpenNFT(QWidget):
 
     # --------------------------------------------------------------------------
     def basicSetupPlot(self, plotitem, grid=True):
-        if not self.P['isRestingState']:
+        if not self.P['isAutoRTQA']:
             lastInds = np.zeros((self.musterInfo['condTotal'],))
             for i in range(self.musterInfo['condTotal']):
                 lastInds[i] = self.musterInfo['tmpCond' + str(i + 1)][-1][1]
@@ -1154,7 +1181,6 @@ class OpenNFT(QWidget):
         logger.info('Using Matlab session "{}" as MAIN', self.mlMainHelper.name)
         if config.USE_PTB_HELPER:
             logger.info('Using Matlab session "{}" for PTB', self.mlPtbDcmHelper.name)
-        logger.info('Using Matlab session "{}" for SPM', self.mlSpmHelper.name)
 
         if config.USE_MATLAB_MODEL_HELPER:
             logger.info('Using Matlab session "{}" for Model Helper', self.mlModelHelper.name)
@@ -1165,27 +1191,54 @@ class OpenNFT(QWidget):
             logger.warning('There is no main Matlab model helper. DCM calculation is not possible.')
         if config.USE_PTB_HELPER:
             self.mlPtbDcmHelper.prepare()
-        self.mlSpmHelper.prepare()
         if config.USE_MATLAB_MODEL_HELPER:
             self.mlModelHelper.prepare()
 
         self.eng = self.mlMainHelper.engine
-        self.engSPM = self.mlSpmHelper.engine
 
         self.eng.workspace['P'] = self.P
         self.eng.workspace['mainLoopData'] = self.mainLoopData
         self.eng.workspace['rtQA_matlab'] = self.rtQA_matlab
 
-        self.frameParams.setEnabled(True)
-        self.frameShortParams.setEnabled(True)
-        self.btnSetup.setEnabled(self.isSetFileChosen)
-
         self.resetDone = True
         self.isInitialized = True
 
-        self.pluginWindow = plugin.PluginWindow()
-        self.btnPlugins.setEnabled(True)
+        if not config.AUTO_RTQA:
+            self.frameParams.setEnabled(True)
+            self.frameShortParams.setEnabled(True)
+            self.btnSetup.setEnabled(self.isSetFileChosen)
+            self.pluginWindow = plugin.PluginWindow()
+            self.btnPlugins.setEnabled(True)
+        else:
+            self.frameAutoRtqaParams.setEnabled(True)
+            self.btnChooseRoiFolder.setEnabled(True)
+            self.btnChooseWatchFolder3.setEnabled(True)
+            self.label_15.setEnabled(True)
+            self.label_16.setEnabled(True)
+            self.leRoiFolder.setEnabled(True)
+            self.leWatchFolder3.setEnabled(True)
+            self.cbOfflineMode3.setEnabled(True)
+            self.label_17.setEnabled(True)
+            self.label_18.setEnabled(True)
+            self.label_45.setEnabled(True)
+            self.sbImgSerNr3.setEnabled(True)
+            self.sbNFRunNr3.setEnabled(True)
+            self.sbSkipVol3.setEnabled(True)
+            self.sbVolumesNr3.setEnabled(True)
+            self.label_44.setEnabled(True)
+            self.label_46.setEnabled(True)
+            self.label_11.setEnabled(True)
+            self.label_21.setEnabled(True)
+            self.label_24.setEnabled(True)
+            self.sbSkipVol3.setEnabled(True)
+            self.sbMatrixSizeX3.setEnabled(True)
+            self.sbMatrixSizeY3.setEnabled(True)
+            self.sbSlicesNr3.setEnabled(True)
+            self.leFirstFile3.setEnabled(True)
+            self.btnStart.setEnabled(True)
+            self.presetupAutoRTQA()
 
+        self.autoRTQASetup = False
         logger.info("Initialization finished ({:.2f} s)", time.time() - ts)
 
     # --------------------------------------------------------------------------
@@ -1195,6 +1248,12 @@ class OpenNFT(QWidget):
         self.rtQA_matlab = {}
         self.reultFromHelper = None
         self.reachedFirstFile = False
+        self.autoRTQASetup = False
+        self.orth_view.terminate()
+        self.orth_view_input = None
+        self.orth_view_output = None
+        self.rtqa_input = None
+        self.rtqa_output = None
 
         self.eng.workspace['P'] = self.P
         self.eng.workspace['mainLoopData'] = self.mainLoopData
@@ -1215,14 +1274,6 @@ class OpenNFT(QWidget):
 
         self.pos_map_thresholds_widget.reset()
         self.neg_map_thresholds_widget.reset()
-
-        self.mosaic_background_image_reader.clear()
-        self.mosaic_pos_map_image_reader.clear()
-        self.mosaic_neg_map_image_reader.clear()
-
-        self.proj_background_images_reader.clear()
-        self.proj_pos_map_images_reader.clear()
-        self.proj_neg_map_images_reader.clear()
 
         self.mosaicImageView.clear()
         self.orthView.clear()
@@ -1258,7 +1309,6 @@ class OpenNFT(QWidget):
             self.P['memMapFile'] = memMapFile
 
             self.eng.workspace['P'] = self.P
-            self.engSPM.workspace['P'] = self.P
             self.previousIterStartTime = 0
             self.displaySamples = []
 
@@ -1271,7 +1321,7 @@ class OpenNFT(QWidget):
             self.P.update(self.eng.workspace['P'])
 
             logger.info("  Setup plots...")
-            if not self.P['isRestingState']:
+            if not self.P['isAutoRTQA']:
                 self.createMusterInfo()
 
             self.setupRoiPlots()
@@ -1279,6 +1329,34 @@ class OpenNFT(QWidget):
 
             with utils.timeit('  initMainLoopData:'):
                 self.initMainLoopData()
+
+            self.orth_view_init()
+
+            self.roiDict = dict()
+            self.selectedRoi = []
+            roi_menu = QMenu()
+            roi_menu.triggered.connect(self.onRoiChecked)
+            self.roiSelectorBtn.setMenu(roi_menu)
+            nrROIs = int(self.P['NrROIs'])
+            for i in range(nrROIs):
+                if self.P['isRTQA'] and i+1==nrROIs:
+                    roi = 'Whole brain ROI'
+                else:
+                    roi = 'ROI_{}'.format(i+1)
+                roi_action = roi_menu.addAction(roi)
+                roi_action.setCheckable(True)
+                if not (self.P['isRTQA'] and i+1==nrROIs):
+                    roi_action.setChecked(True)
+                    self.roiDict[roi] = True
+                    self.selectedRoi.append(i)
+
+            action = roi_menu.addAction("All")
+            action.setCheckable(False)
+
+            action = roi_menu.addAction("None")
+            action.setCheckable(False)
+
+            self.roiSelectorBtn.setEnabled(True)
 
             if config.USE_SHAM:
                 logger.warning("Sham feedback has been selected")
@@ -1346,42 +1424,284 @@ class OpenNFT(QWidget):
 
             self.btnStart.setEnabled(True)
             if self.P['isRTQA']:
-
-                self.btnRTQA.setEnabled(True)
-
-                if self.windowRTQA:
-                    self.windowRTQA.deleteLater()
-
-                self.windowRTQA = rtqa.RTQAWindow(parent=self)
-                self.windowRTQA.volumeCheckBox.stateChanged.connect(self.onShowRtqaVol)
-                self.windowRTQA.volumeCheckBox.stateChanged.connect(self.onChangeNegMapPolicy)
-                self.windowRTQA.volumeCheckBox.stateChanged.connect(self.onInteractWithMapImage)
-                self.windowRTQA.volumeCheckBox.toggled.connect(self.updateOrthViewAsync)
-                self.windowRTQA.smoothedCheckBox.stateChanged.connect(self.onSmoothedChecked)
-                self.windowRTQA.comboBox.currentIndexChanged.connect(self.onModeChanged)
-                self.eng.assignin('base', 'rtQAMode', self.windowRTQA.currentMode, nargout=0)
-                self.eng.assignin('base', 'isShowRtqaVol', self.windowRTQA.volumeCheckBox.isChecked(), nargout=0)
-                self.eng.assignin('base', 'isSmoothed', self.windowRTQA.smoothedCheckBox.isChecked(), nargout=0)
-
-                self.windowRTQA.isStopped = False
-
-            else:
-                self.eng.assignin('base', 'rtQAMode', False, nargout=0)
-                self.eng.assignin('base', 'isShowRtqaVol', False, nargout=0)
-                self.eng.assignin('base', 'isSmoothed', False, nargout=0)
+                self.rtqa_init()
 
             self.onChangeNegMapPolicy()
             self.eng.assignin('base', 'imageViewMode', int(self.imageViewMode), nargout=0)
-            self.eng.assignin('base', 'FIRST_SNR_VOLUME', config.FIRST_SNR_VOLUME, nargout=0)
             self.cbImageViewMode.setEnabled(False)
             self.cbImageViewMode.setCurrentIndex(0)
             self.isStopped = False
 
     # --------------------------------------------------------------------------
+    def presetupAutoRTQA(self):
+
+        if not self.isInitialized:
+            logger.error("Couldn't connect Matlab.\n PRESS INITIALIZE FIRST!")
+            return
+
+        with utils.timeit('Setup finished:'):
+            logger.info("Setup application...")
+
+            self.btnRTQA.setEnabled(False)
+            self.orthViewInitialize = True
+
+            if not self.resetDone:
+                self.reset()
+
+            self.orth_view_input = multiprocessing.Manager().dict()
+            self.orth_view_input["ready"] = False
+            self.orth_view_input["done"] = False
+
+            self.actualizeAutoRTQA()
+            self.isOffline = self.cbOfflineMode3.isChecked()
+
+            memMapFile = self.getFreeMemmapFilename()
+            memMapFile = memMapFile.replace('OrthView', 'shared')
+            logger.info('memMapFile: {}', memMapFile)
+            self.P['memMapFile'] = memMapFile
+
+            if not config.SELECT_ROIS:
+                self.P['NrROIs'] = 1
+            self.eng.workspace['P'] = self.P
+            self.previousIterStartTime = 0
+            self.displaySamples = []
+
+            self.recorder.initialize(self.P['NrOfVolumes'])
+
+    # --------------------------------------------------------------------------
+    def setupAutoRTQA(self):
+
+        if not self.P['useEPITemplate']:
+            dcm = pydicom.dcmread(self.P['MCTempl'])
+            if not (hasattr(dcm,'ImagePositionPatient') and hasattr(dcm,'ImageOrientationPatient')):
+                logger.error("DICOM template has no ImagePositionPatient and ImageOrientationPatient and could not be used as EPI template\nPlease, check DICOM export or use NII EPI template\n")
+                self.fFinNFB = False
+                self.stop()
+                return
+
+        with utils.timeit("  Load protocol data:"):
+            self.loadJsonProtocol()
+
+        with utils.timeit("  Selecting ROI:"):
+            if config.SELECT_ROIS:
+                self.selectRoi()
+
+        with utils.timeit('  initMainLoopData:'):
+            self.eng.setupProcParams(nargout=0)
+
+            if self.P['isRTQA']:
+                self.eng.epiWholeBrainROI(nargout=0)
+
+            with utils.timeit("Receiving 'P' from Matlab:"):
+                self.P = self.eng.workspace['P']
+
+        self.P.update(self.eng.workspace['P'])
+
+        logger.info("  Setup plots...")
+        self.setupRoiPlots()
+        self.setupMcPlots()
+
+        self.orth_view_init()
+
+        self.roiDict = dict()
+        self.selectedRoi = []
+        roi_menu = QMenu()
+        roi_menu.triggered.connect(self.onRoiChecked)
+        self.roiSelectorBtn.setMenu(roi_menu)
+        nrROIs = int(self.P['NrROIs'])
+        for i in range(nrROIs):
+            if not config.SELECT_ROIS or i+1==nrROIs:
+                roi = 'Whole brain ROI'
+            else:
+                roi = 'ROI_{}'.format(i+1)
+            roi_action = roi_menu.addAction(roi)
+            roi_action.setCheckable(True)
+            if config.SELECT_ROIS and not (i+1==nrROIs) or not config.SELECT_ROIS:
+                roi_action.setChecked(True)
+                self.roiDict[roi] = True
+                self.selectedRoi.append(i)
+
+        action = roi_menu.addAction("All")
+        action.setCheckable(False)
+
+        action = roi_menu.addAction("None")
+        action.setCheckable(False)
+
+        self.roiSelectorBtn.setEnabled(True)
+
+        self.initUdpSender()
+
+        self.rtqa_init()
+
+        self.autoRTQASetup = True
+        self.onChangeNegMapPolicy()
+        self.cbImageViewMode.setCurrentIndex(0)
+        self.cbImageViewMode.model().item(1).setEnabled(False)
+        self.isStopped = False
+
+    # --------------------------------------------------------------------------
+    def orth_view_init(self):
+
+        nrROIs = int(self.eng.evalin('base', 'P.NrROIs'))
+        x = self.P['MatrixSizeX']
+        y = self.P['MatrixSizeY']
+        z = self.P['NrOfSlices']
+        ROI_vols = np.zeros((nrROIs, x, y, z))
+        ROI_mats = np.zeros((nrROIs, 4, 4))
+        if self.P['Type'] == 'DCM':
+            if self.P['isRTQA']:
+                # For DCM+rtQA, ROIs are stored in ROIsAnat and whole-brain EPI ROI is in ROIs.
+                # ROIsAnat and whole-brain EPI ROI are transferred from Matlab.
+                # For definition of nrROIs, see selectROI.m
+                for i in range(nrROIs - 1):
+                    ROI_vols[i] = np.array(self.eng.evalin('base', 'ROIsAnat(' + str(i + 1) + ').vol'), ndmin=3)
+                    ROI_mats[i] = np.array(self.eng.evalin('base', 'ROIsAnat(' + str(i + 1) + ').mat'), ndmin=2)
+                ROI_vols[nrROIs-1] = np.array(self.eng.evalin('base', 'ROIs(end).vol'), ndmin=3)
+                ROI_mats[nrROIs-1] = np.array(self.eng.evalin('base', 'ROIs(end).mat'), ndmin=2)
+            else:
+                for i in range(nrROIs):
+                    ROI_vols[i] = np.array(self.eng.evalin('base', 'ROIsAnat(' + str(i + 1) + ').vol'), ndmin=3)
+                    ROI_mats[i] = np.array(self.eng.evalin('base', 'ROIsAnat(' + str(i + 1) + ').mat'), ndmin=2)
+        else:
+            for i in range(nrROIs):
+                ROI_vols[i] = np.array(self.eng.evalin('base', 'ROIs(' + str(i + 1) + ').vol'), ndmin=3)
+                ROI_mats[i] = np.array(self.eng.evalin('base', 'ROIs(' + str(i + 1) + ').mat'), ndmin=2)
+
+        # # shared variables for OrthView process
+        self.orth_view_input = multiprocessing.Manager().dict()
+        self.orth_view_input["nr_ROIs"] = nrROIs
+        self.orth_view_input["ROI_vols"] = ROI_vols
+        self.orth_view_input["ROI_mats"] = ROI_mats
+        self.orth_view_input["cursor_pus"] = []
+        self.orth_view_input["flags_planes"] = []
+        self.orth_view_input["bg_type"] = "bgEPI"
+        self.orth_view_input["is_rtqa"] = False
+        self.orth_view_input["is_neg"] = self.negMapCheckBox.isChecked()
+        self.orth_view_input["is_ROI"] = config.USE_ROI
+        if config.AUTO_RTQA:
+            self.orth_view_input["anat_volume"] = None
+        else:
+            self.orth_view_input["anat_volume"] = self.P['StructBgFile']
+        self.orth_view_input["epi_volume"] = self.P['MCTempl']
+        if config.AUTO_RTQA and not config.USE_EPI_TEMPLATE:
+            self.orth_view_input["epi_volume_type"] = "dcm"
+        else:
+            self.orth_view_input["epi_volume_type"] = "nii"
+        self.orth_view_input["rtQA_volume"] = []
+        self.orth_view_input["stat_volume"] = str(self.eng.evalin('base', 'P.memMapFile')).replace('shared', 'statVol')
+        self.orth_view_input["mat"] = np.array(self.eng.evalin('base', 'mainLoopData.matTemplMotCorr'))
+        self.orth_view_input["dim"] = tuple([x, y, z])
+        self.orth_view_input["ready"] = False
+        self.orth_view_input["done"] = False
+
+        self.orth_view_output = multiprocessing.Manager().dict()
+        self.orth_view_output["ROI_t"] = np.zeros((1, 1))
+        self.orth_view_output["ROI_c"] = np.zeros((1, 1))
+        self.orth_view_output["ROI_s"] = np.zeros((1, 1))
+        self.orth_view_output["back_t"] = np.zeros((1, 1))
+        self.orth_view_output["back_c"] = np.zeros((1, 1))
+        self.orth_view_output["back_s"] = np.zeros((1, 1))
+        self.orth_view_output["overlay_t"] = np.zeros((1, 1))
+        self.orth_view_output["overlay_c"] = np.zeros((1, 1))
+        self.orth_view_output["overlay_s"] = np.zeros((1, 1))
+        self.orth_view_output["neg_overlay_t"] = np.zeros((1, 1))
+        self.orth_view_output["neg_overlay_c"] = np.zeros((1, 1))
+        self.orth_view_output["neg_overlay_s"] = np.zeros((1, 1))
+
+        self.orth_view = orthview.OrthView(self.orth_view_input, self.orth_view_output)
+        self.orth_view.start()
+
+    # --------------------------------------------------------------------------
+    def rtqa_init(self):
+
+        self.btnRTQA.setEnabled(True)
+
+        self.rtqa_input = multiprocessing.Manager().dict()
+        self.rtqa_input["nr_rois"] = self.P["NrROIs"]
+        self.rtqa_input["dim"] = tuple([self.P['MatrixSizeX'], self.P['MatrixSizeY'], self.P['NrOfSlices']])
+        self.rtqa_input["wb_roi_indexes"] = np.array(self.eng.evalin('base', 'ROIs(end).voxelIndex'),
+                                                     dtype=np.int32, ndmin=2)
+        wb_mask = np.ones((self.P['MatrixSizeX'] * self.P['MatrixSizeY'] * self.P['NrOfSlices'],))
+        wb_mask[self.rtqa_input["wb_roi_indexes"]] = 0
+        self.rtqa_input["wb_mask"] = wb_mask.astype(bool)
+        self.rtqa_input["muster_info"] = self.musterInfo
+        self.rtqa_input["xrange"] = self.P['NrOfVolumes'] - self.P['nrSkipVol']
+        self.rtqa_input["is_auto_rtqa"] = self.P["isAutoRTQA"]
+        self.rtqa_input["roi_checked"] = self.selectedRoi
+        if not config.AUTO_RTQA:
+            self.rtqa_input["ind_bas"] = np.array(self.P["inds"][0])
+            self.rtqa_input["ind_cond"] = np.array(self.P["inds"][1])
+        self.rtqa_input["volume"] = self.P["memMapFile"]
+        self.rtqa_input["is_stopped"] = False
+        self.rtqa_input["data_ready"] = False
+        self.rtqa_input["calc_ready"] = False
+        self.rtqa_input["roi_changed"] = False
+        self.rtqa_input["raw_ts"] = []
+        self.rtqa_input["glm_ts"] = []
+        self.rtqa_input["no_reg_glm_ts"] = []
+        self.rtqa_input["proc_ts"] = []
+        self.rtqa_input["mc_ts"] = []
+        self.rtqa_input["offset_mc"] = []
+        self.rtqa_input["beta_coeff"] = []
+        self.rtqa_input["pos_spikes"] = []
+        self.rtqa_input["neg_spikes"] = []
+        self.rtqa_input["is_new_dcm_block"] = True
+        self.rtqa_input["iteration"] = 0
+        self.rtqa_input["which_vol"] = []
+        self.rtqa_input["dvars_scale"] = self.P["scaleFactorDVARS"]
+        self.rtqa_input["rtqa_vol_ready"] = False
+
+        self.rtqa_output = multiprocessing.Manager().dict()
+        self.rtqa_output["snr_vol"] = np.zeros(self.rtqa_input["dim"])
+        self.rtqa_output["cnr_vol"] = np.zeros(self.rtqa_input["dim"])
+        self.rtqa_output["show_vol"] = False
+        self.rtqa_output["rSNR"] = []
+        self.rtqa_output["rCNR"] = []
+        self.rtqa_output["rMean"] = []
+        self.rtqa_output["meanBas"] = []
+        self.rtqa_output["meanCond"] = []
+        self.rtqa_output["rVar"] = []
+        self.rtqa_output["varBas"] = []
+        self.rtqa_output["varCond"] = []
+        self.rtqa_output["glmProcTimeSeries"] = []
+        self.rtqa_output["rMSE"] = []
+        self.rtqa_output["linTrendCoeff"] = []
+        self.rtqa_output["rNoRegSNR"] = []
+        self.rtqa_output["DVARS"] = []
+        self.rtqa_output["excDVARS"] = []
+        self.rtqa_output["mc_params"] = []
+        self.rtqa_output["FD"] = []
+        self.rtqa_output["MD"] = []
+        self.rtqa_output["meanFD"] = []
+        self.rtqa_output["meanMD"] = []
+        self.rtqa_output["excFD"] = []
+        self.rtqa_output["excMD"] = []
+        self.rtqa_output["posSpikes"] = []
+        self.rtqa_output["negSpikes"] = []
+
+        if self.windowRTQA:
+            self.windowRTQA.deleteLater()
+
+        self.calc_rtqa = rtqa_calc.RTQACalculation(self.rtqa_input, self.rtqa_output)
+        self.windowRTQA = rtqa_gui.RTQAWindow(self.calc_rtqa, self.rtqa_input, self.rtqa_output)
+        self.calc_rtqa.start()
+
+        self.windowRTQA.volumeCheckBox.stateChanged.connect(self.onShowRtqaVol)
+        self.windowRTQA.volumeCheckBox.stateChanged.connect(self.onChangeNegMapPolicy)
+        self.windowRTQA.volumeCheckBox.stateChanged.connect(self.onInteractWithMapImage)
+        self.windowRTQA.volumeCheckBox.toggled.connect(self.updateOrthViewAsync)
+        self.windowRTQA.comboBox.currentIndexChanged.connect(self.onModeChanged)
+
+    # --------------------------------------------------------------------------
     def start(self):
         logger.info("*** Started ***")
 
+        if self.P['isAutoRTQA']:
+            self.presetupAutoRTQA()
+
         self.cbImageViewMode.setEnabled(True)
+        self.pos_map_thresholds_widget.setEnabled(True)
+        self.neg_map_thresholds_widget.setEnabled(True)
         self.btnPlugins.setEnabled(False)
         self.btnSetup.setEnabled(False)
         self.btnStart.setEnabled(False)
@@ -1409,12 +1729,18 @@ class OpenNFT(QWidget):
 
         self.isStopped = True
         if self.windowRTQA:
-            self.windowRTQA.isStopped = True
-            self.eng.workspace['rtQA_python'] = self.windowRTQA.dataPacking()
+            self.rtqa_input["is_stopped"] = True
+            self.eng.workspace['rtQA_python'] = self.calc_rtqa.dataPacking()
         self.btnStop.setEnabled(False)
-        self.btnStart.setEnabled(False)
-        self.btnSetup.setEnabled(True)
-        self.btnPlugins.setEnabled(True)
+
+        if 'isAutoRTQA' in self.P and not self.P['isAutoRTQA']:
+            self.btnStart.setEnabled(False)
+            self.btnSetup.setEnabled(True)
+            self.btnPlugins.setEnabled(True)
+        else:
+            self.btnStart.setEnabled(True)
+            self.btnSetup.setEnabled(False)
+            self.btnPlugins.setEnabled(False)
 
         self.fs_observer.stop()
         self.call_timer.stop()
@@ -1465,37 +1791,55 @@ class OpenNFT(QWidget):
     # --------------------------------------------------------------------------
     def rtQA(self):
         self.windowRTQA.show()
-        config.USE_RTQA = True
+        if self.isStopped:
+            self.windowRTQA.plotRTQA()
 
     # --------------------------------------------------------------------------
     def onShowRtqaVol(self):
 
-        is_rtqa_volume = self.windowRTQA.volumeCheckBox.isChecked()
-        self.eng.assignin('base', 'isShowRtqaVol', is_rtqa_volume, nargout=0)
-
         if self.isStopped:
-            self.eng.offlineImageSwitch(nargout=0)
+            # self.eng.offlineImageSwitch(nargout=0)
+            if self.imageViewMode == ImageViewMode.mosaic:
+                self.displayMosaicImage()
+            else:
+                self.onCheckOrthViewUpdated()
 
     # --------------------------------------------------------------------------
-    def onSmoothedChecked(self):
+    def onRoiChecked(self, action):
+        if action.text() == "All":
+            actList = self.roiSelectorBtn.menu().actions()
+            actList = actList[0:-2]
+            for act in actList:
+                act.setChecked(True)
+                self.roiDict[act.text()] = True
+        elif action.text() == "None":
+            actList = self.roiSelectorBtn.menu().actions()
+            actList = actList[0:-2]
+            for act in actList:
+                act.setChecked(False)
+                self.roiDict[act.text()] = False
+        else:
+            self.roiDict[action.text()] = action.isChecked()
 
-        is_rtqa_smoothed = self.windowRTQA.smoothedCheckBox.isChecked()
-        self.eng.assignin('base', 'isSmoothed', is_rtqa_smoothed, nargout=0)
+        self.selectedRoi = np.where(list(self.roiDict.values()))[0]
+        if self.windowRTQA:
+            self.rtqa_input["roi_checked"] = self.selectedRoi
+
+        self.drawRoiPlots(True)
+        if self.isStopped:
+            self.windowRTQA.plotRTQA()
+            self.updateOrthViewAsync()
 
     # --------------------------------------------------------------------------
     def onModeChanged(self):
 
         if self.windowRTQA:
             self.windowRTQA.onComboboxChanged()
-            self.eng.assignin('base', 'rtQAMode', self.windowRTQA.currentMode, nargout=0)
             self.onShowRtqaVol()
 
-        if not self.btnSetup.isEnabled():
+        if self.isStopped:
             self.updateOrthViewAsync()
             self.onInteractWithMapImage()
-
-        if self.isStopped:
-            self.eng.offlineImageSwitch(nargout=0)
 
     # --------------------------------------------------------------------------
     def onChooseSetFile(self):
@@ -1595,7 +1939,10 @@ class OpenNFT(QWidget):
 
         fname = str(Path(fname))
         if fname:
-            self.leMCTempl.setText(fname)
+            if config.AUTO_RTQA and config.USE_EPI_TEMPLATE:
+                self.leMCTempl3.setText(fname)
+            else:
+                self.leMCTempl.setText(fname)
             self.P['MCTempl'] = fname
 
     # --------------------------------------------------------------------------
@@ -1646,19 +1993,25 @@ class OpenNFT(QWidget):
 
     # --------------------------------------------------------------------------
     def updateOrthViewAsync(self):
-        if not self.engSPM:
+        if not self.orth_view:
             return
 
-        if self.imageViewMode == ImageViewMode.orthviewEPI:
+        if self.imageViewMode == ImageViewMode.orthviewEPI or self.P['isAutoRTQA']:
             bgType = 'bgEPI'
         else:
             bgType = 'BgStruct'
 
-        rtqa = self.windowRTQA.volumeCheckBox.isChecked() if self.windowRTQA else False
+        rtqa = self.rtqa_output["show_vol"] if self.windowRTQA else False
 
-        self.orthViewUpdateFuture = self.engSPM.helperUpdateOrthView(
-            self.currentCursorPos, self.currentProjection.value, bgType,
-            rtqa, background=True, nargout=0)
+        if not self.orth_view_input["ready"]:
+            self.orth_view_input["cursor_pus"] = self.currentCursorPos
+            self.orth_view_input["flags_planes"] = self.currentProjection.value
+            self.orth_view_input["bg_type"] = bgType
+            self.orth_view_input["is_rtqa"] = rtqa
+            if self.windowRTQA:
+                self.orth_view_input["rtQA_volume"] = self.rtqa_output["snr_vol"] if self.rtqa_input["which_vol"] == 0 else self.rtqa_output["cnr_vol"]
+            self.orth_view_input["is_neg"] = self.negMapCheckBox.isChecked()
+            self.orth_view_input["ready"] = True
 
     # --------------------------------------------------------------------------
     def onChangeOrthViewCursorPosition(self, pos, proj):
@@ -1681,15 +2034,22 @@ class OpenNFT(QWidget):
             self.displayMosaicImage()
 
         for proj in projview.ProjectionType:
-            pos_map_image = self.proj_pos_map_images_reader.proj_image(proj)
+
+            if proj == projview.ProjectionType.transversal:
+                pos_map_image = self.orth_view_output['overlay_t']
+                neg_map_image = self.orth_view_output['neg_overlay_t']
+            elif proj == projview.ProjectionType.sagittal:
+                pos_map_image = self.orth_view_output['overlay_s']
+                neg_map_image = self.orth_view_output['neg_overlay_s']
+            elif proj == projview.ProjectionType.coronal:
+                pos_map_image = self.orth_view_output['overlay_c']
+                neg_map_image = self.orth_view_output['neg_overlay_c']
 
             if pos_map_image is not None:
                 rgba_pos_map_image = self.pos_map_thresholds_widget.compute_rgba(pos_map_image)
 
                 if rgba_pos_map_image is not None:
                     self.orthView.set_pos_map_image(proj, rgba_pos_map_image)
-
-            neg_map_image = self.proj_neg_map_images_reader.proj_image(proj)
 
             if neg_map_image is not None:
                 rgba_neg_map_image = self.neg_map_thresholds_widget.compute_rgba(neg_map_image)
@@ -1699,21 +2059,19 @@ class OpenNFT(QWidget):
 
     # --------------------------------------------------------------------------
     def onCheckOrthViewUpdated(self):
-        if not self.orthViewUpdateFuture or not self.orthViewUpdateFuture.done():
+        if not self.orth_view_input["done"]:
             return
 
         self.orthViewUpdateInProgress = True
 
-        # with utils.timeit('Getting new orthview projections...'):
-        self.readOrthViewImages()
-
         # SNR/Stat map display
         is_stat_map_created = bool(self.eng.evalin('base', 'mainLoopData.statMapCreated'))
-        is_snr_map_created = bool(self.eng.evalin('base', 'rtQA_matlab.snrMapCreated'))
         if self.windowRTQA:
-            is_rtqa_volume_checked = self.windowRTQA.volumeCheckBox.isChecked()
+            is_snr_map_created = self.rtqa_input["rtqa_vol_ready"]
+            is_rtqa_volume_checked = self.rtqa_output["show_vol"]
         else:
             is_rtqa_volume_checked = False
+            is_snr_map_created = False
 
         if (self.imageViewMode != ImageViewMode.mosaic) and (is_stat_map_created and not is_rtqa_volume_checked
                                                              or is_snr_map_created and is_rtqa_volume_checked):
@@ -1721,25 +2079,42 @@ class OpenNFT(QWidget):
             neg_maps_values = np.array([], dtype=np.uint8)
 
             for proj in projview.ProjectionType:
-                pos_map_image = self.proj_pos_map_images_reader.proj_image(proj)
-                pos_maps_values = np.append(pos_maps_values, pos_map_image.ravel())
 
-                neg_map_image = self.proj_neg_map_images_reader.proj_image(proj)
+                if proj == projview.ProjectionType.transversal:
+                    pos_map_image = self.orth_view_output['overlay_t']
+                    neg_map_image = self.orth_view_output['neg_overlay_t']
+                elif proj == projview.ProjectionType.sagittal:
+                    pos_map_image = self.orth_view_output['overlay_s']
+                    neg_map_image = self.orth_view_output['neg_overlay_s']
+                elif proj == projview.ProjectionType.coronal:
+                    pos_map_image = self.orth_view_output['overlay_c']
+                    neg_map_image = self.orth_view_output['neg_overlay_c']
+
+                pos_maps_values = np.append(pos_maps_values, pos_map_image.ravel())
                 neg_maps_values = np.append(neg_maps_values, neg_map_image.ravel())
 
                 if pos_maps_values.size > 0:
                     self.pos_map_thresholds_widget.compute_thresholds(pos_maps_values)
-                if neg_maps_values.size > 0:
+                if self.negMapCheckBox.isChecked() and neg_maps_values.size > 0:
                     self.neg_map_thresholds_widget.compute_thresholds(neg_maps_values)
 
         for proj in projview.ProjectionType:
-            bg_image = self.proj_background_images_reader.proj_image(proj)
+
+            if proj == projview.ProjectionType.transversal:
+                bg_image = self.orth_view_output['back_t']
+                pos_map_image = self.orth_view_output['overlay_t']
+                neg_map_image = self.orth_view_output['neg_overlay_t']
+            elif proj == projview.ProjectionType.sagittal:
+                bg_image = self.orth_view_output['back_s']
+                pos_map_image = self.orth_view_output['overlay_s']
+                neg_map_image = self.orth_view_output['neg_overlay_s']
+            elif proj == projview.ProjectionType.coronal:
+                bg_image = self.orth_view_output['back_c']
+                pos_map_image = self.orth_view_output['overlay_c']
+                neg_map_image = self.orth_view_output['neg_overlay_c']
+
             self.orthView.set_background_image(proj, bg_image)
-
-            pos_map_image = self.proj_pos_map_images_reader.proj_image(proj)
             rgba_pos_map_image = self.pos_map_thresholds_widget.compute_rgba(pos_map_image)
-
-            neg_map_image = self.proj_neg_map_images_reader.proj_image(proj)
             rgba_neg_map_image = self.neg_map_thresholds_widget.compute_rgba(neg_map_image)
 
             if rgba_pos_map_image is not None:
@@ -1748,100 +2123,132 @@ class OpenNFT(QWidget):
             if rgba_neg_map_image is not None:
                 self.orthView.set_neg_map_image(proj, rgba_neg_map_image)
 
-        self.orthView.set_roi(projview.ProjectionType.transversal, self.spmHelperP['tRoiBoundaries'])
-        self.orthView.set_roi(projview.ProjectionType.coronal, self.spmHelperP['cRoiBoundaries'])
-        self.orthView.set_roi(projview.ProjectionType.sagittal, self.spmHelperP['sRoiBoundaries'])
+        roi_t = []
+        roi_c = []
+        roi_s = []
+        for i in self.selectedRoi:
+            roi_t.append(self.orth_view_output["ROI_t"][i])
+            roi_c.append(self.orth_view_output["ROI_c"][i])
+            roi_s.append(self.orth_view_output["ROI_s"][i])
+
+        self.orthView.set_roi(projview.ProjectionType.transversal, roi_t, self.selectedRoi)
+        self.orthView.set_roi(projview.ProjectionType.coronal, roi_c, self.selectedRoi)
+        self.orthView.set_roi(projview.ProjectionType.sagittal, roi_s, self.selectedRoi)
 
         if self.orthViewInitialize:
             self.orthView.reset_view()
 
         self.orthViewInitialize = False
         self.orthViewUpdateInProgress = False
-        self.orthViewUpdateFuture = None
+        self.orth_view_input["done"] = False
 
     # --------------------------------------------------------------------------
     def loadSettingsFromSetFile(self):
-        # --- top ---
-        self.leProtocolFile.setText(self.settings.value('StimulationProtocol', ''))
-        self.leWorkFolder.setText(self.settings.value('WorkFolder', ''))
-        self.leWatchFolder.setText(self.settings.value('WatchFolder', ''))
-        if (self.settings.value('Type', '')) == 'DCM':
-            self.leRoiAnatFolder.setText(self.settings.value('RoiAnatFolder', ''))
+
+        if not config.AUTO_RTQA:
+            # --- top ---
+            self.leProtocolFile.setText(self.settings.value('StimulationProtocol', ''))
+            self.leWorkFolder.setText(self.settings.value('WorkFolder', ''))
+            self.leWatchFolder.setText(self.settings.value('WatchFolder', ''))
+            if (self.settings.value('Type', '')) == 'DCM':
+                self.leRoiAnatFolder.setText(self.settings.value('RoiAnatFolder', ''))
+            else:
+                self.leRoiAnatFolder.setText(self.settings.value('RoiFilesFolder', ''))
+            self.leRoiAnatOperation.setText(self.settings.value('RoiAnatOperation', 'mean(norm_percValues)'))
+            self.leRoiGroupFolder.setText(self.settings.value('RoiGroupFolder', ''))
+            self.leStructBgFile.setText(self.settings.value('StructBgFile', ''))
+            self.leMCTempl.setText(self.settings.value('MCTempl', ''))
+            if (self.settings.value('Prot', '')) == 'ContTask':
+                self.leTaskFolder.setText(self.settings.value('TaskFolder', ''))
+
+            # --- middle ---
+            self.leProjName.setText(self.settings.value('ProjectName', ''))
+            self.leSubjectID.setText(self.settings.value('SubjectID', ''))
+            self.leFirstFile.setText(self.settings.value('FirstFileNameTxt', '001_{Image Series No:06}_{#:06}.dcm'))
+            self.sbNFRunNr.setValue(int(self.settings.value('NFRunNr', '1')))
+            self.sbImgSerNr.setValue(int(self.settings.value('ImgSerNr', '1')))
+            self.sbVolumesNr.setValue(int(self.settings.value('NrOfVolumes')))
+            self.sbSlicesNr.setValue(int(self.settings.value('NrOfSlices')))
+            self.sbTR.setValue(int(self.settings.value('TR')))
+            self.sbSkipVol.setValue(int(self.settings.value('nrSkipVol')))
+            self.sbMatrixSizeX.setValue(int(self.settings.value('MatrixSizeX')))
+            self.sbMatrixSizeY.setValue(int(self.settings.value('MatrixSizeY')))
+
+            # --- bottom left ---
+            self.cbOfflineMode.setChecked(str(self.settings.value('OfflineMode', 'true')).lower() == 'true')
+
+            if self.settings.value('UseTCPData', None) is None:
+                logger.warning('Upgrade settings format from version 1.0.rc0')
+
+            self.cbUseTCPData.setChecked(str(self.settings.value('UseTCPData', 'false')).lower() == 'true')
+            if self.cbUseTCPData.isChecked():
+                self.leTCPDataIP.setText(self.settings.value('TCPDataIP', ''))
+                self.leTCPDataPort.setText(str(self.settings.value('TCPDataPort', '')))
+
+            self.leMaxFeedbackVal.setText(str(self.settings.value('MaxFeedbackVal', '100')))  # FixMe
+            self.leMinFeedbackVal.setText(str(self.settings.value('MinFeedbackVal', '-100')))
+            self.sbFeedbackValDec.setValue(int(self.settings.value('FeedbackValDec', '0')))  # FixMe
+            self.cbNegFeedback.setChecked(str(self.settings.value('NegFeedback', 'false')).lower() == 'true')
+            self.cbFeedbackPlot.setChecked(str(self.settings.value('PlotFeedback', 'true')).lower() == 'true')
+
+            self.leShamFile.setText(self.settings.value('ShamFile', ''))
+
+            self.cbUsePTB.setChecked(str(self.settings.value('UsePTB', 'false')).lower() == 'true')
+            if not config.USE_PTB_HELPER:
+                self.cbUsePTB.setChecked(False)
+                self.cbUsePTB.setEnabled(False)
+
+            self.cbScreenId.setCurrentIndex(int(self.settings.value('DisplayFeedbackScreenID', 0)))
+            self.cbDisplayFeedbackFullscreen.setChecked(
+                str(self.settings.value('DisplayFeedbackFullscreen')).lower() == 'true')
+
+            self.cbUseUDPFeedback.setChecked(str(self.settings.value('UseUDPFeedback')).lower() == 'true')
+            self.leUDPFeedbackIP.setText(self.settings.value('UDPFeedbackIP', ''))
+            self.leUDPFeedbackPort.setText(str(self.settings.value('UDPFeedbackPort', '1234')))
+            self.leUDPFeedbackControlChar.setText(str(self.settings.value('UDPFeedbackControlChar', '')))
+            self.cbUDPSendCondition.setChecked(str(self.settings.value('UDPSendCondition')).lower() == 'true')
+
+            # --- bottom right ---
+            idx = self.cbDataType.findText(self.settings.value('DataType', 'DICOM'))
+            if idx >= 0:
+                self.cbDataType.setCurrentIndex(idx)
+            self.cbgetMAT.setChecked(str(self.settings.value('GetMAT')).lower() == 'true')
+            idx = self.cbProt.findText(self.settings.value('Prot', 'Inter'))
+            if idx >= 0:
+                self.cbProt.setCurrentIndex(idx)
+            idx = self.cbType.findText(self.settings.value('Type', 'PSC'))
+            if idx >= 0:
+                self.cbType.setCurrentIndex(idx)
+
+            # --- main viewer ---
+            self.sbTargANG.setValue(float(self.settings.value('TargANG', 0)))
+            self.sbTargRAD.setValue(float(self.settings.value('TargRAD', 0)))
+            self.sbTargDIAM.setValue(float(self.settings.value('TargDIAM', 0.0)))
+            self.leWeightsFile.setText(str(self.settings.value('WeightsFileName', '')))
+
+            self.actualize
         else:
-            self.leRoiAnatFolder.setText(self.settings.value('RoiFilesFolder', ''))
-        self.leRoiAnatOperation.setText(self.settings.value('RoiAnatOperation', 'mean(norm_percValues)'))
-        self.leRoiGroupFolder.setText(self.settings.value('RoiGroupFolder', ''))
-        self.leStructBgFile.setText(self.settings.value('StructBgFile', ''))
-        self.leMCTempl.setText(self.settings.value('MCTempl', ''))
-        if (self.settings.value('Prot', '')) == 'ContTask':
-            self.leTaskFolder.setText(self.settings.value('TaskFolder', ''))
+            self.leWatchFolder3.setText(self.settings.value('WatchFolder', ''))
+            if config.SELECT_ROIS:
+                self.leRoiFolder.setText(self.settings.value('RoiFolder', ''))
+            if config.USE_EPI_TEMPLATE:
+                self.leMCTempl3.setText(self.settings.value('MCTempl', ''))
+            self.leRoiAnatOperation.setText(self.settings.value('RoiAnatOperation', 'mean(norm_percValues)'))
 
-        # --- middle ---
-        self.leProjName.setText(self.settings.value('ProjectName', ''))
-        self.leSubjectID.setText(self.settings.value('SubjectID', ''))
-        self.leFirstFile.setText(self.settings.value('FirstFileNameTxt', '001_{Image Series No:06}_{#:06}.dcm'))
-        self.sbNFRunNr.setValue(int(self.settings.value('NFRunNr', '1')))
-        self.sbImgSerNr.setValue(int(self.settings.value('ImgSerNr', '1')))
-        self.sbVolumesNr.setValue(int(self.settings.value('NrOfVolumes')))
-        self.sbSlicesNr.setValue(int(self.settings.value('NrOfSlices')))
-        self.sbTR.setValue(int(self.settings.value('TR')))
-        self.sbSkipVol.setValue(int(self.settings.value('nrSkipVol')))
-        self.sbMatrixSizeX.setValue(int(self.settings.value('MatrixSizeX')))
-        self.sbMatrixSizeY.setValue(int(self.settings.value('MatrixSizeY')))
+            self.leProjName.setText(self.settings.value('ProjectName', ''))
+            self.leSubjectID.setText(self.settings.value('SubjectID', ''))
+            self.leFirstFile3.setText(self.settings.value('FirstFileNameTxt', '001_{Image Series No:06}_{#:06}.dcm'))
+            self.sbNFRunNr3.setValue(int(self.settings.value('NFRunNr', '1')))
+            self.sbImgSerNr3.setValue(int(self.settings.value('ImgSerNr', '1')))
+            self.sbVolumesNr3.setValue(int(self.settings.value('NrOfVolumes')))
+            self.sbSkipVol3.setValue(int(self.settings.value('nrSkipVol')))
+            self.sbSlicesNr3.setValue(int(self.settings.value('NrOfSlices')))
+            self.sbMatrixSizeX3.setValue(int(self.settings.value('MatrixSizeX')))
+            self.sbMatrixSizeY3.setValue(int(self.settings.value('MatrixSizeY')))
 
-        # --- bottom left ---
-        self.cbOfflineMode.setChecked(str(self.settings.value('OfflineMode', 'true')).lower() == 'true')
+            self.cbOfflineMode3.setChecked(str(self.settings.value('OfflineMode', 'true')).lower() == 'true')
 
-        if self.settings.value('UseTCPData', None) is None:
-            logger.warning('Upgrade settings format from version 1.0.rc0')
-
-        self.cbUseTCPData.setChecked(str(self.settings.value('UseTCPData', 'false')).lower() == 'true')
-        if self.cbUseTCPData.isChecked():
-            self.leTCPDataIP.setText(self.settings.value('TCPDataIP', ''))
-            self.leTCPDataPort.setText(str(self.settings.value('TCPDataPort', '')))
-
-        self.leMaxFeedbackVal.setText(str(self.settings.value('MaxFeedbackVal', '100')))  # FixMe
-        self.leMinFeedbackVal.setText(str(self.settings.value('MinFeedbackVal', '-100')))
-        self.sbFeedbackValDec.setValue(int(self.settings.value('FeedbackValDec', '0')))  # FixMe
-        self.cbNegFeedback.setChecked(str(self.settings.value('NegFeedback', 'false')).lower() == 'true')
-        self.cbFeedbackPlot.setChecked(str(self.settings.value('PlotFeedback', 'true')).lower() == 'true')
-
-        self.leShamFile.setText(self.settings.value('ShamFile', ''))
-
-        self.cbUsePTB.setChecked(str(self.settings.value('UsePTB', 'false')).lower() == 'true')
-        if not config.USE_PTB_HELPER:
-            self.cbUsePTB.setChecked(False)
-            self.cbUsePTB.setEnabled(False)
-
-        self.cbScreenId.setCurrentIndex(int(self.settings.value('DisplayFeedbackScreenID', 0)))
-        self.cbDisplayFeedbackFullscreen.setChecked(
-            str(self.settings.value('DisplayFeedbackFullscreen')).lower() == 'true')
-
-        self.cbUseUDPFeedback.setChecked(str(self.settings.value('UseUDPFeedback')).lower() == 'true')
-        self.leUDPFeedbackIP.setText(self.settings.value('UDPFeedbackIP', ''))
-        self.leUDPFeedbackPort.setText(str(self.settings.value('UDPFeedbackPort', '1234')))
-        self.leUDPFeedbackControlChar.setText(str(self.settings.value('UDPFeedbackControlChar', '')))
-        self.cbUDPSendCondition.setChecked(str(self.settings.value('UDPSendCondition')).lower() == 'true')
-
-        # --- bottom right ---
-        idx = self.cbDataType.findText(self.settings.value('DataType', 'DICOM'))
-        if idx >= 0:
-            self.cbDataType.setCurrentIndex(idx)
-        self.cbgetMAT.setChecked(str(self.settings.value('GetMAT')).lower() == 'true')
-        idx = self.cbProt.findText(self.settings.value('Prot', 'Inter'))
-        if idx >= 0:
-            self.cbProt.setCurrentIndex(idx)
-        idx = self.cbType.findText(self.settings.value('Type', 'PSC'))
-        if idx >= 0:
-            self.cbType.setCurrentIndex(idx)
-
-        # --- main viewer ---
-        self.sbTargANG.setValue(float(self.settings.value('TargANG', 0)))
-        self.sbTargRAD.setValue(float(self.settings.value('TargRAD', 0)))
-        self.sbTargDIAM.setValue(float(self.settings.value('TargDIAM', 0.0)))
-        self.leWeightsFile.setText(str(self.settings.value('WeightsFileName', '')))
-
-        self.actualize
+            self.actualizeAutoRTQA()
 
     # --------------------------------------------------------------------------
     def loadJsonProtocol(self):
@@ -1856,7 +2263,6 @@ class OpenNFT(QWidget):
                 return
 
             self.eng.selectROI(self.P['RoiFilesFolder'], nargout=0)
-            self.engSPM.selectROI(self.P['RoiFilesFolder'], nargout=0)
 
             if self.P['Type'] == 'Corr':
                 if int(self.eng.evalin('base', 'P.NrROIs')) < 2:
@@ -1869,7 +2275,89 @@ class OpenNFT(QWidget):
         elif self.P['Type'] == 'DCM':
             p = [self.P['RoiAnatFolder'], self.P['RoiGroupFolder']]
             self.eng.selectROI(p, nargout=0)
-            self.engSPM.selectROI(p, nargout=0)
+
+    # --------------------------------------------------------------------------
+    def actualizeAutoRTQA(self):
+        logger.info("  Actualizing:")
+
+        # --- top ---
+        self.P['WatchFolder'] = self.leWatchFolder3.text()
+        self.P['WorkFolder'] = str(Path(self.P['WatchFolder']).absolute().resolve().parent)
+        if config.USE_EPI_TEMPLATE:
+            self.P['MCTempl'] = self.leMCTempl3.text()
+        else:
+            self.P['MCTempl'] = []
+        self.P['StructBgFile'] = ''
+
+        self.P['Type'] = "None"
+        if config.SELECT_ROIS:
+            self.P['RoiFilesFolder'] = self.leRoiFolder.text()
+        else:
+            self.P['RoiFilesFolder'] = []
+        self.P['RoiAnatOperation'] = "median(norm_percValues)"
+
+        self.P['ProjectName'] = "Auto_RTQA"
+        self.P['SubjectID'] = "foo"
+        self.P['Prot'] = "Auto_RTQA"
+        self.P['FirstFileNameTxt'] = self.leFirstFile3.text()
+        self.P['ImgSerNr'] = self.sbImgSerNr3.value()
+        self.P['NFRunNr'] = self.sbNFRunNr3.value()
+        self.P['NrOfSlices'] = self.sbSlicesNr3.value()
+        self.P['MatrixSizeX'] = self.sbMatrixSizeX3.value()
+        self.P['MatrixSizeY'] = self.sbMatrixSizeY3.value()
+        self.P['NrOfVolumes'] = self.sbVolumesNr3.value()
+        self.P['nrSkipVol'] = self.sbSkipVol3.value()
+
+        # Parsing FirstFileNameTxt template and replace it with variables ---
+        fields = {
+            'projectname': self.P['ProjectName'],
+            'subjectid': self.P['SubjectID'],
+            'imageseriesno': self.P['ImgSerNr'],
+            'nfrunno': self.P['NFRunNr'],
+            '#': 1
+        }
+        template = self.P['FirstFileNameTxt']
+        template_elements = re.findall(r"\{([A-Za-z0-9_: ]+)\}", template)
+
+        self.P['FirstFileName'] = self.P['FirstFileNameTxt']
+
+        for template_element in template_elements:
+            template = template.replace("{%s}" % template_element, "{%s}" % template_element.replace(" ", "").lower())
+
+        self.P['FirstFileName'] = template.format(**fields)
+
+        self.P['DataType'] = "DICOM"
+        self.P['useEPITemplate'] = config.USE_EPI_TEMPLATE
+        self.P['isAutoRTQA'] = config.AUTO_RTQA
+        self.P['isRTQA'] = config.USE_RTQA
+        self.P['isIGLM'] = config.USE_IGLM
+        self.P['isZeroPadding'] = config.zeroPaddingFlag
+        self.P['nrZeroPadVol'] = config.nrZeroPadVol
+        self.P['UseTCPData'] = False
+        self.P['TR'] = 1500
+        config.USE_UDP_FEEDBACK = False
+        self.P['getMAT'] = False
+
+        # Update settings file
+        self.settings.setValue('WorkFolder', self.P['WorkFolder'])
+        self.settings.setValue('WatchFolder', self.P['WatchFolder'])
+        self.settings.setValue('MCTempl', self.P['MCTempl'])
+        self.settings.setValue('RoiFolder', self.P['RoiFilesFolder'])
+        self.settings.setValue('RoiAnatOperation', self.P['RoiAnatOperation'])
+        self.P['PlotFeedback'] = False
+
+        self.settings.setValue('ImgSerNr', self.P['ImgSerNr'])
+        self.settings.setValue('NFRunNr', self.P['NFRunNr'])
+
+        self.settings.setValue('FirstFileNameTxt', self.P['FirstFileNameTxt'])
+        self.settings.setValue('FirstFileName', self.P['FirstFileName'])
+
+        self.settings.setValue('NrOfVolumes', self.P['NrOfVolumes'])
+        self.settings.setValue('nrSkipVol', self.P['nrSkipVol'])
+        self.settings.setValue('NrOfSlices', self.P['NrOfSlices'])
+        self.settings.setValue('MatrixSizeX', self.P['MatrixSizeX'])
+        self.settings.setValue('MatrixSizeY', self.P['MatrixSizeY'])
+        self.settings.setValue('OfflineMode', self.cbOfflineMode.isChecked())
 
     # --------------------------------------------------------------------------
     def actualize(self):
@@ -1916,9 +2404,10 @@ class OpenNFT(QWidget):
         self.P['getMAT'] = self.cbgetMAT.isChecked()
         self.P['Prot'] = str(self.cbProt.currentText())
         self.P['Type'] = str(self.cbType.currentText())
-        self.P['isRestingState'] = bool(self.cbProt.currentText() == "Rest")
+        self.P['isAutoRTQA'] = config.AUTO_RTQA
         self.P['isRTQA'] = config.USE_RTQA
         self.P['isIGLM'] = config.USE_IGLM
+        self.P['useEPITemplate'] = config.USE_EPI_TEMPLATE
         self.P['isZeroPadding'] = config.zeroPaddingFlag
         self.P['nrZeroPadVol'] = config.nrZeroPadVol
 
@@ -2067,27 +2556,30 @@ class OpenNFT(QWidget):
     # --------------------------------------------------------------------------
     def displayMosaicImage(self):
         background_image = None
-        pos_map_image = None
-        neg_map_image = None
+        posVol = None
+        negVol = None
+        dim3D = tuple([self.P['MatrixSizeX'], self.P['MatrixSizeY'], self.P['NrOfSlices']])
+        xdim, ydim, img2d_dimx, img2d_dimy = conversions.get_mosaic_dim(dim3D)
 
-        if 'imgViewTempl' not in self.P:
-            if self.eng.evalin('base', 'length(imgViewTempl)') > 0:
-                filename = self.eng.evalin('base', 'P.memMapFile')
-
-                with utils.timeit("Receiving mosaic image from Matlab (read memmap):"):
-                    self.mosaic_background_image_reader.read(filename, self.eng)
-                background_image = self.mosaic_background_image_reader.image
-
-                if background_image.size > 0:
-                    self.mosaicImageView.set_background_image(background_image)
-            else:
-                return
+        if self.iteration > 1:
+            if self.eng.evalin('base', 'length(imgVolTempl)') > 0:
+                with utils.timeit('Getting background volume:'):
+                    filename = self.eng.evalin('base', 'P.memMapFile')
+                    imgVol = np.array(np.memmap(filename, dtype=np.float64, shape=tuple(dim3D), order='F'))
+                    max_vol = np.max(imgVol)
+                    min_vol = np.min(imgVol)
+                    imgVol = (imgVol - min_vol) / (max_vol - min_vol)
+                    if imgVol.size > 0:
+                        background_image = conversions.vol3d_img2d(imgVol, xdim, ydim, img2d_dimx, img2d_dimy, dim3D)
+                        self.mosaicImageView.set_background_image(background_image)
+                    else:
+                        return
 
         # SNR/Stat map display
         is_stat_map_created = bool(self.eng.evalin('base', 'mainLoopData.statMapCreated'))
         if self.windowRTQA:
             is_rtqa_volume_checked = self.windowRTQA.volumeCheckBox.isChecked()
-            is_snr_map_created = bool(self.eng.evalin('base', 'rtQA_matlab.snrMapCreated'))
+            is_snr_map_created = self.rtqa_input["rtqa_vol_ready"]
         else:
             is_rtqa_volume_checked = False
             is_snr_map_created = False
@@ -2095,18 +2587,30 @@ class OpenNFT(QWidget):
         if (background_image is not None
                 and (is_stat_map_created and not is_rtqa_volume_checked
                      or is_snr_map_created and is_rtqa_volume_checked)):
-            with utils.timeit("Receiving mosaic maps from Matlab:"):
-                filename_pat = self.eng.evalin('base', 'P.memMapFile')
-                filename_pos = filename_pat.replace('shared', 'statMap')
-                filename_neg = filename_pat.replace('shared', 'statMap_neg')
+            with utils.timeit("Receiving stat volumes from Matlab:"):
 
-                self.mosaic_pos_map_image_reader.read(filename_pos, self.eng)
-                self.mosaic_neg_map_image_reader.read(filename_neg, self.eng)
+                if not is_rtqa_volume_checked:
 
-            pos_map_image = self.mosaic_pos_map_image_reader.image
-            neg_map_image = self.mosaic_neg_map_image_reader.image
+                    filename_pat = self.eng.evalin('base', 'P.memMapFile')
+                    filename = filename_pat.replace('shared', 'statVol')
 
-        if pos_map_image is not None:
+                    posVol = np.memmap(filename, dtype=np.float64, shape=tuple(dim3D), order='F')
+                    negVol = np.memmap(filename, dtype=np.float64, shape=tuple(dim3D), offset=posVol.size*posVol.data.itemsize, order='F')
+
+                    posVol = np.array(posVol, dtype=np.int32)
+                    negVol = np.array(negVol, dtype=np.int32)
+
+                else:
+
+                    posVol = self.rtqa_output["snr_vol"] if self.rtqa_input["which_vol"] == 0 else self.rtqa_output["cnr_vol"]
+
+        if posVol is not None:
+
+            xdim, ydim, img2d_dimx, img2d_dimy = conversions.get_mosaic_dim(dim3D)
+            with utils.timeit("Slicing positive volume:"):
+                pos_map_image = conversions.vol3d_img2d(posVol, xdim, ydim, img2d_dimx, img2d_dimy, dim3D)
+                pos_map_image = (pos_map_image / np.max(pos_map_image)) * 255
+
             self.pos_map_thresholds_widget.compute_thresholds(pos_map_image)
             rgba_pos_map_image = self.pos_map_thresholds_widget.compute_rgba(pos_map_image)
 
@@ -2115,7 +2619,12 @@ class OpenNFT(QWidget):
         else:
             self.mosaicImageView.clear_pos_map()
 
-        if neg_map_image is not None:
+        if negVol is not None:
+
+            xdim, ydim, img2d_dimx, img2d_dimy = conversions.get_mosaic_dim(dim3D)
+            neg_map_image = conversions.vol3d_img2d(negVol, xdim, ydim, img2d_dimx, img2d_dimy, dim3D)
+            neg_map_image = (neg_map_image / np.max(neg_map_image)) * 255
+
             self.neg_map_thresholds_widget.compute_thresholds(neg_map_image)
             rgba_neg_map_image = self.neg_map_thresholds_widget.compute_rgba(neg_map_image)
 
@@ -2234,9 +2743,9 @@ class OpenNFT(QWidget):
         else:
             key = 'rawTimeSeries'
 
-        dataRaw = np.array(self.outputSamples[key], ndmin=2)
-        dataProc = np.array(self.outputSamples['kalmanProcTimeSeries'], ndmin=2)
-        dataNorm = np.array(self.outputSamples['scalProcTimeSeries'], ndmin=2)
+        dataRaw = np.array(self.outputSamples[key], ndmin=2)[self.selectedRoi,:]
+        dataProc = np.array(self.outputSamples['kalmanProcTimeSeries'], ndmin=2)[self.selectedRoi,:]
+        dataNorm = np.array(self.outputSamples['scalProcTimeSeries'], ndmin=2)[self.selectedRoi,:]
         if self.P['PlotFeedback']:
             dataNorm = np.concatenate(
                 (dataNorm, np.array([self.displaySamples]) / self.P['MaxFeedbackVal'])
@@ -2261,7 +2770,10 @@ class OpenNFT(QWidget):
 
             plots = []
 
-            for i, c in zip(range(sz), config.ROI_PLOT_COLORS):
+            plot_colors = np.array(config.ROI_PLOT_COLORS)[self.selectedRoi]
+            if self.P['PlotFeedback']:
+                plot_colors = np.append(plot_colors, config.ROI_PLOT_COLORS[int(self.P['NrROIs'])])
+            for i, c in zip(range(sz), plot_colors):
                 pen = pg.mkPen(color=c, width=config.ROI_PLOT_WIDTH)
                 p = plotitem.plot(pen=pen)
                 plots.append(p)
@@ -2275,10 +2787,17 @@ class OpenNFT(QWidget):
 
         if self.P['Prot'] != 'InterBlock':
             if plotwidget == self.procRoiPlot:
+
+                posMin = np.array(self.outputSamples['posMin'],ndmin=2)
+                posMax = np.array(self.outputSamples['posMax'],ndmin=2)
+                inds = list(self.selectedRoi)
+                inds.append(len(posMin)-1)
+                posMin = posMin[inds]
+                posMax = posMax[inds]
+
                 self.drawMinMaxProcRoiPlot(
                     init, data,
-                    self.outputSamples['posMin'],
-                    self.outputSamples['posMax'])
+                    posMin, posMax)
 
         items = plotitem.listDataItems()
 
@@ -2286,7 +2805,7 @@ class OpenNFT(QWidget):
             items.remove(m)
 
         plotitem.autoRange(items=items)
-        if self.P['isRestingState']:
+        if self.P['isAutoRTQA']:
             grid = True
         else:
             grid = False
@@ -2296,7 +2815,7 @@ class OpenNFT(QWidget):
     def drawMusterPlot(self, plotitem: pg.PlotItem):
         ylim = config.MUSTER_Y_LIMITS
 
-        if not self.P['isRestingState']:
+        if not self.P['isAutoRTQA']:
             self.computeMusterPlotData(ylim)
             muster = []
 
@@ -2331,7 +2850,9 @@ class OpenNFT(QWidget):
             plotsMin = []
             plotsMax = []
 
-            for i, c in zip(range(sz), config.ROI_PLOT_COLORS):
+            plot_colors = np.array(config.ROI_PLOT_COLORS)
+            plot_colors = np.append(plot_colors[self.selectedRoi],plot_colors[-1])
+            for i, c in zip(range(sz), plot_colors):
                 plotsMin.append(plotitem.plot(pen=pg.mkPen(
                     color=c, width=config.ROI_PLOT_WIDTH)))
                 plotsMax.append(plotitem.plot(pen=pg.mkPen(
@@ -2345,8 +2866,8 @@ class OpenNFT(QWidget):
         for pmi, mi, pma, ma in zip(
                 self.drawMinMaxProcRoiPlot.__dict__['posMin'], posMin,
                 self.drawMinMaxProcRoiPlot.__dict__['posMax'], posMax):
-            mi = np.array(mi)
-            ma = np.array(ma)
+            mi = np.array(mi,ndmin=1)
+            ma = np.array(ma,ndmin=1)
             pmi.setData(x=x, y=mi)
             pma.setData(x=x, y=ma)
 
@@ -2394,8 +2915,14 @@ class OpenNFT(QWidget):
         self.appSettings.endGroup()
 
         self.appSettings.beginGroup('Params')
-        self.settingFileName = self.appSettings.value(
-            'SettingFileName', self.settingFileName)
+
+        if not config.AUTO_RTQA:
+            self.settingFileName = self.appSettings.value(
+                'SettingFileName', self.settingFileName)
+            if self.settingFileName == str(config.AUTO_RTQA_SETTINGS):
+                self.settingFileName = ''
+        else:
+            self.settingFileName = str(config.AUTO_RTQA_SETTINGS)
 
         self.appSettings.endGroup()
 

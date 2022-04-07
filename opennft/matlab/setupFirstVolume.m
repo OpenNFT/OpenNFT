@@ -33,12 +33,18 @@ else
     switch P.DataType
         case 'DICOM'
             dicomInfoVol = dicominfo(inpFileName); %spm_dicom_headers(inpFileName); dicomInfoVol = dicomInfoVol{1};
-            mxAct      = double(dicomInfoVol.AcquisitionMatrix(1));
-            if (mxAct == 0)
-                mxAct = double(dicomInfoVol.AcquisitionMatrix(3));
+            if dicomInfoVol.NumberOfFrames == 1
+                P.isDicom2D = 1;
+                mxAct      = double(dicomInfoVol.AcquisitionMatrix(1));
+                if (mxAct == 0)
+                    mxAct = double(dicomInfoVol.AcquisitionMatrix(3));
+                end
+                MatrixSizeX_Act = mxAct;
+                dimVol = [MatrixSizeX_Act, MatrixSizeX_Act, double(P.NrOfSlices)];
+            else
+                P.isDicom2D = 0;
+                dimVol = [double(dicomInfoVol.Rows), double(dicomInfoVol.Columns), double(dicomInfoVol.NumberOfFrames)];
             end
-            MatrixSizeX_Act = mxAct;
-            dimVol = [MatrixSizeX_Act, MatrixSizeX_Act, double(P.NrOfSlices)];
             if P.getMAT
                 matVol = getMAT(dicomInfoVol, dimVol);
                 dicomInfoVox   = [dicomInfoVol.PixelSpacing; ...
@@ -65,48 +71,20 @@ end
 [slNrImg2DdimX, slNrImg2DdimY, img2DdimX, img2DdimY] = getMosaicDim(dimVol);
 nrVoxInVol = prod(dimVol);
 
-%% Init memmapfile transport
-% mosaic volume from root matlab to python GUI
-initMemmap(P.memMapFile, 'shared', uint8(zeros(img2DdimX, img2DdimY)), ...
-    'uint8', 'mmImgViewTempl');
-
-% statVol from root matlab to helper matlab
-statVol = zeros(dimVol);
-initMemmap(P.memMapFile, 'statVol', zeros(nrVoxInVol,2), 'double', ...
-    'mmStatVol', {'double', size(statVol), 'posStatVol'; 'double', size(statVol), 'negStatVol'});
-
-if P.isRTQA
-    rtqaVol = zeros(dimVol);
-    initMemmap(P.memMapFile, 'RTQAVol', zeros(nrVoxInVol,1), 'double', ...
-        'mmrtQAVol', {'double', size(rtqaVol), 'rtQAVol'});
-end
-
-% mosaic stat map to python GUI
-initMemmap(P.memMapFile, 'statMap', uint8(zeros(img2DdimX*img2DdimY, 1)), 'uint8', ...
-    'mmStatMap', {'uint8', [img2DdimX, img2DdimY], 'statMap'; });
-initMemmap(P.memMapFile, 'statMap_neg', uint8(zeros(img2DdimX*img2DdimY, 1)), 'uint8', ...
-    'mmStatMap_neg', {'uint8', [img2DdimX, img2DdimY], 'statMap_neg' });
-
-map_template = zeros(img2DdimX,img2DdimY);
-m_out =  evalin('base', 'mmStatMap');
-m_out.Data.statMap = uint8(map_template);
-assignin('base', 'statMap', map_template);
-
-m_out =  evalin('base', 'mmStatMap_neg');
-m_out.Data.statMap_neg = uint8(map_template);
-assignin('base', 'statMap_neg', map_template);
-
-
 %% transfer background mosaic to Python
 imgVolTempl = mainLoopData.imgVolTempl;
-imgViewTempl = vol3Dimg2D(imgVolTempl, slNrImg2DdimX, slNrImg2DdimY, ...
-    img2DdimX, img2DdimY, dimVol);
-imgViewTempl = uint8((imgViewTempl) / max(max(imgViewTempl)) * 255);
-assignin('base', 'imgViewTempl', imgViewTempl);
+assignin('base', 'imgVolTempl', imgVolTempl);
 
-m = evalin('base', 'mmImgViewTempl');
-shift = 0 * length(imgViewTempl(:)) + 1;
-m.Data(shift:end) = imgViewTempl(:);
+m = evalin('base', 'mmTransferVol');
+if P.isZeroPadding
+    m.Data.transferVol = imgVolTempl(:,:,P.nrZeroPadVol+1:end-P.nrZeroPadVol);
+else
+    m.Data.transferVol = imgVolTempl;
+end
+
+if P.isRTQA
+    mainLoopData.procVol = zeros(dimVol);
+end
 
 mainLoopData.dimVol = dimVol;
 mainLoopData.matVol = matVol;
@@ -116,6 +94,7 @@ mainLoopData.img2DdimY = img2DdimY;
 mainLoopData.slNrImg2DdimX = slNrImg2DdimX;
 mainLoopData.slNrImg2DdimY = slNrImg2DdimY;
 mainLoopData.nrVoxInVol = nrVoxInVol;
+
 
 assignin('base', 'mainLoopData', mainLoopData);
 assignin('base', 'P', P);

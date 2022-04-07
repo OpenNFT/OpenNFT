@@ -36,7 +36,7 @@ SPM.xBF.dt = SPM.xY.RT/SPM.xBF.T;
 SPM.xX.K.HParam = 128;
     
 % protocol
-if ~P.isRestingState
+if ~P.isAutoRTQA
     % get conditions from ConditionForContrast
     [junk,regrInd] = ismember(P.ConditionForContrast,cellfun(@(x) x.ConditionName, P.Protocol.ConditionIndex, 'UniformOutput', false));
 else
@@ -69,8 +69,7 @@ SPM.xVi.form = sprintf('AR(%1.1f)',P.aAR1);
 % masking threshold based on moco template (with lower relative threshold)
 % TODO, seems just Matlab version solution:
 %meanVol = mean(spm_read_vols(spm_vol(P.MCTempl)),[1,2,3]);
-meanVol = mean2(mean(spm_read_vols(spm_vol(P.MCTempl)),1));
-SPM.xM.TH = repmat(meanVol*THR,[1 SPM.nscan]);
+SPM.xM.TH = repmat(P.meanVolTemplate*THR,[1 SPM.nscan]);
 
 SPM = spm_fmri_spm_ui(SPM);
 save(fullfile(P.WorkFolder,'Settings','SPM.mat'),'SPM');

@@ -76,4 +76,5 @@ Stop and Exit
 
 To stop scanning process press ``Stop`` button. All data will be saved to /Your/Data/Path/NF_Data_1
 
-After exit, all MATLAB sessions will be terminated if they were not initialized using the ``run_matlab`` command. Otherwise, use 'Crtl+C' in the Terminal to stop them.
+After exit, all MATLAB sessions will be terminated if they were cd ..
+not initialized using the ``run_matlab`` command. Otherwise, use 'Crtl+C' in the Terminal to stop them.

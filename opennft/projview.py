@@ -98,24 +98,27 @@ class ProjectionImageView(pg.ViewBox):
     def set_neg_map_opacity(self, value):
         self._neg_map_imitem.setOpacity(value)
 
-    def set_roi(self, roi_bounds):
+    def set_roi(self, roi_bounds, selectedRoi):
         self._clear_roi()
-        pens = self._roi_pens()
+        colors = np.array(config.ROI_PLOT_COLORS)[selectedRoi]
 
-        for region_bounds, pen in zip(roi_bounds, pens):
+        for region_bounds, c in zip(roi_bounds, colors):
             for piece_coords in region_bounds:
-                coords = np.array(piece_coords)
+                coords = np.array(piece_coords, ndmin=2)
                 if coords.size == 0:
                     continue
 
-                y = coords[:, 0]
-                x = coords[:, 1]
+                y = coords[:, 1]
+                y = np.append(y, y[0])
+                x = coords[:, 0]
+                x = np.append(x, x[0])
 
-                pen['width'] = 2
+                pen = pg.mkPen(color=c, width=config.ROI_PLOT_WIDTH)
                 item = pg.PlotCurveItem(x=x, y=y, pen=pen)
 
                 self._roi_plotdataitems.append(item)
                 self.addItem(item)
+
 
     def clear(self):
         self._image_shape = [0, 0]
@@ -266,8 +269,8 @@ class ProjectionsWidget(QtWidgets.QWidget):
         for view in self._proj_views.values():
             view.set_neg_map_opacity(value)
 
-    def set_roi(self, proj: ProjectionType, roi_bounds):
-        self._proj_views[proj].set_roi(roi_bounds)
+    def set_roi(self, proj: ProjectionType, roi_bounds, selectedRoi):
+        self._proj_views[proj].set_roi(roi_bounds, selectedRoi)
 
     def clear(self):
         for view in self._proj_views.values():

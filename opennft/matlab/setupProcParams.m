@@ -26,10 +26,8 @@ if P.isRTQA
     rtQA_matlab = evalin('base', 'rtQA_matlab');
 end
 
-evalin('base', 'clear mmImgViewTempl;');
+evalin('base', 'clear mmImgVolTempl;');
 evalin('base', 'clear mmStatVol;');
-evalin('base', 'clear mmStatMap;');
-evalin('base', 'clear mmStatMap_neg;');
 evalin('base', 'clear mmOrthView;');
 
 if ~exist(fullfile(P.WorkFolder,'Settings')), mkdir(fullfile(P.WorkFolder,'Settings')); end
@@ -174,7 +172,7 @@ P.isRegrIGLM = true;
 %% adding nuisance regressors to iGLM
 % Note, less efficient regressing out of the motion-related regressors than
 % offline GLM given the whole motion regressors at once.
-if ~P.isRestingState
+if ~P.isAutoRTQA
     P.isMotionRegr = true;
 else
     P.isMotionRegr = false;
@@ -182,11 +180,37 @@ end
 
 %% adding high-pass filter to iGLM
 % Note, different data processing iGLM approach as compared to SPM
-P.isHighPass = false;
+P.isHighPass = true;
 
 %% adding linear regressor
 P.isLinRegr = true;
 P.linRegr = zscore((1:double(P.NrOfVolumes-P.nrSkipVol))');
+
+%% Get motion realignment template data and volume
+if ~P.isAutoRTQA || (P.isAutoRTQA && P.useEPITemplate)
+    infoVolTempl = spm_vol(P.MCTempl);
+    mainLoopData.infoVolTempl = infoVolTempl;
+    tmp_imgVolTempl  = spm_read_vols(infoVolTempl);
+    dimTemplMotCorr     = infoVolTempl.dim;
+    matTemplMotCorr     = infoVolTempl.mat;
+
+else
+    imgVolTempl          = double(dicomread(P.MCTempl));
+    imgInfoTempl         = dicominfo(P.MCTempl);
+    if imgInfoTempl.NumberOfFrames == 1
+        dimTemplMotCorr = double([P.MatrixSizeX, P.MatrixSizeY, P.NrOfSlices]);
+    else
+        dimTemplMotCorr = [imgInfoTempl.Rows, imgInfoTempl.Columns, imgInfoTempl.NumberOfFrames];
+    end
+   
+    matTemplMotCorr      = getMAT(imgInfoTempl, dimTemplMotCorr);
+
+    [slNrImg2DdimX, slNrImg2DdimY, img2DdimX, img2DdimY] = getMosaicDim(dimTemplMotCorr);
+    tmp_imgVolTempl      = img2Dvol3D(imgVolTempl, slNrImg2DdimX, slNrImg2DdimY, dimTemplMotCorr);
+
+end
+
+P.meanVolTemplate = mean2(mean(tmp_imgVolTempl,1));
 
 SPM = setupSPM(P);
 % TODO: To check
@@ -199,7 +223,7 @@ if isfield(P,'ContrastActivation')
     mainLoopData.tContr.neg = -P.ContrastActivation;
 end
 
-if ~P.isRestingState
+if ~P.isAutoRTQA
     
     if ~P.iglmAR1
         % exclude constant regressor
@@ -208,7 +232,7 @@ if ~P.isRestingState
         % exclude constant regressor
         mainLoopData.basFct = arRegr(P.aAR1, SPM.xX.X(:,1:end-1));
     end
-    [mainLoopData.numscan, mainLoopData.nrBasFct] = size(mainLoopData.basFct);
+    [mainLoopData.numscan, P.nrBasFct] = size(mainLoopData.basFct);
     % see notes above definition of spmMaskTh value
     mainLoopData.spmMaskTh = mean(SPM.xM.TH)*ones(size(SPM.xM.TH)); % SPM.xM.TH;
     mainLoopData.pVal = .01;
@@ -228,7 +252,7 @@ if ~P.isRestingState
 
 else
     mainLoopData.basFct = [];
-    mainLoopData.nrBasFct = 6; % size of motion regressors, P.motCorrParam
+    P.nrBasFct = 6; % size of motion regressors, P.motCorrParam
     mainLoopData.numscan = 0;
     [mainLoopData.numscan, mainLoopData.nrHighPassFct] = size(mainLoopData.K.X0);
     P.spmDesign = [];
@@ -236,6 +260,62 @@ else
     mainLoopData.pVal = .1;
     mainLoopData.statMap3D_iGLM = [];
 end
+
+mainLoopData.mf = [];
+mainLoopData.npv = 0;
+mainLoopData.statMapCreated = 0;
+
+% number of regressors of no interest to correct with cGLM
+if ~P.isAutoRTQA
+    % 6 MC regressors, linear trend, constant
+    nrRegrToCorrect = 8;
+else
+    % 2 linear trend, constant, because 6 MC regressors are nrBasFct
+    nrRegrToCorrect = 2;
+end
+if ~P.isRegrIGLM
+    if ~P.isAutoRTQA
+        nrBasFctRegr = 1;
+    else
+        nrBasFctRegr = 6;
+    end
+else
+    nrHighPassRegr = size(mainLoopData.K.X0,2);
+    if ~P.isAutoRTQA
+        nrMotRegr = 6;
+        if P.isHighPass && P.isMotionRegr && P.isLinRegr
+            nrBasFctRegr = nrMotRegr+nrHighPassRegr+2;
+            % adding 6 head motion, linear, high-pass filter, and
+            % constant regressors
+        elseif ~P.isHighPass && P.isMotionRegr && P.isLinRegr
+            nrBasFctRegr = nrMotRegr+2;
+            % adding 6 head motion, linear, and constant regressors
+        elseif P.isHighPass && ~P.isMotionRegr && P.isLinRegr
+            nrBasFctRegr = nrHighPassRegr+2;
+            % adding high-pass filter, linear, and constant regressors
+        elseif P.isHighPass && ~P.isMotionRegr && ~P.isLinRegr
+            nrBasFctRegr = nrHighPassRegr+1;
+            % adding high-pass filter, and constant regressors
+        elseif ~P.isHighPass && ~P.isMotionRegr && P.isLinRegr
+            nrBasFctRegr = 2; % adding linear, and constant regressors
+        end
+    else
+        if P.isHighPass && P.isLinRegr
+            nrBasFctRegr = nrHighPassRegr+2;
+            % adding 6 head motion, linear, high-pass filter, and
+            % constant regressors
+        elseif ~P.isHighPass && P.isLinRegr
+            nrBasFctRegr = 2;
+            % adding 6 head motion, linear, and constant regressors
+        elseif P.isHighPass && ~P.isLinRegr
+            nrBasFctRegr = nrHighPassRegr+1;
+            % adding high-pass filter, and constant regressors
+        end
+    end
+end
+
+P.nrRegrToCorrect = nrRegrToCorrect;
+P.nrBasFctRegr = nrBasFctRegr;
 
 %% rtQA init
 rtQA_matlab.snrMapCreated = 0;
@@ -258,48 +338,23 @@ if P.isRTQA
 
     % rtQA matlab part structure preparation
     if flags.isDCM
-        rtQA_matlab.kalmanSpikesPos = zeros(P.NrROIs,P.lengthDCMTrial*P.nrNFtrials);
-        rtQA_matlab.kalmanSpikesNeg = zeros(P.NrROIs,P.lengthDCMTrial*P.nrNFtrials);
-        rtQA_matlab.varErGlmProcTimeSeries = zeros(P.NrROIs,P.lengthDCMTrial*P.nrNFtrials);
-        rtQA_matlab.tGlmProcTimeSeries.pos = zeros(P.NrROIs,P.lengthDCMTrial*P.nrNFtrials);
-        rtQA_matlab.tGlmProcTimeSeries.neg = zeros(P.NrROIs,P.lengthDCMTrial*P.nrNFtrials);
+        duration = P.lengthDCMTrial*P.nrNFtrials;
     else
-        rtQA_matlab.kalmanSpikesPos = zeros(P.NrROIs,P.VolumesNumber);
-        rtQA_matlab.kalmanSpikesNeg = zeros(P.NrROIs,P.VolumesNumber);
-        rtQA_matlab.varErGlmProcTimeSeries = zeros(P.NrROIs,P.VolumesNumber);
-        rtQA_matlab.tGlmProcTimeSeries.pos = zeros(P.NrROIs,P.VolumesNumber);
-        rtQA_matlab.tGlmProcTimeSeries.neg = zeros(P.NrROIs,P.VolumesNumber);
+        duration = P.VolumesNumber;
     end
-    
-    rtQA_matlab.snrData.snrVol = [];
-    rtQA_matlab.snrData.meanSmoothed = [];
-    rtQA_matlab.snrData.m2Smoothed = [];
-    rtQA_matlab.snrData.meanNonSmoothed = [];
-    rtQA_matlab.snrData.m2NonSmoothed = [];
-    rtQA_matlab.snrData.iteration = 1;
 
-    rtQA_matlab.betRegr = cell(P.NrROIs,1);
+    rtQA_matlab.kalmanSpikesPos = zeros(P.NrROIs,duration);
+    rtQA_matlab.kalmanSpikesNeg = zeros(P.NrROIs,duration);
+    rtQA_matlab.varErGlmProcTimeSeries = zeros(P.NrROIs,duration);
+    rtQA_matlab.tGlmProcTimeSeries.pos = zeros(P.NrROIs,duration);
+    rtQA_matlab.tGlmProcTimeSeries.neg = zeros(P.NrROIs,duration);
 
-    rtQA_matlab.Bn = cell(P.NrROIs,1);
-    rtQA_matlab.var = cell(P.NrROIs,1);
-    rtQA_matlab.tn.pos = cell(P.NrROIs,1);
-    rtQA_matlab.tn.neg = cell(P.NrROIs,1);
+    ROI.betaRegr = zeros(duration, P.nrBasFct+nrRegrToCorrect);
+    ROI.Bn = zeros(duration, P.nrBasFct+nrBasFctRegr);
+    ROI.tn.pos = zeros(duration, 1);
+    ROI.tn.neg = zeros(duration, 1);
 
-    if ~P.isRestingState
-        rtQA_matlab.cnrData.cnrVol = [];
-
-        rtQA_matlab.cnrData.basData.mean = [];
-        rtQA_matlab.cnrData.basData.m2 = [];
-        rtQA_matlab.cnrData.basData.meanSmoothed = [];
-        rtQA_matlab.cnrData.basData.m2Smoothed = [];
-        rtQA_matlab.cnrData.basData.iteration = 1;
-
-        rtQA_matlab.cnrData.condData.mean = [];
-        rtQA_matlab.cnrData.condData.m2 = [];
-        rtQA_matlab.cnrData.condData.meanSmoothed = [];
-        rtQA_matlab.cnrData.condData.m2Smoothed = [];
-        rtQA_matlab.cnrData.condData.iteration = 1;
-
+    if ~P.isAutoRTQA
         % indexes of baseline and condition for CNR calculation
         tmpindexesCond = find(SPM.xX.X(:,contains(SPM.xX.name, P.CondIndexNames( 2 )))>0.6); % Index for Regulation block == 2
         tmpindexesBas = find(SPM.xX.X(:,contains(SPM.xX.name, P.CondIndexNames( 2 )))<0.1); % Index for Regulation block == 2
@@ -317,31 +372,21 @@ if P.isRTQA
             indexesCond = tmpindexesCond-1;
         end
         P.inds = { indexesBas, indexesCond };
-        rtQA_matlab.cnrData.basData.indexesBas = indexesBas;
-        rtQA_matlab.cnrData.condData.indexesCond = indexesCond;
     end
+
 end
 
 clear SPM
 
-mainLoopData.mf = [];
-mainLoopData.npv = 0;
-mainLoopData.statMapCreated = 0;
-
-%% Get motion realignment template data and volume
-infoVolTempl = spm_vol(P.MCTempl);
-mainLoopData.infoVolTempl = infoVolTempl;
-tmp_imgVolTempl  = spm_read_vols(infoVolTempl);
-dimTemplMotCorr     = infoVolTempl.dim;
-matTemplMotCorr     = infoVolTempl.mat;
-
-isZeroPadVol = 1;
-if isZeroPadVol
+if P.isZeroPadding
     nrZeroPadVol = 3;
     zeroPadVol = zeros(dimTemplMotCorr(1),dimTemplMotCorr(2),nrZeroPadVol);
     dimTemplMotCorr(3) = dimTemplMotCorr(3)+nrZeroPadVol*2;
     imgVolTempl = cat(3, cat(3, zeroPadVol, tmp_imgVolTempl), zeroPadVol);
+else
+    imgVolTempl = tmp_imgVolTempl;
 end
+
 
 mainLoopData.dimTemplMotCorr = dimTemplMotCorr;
 mainLoopData.matTemplMotCorr = matTemplMotCorr;
@@ -363,10 +408,27 @@ mainLoopData.deg = deg;
 mainLoopData.b = b;
 
 % make output data folder
-P.nfbDataFolder = [P.WorkFolder filesep 'NF_Data_' num2str(P.NFRunNr)];
+if ~P.isAutoRTQA
+    P.nfbDataFolder = [P.WorkFolder filesep 'NF_Data_' num2str(P.NFRunNr)];
+else
+    watchFolderPath = strsplit(P.WatchFolder,'\');
+    watchFolderName = watchFolderPath{end};
+    P.nfbDataFolder = [P.WorkFolder filesep watchFolderName '_rtQA_Data_' num2str(P.NFRunNr)];
+end
+
 if ~exist(P.nfbDataFolder, 'dir')
     mkdir(P.nfbDataFolder);
 end
+
+nrVoxInVol = prod(dimTemplMotCorr);
+
+%% Init memmapfile transport
+% volume from root matlab to python GUI
+initMemmap(P.memMapFile, 'shared', zeros(nrVoxInVol,1), 'double', 'mmTransferVol', {'double', dimTemplMotCorr, 'transferVol'});
+
+% statVol from root matlab to helper matlab
+initMemmap(P.memMapFile, 'statVol', zeros(nrVoxInVol,2), 'double', ...
+    'mmStatVol', {'double', dimTemplMotCorr, 'posStatVol'; 'double', dimTemplMotCorr, 'negStatVol'});
 
 
 if P.isRTQA

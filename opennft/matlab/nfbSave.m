@@ -25,13 +25,16 @@ end
 
 flags = getFlagsType(P);
 
-folder = P.nfbDataFolder;
+if isfield(P, 'nfbDataFolder')
+    folder = P.nfbDataFolder;
+else
+    return;
+end
 
 % save rtqa data
 if P.isRTQA
     rtQA_matlab = evalin('base', 'rtQA_matlab');
     rtQA_python = evalin('base', 'rtQA_python');
-    rtQAMode = evalin('base', 'rtQAMode');
     save([folder '\rtQA_matlab.mat'], '-struct', 'rtQA_matlab');
     save([folder '\rtQA_python.mat'], '-struct', 'rtQA_python');
 end
@@ -57,9 +60,6 @@ if mainLoopData.statMapCreated
     statMapVect = maskedStatMapVect;
     statMap3D_pos(idxActVoxIGLM.pos) = statMapVect;
 
-    statMap2D_pos = vol3Dimg2D(statMap3D_pos, slNrImg2DdimX, slNrImg2DdimY, img2DdimX, img2DdimY, dimVol) / maxTval;
-    statMap2D_pos = statMap2D_pos * 255;
-
     idxActVoxIGLM.neg = mainLoopData.idxActVoxIGLM.neg{indVolIglmIndx};
     maskedStatMapVect = tn.neg(idxActVoxIGLM.neg);
     maxTval = max(maskedStatMapVect);
@@ -68,43 +68,15 @@ if mainLoopData.statMapCreated
     end
     statMapVect = maskedStatMapVect;
     statMap3D_neg(idxActVoxIGLM.neg) = statMapVect;
-
-    statMap2D_neg = vol3Dimg2D(statMap3D_neg, slNrImg2DdimX, slNrImg2DdimY, img2DdimX, img2DdimY, dimVol) / maxTval;
-    statMap2D_neg = statMap2D_neg * 255;
-
-    mainLoopData.statMap2D_pos = statMap2D_pos;
-    mainLoopData.statMap2D_neg = statMap2D_neg;
-
-    m = evalin('base', 'mmStatVol');
-    m.Data.posStatVol = statMap3D_pos;
-    assignin('base', 'mainLoopData', mainLoopData);
-    
-    m_out =  evalin('base', 'mmStatMap');
-    m_out.Data.statMap = uint8(statMap2D_pos);
-    
-    m_out =  evalin('base', 'mmStatMap_neg');
-    m_out.Data.statMap_neg = uint8(statMap2D_neg);
-    assignin('base', 'statMap_neg', statMap2D_neg);
     
     if P.isRTQA
-        n = mainLoopData.indVolNorm;
-        var = rtQA_matlab.snrData.m2Smoothed ./ double(n-1);
-        rtQA_matlab.snrData.snrVol = rtQA_matlab.snrData.meanSmoothed ./ (var.^.5);
-        if ~P.isRestingState
-            meanBas = rtQA_matlab.cnrData.basData.meanSmoothed;
-            meanCond = rtQA_matlab.cnrData.condData.meanSmoothed;
-            varianceBas = rtQA_matlab.cnrData.basData.m2Smoothed / (rtQA_matlab.cnrData.basData.iteration - 1);
-            varianceCond = rtQA_matlab.cnrData.condData.m2Smoothed / (rtQA_matlab.cnrData.condData.iteration - 1);
-            rtQA_matlab.cnrData.cnrVol = (meanCond - meanBas) ./ ((varianceBas + varianceCond).^.5);
-        end
-
         assignin('base', 'rtQA_matlab', rtQA_matlab);
      end
     
 end
 
 % save feedback values
-if ~P.isRestingState
+if ~P.isAutoRTQA
     % check if vectNFBs exists
     if sum(strcmp(fieldnames(mainLoopData), 'vectNFBs')) == 1
         save([folder filesep P.SubjectID '_' ...
@@ -140,7 +112,7 @@ if flags.isDCM
     roiData.ROIsGlmAnat = evalin('base', 'ROIsGlmAnat');
     roiData.ROIoptimGlmAnat = evalin('base', 'ROIoptimGlmAnat');
 end
-if ~P.isRestingState
+if ~P.isAutoRTQA
     save([folder filesep P.SubjectID '_' ...
         num2str(P.NFRunNr) '_roiData' '.mat'], 'roiData');
 end
@@ -216,6 +188,6 @@ end
 disp('Saving done')
 
 % Clear workspace
-evalin('base', 'clear mmImgViewTempl;');
+evalin('base', 'clear mmTransferVol;');
 evalin('base', 'clear mmStatVol;');
 evalin('base', 'clear mmOrthView;');

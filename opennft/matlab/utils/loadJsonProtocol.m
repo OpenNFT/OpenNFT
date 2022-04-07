@@ -16,19 +16,19 @@ P = evalin('base', 'P');
 
 flags = getFlagsType(P);
 
-jsonFile = P.ProtocolFile;
-NrOfVolumes = P.NrOfVolumes;
-nrSkipVol = P.nrSkipVol;
-   
-prt = loadjson(jsonFile);
+if ~P.isAutoRTQA
+    jsonFile = P.ProtocolFile;
+    NrOfVolumes = P.NrOfVolumes;
+    nrSkipVol = P.nrSkipVol;
 
-% -- remove dcmdef field -- %
-if flags.isDCM
-    prt = rmfield(prt, 'dcmdef');
-end
+    prt = loadjson(jsonFile);
 
-if ~P.isRestingState
-    
+    % -- remove dcmdef field -- %
+    if flags.isDCM
+        prt = rmfield(prt, 'dcmdef');
+    end
+
+
     lCond = length(prt.ConditionIndex);
     for x=1:lCond
         protNames{x} = prt.ConditionIndex{x}.ConditionName;
@@ -68,32 +68,37 @@ if ~P.isRestingState
         P.basBlockLength = ProtCondBas{1}(end);
     end
 
-end
 
-%% Contrast and Conditions For Contrast encoding from .json Contrast specification
-if isfield(prt,'ContrastActivation')
-    if ~P.isRestingState
-        conditionNames = cellfun(@(x) x.ConditionName, prt.ConditionIndex, 'UniformOutput',false);
-        contrastString = textscan(prt.ContrastActivation,'%d*%s','Delimiter',';');
-        P.ConditionForContrast = contrastString{2}';
-        if length(conditionNames)>length(contrastString{1})
-            conditionNames = intersect(contrastString{2},conditionNames)';
-        end
-        contrastVect = [];
-        for contrastIndex = cellfun(@(x) find(strcmp(x,contrastString{2})),conditionNames,'UniformOutput',false)
-            if ~isempty(contrastIndex{1})
-                contrastVect(end+1) = contrastString{1}(contrastIndex{1});
-            else
-                contrastVect(end+1) = 0;
+    %% Contrast and Conditions For Contrast encoding from .json Contrast specification
+    if isfield(prt,'ContrastActivation')
+        if ~P.isAutoRTQA
+            conditionNames = cellfun(@(x) x.ConditionName, prt.ConditionIndex, 'UniformOutput',false);
+            contrastString = textscan(prt.ContrastActivation,'%d*%s','Delimiter',';');
+            P.ConditionForContrast = contrastString{2}';
+            if length(conditionNames)>length(contrastString{1})
+                conditionNames = intersect(contrastString{2},conditionNames)';
             end
+            contrastVect = [];
+            for contrastIndex = cellfun(@(x) find(strcmp(x,contrastString{2})),conditionNames,'UniformOutput',false)
+                if ~isempty(contrastIndex{1})
+                    contrastVect(end+1) = contrastString{1}(contrastIndex{1});
+                else
+                    contrastVect(end+1) = 0;
+                end
+            end
+        else
+            contrastVect = double(cell2mat(textscan(prt.ContrastActivation,'%d','Delimiter',';'))');
         end
-    else
-        contrastVect = double(cell2mat(textscan(prt.ContrastActivation,'%d','Delimiter',';'))');
+        P.ContrastActivation = contrastVect';
     end
-    P.ContrastActivation = contrastVect';
+
+    %% Save
+    P.Protocol = prt;
+else
+
+    P.ContrastActivation = [1; 1; 1; 1; 1; 1];
+
 end
 
-%% Save
-P.Protocol = prt;
 assignin('base', 'P', P);
 end
