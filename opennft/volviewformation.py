@@ -283,9 +283,9 @@ class VolViewFormation(mp.Process):
         back_imgs = np.nan_to_num(back_imgs)
         back_imgs[back_imgs < 0] = 0
 
-        back_imgt = ((back_imgt / np.max(back_imgt)) * 255).astype(np.uint8)
-        back_imgc = ((back_imgc / np.max(back_imgc)) * 255).astype(np.uint8)
-        back_imgs = ((back_imgs / np.max(back_imgs)) * 255).astype(np.uint8)
+        back_imgt = ((back_imgt / np.max(back_imgt)) * 255)
+        back_imgc = ((back_imgc / np.max(back_imgc)) * 255)
+        back_imgs = ((back_imgs / np.max(back_imgs)) * 255)
 
         if flags[0] != "bgEPI":
             m = np.array(np.linalg.solve(self.str_param['space'], self.str_param['premul']) @ self.mat_epi, order='F')
@@ -294,18 +294,18 @@ class VolViewFormation(mp.Process):
         overlay_imgt = np.nan_to_num(overlay_imgt)
         overlay_imgc = np.nan_to_num(overlay_imgc)
         overlay_imgs = np.nan_to_num(overlay_imgs)
-        overlay_imgt = ((overlay_imgt / np.max(overlay_imgt)) * 255).astype(np.uint8)
-        overlay_imgc = ((overlay_imgc / np.max(overlay_imgc)) * 255).astype(np.uint8)
-        overlay_imgs = ((overlay_imgs / np.max(overlay_imgs)) * 255).astype(np.uint8)
+        overlay_imgt = ((overlay_imgt / np.max(overlay_imgt)) * 255)
+        overlay_imgc = ((overlay_imgc / np.max(overlay_imgc)) * 255)
+        overlay_imgs = ((overlay_imgs / np.max(overlay_imgs)) * 255)
 
         if flags[3]:
             neg_overlay_imgt, neg_overlay_imgc, neg_overlay_imgs = self.get_orth_vol(coord_param, neg_overlay_vol, m)
             neg_overlay_imgt = np.nan_to_num(neg_overlay_imgt)
             neg_overlay_imgc = np.nan_to_num(neg_overlay_imgc)
             neg_overlay_imgs = np.nan_to_num(neg_overlay_imgs)
-            neg_overlay_imgt = ((neg_overlay_imgt / np.max(neg_overlay_imgt)) * 255).astype(np.uint8)
-            neg_overlay_imgc = ((neg_overlay_imgc / np.max(neg_overlay_imgc)) * 255).astype(np.uint8)
-            neg_overlay_imgs = ((neg_overlay_imgs / np.max(neg_overlay_imgs)) * 255).astype(np.uint8)
+            neg_overlay_imgt = ((neg_overlay_imgt / np.max(neg_overlay_imgt)) * 255)
+            neg_overlay_imgc = ((neg_overlay_imgc / np.max(neg_overlay_imgc)) * 255)
+            neg_overlay_imgs = ((neg_overlay_imgs / np.max(neg_overlay_imgs)) * 255)
 
         else:
             neg_overlay_imgt = None
