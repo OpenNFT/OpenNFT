@@ -131,9 +131,6 @@ class RTQACalculation(mp.Process):
             if self.input["data_ready"]:
                 self.calculate_rtqa()
 
-                self.input["data_ready"] = False
-                self.input["calc_ready"] = True
-
                 self.output["rSNR"] = self.rSNR
                 self.output["rCNR"] = self.rCNR
                 self.output["rMean"] = self.rMean
@@ -157,6 +154,9 @@ class RTQACalculation(mp.Process):
                 self.output["excMD"] = self.excMD
                 self.output["posSpikes"] = self.posSpikes
                 self.output["negSpikes"] = self.negSpikes
+
+                self.input["data_ready"] = False
+                self.input["calc_ready"] = True
 
     # --------------------------------------------------------------------------
     def calculate_rtqa(self):

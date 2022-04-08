@@ -66,7 +66,6 @@ from opennft import (
     conversions,
     runmatlab,
     ptbscreen,
-    mmapimage,
     mosaicview,
     projview,
     mapimagewidget,
@@ -74,11 +73,9 @@ from opennft import (
     utils,
     rtqa_gui,
     rtqa_calc,
-    orthview,
+    volviewformation,
     eventrecorder as erd,
 )
-
-import cv2
 
 if config.USE_MRPULSE:
     from opennft import mrpulse
@@ -202,10 +199,11 @@ class OpenNFT(QWidget):
         self.files_processed = []
         self.files_exported = []
 
+        self.main_loop = None
         self.eng = None
         self.orth_view = None
-        self.orth_view_input = None
-        self.orth_view_output = None
+        self.view_form_input = None
+        self.view_form_output = None
         self.rtqa_input = None
         self.rtqa_output = None
 
@@ -239,6 +237,7 @@ class OpenNFT(QWidget):
         self.orthViewInitialize = True
         self.orthViewUpdateFuture = None
         self.orthViewUpdateCheckTimer = QTimer(self)
+        self.mosaicViewUpdateCheckTimer = QTimer(self)
 
         self.settings = QSettings('', QSettings.IniFormat)
         self.reachedFirstFile = False
@@ -446,8 +445,9 @@ class OpenNFT(QWidget):
         self.cbImageViewMode.currentIndexChanged.connect(self.onChangeImageViewMode)
         self.orthView.cursorPositionChanged.connect(self.onChangeOrthViewCursorPosition)
 
-        self.call_timer.timeout.connect(self.callMainLoopIteration)
+        self.call_timer.timeout.connect(self.call_main_loop)
         self.orthViewUpdateCheckTimer.timeout.connect(self.onCheckOrthViewUpdated)
+        self.mosaicViewUpdateCheckTimer.timeout.connect(self.onCheckMosaicViewUpdated)
 
         self.cbType.currentTextChanged.connect(self.onChangeFBType)
 
@@ -485,7 +485,7 @@ class OpenNFT(QWidget):
 
     # --------------------------------------------------------------------------
     def onChangeFBType(self, value):
-        if value=='DCM':
+        if value == 'DCM':
             self.cbFeedbackPlot.setChecked(False)
             self.cbFeedbackPlot.setEnabled(False)
         else:
@@ -507,18 +507,20 @@ class OpenNFT(QWidget):
 
     # --------------------------------------------------------------------------
     def onChangeNegMapPolicy(self):
+
         if self.windowRTQA:
             is_rtqa_volume = self.rtqa_output["show_vol"]
         else:
             is_rtqa_volume = False
-        self.negMapCheckBox.setEnabled(not is_rtqa_volume)
 
         if is_rtqa_volume:
             setattr(self, '__neg_map_state', self.negMapCheckBox.isChecked())
             self.negMapCheckBox.setChecked(False)
+            self.negMapCheckBox.setEnabled(False)
         else:
             neg_map_state = getattr(self, '__neg_map_state', self.negMapCheckBox.isChecked())
             self.negMapCheckBox.setChecked(neg_map_state)
+            self.negMapCheckBox.setEnabled(True)
 
     # --------------------------------------------------------------------------
     def showPluginDlg(self):
@@ -651,7 +653,18 @@ class OpenNFT(QWidget):
         return acquisitionFinished
 
     # --------------------------------------------------------------------------
-    def callMainLoopIteration(self):
+    def call_main_loop(self):
+        if not self.main_loop:
+            self.main_loop = self.main_loop_iteration()
+            return
+
+        try:
+            next(self.main_loop)
+        except StopIteration:
+            self.main_loop = self.main_loop_iteration()
+
+    # --------------------------------------------------------------------------
+    def main_loop_iteration(self):
         if self.eng is None:
             return
 
@@ -693,7 +706,8 @@ class OpenNFT(QWidget):
 
         if self.cbUseTCPData.isChecked():
             fname = str(Path(self.P['WatchFolder'])
-                        / self.P['FirstFileNameTxt'].replace('Image Series No','ImgSerNr').replace('#','iter').format(**(self.P),iter=self.iteration))
+                        / self.P['FirstFileNameTxt'].replace('Image Series No', 'ImgSerNr').replace('#', 'iter').format(
+                **(self.P), iter=self.iteration))
         else:
             try:
                 fname = self.files_queue.get_nowait()
@@ -747,8 +761,9 @@ class OpenNFT(QWidget):
             else:
                 self.files_exported.remove(fname)
 
-        autoRTQAMCTempl = (self.iteration == self.P['nrSkipVol']+1) and config.AUTO_RTQA \
-                          and not self.P['useEPITemplate'] and not self.autoRTQASetup
+        autoRTQAMCTempl = (self.iteration == self.P['nrSkipVol'] + 1) and config.AUTO_RTQA \
+                          and not self.P['useEPITemplate'] \
+                          and not self.autoRTQASetup
 
         if autoRTQAMCTempl:
             self.P['MCTempl'] = fname
@@ -777,7 +792,6 @@ class OpenNFT(QWidget):
             return
 
         if config.AUTO_RTQA and not self.autoRTQASetup:
-
             self.files_processed.append(fname)
             self.iteration += 1
             self.isMainLoopEntered = False
@@ -796,8 +810,10 @@ class OpenNFT(QWidget):
 
         # Main logic
         # data preprocessing
-        with utils.timeit('  preprocess fMRI Volume:'):
-            self.eng.preprVol(fname, self.iteration, nargout=0)
+        self.call_timer.setInterval(config.MAIN_LOOP_CALL_PERIOD / 3)
+        prepr_vol_state = self.eng.preprVol(fname, self.iteration, background=True, nargout=0)
+        while not prepr_vol_state.done():
+            yield
 
         # t3
         self.recorder.recordEvent(erd.Times.t3, self.iteration, time.time())
@@ -808,14 +824,13 @@ class OpenNFT(QWidget):
         else:
             is_rtqa_volume = False
 
-        if is_rtqa_volume and config.FIRST_SNR_VOLUME < self.iteration:
-            self.updateOrthViewAsync()
+        is_stat_map_created = bool(self.eng.evalin('base', 'mainLoopData.statMapCreated'))
 
-        if (self.eng.evalin('base', 'mainLoopData.statMapCreated') == 1
-                and not is_rtqa_volume):
-            nrVoxInVol = self.eng.evalin('base', 'mainLoopData.nrVoxInVol')
-            memMapFile = self.eng.evalin('base', 'P.memMapFile')
+        if self.imageViewMode == ImageViewMode.mosaic:
+            self.updateMosaicViewAsync()
 
+        if (is_rtqa_volume and config.FIRST_SNR_VOLUME < self.iteration) or \
+                (is_stat_map_created and not is_rtqa_volume):
             self.updateOrthViewAsync()
 
         # spatio-temporal data processing
@@ -948,7 +963,7 @@ class OpenNFT(QWidget):
             dataRaw = dataRealRaw[:, n]
 
             if n == 0:
-                offsetMCParam = np.array(self.eng.evalin('base','P.offsetMCParam'), ndmin=1)
+                offsetMCParam = np.array(self.eng.evalin('base', 'P.offsetMCParam'), ndmin=1)
                 self.rtqa_input["offset_mc"] = offsetMCParam
 
             if self.P['Type'] != 'DCM':
@@ -989,9 +1004,9 @@ class OpenNFT(QWidget):
                 self.windowRTQA.plotRTQA()
             self.rtqa_input["calc_ready"] = False
 
-        if self.imageViewMode == ImageViewMode.mosaic:
-            with utils.timeit('Display mosaic image:'):
-                self.displayMosaicImage()
+        # if self.imageViewMode == ImageViewMode.mosaic and self.view_form_input["done_mosaic_templ"]:
+        #     with utils.timeit('Display mosaic image:'):
+        #         self.displayMosaicImage()
 
         with utils.timeit('  Drawings:'):
             self.drawRoiPlots(init)
@@ -1015,6 +1030,7 @@ class OpenNFT(QWidget):
             self.stop()
 
         self.iteration += 1
+        self.call_timer.setInterval(config.MAIN_LOOP_CALL_PERIOD)
         self.isMainLoopEntered = False
 
     # --------------------------------------------------------------------------
@@ -1250,10 +1266,11 @@ class OpenNFT(QWidget):
         self.reachedFirstFile = False
         self.autoRTQASetup = False
         self.orth_view.terminate()
-        self.orth_view_input = None
-        self.orth_view_output = None
+        self.view_form_input = None
+        self.view_form_output = None
         self.rtqa_input = None
         self.rtqa_output = None
+        self.main_loop = None
 
         self.eng.workspace['P'] = self.P
         self.eng.workspace['mainLoopData'] = self.mainLoopData
@@ -1330,7 +1347,7 @@ class OpenNFT(QWidget):
             with utils.timeit('  initMainLoopData:'):
                 self.initMainLoopData()
 
-            self.orth_view_init()
+            self.view_form_init()
 
             self.roiDict = dict()
             self.selectedRoi = []
@@ -1339,13 +1356,13 @@ class OpenNFT(QWidget):
             self.roiSelectorBtn.setMenu(roi_menu)
             nrROIs = int(self.P['NrROIs'])
             for i in range(nrROIs):
-                if self.P['isRTQA'] and i+1==nrROIs:
+                if self.P['isRTQA'] and i + 1 == nrROIs:
                     roi = 'Whole brain ROI'
                 else:
-                    roi = 'ROI_{}'.format(i+1)
+                    roi = 'ROI_{}'.format(i + 1)
                 roi_action = roi_menu.addAction(roi)
                 roi_action.setCheckable(True)
-                if not (self.P['isRTQA'] and i+1==nrROIs):
+                if not (self.P['isRTQA'] and i + 1 == nrROIs):
                     roi_action.setChecked(True)
                     self.roiDict[roi] = True
                     self.selectedRoi.append(i)
@@ -1426,8 +1443,7 @@ class OpenNFT(QWidget):
             if self.P['isRTQA']:
                 self.rtqa_init()
 
-            self.onChangeNegMapPolicy()
-            self.eng.assignin('base', 'imageViewMode', int(self.imageViewMode), nargout=0)
+            # self.eng.assignin('base', 'imageViewMode', int(self.imageViewMode), nargout=0)
             self.cbImageViewMode.setEnabled(False)
             self.cbImageViewMode.setCurrentIndex(0)
             self.isStopped = False
@@ -1448,9 +1464,11 @@ class OpenNFT(QWidget):
             if not self.resetDone:
                 self.reset()
 
-            self.orth_view_input = multiprocessing.Manager().dict()
-            self.orth_view_input["ready"] = False
-            self.orth_view_input["done"] = False
+            self.view_form_input = multiprocessing.Manager().dict()
+            self.view_form_input["ready"] = False
+            self.view_form_input["done_mosaic_templ"] = False
+            self.view_form_input["done_mosaic_overlay"] = False
+            self.view_form_input["done_orth"] = False
 
             self.actualizeAutoRTQA()
             self.isOffline = self.cbOfflineMode3.isChecked()
@@ -1473,8 +1491,9 @@ class OpenNFT(QWidget):
 
         if not self.P['useEPITemplate']:
             dcm = pydicom.dcmread(self.P['MCTempl'])
-            if not (hasattr(dcm,'ImagePositionPatient') and hasattr(dcm,'ImageOrientationPatient')):
-                logger.error("DICOM template has no ImagePositionPatient and ImageOrientationPatient and could not be used as EPI template\nPlease, check DICOM export or use NII EPI template\n")
+            if not (hasattr(dcm, 'ImagePositionPatient') and hasattr(dcm, 'ImageOrientationPatient')):
+                logger.error(
+                    "DICOM template has no ImagePositionPatient and ImageOrientationPatient and could not be used as EPI template\nPlease, check DICOM export or use NII EPI template\n")
                 self.fFinNFB = False
                 self.stop()
                 return
@@ -1501,7 +1520,7 @@ class OpenNFT(QWidget):
         self.setupRoiPlots()
         self.setupMcPlots()
 
-        self.orth_view_init()
+        self.view_form_init()
 
         self.roiDict = dict()
         self.selectedRoi = []
@@ -1510,13 +1529,13 @@ class OpenNFT(QWidget):
         self.roiSelectorBtn.setMenu(roi_menu)
         nrROIs = int(self.P['NrROIs'])
         for i in range(nrROIs):
-            if not config.SELECT_ROIS or i+1==nrROIs:
+            if not config.SELECT_ROIS or i + 1 == nrROIs:
                 roi = 'Whole brain ROI'
             else:
-                roi = 'ROI_{}'.format(i+1)
+                roi = 'ROI_{}'.format(i + 1)
             roi_action = roi_menu.addAction(roi)
             roi_action.setCheckable(True)
-            if config.SELECT_ROIS and not (i+1==nrROIs) or not config.SELECT_ROIS:
+            if config.SELECT_ROIS and not (i + 1 == nrROIs) or not config.SELECT_ROIS:
                 roi_action.setChecked(True)
                 self.roiDict[roi] = True
                 self.selectedRoi.append(i)
@@ -1534,13 +1553,12 @@ class OpenNFT(QWidget):
         self.rtqa_init()
 
         self.autoRTQASetup = True
-        self.onChangeNegMapPolicy()
         self.cbImageViewMode.setCurrentIndex(0)
         self.cbImageViewMode.model().item(1).setEnabled(False)
         self.isStopped = False
 
     # --------------------------------------------------------------------------
-    def orth_view_init(self):
+    def view_form_init(self):
 
         nrROIs = int(self.eng.evalin('base', 'P.NrROIs'))
         x = self.P['MatrixSizeX']
@@ -1556,8 +1574,8 @@ class OpenNFT(QWidget):
                 for i in range(nrROIs - 1):
                     ROI_vols[i] = np.array(self.eng.evalin('base', 'ROIsAnat(' + str(i + 1) + ').vol'), ndmin=3)
                     ROI_mats[i] = np.array(self.eng.evalin('base', 'ROIsAnat(' + str(i + 1) + ').mat'), ndmin=2)
-                ROI_vols[nrROIs-1] = np.array(self.eng.evalin('base', 'ROIs(end).vol'), ndmin=3)
-                ROI_mats[nrROIs-1] = np.array(self.eng.evalin('base', 'ROIs(end).mat'), ndmin=2)
+                ROI_vols[nrROIs - 1] = np.array(self.eng.evalin('base', 'ROIs(end).vol'), ndmin=3)
+                ROI_mats[nrROIs - 1] = np.array(self.eng.evalin('base', 'ROIs(end).mat'), ndmin=2)
             else:
                 for i in range(nrROIs):
                     ROI_vols[i] = np.array(self.eng.evalin('base', 'ROIsAnat(' + str(i + 1) + ').vol'), ndmin=3)
@@ -1568,47 +1586,59 @@ class OpenNFT(QWidget):
                 ROI_mats[i] = np.array(self.eng.evalin('base', 'ROIs(' + str(i + 1) + ').mat'), ndmin=2)
 
         # # shared variables for OrthView process
-        self.orth_view_input = multiprocessing.Manager().dict()
-        self.orth_view_input["nr_ROIs"] = nrROIs
-        self.orth_view_input["ROI_vols"] = ROI_vols
-        self.orth_view_input["ROI_mats"] = ROI_mats
-        self.orth_view_input["cursor_pus"] = []
-        self.orth_view_input["flags_planes"] = []
-        self.orth_view_input["bg_type"] = "bgEPI"
-        self.orth_view_input["is_rtqa"] = False
-        self.orth_view_input["is_neg"] = self.negMapCheckBox.isChecked()
-        self.orth_view_input["is_ROI"] = config.USE_ROI
+        self.view_form_input = multiprocessing.Manager().dict()
+        self.view_form_input["nr_ROIs"] = nrROIs
+        self.view_form_input["ROI_vols"] = ROI_vols
+        self.view_form_input["ROI_mats"] = ROI_mats
+        self.view_form_input["cursor_pus"] = []
+        self.view_form_input["flags_planes"] = []
+        self.view_form_input["bg_type"] = "bgEPI"
+        self.view_form_input["is_rtqa"] = False
+        self.view_form_input["is_neg"] = self.negMapCheckBox.isChecked()
+        self.view_form_input["is_ROI"] = config.USE_ROI
         if config.AUTO_RTQA:
-            self.orth_view_input["anat_volume"] = None
+            self.view_form_input["anat_volume"] = None
         else:
-            self.orth_view_input["anat_volume"] = self.P['StructBgFile']
-        self.orth_view_input["epi_volume"] = self.P['MCTempl']
+            self.view_form_input["anat_volume"] = self.P['StructBgFile']
+        self.view_form_input["epi_volume"] = self.P['MCTempl']
         if config.AUTO_RTQA and not config.USE_EPI_TEMPLATE:
-            self.orth_view_input["epi_volume_type"] = "dcm"
+            self.view_form_input["epi_volume_type"] = "dcm"
         else:
-            self.orth_view_input["epi_volume_type"] = "nii"
-        self.orth_view_input["rtQA_volume"] = []
-        self.orth_view_input["stat_volume"] = str(self.eng.evalin('base', 'P.memMapFile')).replace('shared', 'statVol')
-        self.orth_view_input["mat"] = np.array(self.eng.evalin('base', 'mainLoopData.matTemplMotCorr'))
-        self.orth_view_input["dim"] = tuple([x, y, z])
-        self.orth_view_input["ready"] = False
-        self.orth_view_input["done"] = False
+            self.view_form_input["epi_volume_type"] = "nii"
+        self.view_form_input["rtQA_volume"] = []
+        self.view_form_input["stat_volume"] = str(self.eng.evalin('base', 'P.memMapFile')).replace('shared', 'statVol')
+        self.view_form_input["mat"] = np.array(self.eng.evalin('base', 'mainLoopData.matTemplMotCorr'))
+        self.view_form_input["dim"] = tuple([x, y, z])
+        self.view_form_input["memmap_volume"] = self.P['memMapFile']
+        self.view_form_input["view_mode"] = self.imageViewMode
+        self.view_form_input["auto_thr_pos"] = True
+        self.view_form_input["auto_thr_neg"] = True
+        self.view_form_input["ready"] = False
+        self.view_form_input["overlay_ready"] = False
+        self.view_form_input["done_mosaic_templ"] = False
+        self.view_form_input["done_mosaic_overlay"] = False
+        self.view_form_input["done_orth"] = False
 
-        self.orth_view_output = multiprocessing.Manager().dict()
-        self.orth_view_output["ROI_t"] = np.zeros((1, 1))
-        self.orth_view_output["ROI_c"] = np.zeros((1, 1))
-        self.orth_view_output["ROI_s"] = np.zeros((1, 1))
-        self.orth_view_output["back_t"] = np.zeros((1, 1))
-        self.orth_view_output["back_c"] = np.zeros((1, 1))
-        self.orth_view_output["back_s"] = np.zeros((1, 1))
-        self.orth_view_output["overlay_t"] = np.zeros((1, 1))
-        self.orth_view_output["overlay_c"] = np.zeros((1, 1))
-        self.orth_view_output["overlay_s"] = np.zeros((1, 1))
-        self.orth_view_output["neg_overlay_t"] = np.zeros((1, 1))
-        self.orth_view_output["neg_overlay_c"] = np.zeros((1, 1))
-        self.orth_view_output["neg_overlay_s"] = np.zeros((1, 1))
+        self.view_form_output = multiprocessing.Manager().dict()
+        self.view_form_output["mosaic_templ"] = np.zeros((1, 1))
+        self.view_form_output["mosaic_pos_overlay"] = None
+        self.view_form_output["mosaic_neg_overlay"] = None
+        self.view_form_output["ROI_t"] = np.zeros((1, 1))
+        self.view_form_output["ROI_c"] = np.zeros((1, 1))
+        self.view_form_output["ROI_s"] = np.zeros((1, 1))
+        self.view_form_output["back_t"] = np.zeros((1, 1))
+        self.view_form_output["back_c"] = np.zeros((1, 1))
+        self.view_form_output["back_s"] = np.zeros((1, 1))
+        self.view_form_output["overlay_t"] = np.zeros((1, 1))
+        self.view_form_output["overlay_c"] = np.zeros((1, 1))
+        self.view_form_output["overlay_s"] = np.zeros((1, 1))
+        self.view_form_output["neg_overlay_t"] = np.zeros((1, 1))
+        self.view_form_output["neg_overlay_c"] = np.zeros((1, 1))
+        self.view_form_output["neg_overlay_s"] = np.zeros((1, 1))
+        self.view_form_output["pos_thresholds"] = np.array([1, 255])
+        self.view_form_output["neg_thresholds"] = np.array([1, 255])
 
-        self.orth_view = orthview.OrthView(self.orth_view_input, self.orth_view_output)
+        self.orth_view = volviewformation.VolViewFormation(self.view_form_input, self.view_form_output)
         self.orth_view.start()
 
     # --------------------------------------------------------------------------
@@ -1647,7 +1677,7 @@ class OpenNFT(QWidget):
         self.rtqa_input["neg_spikes"] = []
         self.rtqa_input["is_new_dcm_block"] = True
         self.rtqa_input["iteration"] = 0
-        self.rtqa_input["which_vol"] = []
+        self.rtqa_input["which_vol"] = 0
         self.rtqa_input["dvars_scale"] = self.P["scaleFactorDVARS"]
         self.rtqa_input["rtqa_vol_ready"] = False
 
@@ -1688,8 +1718,6 @@ class OpenNFT(QWidget):
 
         self.windowRTQA.volumeCheckBox.stateChanged.connect(self.onShowRtqaVol)
         self.windowRTQA.volumeCheckBox.stateChanged.connect(self.onChangeNegMapPolicy)
-        self.windowRTQA.volumeCheckBox.stateChanged.connect(self.onInteractWithMapImage)
-        self.windowRTQA.volumeCheckBox.toggled.connect(self.updateOrthViewAsync)
         self.windowRTQA.comboBox.currentIndexChanged.connect(self.onModeChanged)
 
     # --------------------------------------------------------------------------
@@ -1720,7 +1748,9 @@ class OpenNFT(QWidget):
             self.startFilesystemWatching()
 
         self.orthViewUpdateCheckTimer.stop()
-        self.orthViewUpdateCheckTimer.start(50)
+        self.orthViewUpdateCheckTimer.start(30)
+        self.mosaicViewUpdateCheckTimer.stop()
+        self.mosaicViewUpdateCheckTimer.start(30)
         self.files_exported = []
         self.files_processed = []
 
@@ -1797,12 +1827,12 @@ class OpenNFT(QWidget):
     # --------------------------------------------------------------------------
     def onShowRtqaVol(self):
 
+        self.windowRTQA.rtQAVolState()
         if self.isStopped:
-            # self.eng.offlineImageSwitch(nargout=0)
             if self.imageViewMode == ImageViewMode.mosaic:
-                self.displayMosaicImage()
+                self.updateMosaicViewAsync()
             else:
-                self.onCheckOrthViewUpdated()
+                self.updateOrthViewAsync()
 
     # --------------------------------------------------------------------------
     def onRoiChecked(self, action):
@@ -1836,10 +1866,6 @@ class OpenNFT(QWidget):
         if self.windowRTQA:
             self.windowRTQA.onComboboxChanged()
             self.onShowRtqaVol()
-
-        if self.isStopped:
-            self.updateOrthViewAsync()
-            self.onInteractWithMapImage()
 
     # --------------------------------------------------------------------------
     def onChooseSetFile(self):
@@ -1983,13 +2009,40 @@ class OpenNFT(QWidget):
 
         self.stackedWidgetImages.setCurrentIndex(stack_index)
         self.imageViewMode = mode
+        self.view_form_input["view_mode"] = self.imageViewMode
 
-        if self.eng:
-            self.eng.assignin('base', 'imageViewMode', int(mode), nargout=0)
+        # if self.eng:
+        #     self.eng.assignin('base', 'imageViewMode', int(mode), nargout=0)
 
         if self.cbImageViewMode.isEnabled():
             self.updateOrthViewAsync()
             self.onInteractWithMapImage()
+
+    # --------------------------------------------------------------------------
+    def updateMosaicViewAsync(self):
+
+        if self.windowRTQA:
+            is_snr_map_created = self.rtqa_input["rtqa_vol_ready"]
+            is_rtqa_volume = self.rtqa_output["show_vol"]
+        else:
+            is_rtqa_volume = False
+            is_snr_map_created = False
+
+        is_stat_map_created = bool(self.eng.evalin('base', 'mainLoopData.statMapCreated'))
+
+        self.view_form_input["is_rtqa"] = is_rtqa_volume
+        if self.windowRTQA and self.view_form_input["is_rtqa"]:
+            if self.rtqa_input["which_vol"] == 0:
+                self.view_form_input["rtQA_volume"] = self.rtqa_output["snr_vol"]
+            else:
+                self.view_form_input["rtQA_volume"] = self.rtqa_output["cnr_vol"]
+        if is_rtqa_volume:
+            self.view_form_input["is_neg"] = False
+        else:
+            self.view_form_input["is_neg"] = self.negMapCheckBox.isChecked()
+        self.view_form_input["overlay_ready"] = (is_stat_map_created and not is_rtqa_volume) \
+                                                or (is_snr_map_created and is_rtqa_volume)
+        self.view_form_input["ready"] = True
 
     # --------------------------------------------------------------------------
     def updateOrthViewAsync(self):
@@ -2001,17 +2054,24 @@ class OpenNFT(QWidget):
         else:
             bgType = 'BgStruct'
 
-        rtqa = self.rtqa_output["show_vol"] if self.windowRTQA else False
+        is_rtqa_volume = self.rtqa_output["show_vol"] if self.windowRTQA else False
 
-        if not self.orth_view_input["ready"]:
-            self.orth_view_input["cursor_pus"] = self.currentCursorPos
-            self.orth_view_input["flags_planes"] = self.currentProjection.value
-            self.orth_view_input["bg_type"] = bgType
-            self.orth_view_input["is_rtqa"] = rtqa
-            if self.windowRTQA:
-                self.orth_view_input["rtQA_volume"] = self.rtqa_output["snr_vol"] if self.rtqa_input["which_vol"] == 0 else self.rtqa_output["cnr_vol"]
-            self.orth_view_input["is_neg"] = self.negMapCheckBox.isChecked()
-            self.orth_view_input["ready"] = True
+        # if not self.view_form_input["ready"]:
+        self.view_form_input["view_mode"] = self.imageViewMode
+        self.view_form_input["cursor_pus"] = self.currentCursorPos
+        self.view_form_input["flags_planes"] = self.currentProjection.value
+        self.view_form_input["bg_type"] = bgType
+        self.view_form_input["is_rtqa"] = is_rtqa_volume
+        if self.windowRTQA:
+            if self.rtqa_input["which_vol"] == 0:
+                self.view_form_input["rtQA_volume"] = self.rtqa_output["snr_vol"]
+            else:
+                self.view_form_input["rtQA_volume"] = self.rtqa_output["cnr_vol"]
+        if is_rtqa_volume:
+            self.view_form_input["is_neg"] = False
+        else:
+            self.view_form_input["is_neg"] = self.negMapCheckBox.isChecked()
+        self.view_form_input["ready"] = True
 
     # --------------------------------------------------------------------------
     def onChangeOrthViewCursorPosition(self, pos, proj):
@@ -2027,120 +2087,112 @@ class OpenNFT(QWidget):
 
         if sender is self.pos_map_thresholds_widget:
             self.pos_map_thresholds_widget.auto_thresholds = False
+            self.view_form_input["auto_thr_pos"] = False
+            self.view_form_output["pos_thresholds"] = self.pos_map_thresholds_widget.get_thresholds()
+
         if sender is self.neg_map_thresholds_widget:
             self.neg_map_thresholds_widget.auto_thresholds = False
+            self.view_form_input["auto_thr_neg"] = False
+            self.view_form_output["neg_thresholds"] = self.neg_map_thresholds_widget.get_thresholds()
 
         if self.imageViewMode == ImageViewMode.mosaic:
-            self.displayMosaicImage()
-
-        for proj in projview.ProjectionType:
-
-            if proj == projview.ProjectionType.transversal:
-                pos_map_image = self.orth_view_output['overlay_t']
-                neg_map_image = self.orth_view_output['neg_overlay_t']
-            elif proj == projview.ProjectionType.sagittal:
-                pos_map_image = self.orth_view_output['overlay_s']
-                neg_map_image = self.orth_view_output['neg_overlay_s']
-            elif proj == projview.ProjectionType.coronal:
-                pos_map_image = self.orth_view_output['overlay_c']
-                neg_map_image = self.orth_view_output['neg_overlay_c']
-
-            if pos_map_image is not None:
-                rgba_pos_map_image = self.pos_map_thresholds_widget.compute_rgba(pos_map_image)
-
-                if rgba_pos_map_image is not None:
-                    self.orthView.set_pos_map_image(proj, rgba_pos_map_image)
-
-            if neg_map_image is not None:
-                rgba_neg_map_image = self.neg_map_thresholds_widget.compute_rgba(neg_map_image)
-
-                if rgba_neg_map_image is not None:
-                    self.orthView.set_neg_map_image(proj, rgba_neg_map_image)
+            self.updateMosaicViewAsync()
+        else:
+            self.updateOrthViewAsync()
 
     # --------------------------------------------------------------------------
     def onCheckOrthViewUpdated(self):
-        if not self.orth_view_input["done"]:
-            return
 
-        self.orthViewUpdateInProgress = True
+        if self.view_form_input["done_orth"]:
 
-        # SNR/Stat map display
-        is_stat_map_created = bool(self.eng.evalin('base', 'mainLoopData.statMapCreated'))
-        if self.windowRTQA:
-            is_snr_map_created = self.rtqa_input["rtqa_vol_ready"]
-            is_rtqa_volume_checked = self.rtqa_output["show_vol"]
-        else:
-            is_rtqa_volume_checked = False
-            is_snr_map_created = False
+            self.orthViewUpdateInProgress = True
 
-        if (self.imageViewMode != ImageViewMode.mosaic) and (is_stat_map_created and not is_rtqa_volume_checked
-                                                             or is_snr_map_created and is_rtqa_volume_checked):
-            pos_maps_values = np.array([], dtype=np.uint8)
-            neg_maps_values = np.array([], dtype=np.uint8)
+            rgba_pos_map_image = None
+            rgba_neg_map_image = None
 
             for proj in projview.ProjectionType:
 
                 if proj == projview.ProjectionType.transversal:
-                    pos_map_image = self.orth_view_output['overlay_t']
-                    neg_map_image = self.orth_view_output['neg_overlay_t']
+                    bg_image = self.view_form_output['back_t']
+                    rgba_pos_map_image = self.view_form_output['overlay_t']
+                    if not self.view_form_input["is_rtqa"] and self.negMapCheckBox.isChecked():
+                        rgba_neg_map_image = self.view_form_output['neg_overlay_t']
                 elif proj == projview.ProjectionType.sagittal:
-                    pos_map_image = self.orth_view_output['overlay_s']
-                    neg_map_image = self.orth_view_output['neg_overlay_s']
+                    bg_image = self.view_form_output['back_s']
+                    rgba_pos_map_image = self.view_form_output['overlay_s']
+                    if not self.view_form_input["is_rtqa"] and self.negMapCheckBox.isChecked():
+                        rgba_neg_map_image = self.view_form_output['neg_overlay_s']
                 elif proj == projview.ProjectionType.coronal:
-                    pos_map_image = self.orth_view_output['overlay_c']
-                    neg_map_image = self.orth_view_output['neg_overlay_c']
+                    bg_image = self.view_form_output['back_c']
+                    rgba_pos_map_image = self.view_form_output['overlay_c']
+                    if not self.view_form_input["is_rtqa"] and self.negMapCheckBox.isChecked():
+                        rgba_neg_map_image = self.view_form_output['neg_overlay_c']
 
-                pos_maps_values = np.append(pos_maps_values, pos_map_image.ravel())
-                neg_maps_values = np.append(neg_maps_values, neg_map_image.ravel())
+                self.orthView.set_background_image(proj, bg_image)
+                if rgba_pos_map_image is not None:
+                    self.orthView.set_pos_map_image(proj, rgba_pos_map_image)
 
-                if pos_maps_values.size > 0:
-                    self.pos_map_thresholds_widget.compute_thresholds(pos_maps_values)
-                if self.negMapCheckBox.isChecked() and neg_maps_values.size > 0:
-                    self.neg_map_thresholds_widget.compute_thresholds(neg_maps_values)
+                if rgba_neg_map_image is not None:
+                    self.orthView.set_neg_map_image(proj, rgba_neg_map_image)
 
-        for proj in projview.ProjectionType:
+            pos_thr = self.view_form_output["pos_thresholds"]
+            self.pos_map_thresholds_widget.set_thresholds(pos_thr)
 
-            if proj == projview.ProjectionType.transversal:
-                bg_image = self.orth_view_output['back_t']
-                pos_map_image = self.orth_view_output['overlay_t']
-                neg_map_image = self.orth_view_output['neg_overlay_t']
-            elif proj == projview.ProjectionType.sagittal:
-                bg_image = self.orth_view_output['back_s']
-                pos_map_image = self.orth_view_output['overlay_s']
-                neg_map_image = self.orth_view_output['neg_overlay_s']
-            elif proj == projview.ProjectionType.coronal:
-                bg_image = self.orth_view_output['back_c']
-                pos_map_image = self.orth_view_output['overlay_c']
-                neg_map_image = self.orth_view_output['neg_overlay_c']
+            if not self.view_form_input["is_rtqa"] and self.negMapCheckBox.isChecked():
+                neg_thr = self.view_form_output["neg_thresholds"]
+                self.neg_map_thresholds_widget.set_thresholds(neg_thr)
 
-            self.orthView.set_background_image(proj, bg_image)
-            rgba_pos_map_image = self.pos_map_thresholds_widget.compute_rgba(pos_map_image)
-            rgba_neg_map_image = self.neg_map_thresholds_widget.compute_rgba(neg_map_image)
+            roi_t = []
+            roi_c = []
+            roi_s = []
+            for i in self.selectedRoi:
+                roi_t.append(self.view_form_output["ROI_t"][i])
+                roi_c.append(self.view_form_output["ROI_c"][i])
+                roi_s.append(self.view_form_output["ROI_s"][i])
+
+            self.orthView.set_roi(projview.ProjectionType.transversal, roi_t, self.selectedRoi)
+            self.orthView.set_roi(projview.ProjectionType.coronal, roi_c, self.selectedRoi)
+            self.orthView.set_roi(projview.ProjectionType.sagittal, roi_s, self.selectedRoi)
+
+            if self.orthViewInitialize:
+                self.orthView.reset_view()
+
+            self.orthViewInitialize = False
+            self.orthViewUpdateInProgress = False
+            self.view_form_input["done_orth"] = False
+
+    # --------------------------------------------------------------------------
+    def onCheckMosaicViewUpdated(self):
+
+        if self.view_form_input["done_mosaic_templ"] and self.iteration > 1:
+            background_image = self.view_form_output["mosaic_templ"]
+            if background_image.size > 0:
+                self.mosaicImageView.set_background_image(background_image)
+            else:
+                return
+
+            self.view_form_input["done_mosaic_templ"] = False
+
+        # SNR/Stat map display
+        if self.view_form_input["done_mosaic_overlay"]:
+
+            rgba_pos_map_image = self.view_form_output["mosaic_pos_overlay"]
+            pos_thr = self.view_form_output["pos_thresholds"]
+            self.pos_map_thresholds_widget.set_thresholds(pos_thr)
 
             if rgba_pos_map_image is not None:
-                self.orthView.set_pos_map_image(proj, rgba_pos_map_image)
+                self.mosaicImageView.set_pos_map_image(rgba_pos_map_image)
 
-            if rgba_neg_map_image is not None:
-                self.orthView.set_neg_map_image(proj, rgba_neg_map_image)
+            if not self.view_form_input["is_rtqa"] and self.negMapCheckBox.isChecked():
 
-        roi_t = []
-        roi_c = []
-        roi_s = []
-        for i in self.selectedRoi:
-            roi_t.append(self.orth_view_output["ROI_t"][i])
-            roi_c.append(self.orth_view_output["ROI_c"][i])
-            roi_s.append(self.orth_view_output["ROI_s"][i])
+                rgba_neg_map_image = self.view_form_output["mosaic_neg_overlay"]
+                neg_thr = self.view_form_output["neg_thresholds"]
+                self.neg_map_thresholds_widget.set_thresholds(neg_thr)
 
-        self.orthView.set_roi(projview.ProjectionType.transversal, roi_t, self.selectedRoi)
-        self.orthView.set_roi(projview.ProjectionType.coronal, roi_c, self.selectedRoi)
-        self.orthView.set_roi(projview.ProjectionType.sagittal, roi_s, self.selectedRoi)
+                if rgba_neg_map_image is not None:
+                    self.mosaicImageView.set_neg_map_image(rgba_neg_map_image)
 
-        if self.orthViewInitialize:
-            self.orthView.reset_view()
-
-        self.orthViewInitialize = False
-        self.orthViewUpdateInProgress = False
-        self.orth_view_input["done"] = False
+            self.view_form_input["done_mosaic_overlay"] = False
 
     # --------------------------------------------------------------------------
     def loadSettingsFromSetFile(self):
@@ -2554,86 +2606,6 @@ class OpenNFT(QWidget):
             config.UDP_SEND_CONDITION = False
 
     # --------------------------------------------------------------------------
-    def displayMosaicImage(self):
-        background_image = None
-        posVol = None
-        negVol = None
-        dim3D = tuple([self.P['MatrixSizeX'], self.P['MatrixSizeY'], self.P['NrOfSlices']])
-        xdim, ydim, img2d_dimx, img2d_dimy = conversions.get_mosaic_dim(dim3D)
-
-        if self.iteration > 1:
-            if self.eng.evalin('base', 'length(imgVolTempl)') > 0:
-                with utils.timeit('Getting background volume:'):
-                    filename = self.eng.evalin('base', 'P.memMapFile')
-                    imgVol = np.array(np.memmap(filename, dtype=np.float64, shape=tuple(dim3D), order='F'))
-                    max_vol = np.max(imgVol)
-                    min_vol = np.min(imgVol)
-                    imgVol = (imgVol - min_vol) / (max_vol - min_vol)
-                    if imgVol.size > 0:
-                        background_image = conversions.vol3d_img2d(imgVol, xdim, ydim, img2d_dimx, img2d_dimy, dim3D)
-                        self.mosaicImageView.set_background_image(background_image)
-                    else:
-                        return
-
-        # SNR/Stat map display
-        is_stat_map_created = bool(self.eng.evalin('base', 'mainLoopData.statMapCreated'))
-        if self.windowRTQA:
-            is_rtqa_volume_checked = self.windowRTQA.volumeCheckBox.isChecked()
-            is_snr_map_created = self.rtqa_input["rtqa_vol_ready"]
-        else:
-            is_rtqa_volume_checked = False
-            is_snr_map_created = False
-
-        if (background_image is not None
-                and (is_stat_map_created and not is_rtqa_volume_checked
-                     or is_snr_map_created and is_rtqa_volume_checked)):
-            with utils.timeit("Receiving stat volumes from Matlab:"):
-
-                if not is_rtqa_volume_checked:
-
-                    filename_pat = self.eng.evalin('base', 'P.memMapFile')
-                    filename = filename_pat.replace('shared', 'statVol')
-
-                    posVol = np.memmap(filename, dtype=np.float64, shape=tuple(dim3D), order='F')
-                    negVol = np.memmap(filename, dtype=np.float64, shape=tuple(dim3D), offset=posVol.size*posVol.data.itemsize, order='F')
-
-                    posVol = np.array(posVol, dtype=np.int32)
-                    negVol = np.array(negVol, dtype=np.int32)
-
-                else:
-
-                    posVol = self.rtqa_output["snr_vol"] if self.rtqa_input["which_vol"] == 0 else self.rtqa_output["cnr_vol"]
-
-        if posVol is not None:
-
-            xdim, ydim, img2d_dimx, img2d_dimy = conversions.get_mosaic_dim(dim3D)
-            with utils.timeit("Slicing positive volume:"):
-                pos_map_image = conversions.vol3d_img2d(posVol, xdim, ydim, img2d_dimx, img2d_dimy, dim3D)
-                pos_map_image = (pos_map_image / np.max(pos_map_image)) * 255
-
-            self.pos_map_thresholds_widget.compute_thresholds(pos_map_image)
-            rgba_pos_map_image = self.pos_map_thresholds_widget.compute_rgba(pos_map_image)
-
-            if rgba_pos_map_image is not None:
-                self.mosaicImageView.set_pos_map_image(rgba_pos_map_image)
-        else:
-            self.mosaicImageView.clear_pos_map()
-
-        if negVol is not None:
-
-            xdim, ydim, img2d_dimx, img2d_dimy = conversions.get_mosaic_dim(dim3D)
-            neg_map_image = conversions.vol3d_img2d(negVol, xdim, ydim, img2d_dimx, img2d_dimy, dim3D)
-            neg_map_image = (neg_map_image / np.max(neg_map_image)) * 255
-
-            self.neg_map_thresholds_widget.compute_thresholds(neg_map_image)
-            rgba_neg_map_image = self.neg_map_thresholds_widget.compute_rgba(neg_map_image)
-
-            if rgba_neg_map_image is not None:
-                self.mosaicImageView.set_neg_map_image(rgba_neg_map_image)
-        else:
-            self.mosaicImageView.clear_neg_map()
-
-    # --------------------------------------------------------------------------
     def createMusterInfo(self):
         # TODO: More general way to use any protocol
         tmpCond = list()
@@ -2743,9 +2715,9 @@ class OpenNFT(QWidget):
         else:
             key = 'rawTimeSeries'
 
-        dataRaw = np.array(self.outputSamples[key], ndmin=2)[self.selectedRoi,:]
-        dataProc = np.array(self.outputSamples['kalmanProcTimeSeries'], ndmin=2)[self.selectedRoi,:]
-        dataNorm = np.array(self.outputSamples['scalProcTimeSeries'], ndmin=2)[self.selectedRoi,:]
+        dataRaw = np.array(self.outputSamples[key], ndmin=2)[self.selectedRoi, :]
+        dataProc = np.array(self.outputSamples['kalmanProcTimeSeries'], ndmin=2)[self.selectedRoi, :]
+        dataNorm = np.array(self.outputSamples['scalProcTimeSeries'], ndmin=2)[self.selectedRoi, :]
         if self.P['PlotFeedback']:
             dataNorm = np.concatenate(
                 (dataNorm, np.array([self.displaySamples]) / self.P['MaxFeedbackVal'])
@@ -2787,11 +2759,10 @@ class OpenNFT(QWidget):
 
         if self.P['Prot'] != 'InterBlock':
             if plotwidget == self.procRoiPlot:
-
-                posMin = np.array(self.outputSamples['posMin'],ndmin=2)
-                posMax = np.array(self.outputSamples['posMax'],ndmin=2)
+                posMin = np.array(self.outputSamples['posMin'], ndmin=2)
+                posMax = np.array(self.outputSamples['posMax'], ndmin=2)
                 inds = list(self.selectedRoi)
-                inds.append(len(posMin)-1)
+                inds.append(len(posMin) - 1)
                 posMin = posMin[inds]
                 posMax = posMax[inds]
 
@@ -2820,7 +2791,6 @@ class OpenNFT(QWidget):
             muster = []
 
             for i in range(self.musterInfo['condTotal']):
-
                 muster.append(
                     plotitem.plot(x=self.musterInfo['xCond' + str(i + 1)],
                                   y=self.musterInfo['yCond' + str(i + 1)],
@@ -2851,7 +2821,7 @@ class OpenNFT(QWidget):
             plotsMax = []
 
             plot_colors = np.array(config.ROI_PLOT_COLORS)
-            plot_colors = np.append(plot_colors[self.selectedRoi],plot_colors[-1])
+            plot_colors = np.append(plot_colors[self.selectedRoi], plot_colors[-1])
             for i, c in zip(range(sz), plot_colors):
                 plotsMin.append(plotitem.plot(pen=pg.mkPen(
                     color=c, width=config.ROI_PLOT_WIDTH)))
@@ -2866,8 +2836,8 @@ class OpenNFT(QWidget):
         for pmi, mi, pma, ma in zip(
                 self.drawMinMaxProcRoiPlot.__dict__['posMin'], posMin,
                 self.drawMinMaxProcRoiPlot.__dict__['posMax'], posMax):
-            mi = np.array(mi,ndmin=1)
-            ma = np.array(ma,ndmin=1)
+            mi = np.array(mi, ndmin=1)
+            ma = np.array(ma, ndmin=1)
             pmi.setData(x=x, y=mi)
             pma.setData(x=x, y=ma)
 

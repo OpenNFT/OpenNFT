@@ -209,6 +209,15 @@ class MapImageThresholdsWidget(QtWidgets.QWidget):
         self._colorbar_imageitem.setImage(colorbar_rgba.transpose((1, 0, 2)))
         self._colorbar_viewbox.autoRange()
 
+    def set_thresholds(self, thresholds):
+        if not self.auto_thresholds:
+            return
+
+        if thresholds:
+            self._set_thresholds(thresholds)
+        else:
+            logger.warning('Cannot compute thresholds')
+
     def _set_thresholds(self, thresholds):
         self._lower_threshold_spinbox.blockSignals(True)
         self._upper_threshold_spinbox.blockSignals(True)
@@ -218,6 +227,11 @@ class MapImageThresholdsWidget(QtWidgets.QWidget):
 
         self._lower_threshold_spinbox.blockSignals(False)
         self._upper_threshold_spinbox.blockSignals(False)
+
+    def get_thresholds(self):
+        lower = self._lower_threshold_spinbox.value()
+        upper = self._upper_threshold_spinbox.value()
+        return Thresholds(lower, upper)
 
     def _get_thresholds(self):
         lower = self._lower_threshold_spinbox.value()
