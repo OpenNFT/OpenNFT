@@ -128,15 +128,12 @@ class VolViewFormation(mp.Process):
                              self.input_data["is_neg"], self.input_data["is_ROI"]]
 
                     # background
-
                     if flags[0] == "bgEPI":
                         back_volume = self.epi_volume
                         mat = self.mat_epi
                     else:
                         back_volume = self.anat_volume
                         mat = self.mat_anat
-
-                    # affine matrix
 
                     # overlay (pos/neg stat or rtQA)
                     if flags[1]:
@@ -177,8 +174,8 @@ class VolViewFormation(mp.Process):
                     pos_maps_values = np.append(pos_maps_values, self.output_data["overlay_c"].ravel())
                     pos_maps_values = np.append(pos_maps_values, self.output_data["overlay_s"].ravel())
                     if self.input_data["auto_thr_pos"]:
-                        pos_thr = self.thr_calculator(overlay_img)
-                        if pos_thr.lower < 0:
+                        pos_thr = self.thr_calculator(pos_maps_values)
+                        if (not pos_thr is None) and pos_thr.lower < 0:
                             pos_thr = Thresholds(0, pos_thr.upper)
                         self.output_data["pos_thresholds"] = pos_thr
                     else:
@@ -192,8 +189,8 @@ class VolViewFormation(mp.Process):
                         neg_maps_values = np.append(neg_maps_values, self.output_data["neg_overlay_c"].ravel())
                         neg_maps_values = np.append(neg_maps_values, self.output_data["neg_overlay_s"].ravel())
                         if self.input_data["auto_thr_neg"]:
-                            neg_thr = self.thr_calculator(neg_overlay_img)
-                            if neg_thr.lower < 0:
+                            neg_thr = self.thr_calculator(neg_maps_values)
+                            if (not neg_thr is None) and neg_thr.lower < 0:
                                 neg_thr = Thresholds(0, neg_thr.upper)
                             self.output_data["neg_thresholds"] = neg_thr
                         else:

@@ -201,7 +201,7 @@ class RTQAWindow(QtWidgets.QWidget):
 
         self.threshold = config.DEFAULT_FD_THRESHOLDS
         self.roiChecked()
-        self.comboBox.currentIndexChanged.connect(self.onComboboxChanged)
+        # self.comboBox.currentIndexChanged.connect(self.onComboboxChanged)
 
     # --------------------------------------------------------------------------
     def closeEvent(self, event):

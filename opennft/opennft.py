@@ -507,18 +507,20 @@ class OpenNFT(QWidget):
 
     # --------------------------------------------------------------------------
     def onChangeNegMapPolicy(self):
+
         if self.windowRTQA:
             is_rtqa_volume = self.rtqa_output["show_vol"]
         else:
             is_rtqa_volume = False
-        self.negMapCheckBox.setEnabled(not is_rtqa_volume)
 
         if is_rtqa_volume:
             setattr(self, '__neg_map_state', self.negMapCheckBox.isChecked())
             self.negMapCheckBox.setChecked(False)
+            self.negMapCheckBox.setEnabled(False)
         else:
             neg_map_state = getattr(self, '__neg_map_state', self.negMapCheckBox.isChecked())
             self.negMapCheckBox.setChecked(neg_map_state)
+            self.negMapCheckBox.setEnabled(True)
 
     # --------------------------------------------------------------------------
     def showPluginDlg(self):
@@ -1441,8 +1443,7 @@ class OpenNFT(QWidget):
             if self.P['isRTQA']:
                 self.rtqa_init()
 
-            self.onChangeNegMapPolicy()
-            self.eng.assignin('base', 'imageViewMode', int(self.imageViewMode), nargout=0)
+            # self.eng.assignin('base', 'imageViewMode', int(self.imageViewMode), nargout=0)
             self.cbImageViewMode.setEnabled(False)
             self.cbImageViewMode.setCurrentIndex(0)
             self.isStopped = False
@@ -1552,7 +1553,6 @@ class OpenNFT(QWidget):
         self.rtqa_init()
 
         self.autoRTQASetup = True
-        self.onChangeNegMapPolicy()
         self.cbImageViewMode.setCurrentIndex(0)
         self.cbImageViewMode.model().item(1).setEnabled(False)
         self.isStopped = False
@@ -1677,7 +1677,7 @@ class OpenNFT(QWidget):
         self.rtqa_input["neg_spikes"] = []
         self.rtqa_input["is_new_dcm_block"] = True
         self.rtqa_input["iteration"] = 0
-        self.rtqa_input["which_vol"] = []
+        self.rtqa_input["which_vol"] = 0
         self.rtqa_input["dvars_scale"] = self.P["scaleFactorDVARS"]
         self.rtqa_input["rtqa_vol_ready"] = False
 
@@ -1718,7 +1718,6 @@ class OpenNFT(QWidget):
 
         self.windowRTQA.volumeCheckBox.stateChanged.connect(self.onShowRtqaVol)
         self.windowRTQA.volumeCheckBox.stateChanged.connect(self.onChangeNegMapPolicy)
-        self.windowRTQA.volumeCheckBox.toggled.connect(self.updateOrthViewAsync)
         self.windowRTQA.comboBox.currentIndexChanged.connect(self.onModeChanged)
 
     # --------------------------------------------------------------------------
@@ -1749,9 +1748,9 @@ class OpenNFT(QWidget):
             self.startFilesystemWatching()
 
         self.orthViewUpdateCheckTimer.stop()
-        self.orthViewUpdateCheckTimer.start(50)
+        self.orthViewUpdateCheckTimer.start(30)
         self.mosaicViewUpdateCheckTimer.stop()
-        self.mosaicViewUpdateCheckTimer.start(50)
+        self.mosaicViewUpdateCheckTimer.start(30)
         self.files_exported = []
         self.files_processed = []
 
@@ -1831,10 +1830,9 @@ class OpenNFT(QWidget):
         self.windowRTQA.rtQAVolState()
         if self.isStopped:
             if self.imageViewMode == ImageViewMode.mosaic:
-                self.onCheckOrthViewUpdated()
+                self.updateMosaicViewAsync()
             else:
                 self.updateOrthViewAsync()
-                self.onCheckOrthViewUpdated()
 
     # --------------------------------------------------------------------------
     def onRoiChecked(self, action):
@@ -1868,10 +1866,6 @@ class OpenNFT(QWidget):
         if self.windowRTQA:
             self.windowRTQA.onComboboxChanged()
             self.onShowRtqaVol()
-
-        if self.isStopped:
-            self.updateOrthViewAsync()
-            self.onInteractWithMapImage()
 
     # --------------------------------------------------------------------------
     def onChooseSetFile(self):
@@ -2017,8 +2011,8 @@ class OpenNFT(QWidget):
         self.imageViewMode = mode
         self.view_form_input["view_mode"] = self.imageViewMode
 
-        if self.eng:
-            self.eng.assignin('base', 'imageViewMode', int(mode), nargout=0)
+        # if self.eng:
+        #     self.eng.assignin('base', 'imageViewMode', int(mode), nargout=0)
 
         if self.cbImageViewMode.isEnabled():
             self.updateOrthViewAsync()
@@ -2038,9 +2032,14 @@ class OpenNFT(QWidget):
 
         self.view_form_input["is_rtqa"] = is_rtqa_volume
         if self.windowRTQA and self.view_form_input["is_rtqa"]:
-            self.view_form_input["rtQA_volume"] = self.rtqa_output["snr_vol"] \
-                if self.rtqa_input["which_vol"] == 0 else self.rtqa_output["cnr_vol"]
-        self.view_form_input["is_neg"] = self.negMapCheckBox.isChecked()
+            if self.rtqa_input["which_vol"] == 0:
+                self.view_form_input["rtQA_volume"] = self.rtqa_output["snr_vol"]
+            else:
+                self.view_form_input["rtQA_volume"] = self.rtqa_output["cnr_vol"]
+        if is_rtqa_volume:
+            self.view_form_input["is_neg"] = False
+        else:
+            self.view_form_input["is_neg"] = self.negMapCheckBox.isChecked()
         self.view_form_input["overlay_ready"] = (is_stat_map_created and not is_rtqa_volume) \
                                                 or (is_snr_map_created and is_rtqa_volume)
         self.view_form_input["ready"] = True
@@ -2055,20 +2054,24 @@ class OpenNFT(QWidget):
         else:
             bgType = 'BgStruct'
 
-        rtqa = self.rtqa_output["show_vol"] if self.windowRTQA else False
+        is_rtqa_volume = self.rtqa_output["show_vol"] if self.windowRTQA else False
 
-        if not self.view_form_input["ready"]:
-            self.view_form_input["view_mode"] = self.imageViewMode
-            self.view_form_input["cursor_pus"] = self.currentCursorPos
-            self.view_form_input["flags_planes"] = self.currentProjection.value
-            self.view_form_input["bg_type"] = bgType
-            self.view_form_input["is_rtqa"] = rtqa
-            if self.windowRTQA:
-                self.view_form_input["rtQA_volume"] = self.rtqa_output["snr_vol"] if self.rtqa_input[
-                                                                                         "which_vol"] == 0 else \
-                    self.rtqa_output["cnr_vol"]
+        # if not self.view_form_input["ready"]:
+        self.view_form_input["view_mode"] = self.imageViewMode
+        self.view_form_input["cursor_pus"] = self.currentCursorPos
+        self.view_form_input["flags_planes"] = self.currentProjection.value
+        self.view_form_input["bg_type"] = bgType
+        self.view_form_input["is_rtqa"] = is_rtqa_volume
+        if self.windowRTQA:
+            if self.rtqa_input["which_vol"] == 0:
+                self.view_form_input["rtQA_volume"] = self.rtqa_output["snr_vol"]
+            else:
+                self.view_form_input["rtQA_volume"] = self.rtqa_output["cnr_vol"]
+        if is_rtqa_volume:
+            self.view_form_input["is_neg"] = False
+        else:
             self.view_form_input["is_neg"] = self.negMapCheckBox.isChecked()
-            self.view_form_input["ready"] = True
+        self.view_form_input["ready"] = True
 
     # --------------------------------------------------------------------------
     def onChangeOrthViewCursorPosition(self, pos, proj):
@@ -2094,72 +2097,69 @@ class OpenNFT(QWidget):
 
         if self.imageViewMode == ImageViewMode.mosaic:
             self.updateMosaicViewAsync()
-            self.onCheckMosaicViewUpdated()
         else:
             self.updateOrthViewAsync()
-            self.onCheckOrthViewUpdated()
 
     # --------------------------------------------------------------------------
     def onCheckOrthViewUpdated(self):
-        if not self.view_form_input["done_orth"]:
-            return
 
-        self.orthViewUpdateInProgress = True
+        if self.view_form_input["done_orth"]:
 
-        rgba_pos_map_image = None
-        rgba_neg_map_image = None
+            self.orthViewUpdateInProgress = True
 
-        for proj in projview.ProjectionType:
+            rgba_pos_map_image = None
+            rgba_neg_map_image = None
 
-            if proj == projview.ProjectionType.transversal:
-                bg_image = self.view_form_output['back_t']
-                rgba_pos_map_image = self.view_form_output['overlay_t']
-                if self.negMapCheckBox.isChecked():
-                    rgba_neg_map_image = self.view_form_output['neg_overlay_t']
-            elif proj == projview.ProjectionType.sagittal:
-                bg_image = self.view_form_output['back_s']
-                rgba_pos_map_image = self.view_form_output['overlay_s']
-                if self.negMapCheckBox.isChecked():
-                    rgba_neg_map_image = self.view_form_output['neg_overlay_s']
-            elif proj == projview.ProjectionType.coronal:
-                bg_image = self.view_form_output['back_c']
-                rgba_pos_map_image = self.view_form_output['overlay_c']
-                if self.negMapCheckBox.isChecked():
-                    rgba_neg_map_image = self.view_form_output['neg_overlay_c']
+            for proj in projview.ProjectionType:
 
-            self.orthView.set_background_image(proj, bg_image)
-            if rgba_pos_map_image is not None:
-                self.orthView.set_pos_map_image(proj, rgba_pos_map_image)
+                if proj == projview.ProjectionType.transversal:
+                    bg_image = self.view_form_output['back_t']
+                    rgba_pos_map_image = self.view_form_output['overlay_t']
+                    if not self.view_form_input["is_rtqa"] and self.negMapCheckBox.isChecked():
+                        rgba_neg_map_image = self.view_form_output['neg_overlay_t']
+                elif proj == projview.ProjectionType.sagittal:
+                    bg_image = self.view_form_output['back_s']
+                    rgba_pos_map_image = self.view_form_output['overlay_s']
+                    if not self.view_form_input["is_rtqa"] and self.negMapCheckBox.isChecked():
+                        rgba_neg_map_image = self.view_form_output['neg_overlay_s']
+                elif proj == projview.ProjectionType.coronal:
+                    bg_image = self.view_form_output['back_c']
+                    rgba_pos_map_image = self.view_form_output['overlay_c']
+                    if not self.view_form_input["is_rtqa"] and self.negMapCheckBox.isChecked():
+                        rgba_neg_map_image = self.view_form_output['neg_overlay_c']
 
-            if rgba_neg_map_image is not None:
-                self.orthView.set_neg_map_image(proj, rgba_neg_map_image)
+                self.orthView.set_background_image(proj, bg_image)
+                if rgba_pos_map_image is not None:
+                    self.orthView.set_pos_map_image(proj, rgba_pos_map_image)
 
-        pos_thr = self.view_form_output["pos_thresholds"]
-        self.pos_map_thresholds_widget.set_thresholds(pos_thr)
+                if rgba_neg_map_image is not None:
+                    self.orthView.set_neg_map_image(proj, rgba_neg_map_image)
 
-        if self.negMapCheckBox.isChecked():
-            neg_thr = self.view_form_output["neg_thresholds"]
-            logger.debug("{}", neg_thr)
-            self.neg_map_thresholds_widget.set_thresholds(neg_thr)
+            pos_thr = self.view_form_output["pos_thresholds"]
+            self.pos_map_thresholds_widget.set_thresholds(pos_thr)
 
-        roi_t = []
-        roi_c = []
-        roi_s = []
-        for i in self.selectedRoi:
-            roi_t.append(self.view_form_output["ROI_t"][i])
-            roi_c.append(self.view_form_output["ROI_c"][i])
-            roi_s.append(self.view_form_output["ROI_s"][i])
+            if not self.view_form_input["is_rtqa"] and self.negMapCheckBox.isChecked():
+                neg_thr = self.view_form_output["neg_thresholds"]
+                self.neg_map_thresholds_widget.set_thresholds(neg_thr)
 
-        self.orthView.set_roi(projview.ProjectionType.transversal, roi_t, self.selectedRoi)
-        self.orthView.set_roi(projview.ProjectionType.coronal, roi_c, self.selectedRoi)
-        self.orthView.set_roi(projview.ProjectionType.sagittal, roi_s, self.selectedRoi)
+            roi_t = []
+            roi_c = []
+            roi_s = []
+            for i in self.selectedRoi:
+                roi_t.append(self.view_form_output["ROI_t"][i])
+                roi_c.append(self.view_form_output["ROI_c"][i])
+                roi_s.append(self.view_form_output["ROI_s"][i])
 
-        if self.orthViewInitialize:
-            self.orthView.reset_view()
+            self.orthView.set_roi(projview.ProjectionType.transversal, roi_t, self.selectedRoi)
+            self.orthView.set_roi(projview.ProjectionType.coronal, roi_c, self.selectedRoi)
+            self.orthView.set_roi(projview.ProjectionType.sagittal, roi_s, self.selectedRoi)
 
-        self.orthViewInitialize = False
-        self.orthViewUpdateInProgress = False
-        self.view_form_input["done_orth"] = False
+            if self.orthViewInitialize:
+                self.orthView.reset_view()
+
+            self.orthViewInitialize = False
+            self.orthViewUpdateInProgress = False
+            self.view_form_input["done_orth"] = False
 
     # --------------------------------------------------------------------------
     def onCheckMosaicViewUpdated(self):
@@ -2183,7 +2183,7 @@ class OpenNFT(QWidget):
             if rgba_pos_map_image is not None:
                 self.mosaicImageView.set_pos_map_image(rgba_pos_map_image)
 
-            if self.negMapCheckBox.isChecked():
+            if not self.view_form_input["is_rtqa"] and self.negMapCheckBox.isChecked():
 
                 rgba_neg_map_image = self.view_form_output["mosaic_neg_overlay"]
                 neg_thr = self.view_form_output["neg_thresholds"]
