@@ -19,7 +19,7 @@ commands, in which case, the first is run to create the object, and the rest are
 
 # ROI step-wise GLM
 This plugin demonstrates how to add you own approach (this one is a step-wise addition of each block) for ROI analysis.
-
+It can be used only with continuous protocol with a single `SignalPreprocessingBasis`.
 __________________________________________________________________________
 Copyright (C) 2016-2021 OpenNFT.org
 
@@ -38,7 +38,7 @@ META = {
     "plugin_name": "ROI step-wise GLM",
     "plugin_time": "t4",  # according to opennft.eventrecorder.Times
     "plugin_init": [
-        "ROIswGLM(int({NrROIs}),len({ProtNF}),r'{nfbDataFolder}')",
+        "ROIswGLM(int({NrROIs}),len({ProtCond}[1]),r'{nfbDataFolder}')", # 2nd is the stimulation block
         "self.parent.eng.evalin('base','onp_roiswglm')"
     ],
     "plugin_signal": "self.parent.eng.evalin('base','isfield(mainLoopData,\\\'tmp_rawTimeSeriesAR1\\\')')",

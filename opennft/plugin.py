@@ -6,8 +6,11 @@ from loguru import logger
 
 import importlib
 
-from opennft import config, utils, eventrecorder  # noqa: F401
+from opennft import config, utils
 
+# import modules referred by plugin methods (often evaluated)
+from opennft import eventrecorder
+import matlab
 
 class PluginWindow(QDialog):
     def __init__(self, parent=None):

@@ -3,23 +3,24 @@ function betaRoi = onp_roiswglm
 P = evalin('base', 'P');
 mainLoopData = evalin('base', 'mainLoopData');
 
-betaRoi = zeros(numel(P.ProtNF),P.NrROIs); % default value indicating no analysis
+betaRoi = zeros(numel(P.ProtCond{2}),P.NrROIs); % default value indicating no analysis
 
 if ~isfield(mainLoopData,'indVolNorm') % init
     % load original SPM
     SPMSpec = load(fullfile(P.WorkFolder,'Settings','SPM.mat')); SPMSpec = SPMSpec.SPM;
     
-    % make sure that the first regressor is the regulation and the order of the rest matches the order of CondNames
-    P.CondNames(strcmp(P.Protocol.RegulationName, P.CondNames)) = [];
-    P.CondNames = [{P.Protocol.RegulationName} P.CondNames];
-    [junk,regrInd] = ismember(P.CondNames,cellfun(@(x) x.ConditionName, P.Protocol.Cond, 'UniformOutput', false));
-    
+%     % make sure that the first regressor is the regulation and the order of the rest matches the order of CondIndexNames
+%     P.CondIndexNames(strcmp(P.Protocol.SignalPreprocessingBasis, P.CondIndexNames)) = [];
+%     P.CondIndexNames = [{P.Protocol.SignalPreprocessingBasis} P.CondIndexNames];
+    [~,regrInd] = ismember(P.CondIndexNames{~cellfun(@isempty, P.CondIndexNames)},cellfun(@(x) x.ConditionName, P.Protocol.ConditionIndex, 'UniformOutput', false));
+    regrInd(regrInd == 0) = [];
+
     % add step-wise regressors for each block
     SPMSpec.Sess.U = struct('name',{},'ons',{},'dur',{},'P',{}, 'orth',{});
     if ~isempty(regrInd)
         for e = 1:numel(regrInd)
-            cond = P.Protocol.Cond{regrInd(e)};
-            if strcmp(cond.ConditionName, P.Protocol.RegulationName)
+            cond = P.Protocol.ConditionIndex{regrInd(e)};
+            if strcmp(cond.ConditionName, P.Protocol.SignalPreprocessingBasis)
                 for s = 1:size(cond.OnOffsets,1)
                     if s > 1, SPMSpec(s) = SPMSpec(s-1); end
                     SPMSpec(s).Sess.U(end+1) = cond2U(cond,s);
@@ -36,17 +37,19 @@ if ~isfield(mainLoopData,'indVolNorm') % init
     clear SPM
     for s = 1:numel(SPMSpec)
         SPM = spm_fmri_spm_ui(SPMSpec(s));
+        indCond = contains(SPM.xX.name,P.CondIndexNames{~cellfun(@isempty, P.CondIndexNames)});
         if ~P.iglmAR1
-            spmDesign{s} = SPM.xX.X(:,contains(SPM.xX.name,P.CondName));
+            spmDesign{s} = SPM.xX.X(:,indCond);
         else
-            spmDesign{s} = arRegr(P.aAR1, SPM.xX.X(:,contains(SPM.xX.name,P.CondName)));
+            spmDesign{s} = arRegr(P.aAR1, SPM.xX.X(:,indCond));
         end
     end
     if exist(fullfile(pwd, 'SPM.mat'),'file'), delete('SPM.mat'); end
     
     % save models and block periods
-    switchInds = cellfun(@(x) x(1), P.ProtBAS(1:end-1)); % not for the last baseline
-    runInds = cellfun(@(x) x(1)-1, P.ProtBAS(2:end),'UniformOutput', false); % right before the consecutive baselines
+    protBAS = P.ProtCond{cellfun(@isempty, P.CondIndexNames)}; % implicit baseline
+    switchInds = cellfun(@(x) x(1), protBAS(1:end-1)); % not for the last baseline
+    runInds = cellfun(@(x) x(1)-1, protBAS(2:end),'UniformOutput', false); % right before the consecutive baselines
     iDesign = mutableClass(switchInds);
     iDesign.addProp('runInds',runInds);
     iDesign.addProp('spmDesign',spmDesign);
