@@ -16,37 +16,10 @@ function epiWholeBrainROI()
 P = evalin('base', 'P');
 flags = getFlagsType(P);
 
-if exist('mainLoopData','var') == 1
-    mainLoopData = evalin('base', 'mainLoopData');
-    imgVolTempl          = mainLoopData.imgVolTempl;
-    dimTemplMotCorr      = mainLoopData.dimTemplMotCorr;
-    matTemplMotCorr      = mainLoopData.matTemplMotCorr;
-else
-    if exist('displayBgEpi','var') == 1
-        displayBgEpi = evalin('base','displayBgEpi');
-    else
-        displayBgEpiName = P.MCTempl;
-        if ~P.isAutoRTQA || (P.isAutoRTQA && P.useEPITemplate)
-            [displayBgEpi.voxelCoord, displayBgEpi.voxelIndex, ...
-                displayBgEpi.mat, displayBgEpi.dim, displayBgEpi.vol] = ...
-                readVol(displayBgEpiName);
-        else
-            displayBgEpi.vol          = double(dicomread(P.MCTempl));
-            displayBgEpi.dim          = double([P.MatrixSizeX, P.MatrixSizeY, P.NrOfSlices]);
-            imgInfoTempl              = dicominfo(P.MCTempl);
-            displayBgEpi.mat          = getMAT(imgInfoTempl, displayBgEpi.dim);
-
-            [slNrImg2DdimX, slNrImg2DdimY, img2DdimX, img2DdimY] = getMosaicDim(displayBgEpi.dim);
-            displayBgEpi.vol          = img2Dvol3D(displayBgEpi.vol, slNrImg2DdimX, slNrImg2DdimY, displayBgEpi.dim);
-        end
-        assignin('base', 'displayBgEpi', displayBgEpi);
-
-    end
-
-    imgVolTempl          = displayBgEpi.vol;
-    dimTemplMotCorr      = displayBgEpi.dim;
-    matTemplMotCorr      = displayBgEpi.mat;
-end
+mainLoopData = evalin('base', 'mainLoopData');
+imgVolTempl          = mainLoopData.imgVolTempl;
+dimTemplMotCorr      = mainLoopData.dimTemplMotCorr;
+matTemplMotCorr      = mainLoopData.matTemplMotCorr;
 
 [slNrImg2DdimX, slNrImg2DdimY, img2DdimX, img2DdimY] = getMosaicDim(dimTemplMotCorr);
 

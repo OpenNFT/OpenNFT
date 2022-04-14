@@ -1,5 +1,4 @@
-function [voxelCoord, voxelIndex, mat, dim, vol] = ...
-                                                          readVol(fileName)
+function [mat, dim, vol] = readVol(fileName)
 % Function to read .nii volume using spm functions.
 %
 % input:
