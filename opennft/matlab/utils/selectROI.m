@@ -44,11 +44,11 @@ if flags.isPSC || flags.isSVM || flags.isCorr || P.isAutoRTQA
     P.ROINames = roiNames;
 
     for iFile = 1:P.NrROIs
-        [ROIs(iFile).voxelCoord, ...
-         ROIs(iFile).voxelIndex, ROIs(iFile).mat, ...
-         ROIs(iFile).dim, ROIs(iFile).vol] = readVol(roiNames{iFile});
+        [ROIs(iFile).mat, ROIs(iFile).dim, ROIs(iFile).vol] = ...
+            readVol(roiNames{iFile});
         ROIs(iFile).vol(ROIs(iFile).vol < 0.5) = 0;
         ROIs(iFile).vol(ROIs(iFile).vol >= 0.5) = 1;
+        ROIs(iFile).voxelIndex = find(ROIs(iFile).vol);
     end
 
     assignin('base', 'ROIs', ROIs);
@@ -63,10 +63,8 @@ if flags.isSVM
 
     P.NrWEIGHTs = length(weightNames);
     for iFile = 1:P.NrWEIGHTs
-        [WEIGHTs(iFile).voxelCoord, ...
-         WEIGHTs(iFile).voxelIndex, WEIGHTs(iFile).mat, ...
-         WEIGHTs(iFile).dim, WEIGHTs(iFile).vol] = ...
-                                               readVol(weightNames{iFile});
+        [WEIGHTs(iFile).mat, WEIGHTs(iFile).dim, WEIGHTs(iFile).vol] = ...
+            readVol(weightNames{iFile});
     end
 
     assignin('base', 'WEIGHTs', WEIGHTs);
@@ -85,12 +83,11 @@ if flags.isDCM
     
     % 1 = AMY_L, 2 = AMY_R, 3 = PFC
     for iFile = 1:P.NrROIs
-        [ROIsAnat(iFile).voxelCoord, ...
-         ROIsAnat(iFile).voxelIndex, ROIsAnat(iFile).mat, ...
-         ROIsAnat(iFile).dim, ROIsAnat(iFile).vol] = ...
-                                              readVol(roiNamesAnat{iFile});
+        [ROIsAnat(iFile).mat, ROIsAnat(iFile).dim, ROIsAnat(iFile).vol] = ...
+            readVol(roiNamesAnat{iFile});
         ROIsAnat(iFile).vol(ROIsAnat(iFile).vol < 0.5) = 0;
         ROIsAnat(iFile).vol(ROIsAnat(iFile).vol >= 0.5) = 1;
+        ROIsAnat(iFile).voxelIndex = find(ROIsAnat(iFile).vol);
     end
 
     %% Group
@@ -106,12 +103,11 @@ if flags.isDCM
     
     % 1 = AMY_L, 2 = AMY_R, 3 = PFC
     for iFile = 1:P.NrROIs
-        [ROIsGroup(iFile).voxelCoord, ...
-         ROIsGroup(iFile).voxelIndex, ROIsGroup(iFile).mat, ...
-         ROIsGroup(iFile).dim, ROIsGroup(iFile).vol] = ...
-                                             readVol(roiNamesGroup{iFile});
+        [ROIsGroup(iFile).mat, ROIsGroup(iFile).dim, ROIsGroup(iFile).vol] = ...
+            readVol(roiNamesGroup{iFile});
         ROIsGroup(iFile).vol(ROIsGroup(iFile).vol < 0.5) = 0;
         ROIsGroup(iFile).vol(ROIsGroup(iFile).vol >= 0.5) = 1;
+        ROIsGroup(iFile).voxelIndex = find(ROIsGroup(iFile).vol);
     end
 
     assignin('base', 'ROIsGroup', ROIsGroup);

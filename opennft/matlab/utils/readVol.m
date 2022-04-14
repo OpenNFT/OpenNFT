@@ -21,11 +21,3 @@ vol = spm_read_vols(volInfo);
 mat = volInfo.mat;
 dim = volInfo.dim;
 vol(isnan(vol)) = 0;
-voxelIndex = find(vol~=0);
-%voxelIntens = vol(voxelIndex);
-voxelCoord = index2coord(voxelIndex,dim);
-% voxelIndex_2 = coord2index(voxelCoord,dim);
-% vol_2 = zeros(dim);
-% vol_2(voxelIndex_2) = voxelIntens;
-% figure, imshow(vol(:,:,15))
-% figure, imshow(vol_2(:,:,15))
