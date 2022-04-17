@@ -2383,6 +2383,7 @@ class OpenNFT(QWidget):
         self.P['isAutoRTQA'] = config.AUTO_RTQA
         self.P['isRTQA'] = config.USE_RTQA
         self.P['isIGLM'] = config.USE_IGLM
+        self.P['isSiemensXA30'] = config.DICOM_SIEMENS_XA30
         self.P['isZeroPadding'] = config.zeroPaddingFlag
         self.P['nrZeroPadVol'] = config.nrZeroPadVol
         self.P['UseTCPData'] = False
@@ -2459,6 +2460,7 @@ class OpenNFT(QWidget):
         self.P['isAutoRTQA'] = config.AUTO_RTQA
         self.P['isRTQA'] = config.USE_RTQA
         self.P['isIGLM'] = config.USE_IGLM
+        self.P['isSiemensXA30'] = config.DICOM_SIEMENS_XA30
         self.P['useEPITemplate'] = config.USE_EPI_TEMPLATE
         self.P['isZeroPadding'] = config.zeroPaddingFlag
         self.P['nrZeroPadVol'] = config.nrZeroPadVol

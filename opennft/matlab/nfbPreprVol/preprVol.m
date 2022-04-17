@@ -89,7 +89,7 @@ switch P.DataType
             while isempty(dcmData) || contains(lastwarn,'Suspicious fragmentary file')
                 dcmData = double(dicomread(inpFileName));
             end
-            if ~P.isDicom2D
+            if P.isSiemensXA30
                 % for new 4D Siemens XA30 data format
                 dcmData = squeeze(dcmData);
                 tmpData = zeros(dimVol);
