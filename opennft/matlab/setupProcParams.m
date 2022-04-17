@@ -200,7 +200,7 @@ else
     if imgInfoTempl.NumberOfFrames == 1
         dimTemplMotCorr = double([P.MatrixSizeX, P.MatrixSizeY, P.NrOfSlices]);
     else
-        dimTemplMotCorr = [imgInfoTempl.Rows, imgInfoTempl.Columns, imgInfoTempl.NumberOfFrames];
+        dimTemplMotCorr = double([imgInfoTempl.Rows, imgInfoTempl.Columns, imgInfoTempl.NumberOfFrames]);
     end
    
     matTemplMotCorr      = getMAT(imgInfoTempl, dimTemplMotCorr);

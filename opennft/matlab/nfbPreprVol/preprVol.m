@@ -90,8 +90,13 @@ switch P.DataType
                 dcmData = double(dicomread(inpFileName));
             end
             if ~P.isDicom2D
-                % for strange 4D Siemens XA30 data format
+                % for new 4D Siemens XA30 data format
                 dcmData = squeeze(dcmData);
+                tmpData = zeros(dimVol);
+                for i=1:dimVol(3)
+                    tmpData(:,:,i) = imrotate(dcmData(:,:,i),-90);
+                end
+                dcmData = tmpData;
             else
                 dcmData = img2Dvol3D(dcmData, slNrImg2DdimX, slNrImg2DdimY, dimVol);
             end
