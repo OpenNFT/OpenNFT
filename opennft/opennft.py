@@ -259,6 +259,7 @@ class OpenNFT(QWidget):
 
         self.eng = None
         if self.orth_view:
+            self.view_form_input["is_stopped"] = True
             self.orth_view.terminate()
         self.orth_view = None
 
@@ -1606,6 +1607,7 @@ class OpenNFT(QWidget):
         self.view_form_input["dim"] = tuple([x, y, z])
         self.view_form_input["memmap_volume"] = self.P['memMapFile']
         self.view_form_input["view_mode"] = self.imageViewMode
+        self.view_form_input["is_stopped"] = False
         self.view_form_input["auto_thr_pos"] = True
         self.view_form_input["auto_thr_neg"] = True
         self.view_form_input["ready"] = False
