@@ -125,7 +125,7 @@ USE_SLEEP_IN_STOP = False
 HIDE_TEST_BTN = True
 
 # Flag for new Siemens XA30 DICOM format
-DICOM_SIEMENS_XA30 = True
+DICOM_SIEMENS_XA30 = False
 
 # rtQA may cause linear performance loss on the big data
 # due to saving process of iGLM quality parameters
