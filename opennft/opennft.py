@@ -1004,10 +1004,6 @@ class OpenNFT(QWidget):
                 self.windowRTQA.plotRTQA()
             self.rtqa_input["calc_ready"] = False
 
-        # if self.imageViewMode == ImageViewMode.mosaic and self.view_form_input["done_mosaic_templ"]:
-        #     with utils.timeit('Display mosaic image:'):
-        #         self.displayMosaicImage()
-
         with utils.timeit('  Drawings:'):
             self.drawRoiPlots(init)
             self.drawMcPlots(init)
@@ -1265,7 +1261,6 @@ class OpenNFT(QWidget):
         self.reultFromHelper = None
         self.reachedFirstFile = False
         self.autoRTQASetup = False
-        self.orth_view.terminate()
         self.view_form_input = None
         self.view_form_output = None
         self.rtqa_input = None
@@ -1759,7 +1754,8 @@ class OpenNFT(QWidget):
 
         self.isStopped = True
         if self.windowRTQA:
-            self.rtqa_input["is_stopped"] = True
+            if not self.rtqa_input is None:
+                self.rtqa_input["is_stopped"] = True
             self.eng.workspace['rtQA_python'] = self.calc_rtqa.dataPacking()
         self.btnStop.setEnabled(False)
 

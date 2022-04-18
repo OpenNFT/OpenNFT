@@ -188,28 +188,9 @@ P.linRegr = zscore((1:double(P.NrOfVolumes-P.nrSkipVol))');
 
 %% Get motion realignment template data and volume
 if ~P.isAutoRTQA || (P.isAutoRTQA && P.useEPITemplate)
-%     infoVolTempl = spm_vol(P.MCTempl);
-%     mainLoopData.infoVolTempl = infoVolTempl;
-%     tmp_imgVolTempl  = spm_read_vols(infoVolTempl);
-%     dimTemplMotCorr     = infoVolTempl.dim;
-%     matTemplMotCorr     = infoVolTempl.mat;
-
-    [tmp_imgVolTempl, matTemplMotCorr, dimTemplMotCorr] = getVolData('NII', P.MCTempl, 0, P.getMAT, false);
-
+    [tmp_imgVolTempl, matTemplMotCorr, dimTemplMotCorr] = getVolData('NII', P.MCTempl, 0, false, false);
 else
-%     imgVolTempl          = double(dicomread(P.MCTempl));
-%     imgInfoTempl         = dicominfo(P.MCTempl);
-%     if imgInfoTempl.NumberOfFrames == 1
-%         dimTemplMotCorr = double([P.MatrixSizeX, P.MatrixSizeY, P.NrOfSlices]);
-%     else
-%         dimTemplMotCorr = double([imgInfoTempl.Rows, imgInfoTempl.Columns, imgInfoTempl.NumberOfFrames]);
-%     end   
-%     matTemplMotCorr      = getMAT(imgInfoTempl, dimTemplMotCorr);
-%     [slNrImg2DdimX, slNrImg2DdimY, img2DdimX, img2DdimY] = getMosaicDim(dimTemplMotCorr);
-%     tmp_imgVolTempl      = img2Dvol3D(imgVolTempl, slNrImg2DdimX, slNrImg2DdimY, dimTemplMotCorr);
-
-    [tmp_imgVolTempl, matTemplMotCorr, dimTemplMotCorr] = getVolData('DICOM', P.MCTempl, 0, P.getMAT, false);
-
+    [tmp_imgVolTempl, matTemplMotCorr, dimTemplMotCorr] = getVolData('DICOM', P.MCTempl, 0, true, false);
 end
 
 if P.isZeroPadding
