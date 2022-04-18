@@ -755,7 +755,7 @@ class OpenNFT(QWidget):
 
             if fname is None:
                 if new_fname is not None:
-                    logger.warning('Non-sequental export: ' + new_fname)
+                    logger.warning('Non-sequential export: ' + new_fname)
                 self.isMainLoopEntered = False
                 return
             else:
