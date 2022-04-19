@@ -40,6 +40,9 @@ MATLAB_NAME_SUFFIX = ''
 DICOM_FILES_EXTENSION = '.dcm'
 IMAPH_FILES_EXTENSION = '.img'
 
+# For test purposes
+USE_YIELD = False
+
 # MRI triggering is required
 USE_MRPULSE = False
 

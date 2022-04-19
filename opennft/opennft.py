@@ -811,10 +811,13 @@ class OpenNFT(QWidget):
 
         # Main logic
         # data preprocessing
-        self.call_timer.setInterval(config.MAIN_LOOP_CALL_PERIOD / 3)
-        prepr_vol_state = self.eng.preprVol(fname, self.iteration, background=True, nargout=0)
-        while not prepr_vol_state.done():
-            yield
+        if config.USE_YIELD:
+            self.call_timer.setInterval(config.MAIN_LOOP_CALL_PERIOD / 3)
+            prepr_vol_state = self.eng.preprVol(fname, self.iteration, background=True, nargout=0)
+            while not prepr_vol_state.done():
+                yield
+        else:
+            self.eng.preprVol(fname, self.iteration, background=False, nargout=0)
 
         # t3
         self.recorder.recordEvent(erd.Times.t3, self.iteration, time.time())
