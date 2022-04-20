@@ -55,7 +55,7 @@ from watchdog.events import FileSystemEventHandler
 from pyniexp.connection import Udp
 from scipy.io import loadmat
 
-from PyQt5.QtWidgets import QApplication, QWidget, QFileDialog, QMenu
+from PyQt5.QtWidgets import QApplication, QWidget, QFileDialog, QMenu, QMessageBox
 from PyQt5.QtGui import QIcon, QPalette
 from PyQt5.QtCore import QSettings, QTimer, QEvent, QRegExp
 from PyQt5.uic import loadUi
@@ -530,6 +530,12 @@ class OpenNFT(QWidget):
             self.plugins = []
             for p in range(len(self.pluginWindow.plugins)):
                 if self.pluginWindow.lvPlugins.model().item(p).checkState():
+                    if 'plugin_prot' in self.pluginWindow.plugins[p].META.keys():
+                        if self.settings.value('Prot') != self.pluginWindow.plugins[p].META['plugin_prot']:
+                            QMessageBox.warning(self, 'Plugin compatibility issue',
+                                "Plugin '"+self.pluginWindow.plugins[p].META['plugin_name']+"' requires a protocol '"+self.pluginWindow.plugins[p].META['plugin_prot']+"'."+
+                                "\nIt is not compatible with current prortocol '"+self.settings.value('Prot')+"' and will not be used.")
+                            continue
                     self.plugins += [plugin.Plugin(self, self.pluginWindow.plugins[p])]
 
     # --------------------------------------------------------------------------
