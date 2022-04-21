@@ -778,7 +778,11 @@ class OpenNFT(QWidget):
         self.recorder.recordEvent(erd.Times.t2, self.iteration, time.time())
 
         if not self.reachedFirstFile:
-            if not self.P['FirstFileName'] in fname:
+            if config.DICOM_SIEMENS_XA30:
+                firstFileName = self.P['FirstFileName'].split('.')[0]
+            else:
+                firstFileName = self.P['FirstFileName']
+            if not firstFileName in fname:
                 logger.info('Volume skipped, waiting for first file')
                 self.isMainLoopEntered = False
                 return
