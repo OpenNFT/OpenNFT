@@ -742,12 +742,22 @@ class OpenNFT(QWidget):
         # check file sequence
         if (not self.isOffline) and (not self.cbUseTCPData.isChecked()) and (len(self.files_processed) > 0):
 
-            last_fname = self.files_processed[-1]
+            if config.DICOM_SIEMENS_XA30:
+                file_name = Path(self.files_processed[-1]).parts[-1]
+                splitted_name = file_name.split("_")
+                last_fname = splitted_name[0] + "_" + splitted_name[1] + "_" + splitted_name[2] + ".dcm"
+            else:
+                last_fname = self.files_processed[-1]
             r = re.findall(r'\D(\d+).\w+$', last_fname)
             last_num = int(r[-1])
             new_fname = fname
             fname = None
             for cur_fname in self.files_exported:
+                if config.DICOM_SIEMENS_XA30:
+                    cur_name = cur_fname
+                    file_name = Path(cur_fname).parts[-1]
+                    splitted_name = file_name.split("_")
+                    cur_fname = splitted_name[0] + "_" + splitted_name[1] + "_" + splitted_name[2] + ".dcm"
                 r = re.findall(r'\D(\d+).\w+$', cur_fname)
                 cur_num = int(r[-1])
                 if cur_num - last_num == 1:
@@ -760,7 +770,11 @@ class OpenNFT(QWidget):
                 self.isMainLoopEntered = False
                 return
             else:
-                self.files_exported.remove(fname)
+                if config.DICOM_SIEMENS_XA30:
+                    self.files_exported.remove(cur_name)
+                    fname = cur_name
+                else:
+                    self.files_exported.remove(fname)
 
         autoRTQAMCTempl = (self.iteration == self.P['nrSkipVol'] + 1) and config.AUTO_RTQA \
                           and not self.P['useEPITemplate'] \
