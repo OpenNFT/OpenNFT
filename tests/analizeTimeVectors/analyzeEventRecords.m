@@ -1,19 +1,19 @@
-function [tv, ts] = analyzeEventRecords(eventrecordsFileName, paramsFileName, startScan, nfbType)
+function [tv, ts] = analyzeEventRecords(eventrecordsFileName, eventrecordsFileName_display, paramsFileName, startScan, nfbType)
 % This function analyses output of eventRecorder and computes main timings for OpenNFT
 %
 % Usage:
 % For continouous PSC feedback,
-% [tv, ts] = analyzeEventRecords('path\to\TimeVectors_*.txt', 'path\to\*_*_P.mat', 6, 'pscCont');
+% [tv, ts] = analyzeEventRecords('path\to\TimeVectors_*.txt', 'path\to\TimeVectors_display_*.txt', 'path\to\*_*_P.mat', 6, 'pscCont');
 % For intermittent PSC feedback,
-% [tv, ts] = analyzeEventRecords('path\to\TimeVectors_*.txt', 'path\to\*_*_P.mat', 6, 'pscInt');
+% [tv, ts] = analyzeEventRecords('path\to\TimeVectors_*.txt', 'path\to\TimeVectors_display_*.txt', 'path\to\*_*_P.mat', 6, 'pscInt');
 % For continouous SVM feedback,
-% [tv, ts] = analyzeEventRecords('path\to\TimeVectors_*.txt', 'path\to\*_*_P.mat', 6, 'svmCont');
+% [tv, ts] = analyzeEventRecords('path\to\TimeVectors_*.txt', 'path\to\TimeVectors_display_*.txt', 'path\to\*_*_P.mat', 6, 'svmCont');
 % For intermittent DCM feedback,
-% [tv, ts] = analyzeEventRecords('path\to\TimeVectors_*.txt', 'path\to\*_*_P.mat', 11, 'dcmInt');
+% [tv, ts] = analyzeEventRecords('path\to\TimeVectors_*.txt', 'path\to\TimeVectors_display_*.txt', 'path\to\*_*_P.mat', 11, 'dcmInt');
 % For Resting state,
-% [tv, ts] = analyzeEventRecords('path\to\TimeVectors_*.txt', 'path\to\*_*_P.mat', 7, 'rest');
+% [tv, ts] = analyzeEventRecords('path\to\TimeVectors_*.txt', '', 'path\to\*_*_P.mat', 7, 'autoRtqa');
 % For Task,
-% [tv, ts] = analyzeEventRecords('path\to\TimeVectors_*.txt', 'path\to\*_*_P.mat', 7, 'task');
+% [tv, ts] = analyzeEventRecords('path\to\TimeVectors_*.txt', 'path\to\TimeVectors_display_*.txt', 'path\to\*_*_P.mat', 7, 'task');
 %
 % Based on eventrecorder.py:
 %     # Events timestamps
@@ -47,6 +47,13 @@ function [tv, ts] = analyzeEventRecords(eventrecordsFileName, paramsFileName, st
 % Written by Yury Koush, Artem Nikonorov
 
     tv = load(eventrecordsFileName);
+    if ~isempty(eventrecordsFileName_display)
+        additional_tv = load(eventrecordsFileName_display);
+    else
+        additional_tv = zeros(length(tv),4);
+    end
+    tv = [tv, additional_tv];
+
     P = load(paramsFileName);
     maxCount = max(tv(1,:)) + 1;
 
@@ -70,7 +77,7 @@ function [tv, ts] = analyzeEventRecords(eventrecordsFileName, paramsFileName, st
         % t8-t5, time until feedback display (Python)
         ds_t8t5 = tv(startScan + 1:maxCount, 9) - tv(startScan + 1:maxCount, 6);
         % t10-t8, display feedback time (Matlab)
-        ds_t10t8 = tv(startScan + 1:maxCount, 11) - tv(startScan + 1:maxCount, 9);
+        ds_t10t8 = tv(startScan + 1:maxCount, 16) - tv(startScan + 1:maxCount, 9);
 
         m(5) = round(mean(ds_t8t5)*1000,1);
         s(5) = round(std(ds_t8t5)*1000,1);
@@ -79,8 +86,8 @@ function [tv, ts] = analyzeEventRecords(eventrecordsFileName, paramsFileName, st
               
         % Matlab PTB Helper absolute display time
         % for feedback
-        m(7) = round(mean(tv(startScan + 1:maxCount, 16))*1000,1);
-        s(7) = round(std(tv(startScan + 1:maxCount, 16))*1000,1);
+        m(7) = round(mean(tv(startScan + 1:maxCount, end))*1000,1);
+        s(7) = round(std(tv(startScan + 1:maxCount, end))*1000,1);
                 
         disp('Durations mean and std (msec.):')
         fprintf('\tt2-t1\tt3-t2\tt4-t3\tt5-t4\tt8-t5\tt10-t8\ttAbs(fb)\n')
@@ -93,10 +100,10 @@ function [tv, ts] = analyzeEventRecords(eventrecordsFileName, paramsFileName, st
         ds_t8t5_ms = ds_t8t5 + ds_t10t8;
         m_fb_displ = round(mean(ds_t8t5_ms)*1000,1); % t8-t5 in the ms
         s_fb_displ = round(std(ds_t8t5_ms)*1000,1);
-        m_instr_displ = [];
-        s_instr_displ = [];
+        m_instr_displ = 0;
+        s_instr_displ = 0;
         
-        elapsedTime = tv(startScan + 1:maxCount, end-2)*1000;
+        elapsedTime = tv(startScan + 1:maxCount, 14)*1000;
         
     elseif strcmp(nfbType,'svmCont')
         % cumulative time stamps
@@ -138,7 +145,7 @@ function [tv, ts] = analyzeEventRecords(eventrecordsFileName, paramsFileName, st
         m_instr_displ = [];
         s_instr_displ = [];
                 
-        elapsedTime = tv(startScan + 1:maxCount, end)*1000;
+        elapsedTime = tv(startScan + 1:maxCount, 14)*1000;
         
     elseif strcmp(nfbType,'pscInt')
         % get instritions and FB display indices
@@ -164,9 +171,9 @@ function [tv, ts] = analyzeEventRecords(eventrecordsFileName, paramsFileName, st
         ds_t7t6_instr = tv(startScan + indCond, 8) - tv(startScan + indCond, 7);
         ds_t7t6_fb = tv(startScan + indFB, 9) - tv(startScan + indFB, 7);
         % t9-t7, display instruction time (Matlab)
-        ds_t9t7_instr = tv(startScan + indCond, 10) - tv(startScan + indCond, 8);
+        ds_t9t7_instr = tv(startScan + indCond, 15) - tv(startScan + indCond, 8);
         % t9-t7, display feedback time (Matlab)
-        ds_t9t7_fb = tv(startScan + indFB, 11) - tv(startScan + indFB, 9);
+        ds_t9t7_fb = tv(startScan + indFB, 16) - tv(startScan + indFB, 9);
                       
         m(5) = round(mean(ds_t7t6_instr)*1000,1);
         s(5) = round(std(ds_t7t6_instr)*1000,1);
@@ -180,11 +187,11 @@ function [tv, ts] = analyzeEventRecords(eventrecordsFileName, paramsFileName, st
         
         % Matlab PTB Helper absolute display time
         % for instruction
-        m(9) = round(mean(tv(startScan + indCond, 15))*1000,1);
-        s(9) = round(std(tv(startScan + indCond, 15))*1000,1);
+        m(9) = round(mean(tv(startScan + indCond, 17))*1000,1);
+        s(9) = round(std(tv(startScan + indCond, 17))*1000,1);
         % for feedback
-        m(10) = round(mean(tv(startScan + indFB, 16))*1000,1);
-        s(10) = round(std(tv(startScan + indFB, 16))*1000,1);
+        m(10) = round(mean(tv(startScan + indFB, 18))*1000,1);
+        s(10) = round(std(tv(startScan + indFB, 18))*1000,1);
                 
         disp('Durations mean and std (msec.):')
         fprintf('\tt2-t1\tt3-t2\tt4-t3\tt5-t4\tt7-t6(in)\tt7-t6(fb)\tt9-t7(in)\tt9-t7(fb)\ttAbs(in)\ttAbs(fb)\n')
@@ -201,7 +208,7 @@ function [tv, ts] = analyzeEventRecords(eventrecordsFileName, paramsFileName, st
         m_instr_displ = round(mean(ds_t7t6_ms_instr)*1000,1); % t7-t6 in the ms
         s_instr_displ = round(std(ds_t7t6_ms_instr)*1000,1);
         
-        elapsedTime = tv(startScan + indCond, end-2)*1000;
+        elapsedTime = tv(startScan + indCond, 14)*1000;
         
     elseif strcmp(nfbType,'dcmInt')
         % get instritions and FB display indices
@@ -288,7 +295,7 @@ function [tv, ts] = analyzeEventRecords(eventrecordsFileName, paramsFileName, st
        
         fprintf('DCM calculation time (sec.) mean = %f, std = %f\n', round(mean(resDcm),1), round(std(resDcm),1))
               
-        elapsedTime = [tv(startScan + indCond, end-2)]*1000;
+        elapsedTime = [tv(startScan + indCond, 14)]*1000;
     
     elseif strcmp(nfbType,'task')
         % cumulative time stamps
@@ -325,9 +332,9 @@ function [tv, ts] = analyzeEventRecords(eventrecordsFileName, paramsFileName, st
         m_instr_displ = 0;
         s_instr_displ = 0;
         
-        elapsedTime = tv(startScan + 1:maxCount, end-2)*1000;
+        elapsedTime = tv(startScan + 1:maxCount, 14)*1000;
         
-    elseif strcmp(nfbType,'rest')
+    elseif strcmp(nfbType,'autoRtqa')
         % cumulative time stamps
         % 1st column is trigger-pulse time, not taken into account here
         ts = tv(startScan + 1:maxCount, 2:6) - repmat(tv(startScan + 1:maxCount, 2), 1, 5);
@@ -351,10 +358,16 @@ function [tv, ts] = analyzeEventRecords(eventrecordsFileName, paramsFileName, st
         fprintf('\t%5.1f\t%5.1f\t%5.1f\n', ...
             s(1), s(2), s(3))
         
-        elapsedTime = tv(startScan + 1:maxCount, end)*1000;
+        elapsedTime = tv(startScan + 1:maxCount, 14)*1000;
         
     end
     
-    fprintf('Display feedback time (msec.) mean = %f, std = %f\n', m_fb_displ, s_fb_displ)
-    fprintf('Display instruction time (msec.) mean = %f, std = %f\n', m_instr_displ, s_instr_displ)
+    if exist('m_fb_displ','var')
+        fprintf('Display feedback time (msec.) mean = %f, std = %f\n', m_fb_displ, s_fb_displ)
+    end
+    if exist('m_instr_displ','var')
+        fprintf('Display instruction time (msec.) mean = %f, std = %f\n', m_instr_displ, s_instr_displ)
+    end
     fprintf('Elapsed time (msec.) mean = %f, std = %f\n', round(mean(elapsedTime),1), round(std(elapsedTime),1))
+
+    
