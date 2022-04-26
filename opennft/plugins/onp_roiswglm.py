@@ -30,7 +30,8 @@ Written by Tibor Auer
 
 from pyniexp.mlplugins import dataProcess
 from loguru import logger
-from multiprocessing import Value, RawArray
+from multiprocessing.sharedctypes import Value, Array
+from ctypes import c_double
 from numpy import array, meshgrid, savetxt
 import matplotlib.pyplot as plt
 from os import path
@@ -56,7 +57,7 @@ class ROIswGLM(dataProcess):
         self.nROIs = nROIs
         self.nBlocks = nBlocks
 
-        self.rtdata = RawArray('d', [0]*self.nROIs*self.nBlocks*self.nBlocks)
+        self.rtdata = Array(c_double, [0]*self.nROIs*self.nBlocks*self.nBlocks)
         self.nData = Value('i', 0)
 
         self.start_process()
@@ -71,12 +72,17 @@ class ROIswGLM(dataProcess):
     def finalize_process(self):
         dat = array(self.rtdata).reshape(self.nBlocks, self.nROIs, self.nBlocks)
 
+        import pickle
+        fname = path.join(path.normpath(self.nfbDataFolder), 'ROIswGLM.pkl')
+        with open(fname,'wb') as fid: pickle.dump(dat,fid)
+
         for b in range(0, self.nBlocks):
             fname = path.join(path.normpath(self.nfbDataFolder), 'ROIswGLM_{:02d}.txt'.format(b+1))
             savetxt(fname=fname, X=dat[b,:,0:b+1].transpose(), fmt='%.3f', delimiter=',')
 
-        X, Y = meshgrid(self.nBlocks, self.nBlocks)
+        dat[0,:,0]= 0 # first estimate is unreliable
+        X, Y = meshgrid(range(1,self.nBlocks+1), range(1,self.nBlocks+1))
         for r in range(0, self.nROIs):
-            ax = plt.subplot(120+(r+1), projection='3d')
+            ax = plt.subplot(100+(self.nROIs*10)+(r+1), projection='3d')
             ax.plot_surface(X, Y, dat[:,r,:])
         plt.show()

@@ -29,7 +29,8 @@ Written by Tibor Auer
 
 from pyniexp.mlplugins import dataProcess
 from loguru import logger
-from multiprocessing import Value, RawArray
+from multiprocessing.sharedctypes import Value, Array
+from ctypes import c_double
 from numpy import array, savetxt
 import matplotlib.pyplot as plt
 from os import path
@@ -51,7 +52,7 @@ class ROIiGLM(dataProcess):
         self.nROIs = nROIs
         self.nVols = nVols
 
-        self.rtdata = RawArray('d', [0]*self.nROIs*self.nVols)
+        self.rtdata = Array(c_double, [0]*self.nROIs*self.nVols)
         self.nData = Value('i', self.nROIs*nSkipVols)
 
         self.start_process()
