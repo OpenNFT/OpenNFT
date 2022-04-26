@@ -63,7 +63,7 @@ class VolViewFormation(mp.Process):
 
         np.seterr(divide='ignore', invalid='ignore')
 
-        while True:
+        while not self.input_data["is_stopped"]:
 
             ready = self.input_data["ready"]
             

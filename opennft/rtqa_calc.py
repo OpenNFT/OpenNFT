@@ -126,7 +126,7 @@ class RTQACalculation(mp.Process):
 
         np.seterr(divide='ignore', invalid='ignore')
 
-        while True:
+        while not self.input["is_stopped"]:
 
             if self.input["data_ready"]:
                 self.calculate_rtqa()

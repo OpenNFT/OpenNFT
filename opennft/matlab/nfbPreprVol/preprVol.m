@@ -49,15 +49,8 @@ wt = mainLoopData.wt;
 deg = mainLoopData.deg;
 b = mainLoopData.b;
 
-matVol = mainLoopData.matVol;
-matTemplMotCorr = mainLoopData.matTemplMotCorr;
 dicomInfoVox = mainLoopData.dicomInfoVox;
-dimTemplMotCorr = mainLoopData.dimTemplMotCorr;
 dimVol = mainLoopData.dimVol;
-slNrImg2DdimX = mainLoopData.slNrImg2DdimX;
-slNrImg2DdimY = mainLoopData.slNrImg2DdimY;
-img2DdimX = mainLoopData.img2DdimX;
-img2DdimY = mainLoopData.img2DdimY;
 
 % Flags
 flagsSpmReslice = mainLoopData.flagsSpmReslice;
@@ -79,61 +72,7 @@ end
 
 %% EPI Data Preprocessing
 % Read Data in real-time and update parameters
-switch P.DataType
-    case 'DICOM'
-        if P.UseTCPData && (indVol > 1)
-            while ~tcp.BytesAvailable, pause(0.01); end
-            [~, dcmData] = tcp.ReceiveScan;
-        else
-            dcmData = [];
-            while isempty(dcmData) || contains(lastwarn,'Suspicious fragmentary file')
-                dcmData = double(dicomread(inpFileName));
-            end
-            if ~P.isDicom2D
-                % for strange 4D Siemens XA30 data format
-                dcmData = squeeze(dcmData);
-            else
-                dcmData = img2Dvol3D(dcmData, slNrImg2DdimX, slNrImg2DdimY, dimVol);
-            end
-        end
-        R(2,1).mat = matVol;
-        if P.isZeroPadding
-            zeroPadVol = zeros(dimVol(1),dimVol(2),P.nrZeroPadVol);
-            dimVol(3) = dimVol(3)+P.nrZeroPadVol*2;
-            R(2,1).Vol = cat(3, cat(3, zeroPadVol, dcmData), zeroPadVol);
-        else
-            R(2,1).Vol = dcmData;
-        end
-        R(2,1).dim = dimVol;
-    case 'IMAPH'
-        % Note, possibly corrupted Phillips rt data export
-        imgVol  = spm_read_vols(spm_vol(inpFileName));
-        % If necessary, flip rt time-series so that it matches the template
-        % set in setupFirstVolume.m, setupProcParams.m, selectROI.m
-        imgVol  = fliplr(imgVol);
-
-        R(2,1).mat = matTemplMotCorr;
-        if P.isZeroPadding
-            zeroPadVol = zeros(dimTemplMotCorr(1),dimTemplMotCorr(2),P.nrZeroPadVol);
-            dimTemplMotCorr(3) = dimTemplMotCorr(3)+P.nrZeroPadVol*2;
-            R(2,1).Vol = cat(3, cat(3, zeroPadVol, imgVol), zeroPadVol);
-        else
-            R(2,1).Vol = imgVol;
-        end
-        R(2,1).dim = dimTemplMotCorr;
-        
-    case 'NII'
-        R(2,1).mat = matVol;
-        tmpVol = spm_read_vols(spm_vol(inpFileName));
-        if P.isZeroPadding
-            zeroPadVol = zeros(dimVol(1),dimVol(2),P.nrZeroPadVol);
-            dimVol(3) = dimVol(3)+P.nrZeroPadVol*2;
-            R(2,1).Vol = cat(3, cat(3, zeroPadVol, tmpVol), zeroPadVol);
-        else
-            R(2,1).Vol = tmpVol;
-        end
-        R(2,1).dim = dimVol;
-end
+[R(2,1).Vol, R(2,1).mat, R(2,1).dim] = getVolData(P.DataType, inpFileName, indVol, P.getMAT, P.UseTCPData);
 tStartMotCorr = tic;
 
 %% realign

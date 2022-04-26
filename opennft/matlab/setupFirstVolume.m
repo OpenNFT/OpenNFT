@@ -21,52 +21,11 @@ matTemplMotCorr = mainLoopData.matTemplMotCorr;
 disp(inpFileName)
 
 % if used, TCP must be called first to allow standard rt export
-if P.UseTCPData
-    tcp = evalin('base', 'tcp');
-    while ~tcp.BytesAvailable, pause(0.01); end
-    [hdr, ~] = tcp.ReceiveScan;
-    dimVol = hdr.Dimensions;
-    matVol = hdr.mat;
-    dicomInfoVox = sqrt(sum(matVol(1:3,1:3).^2));
+[vol, matVol, dimVol] = getVolData(P.DataType, inpFileName, 0, P.getMAT, P.UseTCPData);
+if P.getMAT
+    dicomInfoVox   = [dicomInfoVol.PixelSpacing; dicomInfoVol.SpacingBetweenSlices]';
 else
-    % check first Vol
-    switch P.DataType
-        case 'DICOM'
-            dicomInfoVol = dicominfo(inpFileName); %spm_dicom_headers(inpFileName); dicomInfoVol = dicomInfoVol{1};
-            if dicomInfoVol.NumberOfFrames == 1
-                P.isDicom2D = 1;
-                mxAct      = double(dicomInfoVol.AcquisitionMatrix(1));
-                if (mxAct == 0)
-                    mxAct = double(dicomInfoVol.AcquisitionMatrix(3));
-                end
-                MatrixSizeX_Act = mxAct;
-                dimVol = [MatrixSizeX_Act, MatrixSizeX_Act, double(P.NrOfSlices)];
-            else
-                P.isDicom2D = 0;
-                dimVol = [double(dicomInfoVol.Rows), double(dicomInfoVol.Columns), double(dicomInfoVol.NumberOfFrames)];
-            end
-            if P.getMAT
-                matVol = getMAT(dicomInfoVol, dimVol);
-                dicomInfoVox   = [dicomInfoVol.PixelSpacing; ...
-                    dicomInfoVol.SpacingBetweenSlices]';
-            else
-                matVol = matTemplMotCorr;
-                dicomInfoVox   = sqrt(sum(matTemplMotCorr(1:3,1:3).^2));
-            end
-        case 'IMAPH'
-            % get MC template settings for Phillips in case of no proper header
-            % of the rt export files
-            dimTemplMotCorr = mainLoopData.dimTemplMotCorr;
-            dicomInfoVox   = sqrt(sum(matTemplMotCorr(1:3,1:3).^2));
-            
-            dimVol = dimTemplMotCorr;
-            matVol = matTemplMotCorr;
-        case 'NII'
-            V = spm_vol(inpFileName);
-            dimVol = V.dim;
-            matVol = V.mat;
-            dicomInfoVox = sqrt(sum(matVol(1:3,1:3).^2));
-    end
+    dicomInfoVox   = sqrt(sum(matTemplMotCorr(1:3,1:3).^2));
 end
 [slNrImg2DdimX, slNrImg2DdimY, img2DdimX, img2DdimY] = getMosaicDim(dimVol);
 nrVoxInVol = prod(dimVol);

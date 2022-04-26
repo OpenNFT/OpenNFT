@@ -188,27 +188,23 @@ P.linRegr = zscore((1:double(P.NrOfVolumes-P.nrSkipVol))');
 
 %% Get motion realignment template data and volume
 if ~P.isAutoRTQA || (P.isAutoRTQA && P.useEPITemplate)
-    infoVolTempl = spm_vol(P.MCTempl);
-    mainLoopData.infoVolTempl = infoVolTempl;
-    tmp_imgVolTempl  = spm_read_vols(infoVolTempl);
-    dimTemplMotCorr     = infoVolTempl.dim;
-    matTemplMotCorr     = infoVolTempl.mat;
-
+    [tmp_imgVolTempl, matTemplMotCorr, dimTemplMotCorr] = getVolData('NII', P.MCTempl, 0, false, false);
 else
-    imgVolTempl          = double(dicomread(P.MCTempl));
-    imgInfoTempl         = dicominfo(P.MCTempl);
-    if imgInfoTempl.NumberOfFrames == 1
-        dimTemplMotCorr = double([P.MatrixSizeX, P.MatrixSizeY, P.NrOfSlices]);
-    else
-        dimTemplMotCorr = [imgInfoTempl.Rows, imgInfoTempl.Columns, imgInfoTempl.NumberOfFrames];
-    end
-   
-    matTemplMotCorr      = getMAT(imgInfoTempl, dimTemplMotCorr);
-
-    [slNrImg2DdimX, slNrImg2DdimY, img2DdimX, img2DdimY] = getMosaicDim(dimTemplMotCorr);
-    tmp_imgVolTempl      = img2Dvol3D(imgVolTempl, slNrImg2DdimX, slNrImg2DdimY, dimTemplMotCorr);
-
+    [tmp_imgVolTempl, matTemplMotCorr, dimTemplMotCorr] = getVolData('DICOM', P.MCTempl, 0, true, false);
 end
+
+if P.isZeroPadding
+    nrZeroPadVol = 3;
+    zeroPadVol = zeros(dimTemplMotCorr(1),dimTemplMotCorr(2),nrZeroPadVol);
+    dimTemplMotCorr(3) = dimTemplMotCorr(3)+nrZeroPadVol*2;
+    imgVolTempl = cat(3, cat(3, zeroPadVol, tmp_imgVolTempl), zeroPadVol);
+else
+    imgVolTempl = tmp_imgVolTempl;
+end
+
+mainLoopData.dimTemplMotCorr = dimTemplMotCorr;
+mainLoopData.matTemplMotCorr = matTemplMotCorr;
+mainLoopData.imgVolTempl  = imgVolTempl;
 
 P.meanVolTemplate = mean2(mean(tmp_imgVolTempl,1));
 
@@ -377,20 +373,6 @@ if P.isRTQA
 end
 
 clear SPM
-
-if P.isZeroPadding
-    nrZeroPadVol = 3;
-    zeroPadVol = zeros(dimTemplMotCorr(1),dimTemplMotCorr(2),nrZeroPadVol);
-    dimTemplMotCorr(3) = dimTemplMotCorr(3)+nrZeroPadVol*2;
-    imgVolTempl = cat(3, cat(3, zeroPadVol, tmp_imgVolTempl), zeroPadVol);
-else
-    imgVolTempl = tmp_imgVolTempl;
-end
-
-
-mainLoopData.dimTemplMotCorr = dimTemplMotCorr;
-mainLoopData.matTemplMotCorr = matTemplMotCorr;
-mainLoopData.imgVolTempl  = imgVolTempl;
 
 % Realign preset
 A0=[];x1=[];x2=[];x3=[];wt=[];deg=[];b=[];

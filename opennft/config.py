@@ -40,6 +40,9 @@ MATLAB_NAME_SUFFIX = ''
 DICOM_FILES_EXTENSION = '.dcm'
 IMAPH_FILES_EXTENSION = '.img'
 
+# For test purposes
+USE_YIELD = True
+
 # MRI triggering is required
 USE_MRPULSE = False
 
@@ -123,6 +126,9 @@ PROJ_ROI_COLORS = ROI_PLOT_COLORS
 # debugging use only
 USE_SLEEP_IN_STOP = False
 HIDE_TEST_BTN = True
+
+# Flag for new Siemens XA30 DICOM format
+DICOM_SIEMENS_XA30 = False
 
 # rtQA may cause linear performance loss on the big data
 # due to saving process of iGLM quality parameters

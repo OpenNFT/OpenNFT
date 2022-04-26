@@ -259,6 +259,7 @@ class OpenNFT(QWidget):
 
         self.eng = None
         if self.orth_view:
+            self.view_form_input["is_stopped"] = True
             self.orth_view.terminate()
         self.orth_view = None
 
@@ -747,12 +748,22 @@ class OpenNFT(QWidget):
         # check file sequence
         if (not self.isOffline) and (not self.cbUseTCPData.isChecked()) and (len(self.files_processed) > 0):
 
-            last_fname = self.files_processed[-1]
+            if config.DICOM_SIEMENS_XA30:
+                file_name = Path(self.files_processed[-1]).parts[-1]
+                splitted_name = file_name.split("_")
+                last_fname = splitted_name[0] + "_" + splitted_name[1] + "_" + splitted_name[2] + ".dcm"
+            else:
+                last_fname = self.files_processed[-1]
             r = re.findall(r'\D(\d+).\w+$', last_fname)
             last_num = int(r[-1])
             new_fname = fname
             fname = None
             for cur_fname in self.files_exported:
+                if config.DICOM_SIEMENS_XA30:
+                    cur_name = cur_fname
+                    file_name = Path(cur_fname).parts[-1]
+                    splitted_name = file_name.split("_")
+                    cur_fname = splitted_name[0] + "_" + splitted_name[1] + "_" + splitted_name[2] + ".dcm"
                 r = re.findall(r'\D(\d+).\w+$', cur_fname)
                 cur_num = int(r[-1])
                 if cur_num - last_num == 1:
@@ -765,7 +776,11 @@ class OpenNFT(QWidget):
                 self.isMainLoopEntered = False
                 return
             else:
-                self.files_exported.remove(fname)
+                if config.DICOM_SIEMENS_XA30:
+                    self.files_exported.remove(cur_name)
+                    fname = cur_name
+                else:
+                    self.files_exported.remove(fname)
 
         autoRTQAMCTempl = (self.iteration == self.P['nrSkipVol'] + 1) and config.AUTO_RTQA \
                           and not self.P['useEPITemplate'] \
@@ -783,7 +798,11 @@ class OpenNFT(QWidget):
         self.recorder.recordEvent(erd.Times.t2, self.iteration, time.time())
 
         if not self.reachedFirstFile:
-            if not self.P['FirstFileName'] in fname:
+            if config.DICOM_SIEMENS_XA30:
+                firstFileName = self.P['FirstFileName'].split('.')[0]
+            else:
+                firstFileName = self.P['FirstFileName']
+            if not firstFileName in fname:
                 logger.info('Volume skipped, waiting for first file')
                 self.isMainLoopEntered = False
                 return
@@ -816,10 +835,13 @@ class OpenNFT(QWidget):
 
         # Main logic
         # data preprocessing
-        self.call_timer.setInterval(config.MAIN_LOOP_CALL_PERIOD / 3)
-        prepr_vol_state = self.eng.preprVol(fname, self.iteration, background=True, nargout=0)
-        while not prepr_vol_state.done():
-            yield
+        if config.USE_YIELD:
+            self.call_timer.setInterval(config.MAIN_LOOP_CALL_PERIOD / 3)
+            prepr_vol_state = self.eng.preprVol(fname, self.iteration, background=True, nargout=0)
+            while not prepr_vol_state.done():
+                yield
+        else:
+            self.eng.preprVol(fname, self.iteration, background=False, nargout=0)
 
         # t3
         self.recorder.recordEvent(erd.Times.t3, self.iteration, time.time())
@@ -1009,10 +1031,6 @@ class OpenNFT(QWidget):
             if self.windowRTQA.isVisible():
                 self.windowRTQA.plotRTQA()
             self.rtqa_input["calc_ready"] = False
-
-        # if self.imageViewMode == ImageViewMode.mosaic and self.view_form_input["done_mosaic_templ"]:
-        #     with utils.timeit('Display mosaic image:'):
-        #         self.displayMosaicImage()
 
         with utils.timeit('  Drawings:'):
             self.drawRoiPlots(init)
@@ -1271,7 +1289,6 @@ class OpenNFT(QWidget):
         self.reultFromHelper = None
         self.reachedFirstFile = False
         self.autoRTQASetup = False
-        self.orth_view.terminate()
         self.view_form_input = None
         self.view_form_output = None
         self.rtqa_input = None
@@ -1617,6 +1634,7 @@ class OpenNFT(QWidget):
         self.view_form_input["dim"] = tuple([x, y, z])
         self.view_form_input["memmap_volume"] = self.P['memMapFile']
         self.view_form_input["view_mode"] = self.imageViewMode
+        self.view_form_input["is_stopped"] = False
         self.view_form_input["auto_thr_pos"] = True
         self.view_form_input["auto_thr_neg"] = True
         self.view_form_input["ready"] = False
@@ -1765,7 +1783,8 @@ class OpenNFT(QWidget):
 
         self.isStopped = True
         if self.windowRTQA:
-            self.rtqa_input["is_stopped"] = True
+            if not self.rtqa_input is None:
+                self.rtqa_input["is_stopped"] = True
             self.eng.workspace['rtQA_python'] = self.calc_rtqa.dataPacking()
         self.btnStop.setEnabled(False)
 
@@ -2389,6 +2408,7 @@ class OpenNFT(QWidget):
         self.P['isAutoRTQA'] = config.AUTO_RTQA
         self.P['isRTQA'] = config.USE_RTQA
         self.P['isIGLM'] = config.USE_IGLM
+        self.P['isDicomSiemensXA30'] = config.DICOM_SIEMENS_XA30
         self.P['isZeroPadding'] = config.zeroPaddingFlag
         self.P['nrZeroPadVol'] = config.nrZeroPadVol
         self.P['UseTCPData'] = False
@@ -2465,6 +2485,7 @@ class OpenNFT(QWidget):
         self.P['isAutoRTQA'] = config.AUTO_RTQA
         self.P['isRTQA'] = config.USE_RTQA
         self.P['isIGLM'] = config.USE_IGLM
+        self.P['isDicomSiemensXA30'] = config.DICOM_SIEMENS_XA30
         self.P['useEPITemplate'] = config.USE_EPI_TEMPLATE
         self.P['isZeroPadding'] = config.zeroPaddingFlag
         self.P['nrZeroPadVol'] = config.nrZeroPadVol
