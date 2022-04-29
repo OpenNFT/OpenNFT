@@ -59,7 +59,7 @@ switch dataType
             end
 
             if useGetMAT && isempty(matTemplMotCorr)
-                mat = getMAT(dicomInfoVol, dim);
+                mat = getMAT(dicomInfoVol, dim, P);
             else
                 mat = matTemplMotCorr;
             end
