@@ -1289,10 +1289,18 @@ class OpenNFT(QWidget):
         self.reultFromHelper = None
         self.reachedFirstFile = False
         self.autoRTQASetup = False
-        self.view_form_input = None
-        self.view_form_output = None
-        self.rtqa_input = None
-        self.rtqa_output = None
+        if self.orth_view:
+            self.view_form_input["is_stopped"] = True
+            self.view_form_input = None
+            self.view_form_output = None
+            self.orth_view.terminate()
+        self.orth_view = None
+
+        if self.calc_rtqa:
+            self.calc_rtqa.terminate()
+            self.calc_rtqa = None
+            self.rtqa_input = None
+            self.rtqa_output = None
         self.main_loop = None
 
         self.eng.workspace['P'] = self.P
@@ -1333,6 +1341,8 @@ class OpenNFT(QWidget):
             logger.info("Setup application...")
 
             self.orthViewInitialize = True
+            self.orthViewUpdateCheckTimer.stop()
+            self.mosaicViewUpdateCheckTimer.stop()
 
             # for multiply setup
             # TODO: Is this flag necessary?
@@ -1483,6 +1493,9 @@ class OpenNFT(QWidget):
 
             self.btnRTQA.setEnabled(False)
             self.orthViewInitialize = True
+
+            self.orthViewUpdateCheckTimer.stop()
+            self.mosaicViewUpdateCheckTimer.stop()
 
             if not self.resetDone:
                 self.reset()
@@ -2154,10 +2167,9 @@ class OpenNFT(QWidget):
                         rgba_neg_map_image = self.view_form_output['neg_overlay_c']
 
                 self.orthView.set_background_image(proj, bg_image)
-                if rgba_pos_map_image is not None:
+                if rgba_pos_map_image is not None and rgba_pos_map_image.ndim == 3:
                     self.orthView.set_pos_map_image(proj, rgba_pos_map_image)
-
-                if rgba_neg_map_image is not None:
+                if rgba_neg_map_image is not None and rgba_neg_map_image.ndim == 3:
                     self.orthView.set_neg_map_image(proj, rgba_neg_map_image)
 
             pos_thr = self.view_form_output["pos_thresholds"]
