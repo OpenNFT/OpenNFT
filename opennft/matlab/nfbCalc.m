@@ -300,14 +300,14 @@ if flags.isSVM
 
         % compute average feedback value
         tmp_fbVal = mean(norm_percValues);%eval(P.RoiAnatOperation);
-        dispValue = round(P.MaxFeedbackVal*tmp_fbVal, P.FeedbackValDec);
+        dispValue = P.MaxFeedbackVal-round(P.MaxFeedbackVal*tmp_fbVal, P.FeedbackValDec);
 
         mainLoopData.norm_percValues(indVolNorm,:) = norm_percValues;
         mainLoopData.dispValues(indVolNorm) = dispValue;
         mainLoopData.dispValue = dispValue;
     else
         tmp_fbVal = 0;
-        mainLoopData.dispValue = 0;
+        mainLoopData.dispValue = 100;
     end
 
     mainLoopData.vectNFBs(indVolNorm) = tmp_fbVal;

@@ -706,9 +706,9 @@ class OpenNFT(QWidget):
                 if not self.isCalculateDcm and config.USE_PTB:
                     self.displayScreen()
 
-            elif self.P['Type'] == 'SVM':
-                if self.displayData and config.USE_UDP_FEEDBACK:
-                    logger.info('Sending by UDP - instrValue = ')  # + str(self.displayData['instrValue'])
+            #elif self.P['Type'] == 'SVM':
+                #if self.displayData and config.USE_UDP_FEEDBACK:
+                #    logger.info('Sending by UDP - instrValue = ')  # + str(self.displayData['instrValue'])
                     # self.udpSender.send_data(self.displayData['instrValue'])
 
         if self.cbUseTCPData.isChecked():
@@ -971,8 +971,16 @@ class OpenNFT(QWidget):
                 self.displayData['dispValue'] = self.shamData[self.iteration - self.P['nrSkipVol'] - 1]
 
             if config.USE_UDP_FEEDBACK:
-                logger.info('Sending by UDP - dispValue = {}', self.displayData['dispValue'])
-                self.udpSender.send_data(self.displayData['dispValue'])
+                cond = self.displayData['condition']
+                if cond == 2:
+                    val = 'N '+str(self.displayData['dispValue'])
+                else:
+                    val = 'B '+str(self.displayData['dispValue'])
+
+                logger.info('Sending by UDP - dispValue = {}', val)
+                self.udpSender.send_data(val)
+                #logger.info('Sending by UDP - dispValue = {}', self.displayData['dispValue'])
+                #    self.udpSender.send_data(self.displayData['dispValue'])
 
             self.displaySamples.append(self.displayData['dispValue'])
 
