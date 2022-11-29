@@ -31,9 +31,9 @@ function [DCM_EN, dcmParTag, dcmParOpp] = dcmPrep(SPM)
     
     % Adapt this for multiple inputs eventually
     DCM_EN.Y.dt     = SPM.xY.RT;
-    DCM_EN.U.dt     = SPM.Sess.U(1).dt;
-    DCM_EN.U.name   = SPM.Sess.U(1).name;
-    DCM_EN.U.u      = SPM.Sess.U(1).u(33:end,1);  %SPM, 1 = 'Cond'; 2 = 'Bas';
+    DCM_EN.U.dt     = SPM.Sess.U(2).dt;
+    DCM_EN.U.name   = SPM.Sess.U(2).name;
+    DCM_EN.U.u      = SPM.Sess.U(2).u(33:end,1);  %SPM, 1 = 'Bas'; 2 = 'Cond';
     DCM_EN.TE       = 0.03;
     DCM_EN.n        = length(dcmDef.target.a); % number of ROIs in a single DCM model
     DCM_EN.delays   = repmat(SPM.xY.RT,DCM_EN.n,1);
