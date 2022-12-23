@@ -61,8 +61,16 @@ for indRoi = 1:P.NrROIs
     
     %% Get Raw time-series
     if flags.isPSC || flags.isCorr || P.isAutoRTQA
-        rawTimeSeries(indRoi, indVolNorm) = mean(...
-            mainLoopData.procVol(ROIs(indRoi).voxelIndex));
+        if P.NFRunNr > 1
+        vectIntersectROI = intersect(mainLoopData.prev_idxActVoxIGLM_pos,ROIs(indRoi).voxelIndex);
+        end
+        if P.NFRunNr > 1 && length(vectIntersectROI) > 100
+            rawTimeSeries(indRoi, indVolNorm) = mean(...
+                mainLoopData.procVol(vectIntersectROI));   
+        else
+            rawTimeSeries(indRoi, indVolNorm) = mean(...
+                mainLoopData.procVol(ROIs(indRoi).voxelIndex));                   
+        end
     end
     
     if flags.isSVM

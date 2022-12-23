@@ -93,6 +93,19 @@ if (strcmp(P.Prot, 'Inter') ||  strcmp(P.Prot, 'Cont') || strcmp(P.Prot, 'ContTa
             case 3
                 mainLoopData.flagEndPSC = 1;
                 displayData.displayStage = 'feedback';
+            case 4
+                mainLoopData.flagEndPSC = 0;
+                mainLoopData.dispValue = 0;
+                mainLoopData.Reward = '';
+                displayData.displayStage = 'instruction';
+            case 5
+                mainLoopData.flagEndPSC = 0;
+                mainLoopData.dispValue = 0;
+                mainLoopData.Reward = '';
+                displayData.displayStage = 'instruction';
+            case 6
+                mainLoopData.flagEndPSC = 1;
+                displayData.displayStage = 'feedback';
         end
     end
     % displayData assignment

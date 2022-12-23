@@ -120,6 +120,10 @@ mainLoopData.mposMin = [];
 
 mainLoopData.blockNF = 0;
 mainLoopData.firstNF = 0;
+mainLoopData.blockTask1 = 0;
+mainLoopData.lastTask1 = 0;
+mainLoopData.blockTask2 = 0;
+mainLoopData.lastTask2 = 0;
 
 %% DCM Settings
 if flags.isDCM
@@ -180,7 +184,7 @@ end
 
 %% adding high-pass filter to iGLM
 % Note, different data processing iGLM approach as compared to SPM
-P.isHighPass = true;
+P.isHighPass = false;
 
 %% adding linear regressor
 P.isLinRegr = true;
@@ -213,6 +217,12 @@ SPM = setupSPM(P);
 % High-pass filter
 mainLoopData.K.X0 = SPM.xX.K.X0;
 
+%% MIRI: Add mask from previous run
+if P.NFRunNr > 1
+    load([P.WorkFolder filesep 'Settings' filesep 'MASK_Run_' sprintf('%d',P.NFRunNr-1) '.mat']);
+    mainLoopData.prev_idxActVoxIGLM_pos = prev_idxActVoxIGLM_pos;
+end
+    
 %% Explicit contrasts (optional)
 if isfield(P,'ContrastActivation')
     mainLoopData.tContr.pos = P.ContrastActivation;

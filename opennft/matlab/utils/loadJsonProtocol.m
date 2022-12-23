@@ -76,10 +76,11 @@ if ~P.isAutoRTQA
             contrastString = textscan(prt.ContrastActivation,'%d*%s','Delimiter',';');
             P.ConditionForContrast = contrastString{2}';
             if length(conditionNames)>length(contrastString{1})
-                conditionNames = intersect(contrastString{2},conditionNames)';
+                [tmp_conditionNames,ia,ib] = intersect(conditionNames,contrastString{2});
             end
+            conditionNames = contrastString{2}(sort(ib))';
             contrastVect = [];
-            for contrastIndex = cellfun(@(x) find(strcmp(x,contrastString{2})),conditionNames,'UniformOutput',false)
+            for contrastIndex = cellfun(@(x) strcmp(x,contrastString{2}),conditionNames,'UniformOutput',false)
                 if ~isempty(contrastIndex{1})
                     contrastVect(end+1) = contrastString{1}(contrastIndex{1});
                 else

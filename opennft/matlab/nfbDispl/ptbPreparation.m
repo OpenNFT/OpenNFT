@@ -21,6 +21,11 @@ function ptbPreparation(screenId, workFolder, protName)
 
 P = evalin('base', 'P');
 
+P.isPrePostTest = 0; %run 0 or pre post 1
+P.NrOfVolumes = 582; % run 582  or  pre post 262
+P.nrSkipVol = 6;
+P.dispStimTime = 1.5;
+
 Screen('CloseAll');
 Screen('Preference', 'SkipSyncTests', 2);
 
@@ -217,7 +222,82 @@ if strcmp(protName, 'Inter')
         w/2-w/50,  h/2-w/46; w/2-w/100, h/2-w/74];
     
     Screen('TextSize',P.Screen.wPtr, 100);
-    
+
+    %% Load and check Protocol
+    fName = [workFolder filesep 'Settings' filesep 'NF_PCS_int_FT_run_' sprintf('%d',P.NFRunNr) '.json'];
+
+    prt = loadjson(fName);
+    lCond = length(prt.ConditionIndex);
+    for x=1:lCond
+        protNames{x} = prt.ConditionIndex{x}.ConditionName;
+    end
+
+    P.vectEncCond = ones(1,P.NrOfVolumes-P.nrSkipVol);
+
+    % check if baseline field already exists in protocol
+    % and protocol reading presets
+    % 1 is for Baseline
+    indexBAS = strcmp(protNames,'BAS');
+    if any(indexBAS)
+        P.basBlockLength = prt.ConditionIndex{ 1 }.OnOffsets(1,2);
+        inc = 0;
+    else
+        inc = 1;
+    end
+    P.CondIndexNames = protNames;
+    for x=1:lCond
+        P.ProtCond{x} = {};
+        for k = 1:length(prt.ConditionIndex{x}.OnOffsets(:,1))
+            unitBlock = prt.ConditionIndex{x}.OnOffsets(k,1) : prt.ConditionIndex{x}.OnOffsets(k,2);
+            P.vectEncCond(unitBlock) = x+inc;
+            P.ProtCond{x}(k,:) = {unitBlock};
+        end
+    end
+
+    vectList = zeros(P.NrOfVolumes-P.nrSkipVol,1);
+    wordList = strings(P.NrOfVolumes-P.nrSkipVol,1);
+    jitterList = zeros(P.NrOfVolumes-P.nrSkipVol,1);
+
+    load([workFolder filesep 'Settings' filesep 'WORDS_Run_' sprintf('%d',P.NFRunNr) '.mat']);
+    load([workFolder filesep 'Settings' filesep 'NOWORDS_Run_' sprintf('%d',P.NFRunNr) '.mat']);
+
+    load([workFolder filesep 'Settings' filesep 'JITTER_WORDS_Run_' sprintf('%d',P.NFRunNr) '.mat']);
+    jitterWords = str2double(JITTER);
+    load([workFolder filesep 'Settings' filesep 'JITTER_NOWORDS_Run_' sprintf('%d',P.NFRunNr) '.mat']);
+    jitterNoWords = str2double(JITTER);
+
+    for i = 1:lCond
+        tmpOnstes = prt.ConditionIndex{i}.OnOffsets;
+        tmpName = protNames{i};
+        lOnsets = size(tmpOnstes,1);
+        kW = 0; kNW = 0;
+        for iOn = 1:lOnsets
+            newOnsets = tmpOnstes(iOn,1):2:tmpOnstes(iOn,2)-1;
+            if strcmp(tmpName,'READW')
+                vectList(newOnsets) = 1;
+
+                for iStim = 1:length(newOnsets)
+                    kW = kW + 1;
+                    wordList(newOnsets(iStim)) = WORDS(kW);
+                    jitterList(newOnsets(iStim)) = jitterWords(kW);
+                end
+
+            elseif strcmp(tmpName,'READNW')
+                vectList(newOnsets) = 2;
+
+                for iStim = 1:length(newOnsets)
+                    kNW = kNW + 1;
+                    wordList(newOnsets(iStim)) = NOWORDS(kNW);
+                    jitterList(newOnsets(iStim)) = jitterNoWords(kNW);
+                end
+
+            end
+
+        end
+    end
+    P.vectList = vectList;
+    P.wordList = wordList;
+    P.jitterList = jitterList;
 end
 
 %% DCM

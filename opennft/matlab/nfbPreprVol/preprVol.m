@@ -322,6 +322,19 @@ if ~isempty(idxActVoxIGLM.pos) && max(tn.pos) > 0 % handle empty activation map
     m.Data.posStatVol = statMap3D_pos;
     mainLoopData.statMapCreated = 1;
 end
+
+if indVolNorm == 235
+    1;
+end
+
+%% MIRI
+% mainLoopData.idxActVoxIGLM_pos = idxActVoxIGLM.pos;
+% mainLoopData.max_tn = max(tn.pos);
+if indVolNorm == mainLoopData.numscan
+    prev_idxActVoxIGLM_pos = idxActVoxIGLM.pos; 
+    save([P.WorkFolder filesep 'Settings' filesep 'MASK_Run_' sprintf('%d',P.NFRunNr) '.mat'],'prev_idxActVoxIGLM_pos'); 
+end
+    
 if ~isempty(idxActVoxIGLM.neg) && max(tn.neg) > 0
         
     maskedStatMapVect_neg = tn.neg(idxActVoxIGLM.neg);
