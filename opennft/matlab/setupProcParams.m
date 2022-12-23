@@ -219,9 +219,16 @@ mainLoopData.K.X0 = SPM.xX.K.X0;
 
 %% MIRI: Add mask from previous run
 if P.NFRunNr > 1
-    load([P.WorkFolder filesep 'Settings' filesep 'MASK_Run_' sprintf('%d',P.NFRunNr-1) '.mat']);
-    mainLoopData.prev_idxActVoxIGLM_pos = prev_idxActVoxIGLM_pos;
+    if P.NFRunNr == 3 || P.NFRunNr == 5
+        imgMask = spm_read_vols(spm_vol([P.WorkFolder filesep 'Settings' filesep 'MASK_Run_' sprintf('%d',P.NFRunNr-1) '.nii']));        
+        mainLoopData.prev_idxActVoxIGLM_pos = find(imgMask>0);
+    else
+        load([P.WorkFolder filesep 'Settings' filesep 'MASK_Run_' sprintf('%d',P.NFRunNr-1) '.mat']);
+        mainLoopData.prev_idxActVoxIGLM_pos = prev_idxActVoxIGLM_pos;
+    end
 end
+%
+mainLoopData.infoMask = spm_vol(P.MCTempl);
     
 %% Explicit contrasts (optional)
 if isfield(P,'ContrastActivation')

@@ -333,6 +333,9 @@ end
 if indVolNorm == mainLoopData.numscan
     prev_idxActVoxIGLM_pos = idxActVoxIGLM.pos; 
     save([P.WorkFolder filesep 'Settings' filesep 'MASK_Run_' sprintf('%d',P.NFRunNr) '.mat'],'prev_idxActVoxIGLM_pos'); 
+    %
+    mainLoopData.infoMask.fname = [P.WorkFolder filesep 'Settings' filesep 'MASK_Run_' sprintf('%d',P.NFRunNr) '.nii'];
+    spm_write_vol(mainLoopData.infoMask, statMap3D_pos);
 end
     
 if ~isempty(idxActVoxIGLM.neg) && max(tn.neg) > 0
