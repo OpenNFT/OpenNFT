@@ -7,7 +7,7 @@ import tempfile
 import subprocess
 
 from distutils.spawn import find_executable
-from distutils.core import DistutilsOptionError
+from distutils.errors import DistutilsOptionError
 
 from setuptools import setup, find_packages
 from setuptools.command.install import install
