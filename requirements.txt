@@ -1,5 +1,5 @@
 PyQt5>=5.12.0
-numpy>=1.13.1,>=1.13.1+mkl
+numpy>=1.13.1
 pyqtgraph==0.10.0; python_version < '3.7'
 pyqtgraph>0.10.0; python_version >= '3.7'
 PyNIExp>=0.27.2
