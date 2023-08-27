@@ -36,6 +36,9 @@ else
     loopNrROIs = P.NrROIs;
 end
 
+% Calculate haemodynamic delay (6 s) in volumes
+nVolDelay = ceil(6000/P.TR);
+
 %% Continuous PSC NF
 if flags.isPSC && (strcmp(P.Prot, 'Cont') || strcmp(P.Prot, 'ContTask'))
     blockNF = mainLoopData.blockNF;
@@ -58,11 +61,10 @@ if flags.isPSC && (strcmp(P.Prot, 'Cont') || strcmp(P.Prot, 'ContTask'))
         if blockNF<2
             % according to json protocol
             % index for Baseline == 1
-            i_blockBAS = P.ProtCond{ 1 }{blockNF}(end-6:end);
+            i_blockBAS = (P.ProtCond{ 1 }{blockNF}(1)+nVolDelay):(P.ProtCond{ 1 }{blockNF}(end));
         else
             for iBas = 1:blockNF
-                i_blockBAS = [i_blockBAS P.ProtCond{ 1 }{iBas}(3:end)];
-                % ignore 2 scans for HRF shift, e.g. if TR = 2sec
+                i_blockBAS = (P.ProtCond{ 1 }{iBas}(1)+nVolDelay):(P.ProtCond{ 1 }{iBas}(end));
             end
         end
 
@@ -131,14 +133,12 @@ if  strcmp(P.Prot, 'Inter') && (flags.isPSC || flags.isCorr)
         regSuccess = 0;
         if firstNF == indVolNorm % the first volume of the NF block is
             % expected when assigning volumes for averaging, take HRF delay
-            % into account
-            if blockNF<2
-                i_blockNF = P.ProtCond{ 2 }{blockNF}(end-6:end);
-                i_blockBAS = P.ProtCond{ 1 }{blockNF}(end-6:end);
-            else
-                i_blockNF = P.ProtCond{ 2 }{blockNF}(end-6:end);
-                i_blockBAS = [P.ProtCond{ 1 }{blockNF}(end-5:end) ...
-                              P.ProtCond{ 1 }{blockNF}(end)+1];
+            % into account conservatively (rounded up for start (see line 40) 
+            % and reduced for end (see line 1401))
+            i_blockNF =  (P.ProtCond{ 2 }{blockNF}(1)+nVolDelay):(P.ProtCond{ 2 }{blockNF}(end));
+            i_blockBAS = (P.ProtCond{ 1 }{blockNF}(1)+nVolDelay):(P.ProtCond{ 1 }{blockNF}(end));
+            if blockNF>=2                
+                i_blockBAS = [i_blockBAS (i_blockBAS(end)+1):(i_blockBAS(end)+nVolDelay-1)];
             end
 
             if flags.isPSC
