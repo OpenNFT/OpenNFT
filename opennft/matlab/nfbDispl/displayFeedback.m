@@ -18,10 +18,10 @@ P = evalin('base', 'P');
 Tex = evalin('base', 'Tex');
 
 % Note, don't split cell structure in 2 lines with '...'.
-fieldNames = {'feedbackType', 'condition', 'dispValue', 'Reward', 'displayStage','displayBlankScreen', 'iteration'};
-defaultFields = {'', 0, 0, '', '', '', 0};
+fieldNames = {'feedbackType', 'condition', 'dispValue', 'Reward', 'blockNF', 'displayStage','displayBlankScreen', 'iteration'};
+defaultFields = {'', 0, 0, '', 0, '', '', 0};
 % disp(displayData)
-eval(varsFromStruct(displayData, fieldNames, defaultFields))
+eval(varsFromStruct(displayData, fieldNames, defaultFields));
 
 indVolNorm = iteration - P.nrSkipVol;
 
@@ -236,6 +236,11 @@ switch feedbackType
                      P.Screen.vbl = Screen('Flip', P.Screen.wPtr, ...
                          P.Screen.vbl + P.Screen.ifi/2);
                 else
+                    % random NFB values
+                    if P.isRandTrials
+                        dispValue = P.perRunValRandNFB(blockNF);
+                    end
+                    %
                     Screen(P.Screen.wPtr, 'FillRect', [0 0 0]);
                     % feedback value
                     Screen('DrawText', P.Screen.wPtr, mat2str(dispValue), ...

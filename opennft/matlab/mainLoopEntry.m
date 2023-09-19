@@ -119,6 +119,7 @@ if (strcmp(P.Prot, 'Inter') ||  strcmp(P.Prot, 'Cont') || strcmp(P.Prot, 'ContTa
     displayData.condition = condition;
     displayData.dispValue = mainLoopData.dispValue;
     displayData.Reward = mainLoopData.Reward;
+    displayData.blockNF = mainLoopData.blockNF;
 end
 
 %% DCM

@@ -334,6 +334,7 @@ if flags.isPSC && strcmp(P.Prot, 'Inter')
 
     displayData.Reward = mainLoopData.Reward;
     displayData.dispValue = mainLoopData.dispValue;
+    displayData.blockNF = mainLoopData.blockNF;
 end
 
 %% trial-based DCM NF
