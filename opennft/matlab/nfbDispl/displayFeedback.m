@@ -236,9 +236,9 @@ switch feedbackType
                      P.Screen.vbl = Screen('Flip', P.Screen.wPtr, ...
                          P.Screen.vbl + P.Screen.ifi/2);
                 else
-                    % random NFB values
-                    if P.isRandTrials
-                        dispValue = P.perRunValRandNFB(blockNF);
+                    % sham NFB values
+                    if P.isShamTrials
+                        dispValue = P.perRunValShamNFB(blockNF);
                     end
                     %
                     Screen(P.Screen.wPtr, 'FillRect', [0 0 0]);

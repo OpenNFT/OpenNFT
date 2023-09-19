@@ -25,12 +25,12 @@ P.isPrePostTest = 0; %run 0 or pre post 1
 P.NrOfVolumes = 582; % run 582  or  pre post 262
 P.nrSkipVol = 6;
 P.dispStimTime = 1.5;
-% NFB randomization from previous subjects
-P.isRandTrials = 0;
-if P.isRandTrials
-    P.fNameRandNFB = 'NFB-S03_rand_fbvals.txt';
+% sham NFB from previous subject trials
+P.isShamTrials = 0;
+if P.isShamTrials
+    P.fNameShamNFB = 'NFB-S03_rand_fbvals.txt';
 else
-    P.fNameRandNFB = '';
+    P.fNameShamNFB = '';
 end
 
 Screen('CloseAll');
@@ -231,10 +231,10 @@ if strcmp(protName, 'Inter')
     Screen('TextSize',P.Screen.wPtr, 100);
 
     %% Load and check Protocol
-    if P.isRandTrials
-        fPathRandNFB = [workFolder filesep 'Settings' filesep P.fNameRandNFB];
-        allValRandNFB = table2array(readtable(fPathRandNFB));
-        P.perRunValRandNFB = allValRandNFB(:,P.NFRunNr); % 9 trials per curent run 
+    if P.isShamTrials
+        fPathShamNFB = [workFolder filesep 'Settings' filesep P.fNameShamNFB];
+        allValShamNFB = table2array(readtable(fPathShamNFB));
+        P.perRunValShamNFB = allValShamNFB(:,P.NFRunNr); % 9 trials per curent run 
     end
     
     fName = [workFolder filesep 'Settings' filesep 'NF_PCS_int_FT_run_' sprintf('%d',P.NFRunNr) '.json'];
@@ -244,7 +244,7 @@ if strcmp(protName, 'Inter')
     for x=1:lCond
         protNames{x} = prt.ConditionIndex{x}.ConditionName;
     end
-
+ 
     P.vectEncCond = ones(1,P.NrOfVolumes-P.nrSkipVol);
 
     % check if baseline field already exists in protocol
