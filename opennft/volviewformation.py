@@ -381,7 +381,7 @@ class VolViewFormation(mp.Process):
                 if j == 0: # click was on Transverse: s and t need to change
                     cent[0] = cp[0] + self.str_param['bb'][0,0] - 1
                     cent[1] = cp[1] + self.str_param['bb'][0,1] - 1
-                elif j == 1: # click was on Saggital: t and c need to change
+                elif j == 1: # click was on Sagittal: t and c need to change
                     cent[0] = cp[0] + self.str_param['bb'][0,0] - 1
                     cent[2] = cp[1] + self.str_param['bb'][0,2] - 1
                 elif j == 2: # click was on Coronal: t and s need to change

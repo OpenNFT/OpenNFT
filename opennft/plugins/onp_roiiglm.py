@@ -18,7 +18,7 @@ Each plugin has to be a subclass of *Process class specified in pyniexp.mlplugin
 - the input to the process method of imageProcess (called image) is a multi-dimensional (usually 3D) numpy array as specified during initialization
 
 # ROI iGLM
-This plugin demonstrates how volume-wise iGLM infomration for the ROIs can be extracted.
+This plugin demonstrates how volume-wise iGLM information for the ROIs can be extracted.
 
 __________________________________________________________________________
 Copyright (C) 2016-2021 OpenNFT.org
