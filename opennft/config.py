@@ -63,6 +63,9 @@ DONOT_USE_QFILE_NATIVE_DIALOG = False
 # the length of the TimeVector
 # TIMEVECTOR_LENGTH = 8
 
+# enable tis flag if it won't notice new scans coming in, like in https://github.com/OpenNFT/OpenNFT/issues/156
+USE_POLLING_FS_OBSERVER = False
+
 # plotting initialization
 PLOT_GRID_ALPHA = 0.7
 ROI_PLOT_WIDTH = 2.0

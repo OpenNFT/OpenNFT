@@ -49,7 +49,6 @@ import numpy as np
 import pyqtgraph as pg
 import pydicom
 
-from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 
 from pyniexp.connection import Udp
@@ -77,6 +76,11 @@ from opennft import (
     eventrecorder as erd,
 )
 
+if config.USE_POLLING_FS_OBSERVER:
+    from watchdog.observers.polling import PollingObserver
+else:
+    from watchdog.observers import Observer
+    
 if config.USE_MRPULSE:
     from opennft import mrpulse
 
@@ -190,11 +194,15 @@ class OpenNFT(QWidget):
         self.displayData = None
         self.displayQueue = queue.Queue()
 
+        if config.USE_POLLING_FS_OBSERVER:
+            self.fs_observer = PollingObserver()
+        else:
+            self.fs_observer = Observer()
+
         self.mrPulses = None
         self.recorder = erd.EventRecorder()
         self.call_timer = QTimer(self)
         self.files_queue = queue.Queue()
-        self.fs_observer = Observer()
         self.isOffline = None
         self.files_processed = []
         self.files_exported = []

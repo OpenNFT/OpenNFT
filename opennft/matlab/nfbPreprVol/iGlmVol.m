@@ -1,7 +1,7 @@
 function [idxActVox, recTh, tTh, Cn, Dn, sigma2n, tn, neg_e2n, Bn, e2n] = ...
     iGlmVol(Cn, Dn, sigma2n, tn, Yn, n, nrBasFct, contr, basFct, ...
     pVal, recTh, tTh, spmMaskTh)
-% Core function to compute incemental GLM.
+% Core function to compute incremental GLM.
 %
 % input:
 % Cn         - matrix for Cholesky decomposition (Eq. 15)
