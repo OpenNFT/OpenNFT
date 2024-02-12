@@ -8,8 +8,6 @@ import subprocess
 
 from shutil import which
 from setuptools.errors import OptionError
-from distutils.spawn import find_executable
-from distutils.errors import DistutilsOptionError
 
 from setuptools import setup, find_packages
 from setuptools.command.install import install
@@ -88,7 +86,6 @@ class InstallMatlabEngineMixin:
             install_failed_error = True
         else:
             matlab_exe = which('matlab')
-            # matlab_exe = find_executable('matlab')
             if not matlab_exe:
                 print('Cannot find MATLAB. "Matlab engine for Python" will not be installed', file=sys.stderr)
                 return
