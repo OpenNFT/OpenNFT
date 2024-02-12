@@ -50,7 +50,7 @@ class RTQACalculation(mp.Process):
         self.excFDIndexes_2 = np.array([-1])
         self.excMDIndexes = np.array([-1])
         self.rsqDispl = np.array([0])
-        self.mc_params = np.array([[1e-05,1e-05,1e-05,1e-05,1e-05,1e-05]]).astype(np.float)
+        self.mc_params = np.array([[1e-05,1e-05,1e-05,1e-05,1e-05,1e-05]])
         self.radius = config.DEFAULT_FD_RADIUS
         self.threshold = config.DEFAULT_FD_THRESHOLDS
         self.iterBas = 0
