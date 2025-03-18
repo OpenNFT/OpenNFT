@@ -1084,14 +1084,12 @@ class OpenNFT(QWidget):
     # --------------------------------------------------------------------------
     def startInOfflineMode(self):
         path = Path(self.P['WatchFolder'], self.P['FirstFileName'])
-        ext = re.findall(r"\.\w*$", str(path))
+        ext = path.suffix
         if not ext:
             if self.P['DataType'] == 'IMAPH':
                 ext = config.IMAPH_FILES_EXTENSION
             else:  # dicom as default
                 ext = config.DICOM_FILES_EXTENSION
-        else:
-            ext = ext[-1]
 
         searchString = self.getFileSearchString(self.P['FirstFileNameTxt'], path, ext)
         path = path.parent / searchString
