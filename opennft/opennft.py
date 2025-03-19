@@ -1103,8 +1103,16 @@ class OpenNFT(QWidget):
 
         self.files_queue = queue.Queue()
 
-        for f in files:
-            self.files_queue.put(f)
+        if config.GE_SIGNA:
+            # We only get each N-file - the last slice in the volume for each iteration.
+            # We assume that the volume will be assembled on the MATLAB side from 1-N files.
+            n = self.sbSlicesNr.value()
+
+            for f in files[n-1::n]:
+                self.files_queue.put(f)
+        else:
+            for f in files:
+                self.files_queue.put(f)
 
         self.call_timer.start(config.MAIN_LOOP_CALL_PERIOD)
 

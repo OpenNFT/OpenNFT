@@ -133,6 +133,9 @@ HIDE_TEST_BTN = True
 # Flag for new Siemens XA30 DICOM format
 DICOM_SIEMENS_XA30 = False
 
+# GE scanner DICOM format (one slice per file)
+GE_SIGNA = False
+
 # rtQA may cause linear performance loss on the big data
 # due to saving process of iGLM quality parameters
 USE_RTQA = True
