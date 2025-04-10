@@ -1133,7 +1133,11 @@ class OpenNFT(QWidget):
         event_handler = CreateFileEventHandler(
             searchString, self.files_queue, self.recorder)
 
-        self.fs_observer = Observer()
+        if config.USE_POLLING_FS_OBSERVER:
+            self.fs_observer = PollingObserver()
+        else:
+            self.fs_observer = Observer()
+
         self.fs_observer.schedule(
             event_handler, str(path), recursive=True)
 
