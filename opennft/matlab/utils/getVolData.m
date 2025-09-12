@@ -70,6 +70,30 @@ switch dataType
             dim(3) = dim(3)+P.nrZeroPadVol*2;
             vol = cat(3, cat(3, zeroPadVol, dcmData), zeroPadVol);
         end
+    case 'GE'
+        while isempty(vol) || contains(lastwarn,'Suspicious fragmentary file')
+             
+            [pathstr,tmp_name,tmp_fileSliceNr] = fileparts(fileName);
+            fileSliceNr = str2double(tmp_fileSliceNr(2:end));
+            fname_split = split(tmp_name,'.');
+            name1 = fname_split{1};
+            name2 = fname_split{2};
+            for iSlice = 1:P.NrOfSlices
+                sliceName = spm_select('FPList',pathstr,['.*.' name2 '.' mat2str(iSlice) '$']);
+                vol(:,:,iSlice) = double(dicomread(sliceName));
+            end
+        end
+        % WIP: check voxel values
+        vVox = squeeze(vol(64,50:60,24));
+        fprintf('Value: %s , ',string(vVox));
+
+        mat = matTemplMotCorr;
+        dim = dimTemplMotCorr;
+        if P.isZeroPadding
+            zeroPadVol = zeros(dim(1),dim(2),P.nrZeroPadVol);
+            dim(3) = dim(3)+P.nrZeroPadVol*2;
+            vol = cat(3, cat(3, zeroPadVol, vol), zeroPadVol);
+        end
     case 'IMAPH'
         % Note, possibly corrupted Phillips rt data export
         vol  = spm_read_vols(spm_vol(fileName));

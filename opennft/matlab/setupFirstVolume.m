@@ -21,6 +21,9 @@ matTemplMotCorr = mainLoopData.matTemplMotCorr;
 disp(inpFileName)
 
 % if used, TCP must be called first to allow standard rt export
+if P.isGE
+    P.DataType = 'GE'; % YKWIP
+end
 [vol, matVol, dimVol] = getVolData(P.DataType, inpFileName, 0, P.getMAT, P.UseTCPData);
 if P.getMAT
     dicomInfoVox   = [dicomInfoVol.PixelSpacing; dicomInfoVol.SpacingBetweenSlices]';

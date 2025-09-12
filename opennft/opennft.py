@@ -75,6 +75,7 @@ from opennft import (
     volviewformation,
     eventrecorder as erd,
 )
+from opennft.config import GE_SIGNA
 
 if config.USE_POLLING_FS_OBSERVER:
     from watchdog.observers.polling import PollingObserver
@@ -94,18 +95,65 @@ class ImageViewMode(enum.IntEnum):
     orthviewEPI = 2
 
 
+# --------------------------------------------------------------------------
+def checkFilesForIteration(iteration, WatchFolder, NrOfSlices):
+    # GE check for all files in the iteration - nrOfSlices range
+    start_index = (iteration - 1) * NrOfSlices + 1
+    end_index = iteration * NrOfSlices
+    expected_indices = set(range(start_index, end_index + 1))
+    print(f"Expected file indices: {start_index} to {end_index}")
+
+    found_files = {}
+    missing_indices = set(expected_indices)
+
+    # Scan directory for files in the target range
+    watch_folder = WatchFolder
+    watch_path = Path(watch_folder)
+    target_file_pattern = 'i.*.MRDC.(.*)'
+    file_pattern = re.compile(target_file_pattern)
+
+    for file_path in watch_path.glob('i*.MRDC.*'):
+        match = file_pattern.match(file_path.name)
+        if match:
+            try:
+                file_index = int(match.group(1))
+                if start_index <= file_index <= end_index and file_index not in found_files:
+                    found_files[file_index] = file_path
+                    missing_indices.discard(file_index)  # Remove found index from missing
+                    print(f"Found index {file_index}: {file_path.name}")
+            except ValueError:
+                continue
+
+    # Check if all expected files are found
+    if not missing_indices:
+        # Provide the path of the iteration*NrOfSlices file as output
+        last_file_index = iteration * NrOfSlices
+        fname = found_files.get(last_file_index)
+        print(f"  FNAME {fname} ")
+        return str(fname)
+    else:
+        print(f"  Still missing {len(missing_indices)} files: {sorted(missing_indices)[:5]}...")
+        return None
+
 class CreateFileEventHandler(FileSystemEventHandler):
-    def __init__(self, filepat, fq: queue.Queue, recorder: erd.EventRecorder):
+    def __init__(self, filepat, fq: queue.Queue, recorder: erd.EventRecorder, self_opennft):
         self.filepat = filepat
         self.fq = fq
         self.recorder = recorder
+        self.self_opennft = self_opennft
 
     def on_created(self, event):
-        # if not event.is_directory and event.src_path.endswith(self.filepat):
-        if not event.is_directory and fnmatch.fnmatch(Path(event.src_path).name, self.filepat):
-            # t1
-            self.recorder.recordEvent(erd.Times.t1, 0, time.time())
-            self.fq.put(event.src_path)
+
+        if config.GE_SIGNA:
+            if fname := checkFilesForIteration(self.self_opennft.iteration, self.self_opennft.P['WatchFolder'], self.self_opennft.P['NrOfSlices']):
+                # t1
+                self.recorder.recordEvent(erd.Times.t1, 0, time.time())
+                self.fq.put(fname)
+        else:
+            if not event.is_directory and fnmatch.fnmatch(Path(event.src_path).name, self.filepat):
+                # t1
+                self.recorder.recordEvent(erd.Times.t1, 0, time.time())
+                self.fq.put(event.src_path)
 
 
 # --------------------------------------------------------------------------
@@ -763,19 +811,40 @@ class OpenNFT(QWidget):
                 last_fname = splitted_name[0] + "_" + splitted_name[1] + "_" + splitted_name[2] + ".dcm"
             else:
                 last_fname = self.files_processed[-1]
-            r = re.findall(r'\D(\d+).\w+$', last_fname)
-            last_num = int(r[-1])
+            if GE_SIGNA:
+                file_name = Path(self.files_processed[-1])
+                extensions = file_name.suffixes  # gets ['.MRDC', '.1']
+                r = extensions[-1].lstrip('.')  # gets '.1'
+                last_num = int(r)
+            else:
+                r = re.findall(r'\D(\d+).\w+$', last_fname)
+                last_num = int(r[-1])
+
             new_fname = fname
             fname = None
+
             for cur_fname in self.files_exported:
-                if config.DICOM_SIEMENS_XA30:
+                if GE_SIGNA:
+                    file_name = Path(cur_fname)
                     cur_name = cur_fname
-                    file_name = Path(cur_fname).parts[-1]
-                    splitted_name = file_name.split("_")
-                    cur_fname = splitted_name[0] + "_" + splitted_name[1] + "_" + splitted_name[2] + ".dcm"
-                r = re.findall(r'\D(\d+).\w+$', cur_fname)
-                cur_num = int(r[-1])
-                if cur_num - last_num == 1:
+                    extensions = file_name.suffixes  # gets ['.MRDC', '.1']
+                    r = extensions[-1].lstrip('.')  # gets '.1'
+                    cur_num = int(r)
+                else:
+                    if config.DICOM_SIEMENS_XA30:
+                        cur_name = cur_fname
+                        file_name = Path(cur_fname).parts[-1]
+                        splitted_name = file_name.split("_")
+                        cur_fname = splitted_name[0] + "_" + splitted_name[1] + "_" + splitted_name[2] + ".dcm"
+                    r = re.findall(r'\D(\d+).\w+$', cur_fname)
+                    cur_num = int(r[-1])
+
+                if not GE_SIGNA:
+                    fnameIndexIncrement = 1
+                else:
+                    fnameIndexIncrement = self.P['NrOfSlices']
+
+                if cur_num - last_num == fnameIndexIncrement:
                     fname = cur_fname
                     break
 
@@ -785,9 +854,9 @@ class OpenNFT(QWidget):
                 self.isMainLoopEntered = False
                 return
             else:
-                if config.DICOM_SIEMENS_XA30:
+                if config.DICOM_SIEMENS_XA30 or GE_SIGNA: #
                     self.files_exported.remove(cur_name)
-                    fname = cur_name
+                    fname = cur_fname
                 else:
                     self.files_exported.remove(fname)
 
@@ -810,14 +879,20 @@ class OpenNFT(QWidget):
             if config.DICOM_SIEMENS_XA30:
                 firstFileName = self.P['FirstFileName'].split('.')[0]
             else:
-                firstFileName = self.P['FirstFileName']
-            if not firstFileName in fname:
+                if not GE_SIGNA:
+                    firstFileName = self.P['FirstFileName']
+                elif GE_SIGNA:
+                    firstFileName = '.'+str(self.iteration*self.P['NrOfSlices'])
+            if not firstFileName in fname and not GE_SIGNA:
                 logger.info('Volume skipped, waiting for first file')
                 self.isMainLoopEntered = False
                 return
-            else:
+            elif not firstFileName in fname and not GE_SIGNA:
                 logger.info('First file was reached')
                 self.reachedFirstFile = True
+            elif GE_SIGNA and firstFileName in fname:
+                logger.info('Slices collected for NrOfSlices*iteration file')
+                self.isMainLoopEntered = True
 
         if self.iteration > self.P['NrOfVolumes']:
             logger.info('Volumes limit reached')
@@ -1063,6 +1138,7 @@ class OpenNFT(QWidget):
             self.stop()
 
         self.iteration += 1
+
         self.call_timer.setInterval(config.MAIN_LOOP_CALL_PERIOD)
         self.isMainLoopEntered = False
 
@@ -1119,6 +1195,7 @@ class OpenNFT(QWidget):
 
 
     # --------------------------------------------------------------------------
+    @staticmethod
     def getFileSearchStringGE(file_path):
         """Generate a search string pattern from a file path"""
         if file_path.exists():
@@ -1132,101 +1209,31 @@ class OpenNFT(QWidget):
             search_string = ""
         return search_string
 
-    # --------------------------------------------------------------------------
-    def check_files_for_iteration(self, iteration, max_wait_time=30):
-        """Check for all files in the iteration range, continue searching after timeout"""
-        max_wait_seconds = max_wait_time / 1000  # Convert ms to seconds (30ms = 0.03s)
-
-        start_index = (iteration - 1) * self.P['NrOfSlices'] + 1
-        end_index = iteration * self.P['NrOfSlices']
-        expected_indices = set(range(start_index, end_index + 1))
-
-        print(f"Expected file indices: {start_index} to {end_index}")
-
-        found_files = {}
-        start_time = time.time()
-        timeout_reached = False
-        missing_indices = set(expected_indices)  # Initialize with all expected indices
-
-        while True:  # Continue searching indefinitely
-            current_time = time.time()
-
-            # Check if timeout period has elapsed (for initial intensive search)
-            if not timeout_reached and (current_time - start_time) >= max_wait_seconds:
-                print("⚠ Initial search timeout reached, but continuing to look for missing files...")
-                timeout_reached = True
-
-            # Scan directory for files in the target range
-            for file_path in self.watch_path.glob('i*.MRDC.*'):
-                match = self.file_pattern.match(file_path.name)
-                if match:
-                    try:
-                        file_index = int(match.group(1))
-                        if start_index <= file_index <= end_index and file_index not in found_files:
-                            found_files[file_index] = file_path
-                            missing_indices.discard(file_index)  # Remove found index from missing
-                            # print(f"✓ Found index {file_index}: {file_path.name}")
-                    except ValueError:
-                        continue
-
-            # Check if all expected files are found
-            if not missing_indices:
-                # print(f"✓ All {NrOfSlices} files found for iteration {iteration}")
-                break
-
-            # If timeout reached, sleep longer to reduce CPU usage
-            if timeout_reached:
-                # print(f"  Still missing {len(missing_indices)} files: {sorted(missing_indices)[:5]}...")
-                time.sleep(0.03)  # 30ms between scans after timeout
-            else:
-                # Intensive scanning during initial wait period
-                time.sleep(0.001)  # 1ms between scans
-
-        return found_files, missing_indices  # Return the final missing_indices
 
     # --------------------------------------------------------------------------
     def startFilesystemWatching(self):
         self.files_queue = queue.Queue()
-
-        watch_folder = self.P['WatchFolder']
-        self.watch_path = Path(watch_folder)
-        target_file_pattern = 'i.*.MRDC.(.*)'
-        self.file_pattern = re.compile(target_file_pattern)
-
         path = Path(self.P['WatchFolder'], self.P['FirstFileName'])
-        ext = path.suffix
 
-        if not ext:
-            if self.P['DataType'] == 'IMAPH':
-                ext = config.IMAPH_FILES_EXTENSION
-            elif config.GE_SIGNA:
-                core_name = path.stem.split('.')[0]  # Gets 'i10500001' from 'i10500001.MRDC'
-                extensions = path.suffixes  # Gets list: ['.MRDC', '.1']
-                self.fileNr = extensions[-1].lstrip('.')
-            else:  # dicom as default
-                ext = config.DICOM_FILES_EXTENSION
+        if self.P['DataType'] == 'IMAPH':
+            ext = config.IMAPH_FILES_EXTENSION
+        elif config.GE_SIGNA:
+            core_name = path.stem.split('.')[0]  # gets 'i*' from 'i*.MRDC.1'
+            extensions = path.suffixes  # gets ['.MRDC', '.1']
+            ext = extensions[0].lstrip('.') # gets 'MRDC'
+        else:  # dicom .dcm as default
+            ext = config.DICOM_FILES_EXTENSION
 
         if not config.GE_SIGNA:
             searchString = self.getFileSearchString(self.P['FirstFileNameTxt'], path, ext)
         else:
-            # Check for files in this iteration's range
-            found_files, missing_indices = self.check_files_for_iteration(self.iteration, max_wait_time=30)
-
-            # Provide the path of the iteration*NrOfSlices file as output
-            last_file_index = self.iteration * self.P['NrOfSlices']
-            last_file_path = found_files.get(last_file_index)
-
-            # Call the separate function to generate search string
-            searchString = self.getFileSearchStringGE(last_file_path)
-
-            print(f"✓ Search pattern for similar files: {searchString}")
+            searchString = self.getFileSearchString(self.P['FirstFileNameTxt'], path, '.1')
 
         path = path.parent
-
         logger.info('Searching for {} in {}', searchString, path)
 
         event_handler = CreateFileEventHandler(
-            searchString, self.files_queue, self.recorder)
+            searchString, self.files_queue, self.recorder, self)
 
         self.fs_observer = Observer()
         self.fs_observer.schedule(
@@ -2524,6 +2531,7 @@ class OpenNFT(QWidget):
         self.P['isRTQA'] = config.USE_RTQA
         self.P['isIGLM'] = config.USE_IGLM
         self.P['isDicomSiemensXA30'] = config.DICOM_SIEMENS_XA30
+        self.P['isGE'] = config.GE_SIGNA
         self.P['isZeroPadding'] = config.zeroPaddingFlag
         self.P['nrZeroPadVol'] = config.nrZeroPadVol
         self.P['UseTCPData'] = False
@@ -2601,6 +2609,7 @@ class OpenNFT(QWidget):
         self.P['isRTQA'] = config.USE_RTQA
         self.P['isIGLM'] = config.USE_IGLM
         self.P['isDicomSiemensXA30'] = config.DICOM_SIEMENS_XA30
+        self.P['isGE'] = config.GE_SIGNA
         self.P['useEPITemplate'] = config.USE_EPI_TEMPLATE
         self.P['isZeroPadding'] = config.zeroPaddingFlag
         self.P['nrZeroPadVol'] = config.nrZeroPadVol
