@@ -30,7 +30,7 @@ MAIN_MATLAB_NAME = 'MATLAB_NFB_MAIN'
 PTB_MATLAB_NAME = 'MATLAB_NFB_PTB'
 MODEL_HELPER_MATLAB_NAME = 'MATLAB_NFB_MODEL_HELPER'
 
-MAIN_MATLAB_STARTUP_OPTIONS = '-nodesktop'
+MAIN_MATLAB_STARTUP_OPTIONS = '-desktop'
 PTB_MATLAB_STARTUP_OPTIONS = '-nodesktop'
 MODEL_HELPER_MATLAB_STARTUP_OPTIONS = '-nodesktop'
 
@@ -134,11 +134,11 @@ HIDE_TEST_BTN = True
 DICOM_SIEMENS_XA30 = False
 
 # GE scanner DICOM format (one slice per file)
-GE_SIGNA = False
+GE_SIGNA = True
 
 # rtQA may cause linear performance loss on the big data
 # due to saving process of iGLM quality parameters
-USE_RTQA = True
+USE_RTQA = False
 USE_IGLM = True
 USE_ROI = True
 FIRST_SNR_VOLUME = 1
