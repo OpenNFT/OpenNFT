@@ -28,9 +28,12 @@ if testCase == 'PSC':
     pause_in_sec = 1
 
 elif testCase == 'SVM':
-    srcpath = 'C:/_RT/rtData/NF_SVM/NF_Run_1_src'
-    dstpath = 'C:/_RT/rtData/NF_SVM/NF_Run_1'
-    pause_in_sec = 1
+    # srcpath = 'C:/_RT/rtData/NF_SVM/NF_Run_1_src'
+    # dstpath = 'C:/_RT/rtData/NF_SVM/NF_Run_1'
+    # pause_in_sec = 1
+    srcpath = 'C:/rtExport/src_48'
+    dstpath = 'C:/rtExport/s11100000'
+    pause_in_sec = 2
 
 elif testCase == 'DCM':
     srcpath = 'C:/_RT/rtData/NF_DCM/NF_Run_1_src'
@@ -61,10 +64,35 @@ else:
         fname = "{0}{1:03d}.dcm".format(mask, fn)
         filelist.append(fname)
 
-for filename in sorted(filelist):
-    src = filename
-    if Path.is_file(src) and (not str(filename).startswith(".")):
-        dst = Path(dstpath, filename.name)
-        shutil.copy(src, dst)
-        print(filename)
-        sleep(pause_in_sec)  # seconds
+filelist = sorted(filelist)
+slnr = 48
+slnr_2 = 24
+nrvol = 10
+for n in range(0,slnr*(nrvol),slnr):
+    print(n)
+    for f in filelist[n+slnr_2:n+slnr]:
+        src = f
+        if Path.is_file(src) and (not str(f).startswith(".")):
+            dst = Path(dstpath, f.name)
+            shutil.copy(src, dst)
+            print(f)
+
+    for f in filelist[n:n+slnr_2]:
+        src = f
+        if Path.is_file(src) and (not str(f).startswith(".")):
+            dst = Path(dstpath, f.name)
+            shutil.copy(src, dst)
+            print(f)
+    sleep(2)
+
+
+
+
+# for filename in sorted(filelist):
+#     src = filename
+#     if Path.is_file(src) and (not str(filename).startswith(".")):
+#         dst = Path(dstpath, filename.name)
+#         shutil.copy(src, dst)
+#         print(filename)
+#
+#         sleep(pause_in_sec)  # seconds
