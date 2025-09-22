@@ -2,6 +2,9 @@ function [vol, mat, dim] = getVolData(dataType, fileName, indVol, useGetMAT, use
 
 P = evalin('base', 'P');
 mainLoopData = evalin('base', 'mainLoopData');
+if P.isGE
+    GE_filelist = evalin('base', 'GE_filelist');
+end
 
 if useTCPData, tcp = evalin('base', 'tcp'); end
 
@@ -72,20 +75,19 @@ switch dataType
         end
     case 'GE'
         while isempty(vol) || contains(lastwarn,'Suspicious fragmentary file')
-             
             [pathstr,tmp_name,tmp_fileSliceNr] = fileparts(fileName);
             fileSliceNr = str2double(tmp_fileSliceNr(2:end));
             fname_split = split(tmp_name,'.');
             name1 = fname_split{1};
             name2 = fname_split{2};
             for iSlice = 1:P.NrOfSlices
-                sliceName = spm_select('FPList',pathstr,['.*.' name2 '.' mat2str(iSlice) '$']);
-                vol(:,:,iSlice) = double(dicomread(sliceName));
+                vol(:,:,iSlice) = double(dicomread(GE_filelist{iSlice}));
             end
         end
+
         % WIP: check voxel values
         vVox = squeeze(vol(64,50:60,24));
-        fprintf('Value: %s , ',string(vVox));
+%        fprintf('Value: %s , ',string(vVox));
 
         mat = matTemplMotCorr;
         dim = dimTemplMotCorr;

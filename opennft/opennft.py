@@ -95,59 +95,26 @@ class ImageViewMode(enum.IntEnum):
     orthviewEPI = 2
 
 
-# --------------------------------------------------------------------------
-def checkFilesForIteration(iteration, WatchFolder, NrOfSlices):
-    # GE check for all files in the iteration - nrOfSlices range
-    start_index = (iteration - 1) * NrOfSlices + 1
-    end_index = iteration * NrOfSlices
-    expected_indices = set(range(start_index, end_index + 1))
-    print(f"Expected file indices: {start_index} to {end_index}")
-
-    found_files = {}
-    missing_indices = set(expected_indices)
-
-    # Scan directory for files in the target range
-    watch_folder = WatchFolder
-    watch_path = Path(watch_folder)
-    target_file_pattern = 'i.*.MRDC.(.*)'
-    file_pattern = re.compile(target_file_pattern)
-
-    for file_path in watch_path.glob('i*.MRDC.*'):
-        match = file_pattern.match(file_path.name)
-        if match:
-            try:
-                file_index = int(match.group(1))
-                if start_index <= file_index <= end_index and file_index not in found_files:
-                    found_files[file_index] = file_path
-                    missing_indices.discard(file_index)  # Remove found index from missing
-                    print(f"Found index {file_index}: {file_path.name}")
-            except ValueError:
-                continue
-
-    # Check if all expected files are found
-    if not missing_indices:
-        # Provide the path of the iteration*NrOfSlices file as output
-        last_file_index = iteration * NrOfSlices
-        fname = found_files.get(last_file_index)
-        print(f"  FNAME {fname} ")
-        return str(fname)
-    else:
-        print(f"  Still missing {len(missing_indices)} files: {sorted(missing_indices)[:5]}...")
-        return None
-
 class CreateFileEventHandler(FileSystemEventHandler):
     def __init__(self, filepat, fq: queue.Queue, recorder: erd.EventRecorder, self_opennft):
         self.filepat = filepat
         self.fq = fq
         self.recorder = recorder
         self.self_opennft = self_opennft
+        if config.GE_SIGNA:
+            self.file_list = []
 
     def on_created(self, event):
 
         if config.GE_SIGNA:
-            if fname := checkFilesForIteration(self.self_opennft.iteration, self.self_opennft.P['WatchFolder'], self.self_opennft.P['NrOfSlices']):
+            self.file_list.append(event.src_path)
+            if len(self.file_list) == self.self_opennft.P['NrOfSlices']:
                 # t1
                 self.recorder.recordEvent(erd.Times.t1, 0, time.time())
+                self.file_list.sort()
+                fname = self.file_list[-1]
+                self.self_opennft.GE_filelist = self.file_list.copy()
+                self.file_list = []
                 self.fq.put(fname)
         else:
             if not event.is_directory and fnmatch.fnmatch(Path(event.src_path).name, self.filepat):
@@ -665,6 +632,9 @@ class OpenNFT(QWidget):
 
         self.eng.workspace['rtQA_matlab'] = self.rtQA_matlab
 
+        if GE_SIGNA:
+            self.eng.workspace["GE_filelist"] = []
+
         self.eng.setupProcParams(nargout=0)
 
         if self.P['isRTQA']:
@@ -891,7 +861,7 @@ class OpenNFT(QWidget):
                 logger.info('First file was reached')
                 self.reachedFirstFile = True
             elif GE_SIGNA and firstFileName in fname:
-                logger.info('Slices collected for NrOfSlices*iteration file')
+                logger.info(f'Slices collected for {self.P["NrOfSlices"]*self.iteration} file')
                 self.isMainLoopEntered = True
 
         if self.iteration > self.P['NrOfVolumes']:
@@ -907,6 +877,8 @@ class OpenNFT(QWidget):
             return
 
         logger.info('Call iteration for file "{}"', Path(fname).name)
+        if config.GE_SIGNA:
+            self.eng.workspace['GE_filelist'] = self.GE_filelist
 
         # Start elapsed time
         startingTime = time.time()
@@ -919,13 +891,14 @@ class OpenNFT(QWidget):
 
         # Main logic
         # data preprocessing
-        if config.USE_YIELD:
-            self.call_timer.setInterval(np.int32(config.MAIN_LOOP_CALL_PERIOD / 3))
-            prepr_vol_state = self.eng.preprVol(fname, self.iteration, background=True, nargout=0)
-            while not prepr_vol_state.done():
-                yield
-        else:
-            self.eng.preprVol(fname, self.iteration, background=False, nargout=0)
+        with utils.timeit("preprocess volume: "):
+            if config.USE_YIELD:
+                self.call_timer.setInterval(np.int32(config.MAIN_LOOP_CALL_PERIOD / 3))
+                prepr_vol_state = self.eng.preprVol(fname, self.iteration, background=True, nargout=0)
+                while not prepr_vol_state.done():
+                    yield
+            else:
+                self.eng.preprVol(fname, self.iteration, background=False, nargout=0)
 
         # t3
         self.recorder.recordEvent(erd.Times.t3, self.iteration, time.time())

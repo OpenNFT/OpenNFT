@@ -412,7 +412,6 @@ initMemmap(P.memMapFile, 'shared', zeros(nrVoxInVol,1), 'double', 'mmTransferVol
 initMemmap(P.memMapFile, 'statVol', zeros(nrVoxInVol,2), 'double', ...
     'mmStatVol', {'double', dimTemplMotCorr, 'posStatVol'; 'double', dimTemplMotCorr, 'negStatVol'});
 
-
 if P.isRTQA
     assignin('base', 'rtQA_matlab', rtQA_matlab);
     assignin('base', 'rtQA_python', rtQA_python);
