@@ -9,7 +9,7 @@ Copyright (C) 2016-2021 OpenNFT.org
 Written by Tibor Auer
 """
 
-from pyniexp.connection import Udp
+from pyniexp.network import Udp
 import keyboard
 from time import sleep
 from random import uniform

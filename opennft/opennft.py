@@ -51,7 +51,7 @@ import pydicom
 
 from watchdog.events import FileSystemEventHandler
 
-from pyniexp.connection import Udp
+from pyniexp.network import Udp
 from scipy.io import loadmat
 
 from PyQt5.QtWidgets import QApplication, QWidget, QFileDialog, QMenu, QMessageBox
