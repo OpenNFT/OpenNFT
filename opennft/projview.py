@@ -16,8 +16,8 @@ import numpy as np
 from cycler import cycler
 
 import pyqtgraph as pg
-from PyQt5 import QtCore
-from PyQt5 import QtWidgets
+from PyQt6 import QtCore
+from PyQt6 import QtWidgets
 
 from opennft import config
 

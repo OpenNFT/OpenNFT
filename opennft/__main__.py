@@ -10,7 +10,7 @@ Copyright (C) 2016-2021 OpenNFT.org
 import sys
 import multiprocessing as mp
 
-from PyQt5.QtWidgets import QApplication
+from PyQt6.QtWidgets import QApplication
 
 from opennft import excepthook, utils
 from opennft import config

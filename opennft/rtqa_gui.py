@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
-from PyQt5 import QtWidgets
-from PyQt5 import QtCore
-from PyQt5 import uic
+from PyQt6 import QtWidgets
+from PyQt6 import QtCore
+from PyQt6 import uic
 
 import numpy as np
 import multiprocessing as mp
@@ -19,7 +19,7 @@ class RTQAWindow(QtWidgets.QWidget):
 
     # --------------------------------------------------------------------------
     def __init__(self, rtqa_calc, input, output):
-        super(RTQAWindow, self).__init__(flags=QtCore.Qt.Window)
+        super(RTQAWindow, self).__init__(flags=QtCore.Qt.WindowType.Window)
         mp.Process.__init__(self)
 
         uic.loadUi(utils.get_ui_file('rtqa.ui'), self)

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from PyQt5 import QtWidgets
+from PyQt6 import QtWidgets
 
 import pyqtgraph as pg
 import numpy as np

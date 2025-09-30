@@ -54,11 +54,10 @@ from watchdog.events import FileSystemEventHandler
 from pyniexp.network import Udp
 from scipy.io import loadmat
 
-from PyQt5.QtWidgets import QApplication, QWidget, QFileDialog, QMenu, QMessageBox
-from PyQt5.QtGui import QIcon, QPalette
-from PyQt5.QtCore import QSettings, QTimer, QEvent, QRegExp
-from PyQt5.uic import loadUi
-from PyQt5.QtGui import QRegExpValidator
+from PyQt6.QtGui import QPalette, QIcon, QRegularExpressionValidator
+from PyQt6.uic import loadUi
+from PyQt6.QtCore import QTimer, QSettings, QRegularExpression, QEvent
+from PyQt6.QtWidgets import QApplication, QWidget, QFileDialog, QMenu, QMessageBox
 
 from opennft import (
     config,
@@ -152,8 +151,7 @@ class OpenNFT(QWidget):
 
         self.pbMoreParameters.setChecked(False)
 
-        pg.setConfigOption('foreground',
-                           self.palette().color(QPalette.Foreground))
+        pg.setConfigOption('foreground', QPalette.windowText(self.palette()).color())
         # self.plotBgColor = (210, 210, 210)
         self.plotBgColor = (255, 255, 255)
 
@@ -179,7 +177,7 @@ class OpenNFT(QWidget):
 
         self.settingFileName = config.ROOT_PATH
         self.appSettings = QSettings(
-            str(utils.get_app_settings_file()), QSettings.IniFormat, self)
+            str(utils.get_app_settings_file()), QSettings.Format.IniFormat, self)
 
         self.iteration = 1
         self.preiteration = 0
@@ -247,7 +245,7 @@ class OpenNFT(QWidget):
         self.orthViewUpdateCheckTimer = QTimer(self)
         self.mosaicViewUpdateCheckTimer = QTimer(self)
 
-        self.settings = QSettings('', QSettings.IniFormat)
+        self.settings = QSettings('', QSettings.Format.IniFormat)
         self.reachedFirstFile = False
 
         self.initializeUi()
@@ -282,7 +280,7 @@ class OpenNFT(QWidget):
 
     # --------------------------------------------------------------------------
     def eventFilter(self, obj, event):
-        if event.type() == QEvent.GraphicsSceneMouseDoubleClick:
+        if event.type() == QEvent.Type.GraphicsSceneMouseDoubleClick:
             # Replace plot views
             plotWidget = obj.getViewWidget()
 
@@ -468,13 +466,13 @@ class OpenNFT(QWidget):
         self.cbUsePTB.stateChanged.connect(self.onChangePTB)
         self.onChangePTB()
 
-        ipv4_regexp = QRegExp(r"[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}")
+        ipv4_regexp = QRegularExpression(r"[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}")
 
-        self.leTCPDataIP.setValidator(QRegExpValidator(ipv4_regexp, self))
+        self.leTCPDataIP.setValidator(QRegularExpressionValidator(ipv4_regexp, self))
         self.cbUseTCPData.stateChanged.connect(self.onChangeUseTCPData)
         self.onChangeUseTCPData()
 
-        self.leUDPFeedbackIP.setValidator(QRegExpValidator(ipv4_regexp, self))
+        self.leUDPFeedbackIP.setValidator(QRegularExpressionValidator(ipv4_regexp, self))
         self.cbUseUDPFeedback.stateChanged.connect(self.onChangeUseUDPFeedback)
 
         self.pos_map_thresholds_widget.thresholds_manually_changed.connect(self.onInteractWithMapImage)
@@ -1093,10 +1091,13 @@ class OpenNFT(QWidget):
         else:
             ext = ext[-1]
 
-        searchString = self.getFileSearchString(self.P['FirstFileNameTxt'], path, ext)
-        path = path.parent / searchString
-
-        files = sorted(glob.glob(str(path)))
+        if config.DICOM_SIEMENS_XA30:
+            files = sorted(glob.glob(str(self.P['WatchFolder'])+"\\*.dcm"))
+            self.P['FirstFileName'] = files[0]
+        else:
+            searchString = self.getFileSearchString(self.P['FirstFileNameTxt'], path, ext)
+            path = path.parent / searchString
+            files = sorted(glob.glob(str(path)))
 
         if not files:
             logger.info("No files found in offline mode. Check WatchFolder settings!")
@@ -1943,7 +1944,7 @@ class OpenNFT(QWidget):
         self.leSetFile.setText(fname)
         self.P['SetFile'] = fname
 
-        self.settings = QSettings(fname, QSettings.IniFormat, self)
+        self.settings = QSettings(fname, QSettings.Format.IniFormat, self)
         self.loadSettingsFromSetFile()
 
         self.isSetFileChosen = True
@@ -2537,7 +2538,8 @@ class OpenNFT(QWidget):
             'subjectid': self.P['SubjectID'],
             'imageseriesno': self.P['ImgSerNr'],
             'nfrunno': self.P['NFRunNr'],
-            '#': 1
+            '#': 1,
+            'simens_timestamp': '0000000000000000000000000'
         }
         template = self.P['FirstFileNameTxt']
         template_elements = re.findall(r"\{([A-Za-z0-9_: ]+)\}", template)

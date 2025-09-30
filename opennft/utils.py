@@ -17,7 +17,7 @@ import uuid
 from loguru import logger
 
 import numpy as np
-from PyQt5 import QtCore, QtWidgets
+from PyQt6 import QtCore, QtWidgets
 
 from opennft import config
 
@@ -82,7 +82,7 @@ def get_app_config_dir() -> pathlib.Path:
     :return: A full path to application configuration directory
     """
     return pathlib.Path(QtCore.QStandardPaths.standardLocations(
-        QtCore.QStandardPaths.AppConfigLocation)[0]) / get_unique_app_instance_uuid()
+        QtCore.QStandardPaths.StandardLocation.AppConfigLocation)[0]) / get_unique_app_instance_uuid()
 
 
 def get_app_settings_file() -> pathlib.Path:

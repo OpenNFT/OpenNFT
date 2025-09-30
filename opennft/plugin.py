@@ -1,7 +1,7 @@
-from PyQt5.QtWidgets import QDialog
-from PyQt5.QtGui import QStandardItemModel, QStandardItem
-from PyQt5.QtCore import Qt
-from PyQt5.uic import loadUi
+from PyQt6.QtWidgets import QDialog
+from PyQt6.QtGui import QStandardItemModel, QStandardItem
+from PyQt6.QtCore import Qt
+from PyQt6.uic import loadUi
 from loguru import logger
 
 import importlib
@@ -16,11 +16,11 @@ class PluginWindow(QDialog):
     def __init__(self, parent=None):
         self.plugins = []
 
-        super().__init__(parent=parent, flags=Qt.Dialog)
+        super().__init__(parent=parent, flags=Qt.WindowType.Dialog)
         loadUi(utils.get_ui_file('plugins.ui'), self)
 
         self.setWindowTitle("Plugins")
-        self.setWindowModality(Qt.ApplicationModal)
+        self.setWindowModality(Qt.WindowModality.ApplicationModal)
 
         model = QStandardItemModel(self.lvPlugins)
         for p in [f.name for f in config.PLUGIN_PATH.glob('*.py')]:

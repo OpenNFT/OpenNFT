@@ -11,8 +11,8 @@ from matplotlib import colors
 
 import pyqtgraph as pg
 
-from PyQt5 import QtWidgets
-from PyQt5 import QtCore
+from PyQt6 import QtWidgets
+from PyQt6 import QtCore
 
 from opennft import pgext
 
@@ -129,8 +129,8 @@ class MapImageThresholdsWidget(QtWidgets.QWidget):
         self._colorbar_layout = pg.GraphicsLayoutWidget(self)
 
         size_policy = self._colorbar_layout.sizePolicy()
-        size_policy.setVerticalPolicy(QtWidgets.QSizePolicy.Fixed)
-        size_policy.setHorizontalPolicy(QtWidgets.QSizePolicy.Ignored)
+        size_policy.setVerticalPolicy(QtWidgets.QSizePolicy.Policy.Fixed)
+        size_policy.setHorizontalPolicy(QtWidgets.QSizePolicy.Policy.Ignored)
         self._colorbar_layout.setSizePolicy(size_policy)
 
         self._colorbar_layout.ci.layout.setContentsMargins(0, 0, 0, 0)
