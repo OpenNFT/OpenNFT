@@ -136,6 +136,9 @@ DICOM_SIEMENS_XA30 = False
 # GE scanner DICOM format (one slice per file)
 GE_SIGNA = True
 
+# GE_SIGNA only. QC log of the slice order of each assembled volume
+INPUT_FILE_ORDER_QC = True
+
 # rtQA may cause linear performance loss on the big data
 # due to saving process of iGLM quality parameters
 USE_RTQA = False

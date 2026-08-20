@@ -73,24 +73,33 @@ switch dataType
             dim(3) = dim(3)+P.nrZeroPadVol*2;
             vol = cat(3, cat(3, zeroPadVol, dcmData), zeroPadVol);
         end
-    case 'GE'
-        while isempty(vol) || contains(lastwarn,'Suspicious fragmentary file')
-            [pathstr,tmp_name,tmp_fileSliceNr] = fileparts(fileName);
-            fileSliceNr = str2double(tmp_fileSliceNr(2:end));
-            fname_split = split(tmp_name,'.');
-            name1 = fname_split{1};
-            name2 = fname_split{2};
-            for iSlice = 1:P.NrOfSlices
-                vol(:,:,iSlice) = double(dicomread(GE_filelist{iSlice}));
-            end
+	case 'GE'
+        % Get volume from bin
+        if evalin('base', 'exist(''GE_bin_path'', ''var'')')
+            binPath = evalin('base', 'GE_bin_path');
+            
+            mat = matTemplMotCorr;
+            dim = dimTemplMotCorr;
+            
+            % Read bin file
+            fid = fopen(binPath, 'r');
+            
+            % Read raw doubles. Inf implies "read until EOF"
+            raw_data = fread(fid, Inf, 'double');
+            fclose(fid);
+            
+            vol = reshape(raw_data, dim(1), dim(2), dim(3));
+            
+            % Clean up the workspace variable
+            evalin('base', 'clear GE_bin_path');
+            % Delete the actual file from disk
+            if indVol > 0
+				delete(binPath);
+			end
+            
+        else
+            error('CRITICAL: GE_bin_path missing. Python did not inject data.');
         end
-
-        % WIP: check voxel values
-        vVox = squeeze(vol(64,50:60,24));
-%        fprintf('Value: %s , ',string(vVox));
-
-        mat = matTemplMotCorr;
-        dim = dimTemplMotCorr;
         if P.isZeroPadding
             zeroPadVol = zeros(dim(1),dim(2),P.nrZeroPadVol);
             dim(3) = dim(3)+P.nrZeroPadVol*2;

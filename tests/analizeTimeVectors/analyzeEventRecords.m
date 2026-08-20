@@ -151,6 +151,11 @@ function [tv, ts] = analyzeEventRecords(eventrecordsFileName, eventrecordsFileNa
         % get instritions and FB display indices
         indCond = find(P.vectEncCond~=3);
         indFB = find(P.vectEncCond==3);
+		
+		max_limit = maxCount - startScan;
+        indCond = indCond(indCond <= max_limit);
+        indFB = indFB(indFB <= max_limit);
+		
         % cumulative time stamps
         % 1st column is trigger-pulse time, not taken into account here
         ts = tv(startScan + 1:maxCount, 2:6) - repmat(tv(startScan + 1:maxCount, 2), 1, 5);
@@ -214,7 +219,11 @@ function [tv, ts] = analyzeEventRecords(eventrecordsFileName, eventrecordsFileNa
         % get instritions and FB display indices
         indCond = find(P.vectEncCond~=3 & P.vectEncCond~=4);
         indFB = find(P.vectEncCond==4);
-        
+
+        max_limit = maxCount - startScan;
+        indCond = indCond(indCond <= max_limit);
+        indFB = indFB(indFB <= max_limit);
+
         % cumulative time stamps
         % 1st column is trigger-pulse time, not taken into account here
         ts = tv(startScan + 1:maxCount, 2:5) - repmat(tv(startScan + 1:maxCount, 2), 1, 4);

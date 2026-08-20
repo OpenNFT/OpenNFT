@@ -48,6 +48,7 @@ from loguru import logger
 import numpy as np
 import pyqtgraph as pg
 import pydicom
+import os
 
 from watchdog.events import FileSystemEventHandler
 
@@ -94,6 +95,22 @@ class ImageViewMode(enum.IntEnum):
     orthviewAnat = 1
     orthviewEPI = 2
 
+def fileIndexNumber(filename):
+    # Last number in a file name, used to order slice files and check their sequence
+    numbers = re.findall(r'\d+', Path(filename).name)
+    return int(numbers[-1]) if numbers else 0
+
+
+def writeGEVolumeBin(file_list, work_folder, key_name):
+    # Assemble one GE volume from its slice files and stage it for matlab
+    slices = [pydicom.dcmread(f, force=True) for f in file_list]
+    vol_data = np.dstack([s.pixel_array for s in slices])
+    bin_path = os.path.join(work_folder, 'raw_{}.bin'.format(key_name))
+    vol_data.flatten(order='F').astype(np.float64).tofile(bin_path)
+    return bin_path
+
+INPUT_FILE_ORDER_QC_FILE = 'input_file_order_QC.txt'
+
 
 class CreateFileEventHandler(FileSystemEventHandler):
     def __init__(self, filepat, fq: queue.Queue, recorder: erd.EventRecorder, self_opennft):
@@ -101,8 +118,14 @@ class CreateFileEventHandler(FileSystemEventHandler):
         self.fq = fq
         self.recorder = recorder
         self.self_opennft = self_opennft
+        self.volume_count = 1
+        self.qc_path = None
         if config.GE_SIGNA:
             self.file_list = []
+            if config.INPUT_FILE_ORDER_QC:
+                # New file per run
+                self.qc_path = Path(self_opennft.P['WorkFolder']) / INPUT_FILE_ORDER_QC_FILE
+                self.qc_path.write_text('')
 
     def on_created(self, event):
 
@@ -110,17 +133,34 @@ class CreateFileEventHandler(FileSystemEventHandler):
             self.file_list.append(event.src_path)
             if len(self.file_list) == self.self_opennft.P['NrOfSlices']:
                 # t1
-                self.recorder.recordEvent(erd.Times.t1, 0, time.time())
-                self.file_list.sort()
+                self.recorder.recordEvent(erd.Times.t1, self.volume_count, time.time()) # to count t1 right isntead of set just 0
+                self.file_list.sort(key=fileIndexNumber)
+
+                if self.qc_path is not None:
+                    with open(self.qc_path, 'a') as qc:
+                        qc.write('--- Volume {} ---\n'.format(self.volume_count))
+                        for filepath in self.file_list:
+                            qc.write('{}\n'.format(Path(filepath).name))
+
                 fname = self.file_list[-1]
-                self.self_opennft.GE_filelist = self.file_list.copy()
+                key_name = os.path.basename(fname)
+                bin_path = writeGEVolumeBin(
+                    self.file_list, self.self_opennft.P['WorkFolder'], key_name)
+                self.self_opennft.GE_dict[key_name] = {
+                        'files': self.file_list.copy(),
+                        'bin_path': bin_path  # Store path
+                    }
+
+                # self.self_opennft.GE_dict[fname] = self.file_list.copy() # store every batch of slices in dict
                 self.file_list = []
                 self.fq.put(fname)
+                self.volume_count += 1
         else:
             if not event.is_directory and fnmatch.fnmatch(Path(event.src_path).name, self.filepat):
                 # t1
-                self.recorder.recordEvent(erd.Times.t1, 0, time.time())
+                self.recorder.recordEvent(erd.Times.t1, self.volume_count, time.time())
                 self.fq.put(event.src_path)
+                self.volume_count += 1 
 
 
 # --------------------------------------------------------------------------
@@ -221,6 +261,7 @@ class OpenNFT(QWidget):
         self.isOffline = None
         self.files_processed = []
         self.files_exported = []
+        self.GE_dict = {} # dictionary to store slice batches
 
         self.main_loop = None
         self.eng = None
@@ -782,10 +823,7 @@ class OpenNFT(QWidget):
             else:
                 last_fname = self.files_processed[-1]
             if GE_SIGNA:
-                file_name = Path(self.files_processed[-1])
-                extensions = file_name.suffixes  # gets ['.MRDC', '.1']
-                r = extensions[-1].lstrip('.')  # gets '.1'
-                last_num = int(r)
+                last_num = fileIndexNumber(self.files_processed[-1])
             else:
                 r = re.findall(r'\D(\d+).\w+$', last_fname)
                 last_num = int(r[-1])
@@ -795,11 +833,8 @@ class OpenNFT(QWidget):
 
             for cur_fname in self.files_exported:
                 if GE_SIGNA:
-                    file_name = Path(cur_fname)
                     cur_name = cur_fname
-                    extensions = file_name.suffixes  # gets ['.MRDC', '.1']
-                    r = extensions[-1].lstrip('.')  # gets '.1'
-                    cur_num = int(r)
+                    cur_num = fileIndexNumber(cur_fname)
                 else:
                     if config.DICOM_SIEMENS_XA30:
                         cur_name = cur_fname
@@ -830,6 +865,10 @@ class OpenNFT(QWidget):
                 else:
                     self.files_exported.remove(fname)
 
+        if fname is None:
+            self.isMainLoopEntered = False
+            return
+
         autoRTQAMCTempl = (self.iteration == self.P['nrSkipVol'] + 1) and config.AUTO_RTQA \
                           and not self.P['useEPITemplate'] \
                           and not self.autoRTQASetup
@@ -852,15 +891,16 @@ class OpenNFT(QWidget):
                 if not GE_SIGNA:
                     firstFileName = self.P['FirstFileName']
                 elif GE_SIGNA:
-                    firstFileName = '.'+str(self.iteration*self.P['NrOfSlices'])
-            if not firstFileName in fname and not GE_SIGNA:
+                    # Volume N is complete once file index reaches N * NrOfSlices
+                    firstFileName = self.iteration * self.P['NrOfSlices']
+            if not GE_SIGNA and not firstFileName in fname:
                 logger.info('Volume skipped, waiting for first file')
                 self.isMainLoopEntered = False
                 return
-            elif not firstFileName in fname and not GE_SIGNA:
+            elif not GE_SIGNA and firstFileName in fname:
                 logger.info('First file was reached')
                 self.reachedFirstFile = True
-            elif GE_SIGNA and firstFileName in fname:
+            elif GE_SIGNA and fileIndexNumber(fname) == firstFileName:
                 logger.info(f'Slices collected for {self.P["NrOfSlices"]*self.iteration} file')
                 self.isMainLoopEntered = True
 
@@ -877,7 +917,36 @@ class OpenNFT(QWidget):
             return
 
         logger.info('Call iteration for file "{}"', Path(fname).name)
+        self.temp_bin_path = None
         if config.GE_SIGNA:
+            if self.isOffline and hasattr(self, 'offline_file_list'):
+                current_idx = self.offline_file_list.index(fname)
+                start_idx = current_idx - self.P['NrOfSlices'] + 1
+                
+                if start_idx < 0:
+                    logger.error('Incomplete volume for "{}": {} slices available, {} needed',
+                                 Path(fname).name, current_idx + 1, self.P['NrOfSlices'])
+                    self.isMainLoopEntered = False
+                    return
+
+                self.GE_filelist = self.offline_file_list[start_idx: current_idx + 1]
+                self.temp_bin_path = writeGEVolumeBin(
+                    self.GE_filelist, self.P['WorkFolder'], os.path.basename(fname))
+
+            elif not self.isOffline:
+                key_name = os.path.basename(fname)
+                if key_name in self.GE_dict:
+                    payload = self.GE_dict.pop(key_name)
+                    
+                    if payload['bin_path'] is not None:
+                        self.temp_bin_path = payload['bin_path']
+                        self.GE_filelist = payload['files']
+                    else:
+                        self.GE_filelist = payload['files']
+                else:
+                    logger.error(f"CRITICAL: Payload missing for {key_name}")
+                    self.GE_filelist = [fname]
+
             self.eng.workspace['GE_filelist'] = self.GE_filelist
 
         # Start elapsed time
@@ -886,12 +955,19 @@ class OpenNFT(QWidget):
         self.previousIterStartTime = startingTime
 
         if self.iteration == 1 or autoRTQAMCTempl:
+            if config.GE_SIGNA and self.temp_bin_path is not None:
+                self.eng.workspace['GE_bin_path'] = self.temp_bin_path
             with utils.timeit('  setup after first volume:'):
                 self.eng.setupFirstVolume(fname, nargout=0)
 
         # Main logic
         # data preprocessing
         with utils.timeit("preprocess volume: "):
+            # Send the data right now, ensuring it exists for getVolData
+            if config.GE_SIGNA and self.temp_bin_path is not None:
+                self.eng.workspace['GE_bin_path'] = self.temp_bin_path
+                self.temp_bin_path = None
+            
             if config.USE_YIELD:
                 self.call_timer.setInterval(np.int32(config.MAIN_LOOP_CALL_PERIOD / 3))
                 prepr_vol_state = self.eng.preprVol(fname, self.iteration, background=True, nargout=0)
@@ -1141,10 +1217,19 @@ class OpenNFT(QWidget):
             else:  # dicom as default
                 ext = config.DICOM_FILES_EXTENSION
 
-        searchString = self.getFileSearchString(self.P['FirstFileNameTxt'], path, ext)
-        path = path.parent / searchString
+        if config.GE_SIGNA:
+            # Define mask from the First File Name field
+            searchString = self.P['FirstFileName']
+        else:
+            searchString = self.getFileSearchString(self.P['FirstFileNameTxt'], path, ext)
 
+        path = path.parent / searchString
+        logger.info('Offline mode: searching for {}', path)
         files = sorted(glob.glob(str(path)))
+        files.sort(key=fileIndexNumber)
+
+        self.offline_file_list = files
+        self.GE_filelist = []
 
         if not files:
             logger.info("No files found in offline mode. Check WatchFolder settings!")
@@ -1153,16 +1238,30 @@ class OpenNFT(QWidget):
 
         self.files_queue = queue.Queue()
 
+        vol_count = 1
+        max_vol = self.P['NrOfVolumes']
+
         if config.GE_SIGNA:
             # We only get each N-file - the last slice in the volume for each iteration.
             # We assume that the volume will be assembled on the MATLAB side from 1-N files.
             n = self.sbSlicesNr.value()
 
             for f in files[n-1::n]:
+                if vol_count > max_vol:
+                    break
+
+                self.recorder.recordEvent(erd.Times.t1, vol_count, time.time())
                 self.files_queue.put(f)
+                vol_count += 1
         else:
+            vol_count = 1
             for f in files:
+                if vol_count > max_vol:
+                    break
+                
+                self.recorder.recordEvent(erd.Times.t1, vol_count, time.time())
                 self.files_queue.put(f)
+                vol_count += 1
 
         self.call_timer.start(config.MAIN_LOOP_CALL_PERIOD)
 
@@ -2398,7 +2497,7 @@ class OpenNFT(QWidget):
             self.sbTargDIAM.setValue(float(self.settings.value('TargDIAM', 0.0)))
             self.leWeightsFile.setText(str(self.settings.value('WeightsFileName', '')))
 
-            self.actualize
+            self.actualize()
         else:
             self.leWatchFolder3.setText(self.settings.value('WatchFolder', ''))
             if config.SELECT_ROIS:
